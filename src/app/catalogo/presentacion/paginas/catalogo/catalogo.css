@@ -1,0 +1,114 @@
+.contenedor-general {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    overflow: hidden;
+    /* lo que se sale del círculo por la derecha se recorta */
+    background-color: #fdeae0;
+    /* color de fondo (cámbielo si quiere) */
+
+    /* AJUSTES DEL CÍRCULO */
+    --alto-circulo: 140%;
+    /* más chico = más espacio entre el texto y el círculo, y se ve más imagen */
+    --desplazamiento: -10%;
+    /* más negativo = el círculo se aleja del texto hacia la derecha */
+    --aro: 40px;
+    /* grosor del aro blanco */
+}
+
+/*Contenedor de las letras*/
+.contenedor-curvo {
+    position: relative;
+    z-index: 2;
+    /* el texto queda por encima del círculo */
+    width: 55%;
+    height: 100%;
+    padding: 30px 30px 30px 8%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #111;
+    background-image: url('/imagenes/fondo-letra.png');
+}
+
+/* Imagen circular: el borde blanco y el círculo son lo que parece "hundido" en el contenedor */
+.imagen-circular {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    right: var(--desplazamiento);
+    height: var(--alto-circulo);
+    aspect-ratio: 1 / 1;
+    /* ancho = alto → círculo perfecto */
+    transform: translateY(-50%);
+    border-radius: 50%;
+    border: var(--aro) solid #fff;
+    /* aro blanco */
+    overflow: hidden;
+    /* recorta la imagen en círculo */
+    background-color: #fff;
+}
+
+.imagen-circular img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* la imagen se ve COMPLETA dentro del círculo (cover la recortaría) */
+    display: block;
+}
+
+/* Variante: círculo completo dentro del contenedor (sin salirse), para ver toda la imagen.
+   Uso en el HTML: <div class="imagen-circular completa"> */
+.imagen-circular.completa {
+    height: 92%;
+    right: 4%;
+}
+
+/* Textos */
+.pregunta {
+    font-size: 1rem;
+    margin-bottom: 12px;
+}
+
+.titulo {
+    font-size: clamp(2.2rem, 5vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 20px;
+}
+
+.titulo-suave {
+    display: block;
+    font-weight: 500;
+    text-transform: none;
+}
+
+.descripcion {
+    max-width: 640px;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+
+.boton-coleccion {
+    align-self: flex-start;
+    background-color: #3a4696;
+    color: #fff;
+    border: none;
+    border-radius: 40px;
+    padding: 18px 48px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Pantallas pequeñas: el círculo baja de tamaño para no tapar el texto */
+@media (max-width: 992px) {
+    .contenedor-curvo {
+        width: 100%;
+    }
+
+    .imagen-circular {
+        height: 110%;
+        right: -45%;
+        opacity: 0.35;
+    }
+}

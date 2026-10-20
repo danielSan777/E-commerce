@@ -1,3 +1,32 @@
 import { Routes } from '@angular/router';
+import { MainLayout } from './core/layout/main-layout/main-layout/main-layout';
 
-export const routes: Routes = [];
+export const routes: Routes = [
+
+    {
+        path: '',
+        component: MainLayout,
+        children: [
+            {
+                path: '',
+                redirectTo: 'catalogo',
+                pathMatch: 'full'
+            },
+            {
+                path: 'catalogo',
+                loadComponent: () =>
+                    import('./catalogo/presentacion/paginas/catalogo/catalogo')
+                        .then(m => m.Catalogo)
+            },
+            {
+                path: 'catalogo/:slug',
+                loadComponent: () =>
+                    import('./catalogo/presentacion/paginas/catalogo/catalogo')
+                        .then(m => m.Catalogo)
+            }
+
+        ]
+    }
+
+
+];

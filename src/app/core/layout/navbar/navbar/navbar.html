@@ -1,0 +1,67 @@
+<div class="barra-superior">
+    <span>+593 999283765</span>
+    <div><span>Sorprende a tu persona favorita con </span>
+        <span class="texto-destacado">nuestros colecciones inspiradas en ti</span>
+    </div>
+
+</div>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-success">
+    <div class="container">
+        <!-- Logo y nombre de la tienda -->
+        <a class="navbar-brand fw-bold d-flex flex-column align-items-center" routerLink="/">
+            <img src="/favicon.ico" alt="Logo de El Jardín de Sele" class="logo-tienda" />
+            <span>El Jardín de Sele</span>
+
+        </a>
+
+        <!-- Botón para móviles -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal"
+            aria-controls="menuPrincipal" aria-expanded="false" aria-label="Abrir menú">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Catálogos en el centro -->
+        <div class="collapse navbar-collapse" id="menuPrincipal">
+            <ul class="navbar-nav categorias-navbar mb-2 mb-lg-0">
+                @for (catalogo of catalogos(); track catalogo.id){
+                <li class="nav-item">
+                    <a class="nav-link" [routerLink]="catalogo.slug ? ['/catalogo', catalogo.slug] : ['/']"
+                        routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                        <i [class]="['bi', catalogo.icono].join(' ')" aria-hidden="true"></i>
+                        {{ catalogo.nombre }}
+                    </a>
+                </li>
+                }
+            </ul>
+
+            <!-- Iconos del lado derecho -->
+            <div class="iconos-navbar d-flex align-items-center gap-3 ms-auto">
+                <!-- Buscar -->
+                <a routerLink="/buscar" class="icono-nav" aria-label="Buscar">
+                    <i class="bi bi-search"></i>
+                </a>
+
+                <!-- Mi cuenta -->
+                <a routerLink="/cuenta" class="icono-nav" aria-label="Mi cuenta">
+                    <i class="bi bi-person"></i>
+                </a>
+
+                <!-- Favoritos -->
+                <a routerLink="/favoritos" class="icono-nav" aria-label="Favoritos">
+                    <i class="bi bi-heart"></i>
+                </a>
+
+                <!-- Carrito -->
+                <a routerLink="/carrito" class="icono-nav" aria-label="Carrito de compras">
+                    <i class="bi bi-cart3"></i>
+                </a>
+            </div>
+
+        </div>
+
+
+
+
+    </div>
+</nav>
