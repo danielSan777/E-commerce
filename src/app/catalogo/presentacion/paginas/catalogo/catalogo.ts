@@ -32,7 +32,7 @@ export class Catalogo {
       titulo: 'Bienvenidos a El Jardín de Sele',
       descripcion: 'regalos llenos de vida que adornaran tu espacio o el de esa persona especial',
       boton: 'Ver Productos',
-      imagen: 'imagenes/doctor3D.png'
+      imagen: 'imagenes/amor.png'
     },
     {
       id: 2,
@@ -40,7 +40,7 @@ export class Catalogo {
       titulo: 'Crea tu propia maceta',
       descripcion: 'Elige los accesorios y personaliza tu maceta con el nombre de esa persona especial',
       boton: 'Personalizar',
-      imagen: 'imagenes/licenciada.png'
+      imagen: 'imagenes/doctor3D.png'
     },
     {
       id: 3,
@@ -48,7 +48,7 @@ export class Catalogo {
       titulo: 'La mejor Tienda de regalos',
       descripcion: 'Buscamos representar los sentimientos de las personas en regalos que sean inolvidables',
       boton: 'Ver productos',
-      imagen: 'imagenes/prueba.png',
+      imagen: 'imagenes/pato.png',
     },
   ];
 
