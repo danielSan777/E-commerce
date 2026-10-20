@@ -1,15 +1,17 @@
 .contenedor-general {
     position: relative;
     width: 100%;
-    height: 520px;
+    height: var(--alto);
     overflow: hidden;
     /* lo que se sale del círculo por la derecha se recorta */
     background-color: #fdeae0;
     /* color de fondo (cámbielo si quiere) */
 
     /* AJUSTES DEL CÍRCULO */
-    --alto-circulo: 140%;
-    /* más chico = más espacio entre el texto y el círculo, y se ve más imagen */
+    --alto: 520px;
+    /* alto del contenedor (y de la imagen: la imagen siempre mide esto, nunca se hace zoom) */
+    --factor: 1.4;
+    /* tamaño del círculo = alto × factor. 1.4 = sobresale por arriba y por abajo como en el diseño */
     --desplazamiento: -10%;
     /* más negativo = el círculo se aleja del texto hacia la derecha */
     --aro: 40px;
@@ -37,7 +39,7 @@
     z-index: 1;
     top: 50%;
     right: var(--desplazamiento);
-    height: var(--alto-circulo);
+    height: calc(var(--alto) * var(--factor));
     aspect-ratio: 1 / 1;
     /* ancho = alto → círculo perfecto */
     transform: translateY(-50%);
@@ -50,10 +52,15 @@
 }
 
 .imagen-circular img {
+    /* La imagen NO se estira al tamaño del círculo (por eso no hace zoom): mide solo el alto
+       visible del contenedor y va centrada en la parte del círculo que se ve. */
+    position: absolute;
+    left: 0;
+    top: calc((100% - var(--alto)) / 2);
     width: 100%;
-    height: 100%;
-    object-fit: contain;
-    /* la imagen se ve COMPLETA dentro del círculo (cover la recortaría) */
+    height: var(--alto);
+    object-fit: cover;
+    /* la imagen llena TODO el círculo (se puede cambiar por diapositiva en el .ts con "ajuste") */
     display: block;
 }
 
@@ -106,9 +113,12 @@
         width: 100%;
     }
 
+    .contenedor-general {
+        --factor: 1.25;
+        --desplazamiento: -45%;
+    }
+
     .imagen-circular {
-        height: 110%;
-        right: -45%;
         opacity: 0.35;
     }
 }
@@ -123,8 +133,8 @@
     z-index: 3;
     /* por encima del texto y de la imagen */
     transform: translateY(-50%);
-    width: 74px;
-    height: 74px;
+    width: 60px;
+    height: 60px;
     margin: 0;
     padding: 0;
     border: none;
@@ -136,10 +146,14 @@
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s;
 }
 
 .flecha:hover {
+    background-color: #6f4e37;
+    /* fondo café al pasar el mouse (cambie el hexadecimal si quiere otro tono) */
+    color: #fff;
+    /* la flecha (usa currentColor) pasa a blanco */
     transform: translateY(-50%) scale(1.08);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }

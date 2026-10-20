@@ -19,7 +19,10 @@
     <!-- Imagen en forma circular -->
     <div class="imagen-circular">
         @for (slide of [slideActual()]; track slide.id) {
-        <img class="slide-imagen" [src]="slide.imagen" [alt]="slide.titulo">
+
+        <!-- La imagen llena todo el círculo (las fotos deben ser de proporción 5:4, como la del doctor) -->
+        <img class="slide-imagen" [src]="slide.imagen" [alt]="slide.titulo" [style.object-fit]="slide.ajuste ?? 'cover'"
+            [style.object-position]="slide.posicion ?? 'center'">
         }
     </div>
 

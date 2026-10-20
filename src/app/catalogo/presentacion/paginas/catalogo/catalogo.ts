@@ -7,6 +7,12 @@ interface Slide {
   descripcion: string;
   boton: string;
   imagen: string;
+  // Cómo se ajusta la imagen al círculo (opcional):
+  //  'cover'   = llena todo el círculo (recorta lo que sobra)  ← por defecto
+  //  'contain' = se ve completa, pero deja franjas blancas si no es cuadrada
+  ajuste?: 'cover' | 'contain';
+  // Qué parte de la imagen queda visible cuando se recorta (opcional), ej. 'center top', '30% 50%'
+  posicion?: string;
 }
 
 @Component({
@@ -26,7 +32,7 @@ export class Catalogo {
       titulo: 'Bienvenidos a El Jardín de Sele',
       descripcion: 'regalos llenos de vida que adornaran tu espacio o el de esa persona especial',
       boton: 'Ver Productos',
-      imagen: 'imagenes/doctor3D.png',
+      imagen: 'imagenes/doctor3D.png'
     },
     {
       id: 2,
@@ -34,7 +40,7 @@ export class Catalogo {
       titulo: 'Crea tu propia maceta',
       descripcion: 'Elige los accesorios y personaliza tu maceta con el nombre de esa persona especial',
       boton: 'Personalizar',
-      imagen: 'imagenes/licenciada.png',
+      imagen: 'imagenes/licenciada.png'
     },
     {
       id: 3,
@@ -42,7 +48,7 @@ export class Catalogo {
       titulo: 'La mejor Tienda de regalos',
       descripcion: 'Buscamos representar los sentimientos de las personas en regalos que sean inolvidables',
       boton: 'Ver productos',
-      imagen: 'accesorios/regalo.png',
+      imagen: 'imagenes/prueba.png',
     },
   ];
 
