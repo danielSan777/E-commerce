@@ -112,3 +112,115 @@
         opacity: 0.35;
     }
 }
+
+/* ========================= */
+/* CARRUSEL: flechas, puntos y animación */
+/* ========================= */
+
+.flecha {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    /* por encima del texto y de la imagen */
+    transform: translateY(-50%);
+    width: 74px;
+    height: 74px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: #fff;
+    color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.flecha:hover {
+    transform: translateY(-50%) scale(1.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.flecha-izquierda {
+    left: 28px;
+}
+
+.flecha-derecha {
+    right: 28px;
+}
+
+.puntos {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    z-index: 3;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+}
+
+.punto {
+    width: 12px;
+    height: 12px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+
+.punto.activo {
+    background-color: #111;
+}
+
+/* Animación al cambiar de diapositiva */
+.slide-texto {
+    animation: entrar-texto 0.5s ease;
+}
+
+.slide-imagen {
+    animation: entrar-imagen 0.5s ease;
+}
+
+@keyframes entrar-texto {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes entrar-imagen {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 992px) {
+    .flecha {
+        width: 52px;
+        height: 52px;
+    }
+
+    .flecha-izquierda {
+        left: 12px;
+    }
+
+    .flecha-derecha {
+        right: 12px;
+    }
+}
