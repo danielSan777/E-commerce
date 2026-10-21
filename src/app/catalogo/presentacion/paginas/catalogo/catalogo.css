@@ -191,36 +191,53 @@
     background-color: #111;
 }
 
-/* Animación al cambiar de diapositiva */
-.slide-texto {
-    animation: entrar-texto 0.5s ease;
+/* Animación al cambiar de diapositiva: el texto aparece de arriba hacia abajo.
+   Cada línea entra una tras otra y todo dura 1 segundo en total
+   (duración 0.4s + retraso de hasta 0.6s). Para cambiar el tiempo, ajuste estos valores. */
+.slide-texto>* {
+    opacity: 0;
+    animation: entrar-texto 0.4s ease-out forwards;
 }
 
+.slide-texto> :nth-child(1) {
+    animation-delay: 0s;
+}
+
+.slide-texto> :nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.slide-texto> :nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+.slide-texto> :nth-child(4) {
+    animation-delay: 0.6s;
+}
+
+/* Fundido suave entre imágenes: la activa pasa a opacidad 1 y las demás a 0.
+   Para más lento o más rápido, cambie 0.9s. */
 .slide-imagen {
-    animation: entrar-imagen 0.5s ease;
+    opacity: 0;
+    transform: scale(1.04);
+    transition: opacity 0.9s ease-in-out, transform 1.2s ease-out;
+}
+
+.slide-imagen.activa {
+    opacity: 1;
+    transform: scale(1);
 }
 
 @keyframes entrar-texto {
     from {
         opacity: 0;
-        transform: translateX(-20px);
+        transform: translateY(-25px);
+        /* empieza más arriba y baja a su lugar */
     }
 
     to {
         opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes entrar-imagen {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
+        transform: translateY(0);
     }
 }
 
