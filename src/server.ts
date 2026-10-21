@@ -1,16 +1,21 @@
 import {
   AngularNodeAppEngine,
   createNodeRequestHandler,
-  isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
-
 const app = express();
-const angularApp = new AngularNodeAppEngine();
+const angularApp = new AngularNodeAppEngine({
+  allowedHosts: [
+    "greenyellow-wombat-602690.hostingersite.com",
+    "jardindesele.com",
+    "www.jardindesele.com",
+  ],
+  trustProxyHeaders: true,
+});
 
 /**
  * Example Express Rest API endpoints can be defined here.
@@ -50,17 +55,18 @@ app.use((req, res, next) => {
 /**
  * Start the server if this module is the main entry point, or it is ran via PM2.
  * The server listens on the port defined by the `PORT` environment variable, or defaults to 4000.
- */
-if (isMainModule(import.meta.url) || process.env['pm_id']) {
-  const port = process.env['PORT'] || 4000;
-  app.listen(port, (error) => {
-    if (error) {
-      throw error;
-    }
+*/
 
-    console.log(`Node Express server listening on http://localhost:${port}`);
-  });
-}
+
+const port = Number(process.env["PORT"] || 4000);
+
+app.listen(port, "0.0.0.0", (error) => {
+  if (error) {
+    throw error;
+  }
+
+  console.log(`Node Express server listening on port ${port}`);
+});
 
 /**
  * Request handler used by the Angular CLI (for dev-server and during build) or Firebase Cloud Functions.
