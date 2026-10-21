@@ -1,24 +1,19 @@
+<!-- Barra superior: solo en pantallas grandes (>= 992px) -->
 <div class="barra-superior">
     <span>+593 999283765</span>
     <div><span>Sorprende a tu persona favorita con </span>
         <span class="texto-destacado">nuestros colecciones inspiradas en ti</span>
     </div>
-
 </div>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white">
+<!-- NAVBAR DE ESCRITORIO: solo en pantallas grandes (>= 992px) -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white navbar-escritorio">
     <div class="container">
         <!-- Logo y nombre de la tienda -->
         <a class="navbar-brand nombre-marca fw-bold d-flex flex-column align-items-center" routerLink="/">
             <img src="/logo.png" alt="Logo de El Jardín de Sele" class="logo-tienda" />
             <span>El Jardín de Sele</span>
         </a>
-
-        <!-- Botón para móviles -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal"
-            aria-controls="menuPrincipal" aria-expanded="false" aria-label="Abrir menú">
-            <span class="navbar-toggler-icon"></span>
-        </button>
 
         <!-- Catálogos en el centro -->
         <div class="collapse navbar-collapse" id="menuPrincipal">
@@ -36,31 +31,91 @@
 
             <!-- Iconos del lado derecho -->
             <div class="iconos-navbar d-flex align-items-center gap-3 ms-auto">
-                <!-- Buscar -->
-                <a routerLink="/buscar" class="icono-nav" aria-label="Buscar">
-                    <i class="bi bi-search"></i>
-                </a>
-
-                <!-- Mi cuenta -->
-                <a routerLink="/cuenta" class="icono-nav" aria-label="Mi cuenta">
-                    <i class="bi bi-person"></i>
-                </a>
-
-                <!-- Favoritos -->
-                <a routerLink="/favoritos" class="icono-nav" aria-label="Favoritos">
-                    <i class="bi bi-heart"></i>
-                </a>
-
-                <!-- Carrito -->
-                <a routerLink="/carrito" class="icono-nav" aria-label="Carrito de compras">
-                    <i class="bi bi-cart3"></i>
-                </a>
+                <a routerLink="/buscar" class="icono-nav" aria-label="Buscar"><i class="bi bi-search"></i></a>
+                <a routerLink="/cuenta" class="icono-nav" aria-label="Mi cuenta"><i class="bi bi-person"></i></a>
+                <a routerLink="/favoritos" class="icono-nav" aria-label="Favoritos"><i class="bi bi-heart"></i></a>
+                <a routerLink="/carrito" class="icono-nav" aria-label="Carrito de compras"><i
+                        class="bi bi-cart3"></i></a>
             </div>
-
         </div>
-
-
-
-
     </div>
 </nav>
+
+<!-- CABECERA MÓVIL / TABLET: se ve en pantallas menores a 992px y abre el sidebar -->
+<header class="cabecera-movil">
+    <div class="d-flex align-items-center gap-5">
+        <button type="button" class="boton-menu" (click)="abrir()" aria-label="Abrir menú"
+            [attr.aria-expanded]="menuAbierto()" aria-controls="sidebar-menu">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <a class="navbar-brand nombre-marca fw-bold d-flex flex-column  align-items-center gap-2 m-0 " routerLink="/">
+            <img src="/logo.png" alt="Logo de El Jardín de Sele" class="logo-tienda" />
+            <span>El Jardín de Sele</span>
+        </a>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <a routerLink="/buscar" class="icono-nav" aria-label="Buscar"><i class="bi bi-search"></i></a>
+        <a routerLink="/carrito" class="icono-nav" aria-label="Carrito de compras"><i class="bi bi-cart3"></i></a>
+    </div>
+</header>
+
+<!-- SIDEBAR (a la izquierda): en tablet ocupa media pantalla y en celular toda la pantalla -->
+<div class="sidebar-fondo" [class.abierto]="menuAbierto()" (click)="cerrar()"></div>
+
+<aside id="sidebar-menu" class="sidebar" [class.abierto]="menuAbierto()" [attr.aria-hidden]="!menuAbierto()">
+    <div class="sidebar-cabecera">
+        <div class="sidebar-pestanas">
+            <button type="button" class="sidebar-pestana" [class.activa]="pestana() === 'menu'"
+                (click)="pestana.set('menu')">MENÚ</button>
+            <button type="button" class="sidebar-pestana" [class.activa]="pestana() === 'categorias'"
+                (click)="pestana.set('categorias')">CATEGORÍAS</button>
+        </div>
+        <button type="button" class="sidebar-cerrar" (click)="cerrar()" aria-label="Cerrar menú">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <nav class="sidebar-cuerpo">
+        @if (pestana() === 'menu') {
+        <ul class="sidebar-lista">
+            @for (catalogo of catalogos(); track catalogo.id) {
+            <li>
+                <a class="sidebar-enlace" [routerLink]="catalogo.slug ? ['/catalogo', catalogo.slug] : ['/']"
+                    (click)="cerrar()">
+                    <i [class]="['bi', catalogo.icono].join(' ')" aria-hidden="true"></i>
+                    <span>{{ catalogo.nombre }}</span>
+                </a>
+            </li>
+            }
+            <li>
+                <a class="sidebar-enlace" routerLink="/favoritos" (click)="cerrar()">
+                    <i class="bi bi-heart" aria-hidden="true"></i><span>Favoritos</span>
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-enlace" routerLink="/carrito" (click)="cerrar()">
+                    <i class="bi bi-cart3" aria-hidden="true"></i><span>Carrito</span>
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-enlace" routerLink="/cuenta" (click)="cerrar()">
+                    <i class="bi bi-person" aria-hidden="true"></i><span>Iniciar sesión / Registrarse</span>
+                </a>
+            </li>
+        </ul>
+        } @else {
+        <ul class="sidebar-lista">
+            @for (catalogo of categorias(); track catalogo.id) {
+            <li>
+                <a class="sidebar-enlace" [routerLink]="['/catalogo', catalogo.slug]" (click)="cerrar()">
+                    <i [class]="['bi', catalogo.icono].join(' ')" aria-hidden="true"></i>
+                    <span>{{ catalogo.nombre }}</span>
+                </a>
+            </li>
+            }
+        </ul>
+        }
+    </nav>
+</aside>

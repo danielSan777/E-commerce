@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, HostListener, computed, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CatalogoMenu } from '../../../../catalogo/dominio/entidades/catalogo';
 
@@ -8,8 +8,11 @@ import { CatalogoMenu } from '../../../../catalogo/dominio/entidades/catalogo';
   styleUrl: './navbar.css',
   templateUrl: './navbar.html',
 })
-
 export class Navbar {
+
+  // Sidebar (pantallas menores a 992px)
+  menuAbierto = signal(false);
+  pestana = signal<'menu' | 'categorias'>('menu');
 
   catalogos = signal<CatalogoMenu[]>([
     {
@@ -38,7 +41,29 @@ export class Navbar {
     }
   ]);
 
+  // Pestaña CATEGORÍAS: los catálogos sin "Inicio"
+  categorias = computed(() => this.catalogos().filter(c => c.slug));
 
+  abrir(): void {
+    this.pestana.set('menu');
+    this.menuAbierto.set(true);
+    document.body.style.overflow = 'hidden'; // evita que la página se mueva detrás del sidebar
+  }
 
+  cerrar(): void {
+    this.menuAbierto.set(false);
+    document.body.style.overflow = '';
+  }
 
+  // Esc cierra el sidebar
+  @HostListener('document:keydown.escape')
+  alPresionarEscape(): void {
+    if (this.menuAbierto()) this.cerrar();
+  }
+
+  // Si la pantalla pasa a "grande", se cierra el sidebar
+  @HostListener('window:resize')
+  alCambiarTamano(): void {
+    if (this.menuAbierto() && window.innerWidth >= 992) this.cerrar();
+  }
 }

@@ -56,6 +56,22 @@
     padding-right: 80px;
 }
 
+/* La barra superior y el navbar de escritorio solo se ven en pantallas grandes */
+.barra-superior,
+.navbar-escritorio {
+    display: none;
+}
+
+@media (min-width: 992px) {
+    .barra-superior {
+        display: flex;
+    }
+
+    .navbar-escritorio {
+        display: flex;
+    }
+}
+
 .barra-superior span {
     font-size: 12px;
 }
@@ -65,5 +81,161 @@
 }
 
 .nombre-marca {
+    color: #3a4696;
+}
+
+/* ========================= */
+/* CABECERA MÓVIL + SIDEBAR  */
+/* ========================= */
+
+.cabecera-movil {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background-color: #fff;
+}
+
+@media (min-width: 992px) {
+    .cabecera-movil {
+        display: none;
+    }
+}
+
+.boton-menu {
+    border: none;
+    background: transparent;
+    color: #3a4696;
+    font-size: 2rem;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+}
+
+/* Fondo oscuro detrás del sidebar */
+.sidebar-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 1040;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-fondo.abierto {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Sidebar a la izquierda. Celular: toda la pantalla. */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar.abierto {
+    transform: translateX(0);
+    visibility: visible;
+}
+
+/* Pantalla mediana (tablet): media pantalla */
+@media (min-width: 576px) {
+    .sidebar {
+        width: 50%;
+        min-width: 340px;
+    }
+}
+
+/* Pantallas grandes: no existe sidebar */
+@media (min-width: 992px) {
+
+    .sidebar,
+    .sidebar-fondo {
+        display: none;
+    }
+}
+
+.sidebar-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 68px;
+    background-color: #3a4696;
+    /* color morado del sidebar */
+}
+
+.sidebar-pestanas {
+    display: flex;
+    gap: 28px;
+}
+
+.sidebar-pestana {
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+}
+
+.sidebar-pestana.activa {
+    color: #fff;
+}
+
+.sidebar-cerrar {
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+
+.sidebar-cuerpo {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 36px 24px;
+}
+
+.sidebar-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar-lista li {
+    border-bottom: 1px solid #e6e6e6;
+}
+
+.sidebar-enlace {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 0;
+    color: #333;
+    font-size: 1.05rem;
+    text-decoration: none;
+}
+
+.sidebar-enlace i {
+    font-size: 1.15rem;
+    color: #444;
+}
+
+.sidebar-enlace:hover,
+.sidebar-enlace:hover i {
     color: #3a4696;
 }
