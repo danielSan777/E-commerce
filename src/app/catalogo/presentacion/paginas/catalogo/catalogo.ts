@@ -15,6 +15,11 @@ interface Slide {
   posicion?: string;
 }
 
+interface Coleccion {
+  nombre: string;
+  imagen: string;
+}
+
 @Component({
   imports: [],
   selector: 'app-catalogo',
@@ -51,6 +56,21 @@ export class Catalogo {
       imagen: 'imagenes/pato.png',
     },
   ];
+
+  // Colecciones que se muestran en círculos (cambie las rutas por las de sus imágenes)
+  colecciones: Coleccion[] = [
+    { nombre: 'profesiones', imagen: 'imagenes/colecciones/abogado.png' },
+    { nombre: 'Amor & Amistad', imagen: 'imagenes/colecciones/bob-serenata.png' },
+    { nombre: 'Personajes', imagen: 'imagenes/colecciones/chica_superpoderosa.png' },
+    { nombre: 'profesiones', imagen: 'imagenes/colecciones/maestro.png' },
+    { nombre: 'Amor & Amistad', imagen: 'imagenes/colecciones/pareja-juntos.png' },
+    { nombre: 'Personajes', imagen: 'imagenes/colecciones/personajes.png' },
+    { nombre: 'Amor & Amistad', imagen: 'imagenes/colecciones/senorita.png' },
+    { nombre: 'profesiones', imagen: 'imagenes/colecciones/veterinario.png' }
+  ];
+
+  // La lista se repite dos veces para que al desplazarse nunca quede un hueco vacío
+  coleccionesDobles: Coleccion[] = [...this.colecciones, ...this.colecciones];
 
   indice = signal(0);
 
