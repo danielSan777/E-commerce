@@ -1,5 +1,5 @@
 import {
-  Component, computed, signal, OnInit,
+  Component, ElementRef, computed, signal, viewChild, OnInit,
   OnDestroy
 } from '@angular/core';
 
@@ -36,26 +36,99 @@ export class Catalogo implements OnInit, OnDestroy {
 
   private temporizador?: ReturnType<typeof setInterval>;
 
-  ngOnDestroy(): void {
+  // ===== Colecciones: carrusel infinito que se mueve solo y también se arrastra con el mouse o el dedo =====
+  // La pista se mueve con transform (no con scroll) y su posición se reinicia con módulo,
+  // así nunca llega a un final: al arrastrar hacia cualquier lado las imágenes siguen apareciendo.
 
+  private readonly velocidad = 60; // píxeles por segundo (cambie este número para ir más rápido o más lento)
+
+  pista = viewChild<ElementRef<HTMLElement>>('pista');
+  desplazamiento = signal(0); // cuántos píxeles se ha movido la fila hacia la izquierda
+
+  arrastrando = false;
+  private pausado = false; // true mientras el mouse está encima
+  private ultimoX = 0;
+  private idAnimacion = 0;
+  private ultimoTiempo = 0;
+
+  // Ancho de UNA copia de la lista (la pista contiene la lista repetida dos veces)
+  private anchoLista(): number {
+    const pista = this.pista()?.nativeElement;
+    return pista ? pista.scrollWidth / 2 : 0;
+  }
+
+  private mover(pixeles: number): void {
+    const ancho = this.anchoLista();
+    if (!ancho) {
+      return;
+    }
+    // Se mantiene entre 0 y el ancho de una lista: al pasar el límite "da la vuelta" sin que se note
+    let nuevo = (this.desplazamiento() + pixeles) % ancho;
+    if (nuevo < 0) {
+      nuevo += ancho;
+    }
+    this.desplazamiento.set(nuevo);
+  }
+
+  private animar = (tiempo: number): void => {
+    const segundos = Math.min((tiempo - this.ultimoTiempo) / 1000, 0.1);
+    this.ultimoTiempo = tiempo;
+
+    if (!this.arrastrando && !this.pausado) {
+      this.mover(this.velocidad * segundos);
+    }
+    this.idAnimacion = requestAnimationFrame(this.animar);
+  };
+
+  pausar(valor: boolean): void {
+    this.pausado = valor;
+  }
+
+  iniciarArrastre(event: PointerEvent): void {
+    // Solo iniciar con el botón izquierdo del mouse
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+      return;
+    }
+    this.arrastrando = true;
+    this.ultimoX = event.clientX;
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  moverArrastre(event: PointerEvent): void {
+    if (!this.arrastrando) {
+      return;
+    }
+    // Arrastrar a la izquierda mueve la fila a la izquierda, y viceversa
+    this.mover(this.ultimoX - event.clientX);
+    this.ultimoX = event.clientX;
+  }
+
+  terminarArrastre(event: PointerEvent): void {
+    if (!this.arrastrando) {
+      return;
+    }
+    this.arrastrando = false;
+
+    const visor = event.currentTarget as HTMLElement;
+    if (visor.hasPointerCapture(event.pointerId)) {
+      visor.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  ngOnDestroy(): void {
     if (this.temporizador) {
       clearInterval(this.temporizador);
     }
-
+    cancelAnimationFrame(this.idAnimacion);
   }
 
-
   ngOnInit(): void {
-
     this.temporizador = setInterval(() => {
       this.siguiente();
     }, 3000);
 
+    this.idAnimacion = requestAnimationFrame(this.animar);
   }
-
-
-
-
 
   // Cada diapositiva: su texto, su botón y su imagen (cambie las rutas de las imágenes por las suyas)
   slides: Slide[] = [
@@ -97,7 +170,7 @@ export class Catalogo implements OnInit, OnDestroy {
     { nombre: 'profesiones', imagen: 'imagenes/colecciones/veterinario.png' }
   ];
 
-  // La lista se repite dos veces para que al desplazarse nunca quede un hueco vacío
+  // La lista se repite dos veces para que al moverse nunca quede un hueco vacío
   coleccionesDobles: Coleccion[] = [...this.colecciones, ...this.colecciones];
 
   indice = signal(0);

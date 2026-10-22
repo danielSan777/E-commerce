@@ -325,30 +325,21 @@
 .colecciones-visor {
     overflow: hidden;
     padding: 24px 0;
+    cursor: grab;
+    user-select: none;
+    touch-action: pan-y;
+    /* en celular: el dedo arrastra la fila de lado, y hacia arriba/abajo sigue moviendo la página */
 }
 
-/* Fila de círculos que se desplaza sola: va hacia la izquierda y luego regresa hacia la derecha.
-   Para cambiar la velocidad, cambie los 20s. */
+.colecciones-visor.arrastrando {
+    cursor: grabbing;
+}
+
+/* Fila de círculos: la mueve el código (.ts) con transform, sin animación CSS */
 .colecciones-pista {
     display: flex;
     width: max-content;
-    animation: desplazar-colecciones 40s ease-in-out infinite alternate;
-}
-
-/* Al pasar el mouse por la fila, se detiene */
-.colecciones-pista:hover {
-    animation-play-state: paused;
-}
-
-/* Recorre la mitad de la pista (la lista original); como la lista está repetida, nunca hay huecos */
-@keyframes desplazar-colecciones {
-    from {
-        transform: translateX(0);
-    }
-
-    to {
-        transform: translateX(-50%);
-    }
+    will-change: transform;
 }
 
 .coleccion {

@@ -58,8 +58,11 @@
     <p class="colecciones-subtitulo">Nuestros productos están diseñados para todos, respetuosos con el medio ambiente.
     </p>
 
-    <div class="colecciones-visor">
-        <div class="colecciones-pista">
+    <div class="colecciones-visor" [class.arrastrando]="arrastrando" (pointerdown)="iniciarArrastre($event)"
+        (pointermove)="moverArrastre($event)" (pointerup)="terminarArrastre($event)"
+        (pointercancel)="terminarArrastre($event)" (dragstart)="$event.preventDefault()" (pointerenter)="pausar(true)"
+        (pointerleave)="pausar(false)">
+        <div class="colecciones-pista" #pista [style.transform]="'translateX(' + (-desplazamiento()) + 'px)'">
             @for (coleccion of coleccionesDobles; track $index) {
             <a class="coleccion" href="#" (click)="$event.preventDefault()">
                 <div class="coleccion-circulo">
