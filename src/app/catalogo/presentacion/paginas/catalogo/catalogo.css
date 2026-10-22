@@ -497,7 +497,10 @@
 }
 
 .producto-precio-anterior {
-    margin-left: 6px;
+    display: block;
+    /* pasa a la línea de abajo */
+    margin-top: 4px;
+    font-size: 0.95em;
     color: #777;
     text-decoration: line-through;
 }
