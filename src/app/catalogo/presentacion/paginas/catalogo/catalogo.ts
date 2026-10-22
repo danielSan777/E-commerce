@@ -1,4 +1,7 @@
-import { Component, computed, signal } from '@angular/core';
+import {
+  Component, computed, signal, OnInit,
+  OnDestroy
+} from '@angular/core';
 
 interface Slide {
   id: number;
@@ -26,8 +29,33 @@ interface Coleccion {
   styleUrl: './catalogo.css',
   templateUrl: './catalogo.html',
 })
+/* ancho:411px
+alto:780px */
+export class Catalogo implements OnInit, OnDestroy {
 
-export class Catalogo {
+
+  private temporizador?: ReturnType<typeof setInterval>;
+
+  ngOnDestroy(): void {
+
+    if (this.temporizador) {
+      clearInterval(this.temporizador);
+    }
+
+  }
+
+
+  ngOnInit(): void {
+
+    this.temporizador = setInterval(() => {
+      this.siguiente();
+    }, 3000);
+
+  }
+
+
+
+
 
   // Cada diapositiva: su texto, su botón y su imagen (cambie las rutas de las imágenes por las suyas)
   slides: Slide[] = [

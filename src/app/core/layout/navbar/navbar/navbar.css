@@ -89,12 +89,11 @@
 /* ========================= */
 
 .cabecera-movil {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 16px;
-    background-color: #fff;
+    min-height: 90px;
+    padding: 8px 12px;
 }
+
+
 
 @media (min-width: 992px) {
     .cabecera-movil {
