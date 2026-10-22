@@ -23,6 +23,15 @@ interface Coleccion {
   imagen: string;
 }
 
+interface Producto {
+  id: number;
+  nombre: string;
+  imagen: string;          // ruta de la imagen
+  precio: number;
+  precioAnterior?: number; // opcional: se muestra tachado
+  descuento?: number;      // opcional: porcentaje que se muestra en la etiqueta roja (ej. 10 → "-10%")
+}
+
 @Component({
   imports: [],
   selector: 'app-catalogo',
@@ -173,6 +182,26 @@ export class Catalogo implements OnInit, OnDestroy {
   // La lista se repite dos veces para que al moverse nunca quede un hueco vacío
   coleccionesDobles: Coleccion[] = [...this.colecciones, ...this.colecciones];
 
+  // Productos (cambie las rutas, nombres y precios por los suyos). Solo se muestran los primeros 8.
+  productos: Producto[] = [
+    { id: 1, nombre: 'Baby Garfield', imagen: 'imagenes/colecciones/personajes/baby.png', precio: 22 },
+    { id: 2, nombre: 'Bellota Chicas super poderosas', imagen: 'imagenes/colecciones/personajes/bellota.png', precio: 20 },
+    { id: 3, nombre: 'Bombón Chicas super poderosas', imagen: 'imagenes/colecciones/personajes/bonbom.png', precio: 20 },
+    { id: 4, nombre: 'Burbuja Chicas super poderosas', imagen: 'imagenes/colecciones/personajes/burbuja.png', precio: 20, precioAnterior: 220, descuento: 10 },
+    { id: 5, nombre: 'Homero Simpson', imagen: 'imagenes/colecciones/personajes/homero.png', precio: 22, precioAnterior: 220, descuento: 5 },
+    { id: 6, nombre: 'Lucas con pantalón, personalizado', imagen: 'imagenes/colecciones/personajes/lucas.png', precio: 22, precioAnterior: 220 },
+    { id: 7, nombre: 'Pato Lucas clásico', imagen: 'imagenes/colecciones/personajes/pato.png', precio: 20, precioAnterior: 240, descuento: 5 },
+    { id: 8, nombre: 'Pikachu', imagen: 'imagenes/colecciones/personajes/picachu.png', precio: 20, precioAnterior: 220, descuento: 5 },
+  ];
+
+  // Máximo 8 productos en pantalla
+  productosVisibles = computed(() => this.productos.slice(0, 8));
+
+  // Formato del precio: S/. 299.00 PEN
+  formatoPrecio(valor: number): string {
+    return `$/. ${valor.toFixed(2)} `;
+  }
+
   indice = signal(0);
 
   slideActual = computed(() => this.slides[this.indice()]);
@@ -188,4 +217,7 @@ export class Catalogo implements OnInit, OnDestroy {
   irA(indice: number): void {
     this.indice.set(indice);
   }
+
+
+
 }
