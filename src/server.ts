@@ -10,7 +10,7 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine({
   allowedHosts: [
-    "greenyellow-wombat-602690.hostingersite.com",
+    "royalblue-koala-441475.hostingersite.com",
     "jardindesele.com",
     "www.jardindesele.com",
   ],
