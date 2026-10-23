@@ -1,7 +1,15 @@
 import {
   Component, ElementRef, computed, signal, viewChild, OnInit,
-  OnDestroy
+  OnDestroy, Inject, PLATFORM_ID
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Colecciones } from '../../componentes/colecciones/colecciones';
+import { Productos } from '../../componentes/productos/productos';
+import { Dedicatoria } from '../../componentes/dedicatoria/dedicatoria';
+import { Slider } from '../../componentes/slider/slider';
+import { SobreNosotros } from '../../componentes/sobre-nosotros/sobre-nosotros';
+import { Informacion } from '../../componentes/informacion/informacion';
+
 
 interface Slide {
   id: number;
@@ -18,22 +26,8 @@ interface Slide {
   posicion?: string;
 }
 
-interface Coleccion {
-  nombre: string;
-  imagen: string;
-}
-
-interface Producto {
-  id: number;
-  nombre: string;
-  imagen: string;          // ruta de la imagen
-  precio: number;
-  precioAnterior?: number; // opcional: se muestra tachado
-  descuento?: number;      // opcional: porcentaje que se muestra en la etiqueta roja (ej. 10 → "-10%")
-}
-
 @Component({
-  imports: [],
+  imports: [Colecciones, Productos, Dedicatoria, Slider, SobreNosotros, Informacion],
   selector: 'app-catalogo',
   styleUrl: './catalogo.css',
   templateUrl: './catalogo.html',
@@ -53,12 +47,41 @@ export class Catalogo implements OnInit, OnDestroy {
 
   pista = viewChild<ElementRef<HTMLElement>>('pista');
   desplazamiento = signal(0); // cuántos píxeles se ha movido la fila hacia la izquierda
-
   arrastrando = false;
+
   private pausado = false; // true mientras el mouse está encima
-  private ultimoX = 0;
+
   private idAnimacion = 0;
   private ultimoTiempo = 0;
+
+  private esNavegador: boolean;
+
+  constructor(@Inject(PLATFORM_ID) platformId: object) {
+    this.esNavegador = isPlatformBrowser(platformId);
+  }
+
+
+  ngOnDestroy(): void {
+    if (!this.esNavegador) {
+      return;
+    }
+    if (this.temporizador) {
+      clearInterval(this.temporizador);
+    }
+    cancelAnimationFrame(this.idAnimacion);
+  }
+
+  ngOnInit(): void {
+    if (!this.esNavegador) {
+      return;
+    }
+    this.temporizador = setInterval(() => {
+      this.siguiente();
+    }, 3000);
+
+    this.idAnimacion = requestAnimationFrame(this.animar);
+  }
+
 
   // Ancho de UNA copia de la lista (la pista contiene la lista repetida dos veces)
   private anchoLista(): number {
@@ -79,6 +102,7 @@ export class Catalogo implements OnInit, OnDestroy {
     this.desplazamiento.set(nuevo);
   }
 
+
   private animar = (tiempo: number): void => {
     const segundos = Math.min((tiempo - this.ultimoTiempo) / 1000, 0.1);
     this.ultimoTiempo = tiempo;
@@ -93,24 +117,9 @@ export class Catalogo implements OnInit, OnDestroy {
     this.pausado = valor;
   }
 
-  iniciarArrastre(event: PointerEvent): void {
-    // Solo iniciar con el botón izquierdo del mouse
-    if (event.pointerType === 'mouse' && event.button !== 0) {
-      return;
-    }
-    this.arrastrando = true;
-    this.ultimoX = event.clientX;
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-  }
 
-  moverArrastre(event: PointerEvent): void {
-    if (!this.arrastrando) {
-      return;
-    }
-    // Arrastrar a la izquierda mueve la fila a la izquierda, y viceversa
-    this.mover(this.ultimoX - event.clientX);
-    this.ultimoX = event.clientX;
-  }
+
+
 
   terminarArrastre(event: PointerEvent): void {
     if (!this.arrastrando) {
@@ -122,21 +131,6 @@ export class Catalogo implements OnInit, OnDestroy {
     if (visor.hasPointerCapture(event.pointerId)) {
       visor.releasePointerCapture(event.pointerId);
     }
-  }
-
-  ngOnDestroy(): void {
-    if (this.temporizador) {
-      clearInterval(this.temporizador);
-    }
-    cancelAnimationFrame(this.idAnimacion);
-  }
-
-  ngOnInit(): void {
-    this.temporizador = setInterval(() => {
-      this.siguiente();
-    }, 3000);
-
-    this.idAnimacion = requestAnimationFrame(this.animar);
   }
 
   // Cada diapositiva: su texto, su botón y su imagen (cambie las rutas de las imágenes por las suyas)
@@ -167,40 +161,10 @@ export class Catalogo implements OnInit, OnDestroy {
     },
   ];
 
-  // Colecciones que se muestran en círculos (cambie las rutas por las de sus imágenes)
-  colecciones: Coleccion[] = [
-    { nombre: 'profesiones', imagen: 'imagenes/colecciones/abogado.png' },
-    { nombre: 'Amor & Amistad', imagen: 'imagenes/colecciones/bob-serenata.png' },
-    { nombre: 'Personajes', imagen: 'imagenes/colecciones/chica_superpoderosa.png' },
-    { nombre: 'profesiones', imagen: 'imagenes/colecciones/maestro.png' },
-    { nombre: 'Amor & Amistad', imagen: 'imagenes/colecciones/pareja-juntos.png' },
-    { nombre: 'Personajes', imagen: 'imagenes/colecciones/personajes.png' },
-    { nombre: 'Amor & Amistad', imagen: 'imagenes/colecciones/senorita.png' },
-    { nombre: 'profesiones', imagen: 'imagenes/colecciones/veterinario.png' }
-  ];
 
-  // La lista se repite dos veces para que al moverse nunca quede un hueco vacío
-  coleccionesDobles: Coleccion[] = [...this.colecciones, ...this.colecciones];
 
-  // Productos (cambie las rutas, nombres y precios por los suyos). Solo se muestran los primeros 8.
-  productos: Producto[] = [
-    { id: 1, nombre: 'Baby Garfield', imagen: 'imagenes/colecciones/personajes/baby.png', precio: 22 },
-    { id: 2, nombre: 'Bellota Chicas super poderosas', imagen: 'imagenes/colecciones/personajes/bellota.png', precio: 20 },
-    { id: 3, nombre: 'Bombón Chicas super poderosas', imagen: 'imagenes/colecciones/personajes/bonbom.png', precio: 20 },
-    { id: 4, nombre: 'Burbuja Chicas super poderosas', imagen: 'imagenes/colecciones/personajes/burbuja.png', precio: 20, precioAnterior: 220, descuento: 10 },
-    { id: 5, nombre: 'Homero Simpson', imagen: 'imagenes/colecciones/personajes/homero.png', precio: 22, precioAnterior: 220, descuento: 5 },
-    { id: 6, nombre: 'Lucas con pantalón, personalizado', imagen: 'imagenes/colecciones/personajes/lucas.png', precio: 22, precioAnterior: 220 },
-    { id: 7, nombre: 'Pato Lucas clásico', imagen: 'imagenes/colecciones/personajes/pato.png', precio: 20, precioAnterior: 240, descuento: 5 },
-    { id: 8, nombre: 'Pikachu', imagen: 'imagenes/colecciones/personajes/picachu.png', precio: 20, precioAnterior: 220, descuento: 5 },
-  ];
 
-  // Máximo 8 productos en pantalla
-  productosVisibles = computed(() => this.productos.slice(0, 8));
 
-  // Formato del precio: S/. 299.00 PEN
-  formatoPrecio(valor: number): string {
-    return `$/. ${valor.toFixed(2)} `;
-  }
 
   indice = signal(0);
 

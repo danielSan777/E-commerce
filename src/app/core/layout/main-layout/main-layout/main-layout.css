@@ -1,0 +1,60 @@
+/* Botón de WhatsApp siempre visible en la esquina inferior derecha */
+.whatsapp-flotante {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1000;
+    /* por encima del contenido; el sidebar del menú (z-index 1050) queda encima de él */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.whatsapp-texto {
+    background-color: #fff;
+    color: #111;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 10px 18px;
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    white-space: nowrap;
+}
+
+.whatsapp-icono {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background-color: #25d366;
+    /* verde oficial de WhatsApp */
+    color: #fff;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease;
+}
+
+.whatsapp-flotante:hover .whatsapp-icono {
+    transform: scale(1.1);
+}
+
+/* Celular: solo el círculo verde, sin el texto */
+@media (max-width: 575.98px) {
+    .whatsapp-texto {
+        display: none;
+    }
+
+    .whatsapp-icono {
+        width: 56px;
+        height: 56px;
+        font-size: 1.8rem;
+    }
+
+    .whatsapp-flotante {
+        right: 14px;
+        bottom: 14px;
+    }
+}

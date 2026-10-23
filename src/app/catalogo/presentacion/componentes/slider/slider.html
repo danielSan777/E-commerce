@@ -1,0 +1,43 @@
+<section class="slider-seccion">
+
+    <div class="container text-center slider-cabecera">
+        <h2 class="slider-titulo">{{ titulo }}</h2>
+        <p class="slider-subtitulo">{{ subtitulo }}</p>
+    </div>
+
+    <div class="slider-contenedor" (pointerenter)="pausar(true)" (pointerleave)="pausar(false)">
+        <!-- Ventana del slider: las imágenes se mueven solas hacia la derecha -->
+        <div class="slider-visor">
+            <div class="slider-pista" #pista [style.transform]="'translateX(' + (-desplazamiento()) + 'px)'">
+                @for (producto of productosTriples; track $index) {
+                <a class="slider-item" href="#" (click)="$event.preventDefault()">
+                    <div class="slider-imagen">
+                        <img [src]="producto.imagen" [alt]="producto.nombre" draggable="false">
+                        @if (producto.agotado) {
+                        <span class="slider-etiqueta">Agotado</span>
+                        }
+                    </div>
+                    <h3 class="slider-nombre">{{ producto.nombre }}</h3>
+                    <p class="slider-precio">{{ formatoPrecio(producto.precio) }}</p>
+                </a>
+                }
+            </div>
+        </div>
+
+        <!-- Flechas: aparecen al pasar el mouse -->
+        <button type="button" class="slider-flecha slider-flecha-izquierda" (click)="mover(-1)" aria-label="Anterior">
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="slider-flecha slider-flecha-derecha" (click)="mover(1)" aria-label="Siguiente">
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <!-- Puntos: aparecen al pasar el mouse -->
+    <div class="slider-puntos">
+        @for (producto of productos; track $index) {
+        <button type="button" class="slider-punto" [class.activo]="$index === indiceActivo()" (click)="irA($index)"
+            [attr.aria-label]="'Ir a ' + producto.nombre"></button>
+        }
+    </div>
+</section>

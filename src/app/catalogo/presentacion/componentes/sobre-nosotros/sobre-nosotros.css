@@ -1,0 +1,101 @@
+/* Imagen de fondo: el cuadro blanco queda centrado encima */
+.sobre-fondo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 680px;
+    padding: 70px 16px;
+    border-radius: 14px;
+    background-size: cover;
+    background-position: center;
+    background-color: #cfd0d8;
+    /* color mientras carga la imagen */
+}
+
+/* Cuadro blanco del centro */
+.sobre-cuadro {
+    width: 100%;
+    max-width: 675px;
+    padding: 50px 56px;
+    border-radius: 6px;
+    background-color: #fff;
+}
+
+.sobre-logo {
+    max-width: 110px;
+    max-height: 90px;
+    object-fit: contain;
+    margin-bottom: 12px;
+}
+
+.sobre-nombre {
+    font-size: clamp(2.2rem, 4.5vw, 3.6rem);
+    font-weight: 500;
+    color: #3a4696;
+    margin-bottom: 18px;
+}
+
+.sobre-titulo {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 14px;
+}
+
+.sobre-descripcion {
+    font-size: 1.1rem;
+    line-height: 1.9;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+.sobre-boton {
+    background-color: #3a4696;
+    color: #fff;
+    border: none;
+    border-radius: 40px;
+    padding: 18px 50px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: background-color 0.2s;
+}
+
+.sobre-boton:hover {
+    background-color: #6f4e37;
+    color: #fff;
+}
+
+/* Tablet */
+@media (max-width: 991.98px) {
+    .sobre-fondo {
+        min-height: 560px;
+        padding: 50px 16px;
+    }
+
+    .sobre-cuadro {
+        padding: 40px 36px;
+    }
+}
+
+/* Celular */
+@media (max-width: 575.98px) {
+    .sobre-fondo {
+        min-height: 480px;
+        padding: 32px 12px;
+    }
+
+    .sobre-cuadro {
+        padding: 28px 20px;
+    }
+
+    .sobre-descripcion {
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin-bottom: 22px;
+    }
+
+    .sobre-boton {
+        padding: 14px 32px;
+        font-size: 0.85rem;
+    }
+}

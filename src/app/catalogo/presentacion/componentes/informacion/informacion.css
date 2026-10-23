@@ -1,0 +1,51 @@
+.informacion {
+    padding-top: 60px;
+    padding-bottom: 60px;
+    background-color: #fff;
+}
+
+.info-item {
+    height: 100%;
+    padding: 12px 28px;
+}
+
+.info-imagen {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin-bottom: 26px;
+}
+
+.info-titulo {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.info-descripcion {
+    font-size: 1.05rem;
+    line-height: 2;
+    color: #555;
+    margin: 0;
+}
+
+/* Computador: 4 columnas con una línea fina que las separa */
+@media (min-width: 992px) {
+    .informacion .col-lg-3:not(:last-child) .info-item {
+        border-right: 1px solid #e6e6e6;
+    }
+}
+
+/* Celular: un bloque debajo de otro */
+@media (max-width: 575.98px) {
+    .informacion {
+        padding-top: 40px;
+        padding-bottom: 40px;
+    }
+
+    .info-descripcion {
+        font-size: 0.95rem;
+        line-height: 1.8;
+    }
+}

@@ -1,0 +1,14 @@
+<!-- Bootstrap: 4 por fila en computador (lg), 2 por fila en pantallas medianas (md), 1 por fila en celular -->
+<section class="container-fluid informacion px-3 px-lg-4">
+    <div class="row g-4 g-lg-0">
+        @for (item of items; track item.titulo) {
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="info-item text-center">
+                <img class="info-imagen" [src]="item.imagen" [alt]="item.titulo">
+                <h3 class="info-titulo">{{ item.titulo }}</h3>
+                <p class="info-descripcion">{{ item.descripcion }}</p>
+            </div>
+        </div>
+        }
+    </div>
+</section>

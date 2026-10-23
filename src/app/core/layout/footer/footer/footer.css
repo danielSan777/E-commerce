@@ -1,0 +1,313 @@
+.footer {
+    position: relative;
+    overflow: hidden;
+    background-color: #3a4696;
+    /* azul del footer (cámbielo si quiere) */
+    color: #fff;
+    padding: 50px 0 28px;
+}
+
+/* Formas decorativas suaves del fondo */
+.footer::before,
+.footer::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 40, 0.12);
+    pointer-events: none;
+}
+
+.footer::before {
+    width: 420px;
+    height: 420px;
+    top: -140px;
+    right: 18%;
+}
+
+.footer::after {
+    width: 320px;
+    height: 320px;
+    bottom: -120px;
+    left: -80px;
+}
+
+.footer-contenido {
+    position: relative;
+    z-index: 1;
+    max-width: 1700px;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+/* ====== Marca ====== */
+.footer-logo {
+    display: block;
+    max-width: 320px;
+    width: 20%;
+    margin-bottom: 26px;
+    margin: 0 auto 26px;
+}
+
+
+.footer-descripcion {
+    font-size: 1.05rem;
+    line-height: 2;
+    margin-bottom: 20px;
+}
+
+.footer-dato {
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+}
+
+/* ====== Secciones ====== */
+.footer-seccion-titulo {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+}
+
+.footer-seccion-titulo .bi {
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+/* Cuerpo desplegable (animación de alto con grid) */
+.footer-seccion-cuerpo {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+}
+
+.footer-seccion.abierta .footer-seccion-cuerpo {
+    grid-template-rows: 1fr;
+}
+
+.footer-seccion-interior {
+    overflow: hidden;
+}
+
+.footer-lista {
+    list-style: none;
+    margin: 0;
+    padding: 24px 0 0;
+}
+
+.footer-lista li {
+    margin-bottom: 20px;
+}
+
+.footer-lista a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.05rem;
+}
+
+.footer-lista a:hover {
+    text-decoration: underline;
+}
+
+.footer-texto {
+    font-size: 1.05rem;
+    line-height: 2;
+    margin: 24px 0 24px;
+}
+
+.footer-libro {
+    max-width: 220px;
+    width: 100%;
+    display: block;
+}
+
+/* ====== Boletín ====== */
+.footer-formulario {
+    display: flex;
+    max-width: 400px;
+    border-radius: 40px;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.footer-correo {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    padding: 0 22px;
+    height: 62px;
+    font-size: 1rem;
+}
+
+.footer-suscribir {
+    border: none;
+    background-color: #e15a38;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0 30px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.footer-suscribir:hover {
+    background-color: #6f4e37;
+}
+
+.footer-mensaje {
+    margin: 12px 0 0;
+    font-size: 0.95rem;
+    color: #b8f0c4;
+}
+
+.footer-mensaje.error {
+    color: #ffc9c0;
+}
+
+.footer-redes {
+    display: flex;
+    gap: 14px;
+    margin-top: 22px;
+}
+
+.footer-red {
+    width: 45px;
+    height: 45px;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.footer-red:hover {
+    background-color: #fff;
+    color: #3a4696;
+}
+
+/* ====== Parte de abajo ====== */
+.footer-abajo {
+    margin-top: 28px;
+    text-align: center;
+}
+
+.footer-derechos {
+    margin-bottom: 14px;
+    font-size: 1rem;
+}
+
+.footer-pagos {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.footer-pagos img {
+    height: 26px;
+    width: auto;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+/* ================================================= */
+/* PANTALLAS MEDIANAS Y CELULAR: secciones con +/−   */
+/* ================================================= */
+.footer-grilla {
+    display: block;
+}
+
+.footer-marca {
+    padding-bottom: 28px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.footer-seccion {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+    padding: 18px 0;
+}
+
+.footer-seccion.abierta .footer-seccion-interior {
+    padding-bottom: 12px;
+}
+
+/* ================================================= */
+/* COMPUTADOR (992px o más): 5 columnas, todo abierto */
+/* ================================================= */
+@media (min-width: 992px) {
+    .footer {
+        padding-top: 90px;
+    }
+
+    .footer-grilla {
+        display: grid;
+        grid-template-columns: 1.45fr 1fr 1fr 1fr 1.25fr;
+        gap: 40px;
+    }
+
+    .footer-marca {
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .footer-seccion {
+        border-bottom: none;
+        padding: 0;
+    }
+
+    /* El título deja de ser botón y no se ve el + */
+    .footer-seccion-titulo {
+        cursor: default;
+        pointer-events: none;
+        font-size: 1.2rem;
+    }
+
+    .footer-seccion-titulo .bi {
+        display: none;
+    }
+
+    /* Siempre abierto */
+    .footer-seccion-cuerpo {
+        grid-template-rows: 1fr;
+        transition: none;
+    }
+
+    .footer-abajo {
+        margin-top: 50px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .footer-logo {
+        max-width: 260px;
+    }
+
+    .footer-descripcion,
+    .footer-dato,
+    .footer-texto,
+    .footer-lista a {
+        font-size: 1rem;
+    }
+
+    .footer-correo {
+        height: 54px;
+    }
+
+    .footer-suscribir {
+        padding: 0 20px;
+    }
+}

@@ -1,0 +1,175 @@
+/* ========================= */
+/* PRODUCTOS                 */
+/* ========================= */
+
+.productos {
+    padding: 40px 16px 60px;
+    background-color: #fff;
+}
+
+.productos-cabecera {
+    position: relative;
+    max-width: 1700px;
+    margin: 0 auto 40px;
+    text-align: center;
+}
+
+.productos-titulo {
+    font-size: clamp(1.8rem, 3.5vw, 3rem);
+    font-weight: 500;
+    color: #3d3d3d;
+    margin-bottom: 10px;
+}
+
+.productos-subtitulo {
+    font-size: 1.05rem;
+    color: #555;
+    margin: 0;
+}
+
+/* "Ver más productos »" va a la derecha del título (en celular queda debajo) */
+.productos-ver-mas-enlace {
+    position: absolute;
+    top: 20px;
+    right: 0;
+    color: #444;
+    text-decoration: none;
+    font-size: 1.05rem;
+}
+
+.productos-ver-mas-enlace:hover {
+    color: #3a4696;
+}
+
+/* 4 productos por fila en pantallas grandes */
+.productos-grilla {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 36px 36px;
+    max-width: 1700px;
+    margin: 0 auto;
+}
+
+.producto {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    color: #222;
+}
+
+.producto-imagen {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 16px;
+    overflow: hidden;
+    background-color: #f1f1f1;
+    margin-bottom: 16px;
+}
+
+.producto-imagen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+}
+
+.producto:hover .producto-imagen img {
+    transform: scale(1.05);
+}
+
+/* Etiqueta roja de descuento */
+.producto-etiqueta {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    background-color: #d92b2b;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 2px;
+}
+
+.producto-nombre {
+    font-size: 1.05rem;
+    font-weight: 400;
+    margin: 0 0 8px;
+}
+
+.producto-precio {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #3a4696;
+}
+
+.producto-precio-anterior {
+    display: block;
+    /* pasa a la línea de abajo */
+    margin-top: 4px;
+    font-size: 0.95em;
+    color: #777;
+    text-decoration: line-through;
+}
+
+.productos-boton-contenedor {
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+}
+
+.productos-boton {
+    background-color: #3a4696;
+    color: #fff;
+    border: none;
+    border-radius: 40px;
+    padding: 18px 56px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.productos-boton:hover {
+    background-color: #6f4e37;
+}
+
+/* Tablet: el enlace baja debajo del subtítulo */
+@media (max-width: 992px) {
+    .productos-ver-mas-enlace {
+        position: static;
+        display: inline-block;
+        margin-top: 12px;
+    }
+
+    .productos-grilla {
+        gap: 28px 20px;
+    }
+}
+
+/* Celular: 2 productos por fila */
+@media (max-width: 767.98px) {
+    .productos-grilla {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px 12px;
+    }
+
+    .producto-nombre {
+        font-size: 0.9rem;
+    }
+
+    .producto-precio {
+        font-size: 0.95rem;
+    }
+
+    .producto-etiqueta {
+        top: 10px;
+        left: 10px;
+        font-size: 0.75rem;
+    }
+
+    .productos-boton {
+        padding: 16px 40px;
+    }
+}

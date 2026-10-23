@@ -50,67 +50,9 @@
     </div>
 </div>
 
-<!-- ========================= -->
-<!-- NUESTRAS COLECCIONES      -->
-<!-- ========================= -->
-<section class="colecciones">
-    <h2 class="colecciones-titulo">Nuestras Colecciones</h2>
-    <p class="colecciones-subtitulo">Nuestros productos están diseñados para todos, respetuosos con el medio ambiente.
-    </p>
-
-    <div class="colecciones-visor" [class.arrastrando]="arrastrando" (pointerdown)="iniciarArrastre($event)"
-        (pointermove)="moverArrastre($event)" (pointerup)="terminarArrastre($event)"
-        (pointercancel)="terminarArrastre($event)" (dragstart)="$event.preventDefault()" (pointerenter)="pausar(true)"
-        (pointerleave)="pausar(false)">
-        <div class="colecciones-pista" #pista [style.transform]="'translateX(' + (-desplazamiento()) + 'px)'">
-            @for (coleccion of coleccionesDobles; track $index) {
-            <a class="coleccion" href="#" (click)="$event.preventDefault()">
-                <div class="coleccion-circulo">
-                    <img [src]="coleccion.imagen" [alt]="coleccion.nombre">
-                </div>
-                <span class="coleccion-nombre">{{ coleccion.nombre }}</span>
-            </a>
-            }
-        </div>
-    </div>
-</section>
-
-<!-- ========================= -->
-<!-- PRODUCTOS (máximo 8)      -->
-<!-- ========================= -->
-<section class="productos">
-    <div class="productos-cabecera">
-        <div class="productos-titulos">
-            <h2 class="productos-titulo">Colección Personajes</h2>
-            <p class="productos-subtitulo">¿Se acerca una fecha especial? ¿No sabes qué regalar? Encuentra aquí gran
-                variedad de <em>regalos</em></p>
-        </div>
-        <a class="productos-ver-mas-enlace" href="#" (click)="$event.preventDefault()">
-            Ver más productos <i class="bi bi-chevron-double-right" aria-hidden="true"></i>
-        </a>
-    </div>
-
-    <div class="productos-grilla">
-        @for (producto of productosVisibles(); track producto.id) {
-        <a class="producto" href="#" (click)="$event.preventDefault()">
-            <div class="producto-imagen">
-                <img [src]="producto.imagen" [alt]="producto.nombre">
-                @if (producto.descuento) {
-                <span class="producto-etiqueta">-{{ producto.descuento }}%</span>
-                }
-            </div>
-            <h3 class="producto-nombre">{{ producto.nombre }}</h3>
-            <p class="producto-precio">
-                {{ formatoPrecio(producto.precio) }}
-                @if (producto.precioAnterior) {
-                <span class="producto-precio-anterior">{{ formatoPrecio(producto.precioAnterior) }}</span>
-                }
-            </p>
-        </a>
-        }
-    </div>
-
-    <div class="productos-boton-contenedor">
-        <button type="button" class="productos-boton">VER MÁS PRODUCTOS</button>
-    </div>
-</section>
+<app-colecciones></app-colecciones>
+<app-productos></app-productos>
+<app-dedicatoria></app-dedicatoria>
+<app-slider></app-slider>
+<app-sobre-nosotros></app-sobre-nosotros>
+<app-informacion></app-informacion>

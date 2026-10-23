@@ -1,0 +1,28 @@
+<!-- Dos cuadros con Bootstrap:
+     - Pantallas medianas y grandes (>= 768px): uno al lado del otro (col-md-6)
+     - Pantallas pequeñas: uno encima del otro (col-12) -->
+<section class="container-fluid dedicatoria px-3 px-lg-4 py-4 py-lg-5">
+    <div class="row g-3 g-lg-4">
+        @for (tarjeta of tarjetas; track tarjeta.titulo) {
+        <div class="col-12 col-md-6">
+            <article class="tarjeta-promo">
+
+                <!-- Texto -->
+                <div class="tarjeta-texto d-flex flex-column justify-content-center">
+                    <p class="tarjeta-pregunta">{{ tarjeta.pregunta }}</p>
+                    <h2 class="tarjeta-titulo" [style.font-size]="tarjeta.tamanoTitulo">{{ tarjeta.titulo }}</h2>
+                    <p class="tarjeta-descripcion">{{ tarjeta.descripcion }}</p>
+                    <a class="btn tarjeta-boton align-self-start" [href]="tarjeta.enlace"
+                        (click)="tarjeta.enlace === '#' && $event.preventDefault()">{{ tarjeta.boton }}</a>
+                </div>
+
+                <!-- Imagen COMPLETA (sin recortes). Hace zoom al pasar el mouse por el cuadro -->
+                <div class="tarjeta-imagen">
+                    <img [src]="tarjeta.imagen" [alt]="tarjeta.titulo">
+                </div>
+
+            </article>
+        </div>
+        }
+    </div>
+</section>

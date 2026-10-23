@@ -5,3 +5,9 @@
 </main>
 
 <app-footer />
+
+<!-- Botón flotante de WhatsApp: está en el layout principal, por eso aparece en TODAS las páginas y secciones -->
+<a class="whatsapp-flotante" [href]="enlaceWhatsapp" target="_blank" rel="noopener" aria-label="Chatear por WhatsApp">
+    <span class="whatsapp-texto">{{ textoWhatsapp }}</span>
+    <span class="whatsapp-icono"><i class="bi bi-whatsapp" aria-hidden="true"></i></span>
+</a>

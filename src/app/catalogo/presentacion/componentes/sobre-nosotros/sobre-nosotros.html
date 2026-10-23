@@ -1,0 +1,20 @@
+<!-- Imagen de fondo con un cuadro blanco en el centro. Todo se edita desde sobre-nosotros.ts -->
+<section class="container-fluid px-3 px-lg-4 py-4">
+    <div class="sobre-fondo" [style.background-image]="'url(' + imagenFondo + ')'">
+
+        <div class="sobre-cuadro text-center">
+            <img class="sobre-logo" [src]="logo" [alt]="textoLogo">
+
+            @if (nombreEmpresa) {
+            <h2 class="sobre-nombre">{{ nombreEmpresa }}</h2>
+            }
+
+            <h3 class="sobre-titulo">{{ titulo }}</h3>
+            <p class="sobre-descripcion">{{ descripcion }}</p>
+
+            <a class="btn sobre-boton" [href]="enlaceBoton" (click)="enlaceBoton === '#' && $event.preventDefault()">{{
+                textoBoton }}</a>
+        </div>
+
+    </div>
+</section>

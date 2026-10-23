@@ -1,0 +1,128 @@
+/* Cuadro gris con texto a la izquierda e imagen a la derecha */
+.tarjeta-promo {
+    --ancho-imagen: 60%;
+    display: flex;
+    align-items: stretch;
+    height: 420px;
+    border-radius: 14px;
+    overflow: hidden;
+    background-color: #cfd0d8;
+}
+
+/* El texto ocupa todo el espacio que deja la imagen */
+.tarjeta-texto {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 24px 12px 24px clamp(16px, 4vw, 90px);
+}
+
+.tarjeta-pregunta {
+    font-size: 1rem;
+    color: #222;
+    margin-bottom: 8px;
+}
+
+.tarjeta-titulo {
+    font-size: clamp(2rem, 4.2vw, 4.2rem);
+    font-weight: 600;
+    color: #3d3d3d;
+    line-height: 1.1;
+    margin-bottom: 18px;
+}
+
+.tarjeta-descripcion {
+    font-size: 1.05rem;
+    color: #555;
+    margin-bottom: 26px;
+}
+
+.tarjeta-boton {
+    background-color: #3a4696;
+    color: #fff;
+    border: none;
+    border-radius: 40px;
+    padding: 16px 52px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: background-color 0.2s;
+}
+
+.tarjeta-boton:hover {
+    background-color: #6f4e37;
+    color: #fff;
+}
+
+/* Contenedor de la imagen: ancho fijo en %, y la imagen se ve COMPLETA (su alto sale de su proporción) */
+.tarjeta-imagen {
+    flex: 0 0 var(--ancho-imagen);
+    height: 100%;
+    align-self: stretch;
+    overflow: hidden;
+}
+
+.tarjeta-imagen img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.5s ease;
+}
+
+/* Zoom suave al pasar el mouse por el cuadro */
+.tarjeta-promo:hover .tarjeta-imagen img {
+    transform: scale(1.1);
+}
+
+/* Celular: cuadros más compactos */
+@media (max-width: 575.98px) {
+    .tarjeta-promo {
+        --ancho-imagen: 35%;
+        height: 180px;
+    }
+
+    .tarjeta-texto {
+        flex: 1 1 65%;
+        min-width: 0;
+        padding: 16px 8px 16px 14px;
+    }
+
+    .tarjeta-imagen {
+        flex: 0 0 var(--ancho-imagen);
+        height: 100%;
+        align-self: stretch;
+        overflow: hidden;
+    }
+
+    .tarjeta-imagen img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+    }
+
+    .tarjeta-pregunta {
+        font-size: 0.75rem;
+        margin-bottom: 6px;
+    }
+
+    .tarjeta-titulo {
+        font-size: 1.5rem;
+        line-height: 1.1;
+        margin-bottom: 10px;
+    }
+
+    .tarjeta-descripcion {
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
+
+    .tarjeta-boton {
+        padding: 9px 16px;
+        font-size: 0.75rem;
+    }
+}
+
+/* .dedicatoria {
+    height: 100px;
+} */

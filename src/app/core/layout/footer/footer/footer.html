@@ -1,0 +1,104 @@
+<footer class="footer">
+    <div class="container-fluid footer-contenido">
+
+        <div class="footer-grilla">
+
+            <!-- Marca -->
+            <div class="footer-marca">
+                <img class="footer-logo" [src]="logo" [alt]="textoLogo">
+                <p class="footer-descripcion">{{ descripcion }}</p>
+                <p class="footer-dato">{{ telefono }}</p>
+                <p class="footer-dato">{{ correo }}</p>
+            </div>
+
+            <!-- Columnas de enlaces -->
+            @for (columna of columnas; track columna.titulo; let i = $index) {
+            <div class="footer-seccion" [class.abierta]="seccionAbierta() === i">
+                <button type="button" class="footer-seccion-titulo" (click)="alternar(i)"
+                    [attr.aria-expanded]="seccionAbierta() === i">
+                    <span>{{ columna.titulo }}</span>
+                    <i class="bi" [class.bi-plus-lg]="seccionAbierta() !== i"
+                        [class.bi-dash-lg]="seccionAbierta() === i" aria-hidden="true"></i>
+                </button>
+                <div class="footer-seccion-cuerpo">
+                    <div class="footer-seccion-interior">
+                        <ul class="footer-lista">
+                            @for (enlace of columna.enlaces; track enlace.texto) {
+                            <li>
+                                <a [routerLink]="enlace.ruta">
+                                    <i class="bi bi-arrow-right-circle" aria-hidden="true"></i>{{ enlace.texto }}
+                                </a>
+                            </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            }
+
+            <!-- Libro de Reclamaciones -->
+            <div class="footer-seccion" [class.abierta]="seccionAbierta() === columnas.length">
+                <button type="button" class="footer-seccion-titulo" (click)="alternar(columnas.length)"
+                    [attr.aria-expanded]="seccionAbierta() === columnas.length">
+                    <span>{{ libro.titulo }}</span>
+                    <i class="bi" [class.bi-plus-lg]="seccionAbierta() !== columnas.length"
+                        [class.bi-dash-lg]="seccionAbierta() === columnas.length" aria-hidden="true"></i>
+                </button>
+                <div class="footer-seccion-cuerpo">
+                    <div class="footer-seccion-interior">
+                        <p class="footer-texto">{{ libro.texto }}</p>
+                        <a [href]="libro.enlace" (click)="libro.enlace === '#' && $event.preventDefault()">
+                            <img class="footer-libro" [src]="libro.imagen" [alt]="libro.textoImagen">
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boletín -->
+            <div class="footer-seccion" [class.abierta]="seccionAbierta() === columnas.length + 1">
+                <button type="button" class="footer-seccion-titulo" (click)="alternar(columnas.length + 1)"
+                    [attr.aria-expanded]="seccionAbierta() === columnas.length + 1">
+                    <span>{{ boletin.titulo }}</span>
+                    <i class="bi" [class.bi-plus-lg]="seccionAbierta() !== columnas.length + 1"
+                        [class.bi-dash-lg]="seccionAbierta() === columnas.length + 1" aria-hidden="true"></i>
+                </button>
+                <div class="footer-seccion-cuerpo">
+                    <div class="footer-seccion-interior">
+                        <p class="footer-texto">{{ boletin.texto }}</p>
+
+                        <form class="footer-formulario" (submit)="suscribir($event, correoCampo)">
+                            <input #correoCampo type="email" class="footer-correo" [placeholder]="boletin.placeholder"
+                                aria-label="Correo electrónico">
+                            <button type="submit" class="footer-suscribir">{{ boletin.boton }}</button>
+                        </form>
+
+                        @if (mensaje()) {
+                        <p class="footer-mensaje" [class.error]="mensajeEsError()">{{ mensaje() }}</p>
+                        }
+
+                        <div class="footer-redes">
+                            @for (red of redes; track red.nombre) {
+                            <a [href]="red.enlace" target="_blank" rel="noopener" class="footer-red"
+                                [attr.aria-label]="red.nombre">
+                                <i class="bi" [class]="red.icono" aria-hidden="true"></i>
+                            </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Parte de abajo: derechos y medios de pago -->
+        <div class="footer-abajo">
+            <p class="footer-derechos">{{ derechos }} <strong>{{ autor }}</strong></p>
+            <div class="footer-pagos">
+                @for (pago of mediosPago; track pago.nombre) {
+                <img [src]="pago.imagen" [alt]="pago.nombre">
+                }
+            </div>
+        </div>
+
+    </div>
+</footer>

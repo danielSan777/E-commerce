@@ -1,0 +1,210 @@
+.slider-seccion {
+    --visibles: 4;
+    /* cuántas imágenes se ven a la vez */
+    --separacion: 36px;
+    /* espacio entre imágenes */
+    --lateral: 90px;
+    /* margen izquierdo y derecho donde se alcanzan a ver imágenes cortadas */
+    padding: 50px 0 40px;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+.slider-cabecera {
+    margin-bottom: 40px;
+}
+
+.slider-titulo {
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 500;
+    color: #3d3d3d;
+    margin-bottom: 12px;
+}
+
+.slider-subtitulo {
+    font-size: 1.1rem;
+    color: #555;
+    margin: 0;
+}
+
+.slider-contenedor {
+    position: relative;
+}
+
+.slider-visor {
+    overflow: hidden;
+}
+
+/* Fila que mueve el código (.ts) con transform */
+.slider-pista {
+    display: flex;
+    width: calc(100% - 2 * var(--lateral));
+    margin-left: var(--lateral);
+    will-change: transform;
+}
+
+.slider-item {
+    flex: 0 0 calc((100% - (var(--visibles) - 1) * var(--separacion)) / var(--visibles));
+    margin-right: var(--separacion);
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    color: #222;
+    user-select: none;
+}
+
+.slider-imagen {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 14px;
+    overflow: hidden;
+    background-color: #f1f1f1;
+    margin-bottom: 16px;
+}
+
+.slider-imagen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+}
+
+/* Zoom suave al pasar el mouse por cada imagen */
+.slider-item:hover .slider-imagen img {
+    transform: scale(1.08);
+}
+
+.slider-etiqueta {
+    position: absolute;
+    top: 0;
+    left: 24px;
+    background-color: rgba(60, 60, 60, 0.85);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 4px 12px;
+}
+
+.slider-nombre {
+    font-size: 1.05rem;
+    font-weight: 400;
+    margin: 0 0 8px;
+}
+
+.slider-precio {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #3a4696;
+}
+
+/* ===== Flechas (solo se ven al pasar el mouse) ===== */
+.slider-flecha {
+    position: absolute;
+    top: calc((100% - 90px) / 2);
+    /* queda a la altura del centro de las imágenes */
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 62px;
+    height: 62px;
+    border: none;
+    border-radius: 50%;
+    background-color: #fff;
+    color: #111;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    transition: opacity 0.3s ease, background-color 0.2s, color 0.2s;
+}
+
+.slider-flecha-izquierda {
+    left: calc(var(--lateral) + 14px);
+}
+
+.slider-flecha-derecha {
+    right: calc(var(--lateral) + 14px);
+}
+
+.slider-flecha:hover {
+    background-color: #6f4e37;
+    color: #fff;
+}
+
+/* ===== Puntos (solo se ven al pasar el mouse) ===== */
+.slider-puntos {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 28px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.slider-punto {
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.slider-punto.activo {
+    background-color: #111;
+}
+
+.slider-seccion:hover .slider-flecha,
+.slider-seccion:hover .slider-puntos {
+    opacity: 1;
+}
+
+/* En pantallas táctiles no existe "pasar el mouse": flechas y puntos se ven siempre */
+@media (hover: none) {
+
+    .slider-flecha,
+    .slider-puntos {
+        opacity: 1;
+    }
+}
+
+/* Tablet: 3 imágenes */
+@media (max-width: 991.98px) {
+    .slider-seccion {
+        --visibles: 3;
+        --separacion: 20px;
+        --lateral: 40px;
+    }
+
+    .slider-flecha {
+        width: 52px;
+        height: 52px;
+    }
+}
+
+/* Celular: 2 imágenes */
+@media (max-width: 575.98px) {
+    .slider-seccion {
+        --visibles: 2;
+        --separacion: 12px;
+        --lateral: 16px;
+    }
+
+    .slider-flecha {
+        width: 40px;
+        height: 40px;
+        font-size: 0.9rem;
+    }
+
+    .slider-nombre {
+        font-size: 0.9rem;
+    }
+
+    .slider-precio {
+        font-size: 0.95rem;
+    }
+}
