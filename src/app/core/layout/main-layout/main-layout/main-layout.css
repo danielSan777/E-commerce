@@ -44,7 +44,8 @@
 /* Celular: solo el círculo verde, sin el texto */
 @media (max-width: 575.98px) {
     .whatsapp-texto {
-        display: none;
+        font-size: 0.85rem;
+        padding: 8px 12px;
     }
 
     .whatsapp-icono {
