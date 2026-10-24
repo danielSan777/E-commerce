@@ -26,10 +26,23 @@ interface RedSocial {
 
 export class Footer {
 
+
+  // ===== Botón flotante de WhatsApp (editable) =====
+  // Número con código de país, SOLO dígitos (sin +, espacios ni guiones). Ejemplo Ecuador: 593999283765
+  numeroWhatsapp = '593999283765';
+
+  // Mensaje que aparece escrito al abrir el chat
+  mensajeWhatsapp = 'Hola, quisiera más información sobre sus productos.';
+
+  // Texto que se ve junto al botón
+  textoWhatsapp = 'Chatea con nosotros';
+
+
+
   // ===== TODO LO EDITABLE ESTÁ AQUÍ: textos, enlaces y rutas de imágenes =====
 
   // --- Marca (lado izquierdo en computador, arriba en celular) ---
-  logo = 'logo.png';
+  logo = 'logo_sin_fondo.png';
   textoLogo = 'El Jardín de Sele';
   descripcion =
     'En El Jardín de Sel encontrarás los detalles más especiales para decorar tus espacios favoritos, ' +
@@ -69,7 +82,7 @@ export class Footer {
     titulo: 'Libro de Reclamaciones',
     texto:
       'De acuerdo a lo establecido en el Código de Protección y Defensa del Consumidor ' +
-      'QumirDeco cuenta con un Libro de Reclamaciones a su disposición.',
+      'El Jardín de Sele cuenta con un Libro de Reclamaciones a su disposición.',
     imagen: 'imagenes/footer/libro-reclamaciones.png',
     textoImagen: 'Libro de reclamaciones digital',
     enlace: '#'
@@ -88,9 +101,9 @@ export class Footer {
   };
 
   redes: RedSocial[] = [
-    { nombre: 'Instagram', icono: 'bi-instagram', enlace: 'https://www.instagram.com/' },
-    { nombre: 'TikTok', icono: 'bi-tiktok', enlace: 'https://www.tiktok.com/' },
-    { nombre: 'Facebook', icono: 'bi-facebook', enlace: 'https://www.facebook.com/' },
+    { nombre: 'Instagram', icono: 'bi-instagram', enlace: 'https://www.instagram.com/jardindesele?rpxt=b3dib204ZjdybXAx' },
+    { nombre: 'TikTok', icono: 'bi-tiktok', enlace: 'https://www.tiktok.com/@jardindesele?_r=1&_t=ZS-9AoGQ9nwUCL' },
+    { nombre: 'WhatsApp', icono: 'bi-whatsapp', enlace: `https://wa.me/${this.numeroWhatsapp}?text=${encodeURIComponent(this.mensajeWhatsapp)}` },
   ];
 
   // --- Parte de abajo ---
