@@ -10,7 +10,8 @@
 
             <p class="descripcion">{{ slide.descripcion }}</p>
 
-            <button type="button" class="boton-coleccion">{{ slide.boton }}</button>
+            <button type="button" class="boton-coleccion" [routerLink]="slide.ruta" (click)="probarClick()">{{
+                slide.boton }}</button>
         </div>
         }
     </div>

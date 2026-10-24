@@ -1,1 +1,30 @@
-<p>all-productos works!</p>
+<!-- Banner a todo el ancho. La imagen queda fija y el banner "sube" al hacer scroll (efecto parallax). -->
+<section class="container-fluid p-0">
+    <div class="banner-productos d-flex align-items-center justify-content-center">
+
+        <!-- Imagen fija en la pantalla: el banner la recorta, así parece que el banner sube sobre la imagen -->
+        <div class="banner-fondo" [style.background-image]="'url(' + imagenBanner + ')'"></div>
+
+        <div class="banner-contenido text-center px-3">
+            <h1 class="banner-titulo">{{ titulo }}</h1>
+
+            <nav aria-label="Ruta de navegación">
+                <ol class="banner-migas list-unstyled d-flex justify-content-center flex-wrap mb-0">
+                    @for (miga of migas; track miga.texto; let ultima = $last) {
+                    <li>
+                        @if (miga.ruta) {
+                        <a [routerLink]="miga.ruta">{{ miga.texto }}</a>
+                        } @else {
+                        <span>{{ miga.texto }}</span>
+                        }
+                    </li>
+                    @if (!ultima) {
+                    <li class="banner-separador" aria-hidden="true">/</li>
+                    }
+                    }
+                </ol>
+            </nav>
+        </div>
+
+    </div>
+</section>

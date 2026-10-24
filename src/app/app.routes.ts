@@ -13,6 +13,12 @@ export const routes: Routes = [
                 pathMatch: 'full'
             },
             {
+                path: 'catalogo/todos-productos',
+                loadComponent: () =>
+                    import('./all-productos/presentacion/paginas/all-productos/all-productos')
+                        .then(m => m.AllProductos)
+            },
+            {
                 path: 'catalogo',
                 loadComponent: () =>
                     import('./catalogo/presentacion/paginas/catalogo/catalogo')
@@ -24,6 +30,7 @@ export const routes: Routes = [
                     import('./catalogo/presentacion/paginas/catalogo/catalogo')
                         .then(m => m.Catalogo)
             }
+
 
         ]
     }

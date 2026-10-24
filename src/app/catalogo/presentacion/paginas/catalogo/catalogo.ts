@@ -9,7 +9,7 @@ import { Dedicatoria } from '../../componentes/dedicatoria/dedicatoria';
 import { Slider } from '../../componentes/slider/slider';
 import { SobreNosotros } from '../../componentes/sobre-nosotros/sobre-nosotros';
 import { Informacion } from '../../componentes/informacion/informacion';
-
+import { RouterLink } from '@angular/router';
 
 interface Slide {
   id: number;
@@ -24,10 +24,11 @@ interface Slide {
   ajuste?: 'cover' | 'contain';
   // Qué parte de la imagen queda visible cuando se recorta (opcional), ej. 'center top', '30% 50%'
   posicion?: string;
+  ruta: string;
 }
 
 @Component({
-  imports: [Colecciones, Productos, Dedicatoria, Slider, SobreNosotros, Informacion],
+  imports: [Colecciones, Productos, Dedicatoria, Slider, SobreNosotros, Informacion, RouterLink],
   selector: 'app-catalogo',
   styleUrl: './catalogo.css',
   templateUrl: './catalogo.html',
@@ -141,7 +142,8 @@ export class Catalogo implements OnInit, OnDestroy {
       titulo: 'Bienvenidos a El Jardín de Sele',
       descripcion: 'regalos llenos de vida que adornaran tu espacio o el de esa persona especial',
       boton: 'Ver Productos',
-      imagen: 'imagenes/amor.png'
+      imagen: 'imagenes/amor.png',
+      ruta: "todos-productos"
     },
     {
       id: 2,
@@ -149,7 +151,8 @@ export class Catalogo implements OnInit, OnDestroy {
       titulo: 'Crea tu propia maceta',
       descripcion: 'Elige los accesorios y personaliza tu maceta con el nombre de esa persona especial',
       boton: 'Personalizar',
-      imagen: 'imagenes/doctor3D.png'
+      imagen: 'imagenes/doctor3D.png',
+      ruta: "todos-productos"
     },
     {
       id: 3,
@@ -158,6 +161,7 @@ export class Catalogo implements OnInit, OnDestroy {
       descripcion: 'Buscamos representar los sentimientos de las personas en regalos que sean inolvidables',
       boton: 'Ver productos',
       imagen: 'imagenes/pato.png',
+      ruta: "todos-productos"
     },
   ];
 
@@ -182,6 +186,9 @@ export class Catalogo implements OnInit, OnDestroy {
     this.indice.set(indice);
   }
 
+  probarClick(): void {
+    console.log('El botón recibió el clic');
+  }
 
 
 }
