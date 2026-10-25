@@ -14,9 +14,7 @@ export class MuestraTodosProductos {
   // ====== EDITABLE ======
   moneda = '$.';
   codigoMoneda = 'USD';
-
   productos = productos;
-
 
   opcionesOrden = [
     { valor: 'caracteristicas', texto: 'Características' },
