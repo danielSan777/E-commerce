@@ -7,13 +7,31 @@
 <app-footer />
 
 <!-- Botón flotante de WhatsApp: está en el layout principal, por eso aparece en TODAS las páginas y secciones -->
-<a class="whatsapp-flotante" [href]="enlaceWhatsapp" target="_blank" rel="noopener" aria-label="Chatear por WhatsApp">
+<a class="whatsapp-flotante" [class.con-barra]="mostrarBarraMovil()" [href]="enlaceWhatsapp" target="_blank"
+    rel="noopener" aria-label="Chatear por WhatsApp">
     <span class="whatsapp-texto">{{ textoWhatsapp }}</span>
     <span class="whatsapp-icono"><i class="bi bi-whatsapp" aria-hidden="true"></i></span>
 </a>
 
 <!-- Botón "subir arriba": aparece al bajar, está encima del botón de WhatsApp y sube a la primera sección -->
-<button type="button" class="subir-flotante" [class.visible]="mostrarSubir()" [style.--progreso]="progreso() + '%'"
-    (click)="subirArriba()" aria-label="Subir al inicio" [attr.tabindex]="mostrarSubir() ? 0 : -1">
+<button type="button" class="subir-flotante" [class.visible]="mostrarSubir()" [class.con-barra]="mostrarBarraMovil()"
+    [style.--progreso]="progreso() + '%'" (click)="subirArriba()" aria-label="Subir al inicio"
+    [attr.tabindex]="mostrarSubir() ? 0 : -1">
     <i class="bi bi-chevron-double-up" aria-hidden="true"></i>
 </button>
+
+<!-- Barra inferior SOLO para celulares: aparece después de la primera sección -->
+<nav class="barra-movil" [class.visible]="mostrarBarraMovil()" aria-label="Menú rápido">
+    @for (opcion of opcionesMovil; track opcion.texto) {
+    <a class="barra-movil-opcion" [routerLink]="opcion.ruta" routerLinkActive="activa"
+        [routerLinkActiveOptions]="{ exact: opcion.ruta === '/' }">
+        <span class="barra-movil-icono">
+            <i class="bi" [class]="opcion.icono" aria-hidden="true"></i>
+            @if (opcion.texto === 'Carrito') {
+            <span class="barra-movil-burbuja">{{ cantidadCarrito() }}</span>
+            }
+        </span>
+        <span class="barra-movil-texto">{{ opcion.texto }}</span>
+    </a>
+    }
+</nav>

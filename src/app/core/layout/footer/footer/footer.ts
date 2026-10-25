@@ -108,7 +108,7 @@ export class Footer {
 
   // --- Parte de abajo ---
   derechos = 'El Jardín de Sele ® Realizado por';
-  autor = 'Daniel Alvarado';
+  autor = 'LCD. Daniel Alvarado';
   mediosPago: { nombre: string; imagen: string }[] = [
     { nombre: 'Visa', imagen: 'imagenes/footer/pagos/visa.png' },
     { nombre: 'Mastercard', imagen: 'imagenes/footer/pagos/mastercard.png' },

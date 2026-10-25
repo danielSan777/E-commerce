@@ -1,3 +1,11 @@
+/* Espacio debajo del footer solo en celulares */
+@media (max-width: 991.98px) {
+    app-footer {
+        display: block;
+        margin-bottom: 70px;
+    }
+}
+
 /* Botón de WhatsApp siempre visible en la esquina inferior derecha */
 .whatsapp-flotante {
     position: fixed;
@@ -107,5 +115,85 @@
         bottom: 82px;
         width: 48px;
         height: 48px;
+    }
+}
+
+/* ===== Barra inferior (solo celulares, menos de 576px) ===== */
+.barra-movil {
+    display: none;
+}
+
+@media (max-width: 575.98px) {
+    .barra-movil {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        height: 64px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        background-color: #fff;
+        box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+        /* oculta hasta pasar la primera sección */
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+    }
+
+    .barra-movil.visible {
+        transform: translateY(0);
+    }
+
+    .barra-movil-opcion {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        color: #222;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .barra-movil-opcion.activa {
+        color: #3a4696;
+    }
+
+    .barra-movil-icono {
+        position: relative;
+        font-size: 1.4rem;
+        line-height: 1;
+    }
+
+    /* Burbuja del carrito */
+    .barra-movil-burbuja {
+        position: absolute;
+        top: -8px;
+        right: -12px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: 9px;
+        background-color: #3a4696;
+        color: #fff;
+        font-size: 0.7rem;
+        line-height: 18px;
+        text-align: center;
+    }
+
+    /* Cuando la barra está visible, WhatsApp y "subir" se mueven hacia arriba para no taparse */
+    .whatsapp-flotante,
+    .subir-flotante {
+        transition: bottom 0.3s ease, opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+    }
+
+    .whatsapp-flotante.con-barra {
+        bottom: 78px;
+    }
+
+    .subir-flotante.con-barra {
+        bottom: 146px;
     }
 }

@@ -1,11 +1,11 @@
 import { Component, HostListener, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Navbar } from '../../navbar/navbar/navbar';
 import { Footer } from '../../footer/footer/footer';
 
 
 @Component({
-  imports: [RouterOutlet, Navbar, Footer],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Navbar, Footer],
   selector: 'app-main-layout',
   styleUrl: './main-layout.css',
   templateUrl: './main-layout.html',
@@ -41,8 +41,27 @@ export class MainLayout {
     const recorridoTotal = document.documentElement.scrollHeight - window.innerHeight;
 
     this.mostrarSubir.set(posicion > this.distanciaParaMostrar);
+    this.mostrarBarraMovil.set(posicion > this.distanciaBarraMovil);
     this.progreso.set(recorridoTotal > 0 ? Math.min(100, (posicion / recorridoTotal) * 100) : 0);
   }
+
+  // ===== Barra de opciones inferior (solo celulares) =====
+  // Aparece cuando se baja más de este número de píxeles (después de la primera sección).
+  // Ponga 0 si quiere que se vea siempre.
+  private readonly distanciaBarraMovil = 450;
+
+  mostrarBarraMovil = signal(false);
+
+  // Cantidad que se ve en la burbuja del carrito
+  cantidadCarrito = signal(0);
+
+  // Opciones de la barra (cambie textos, iconos de Bootstrap Icons y rutas)
+  opcionesMovil = [
+    { texto: 'Inicio', icono: 'bi-house-door', ruta: '/' },
+    { texto: 'Cuenta', icono: 'bi-person', ruta: '/cuenta' },
+    { texto: 'Tienda', icono: 'bi-shop', ruta: '/productos' },
+    { texto: 'Carrito', icono: 'bi-cart3', ruta: '/carrito' },
+  ];
 
   // Sube hasta la primera sección (inicio de la página), con animación suave
   subirArriba(): void {
