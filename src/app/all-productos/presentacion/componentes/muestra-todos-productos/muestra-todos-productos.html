@@ -1,0 +1,263 @@
+<section class="tienda container-fluid">
+    <!-- Botón de filtros (solo pantallas pequeñas) -->
+    <div class="acciones-movil">
+        <button type="button" class="btn-filtros" (click)="filtrosAbiertos.set(!filtrosAbiertos())">
+            <i class="bi bi-sliders"></i> Filtros
+        </button>
+        <button type="button" class="btn-ordenar" (click)="ordenMovilAbierto.set(true)">
+            Ordenar por <i class="bi bi-chevron-down"></i>
+        </button>
+    </div>
+
+    <!-- Ordenar por (hoja que sube desde abajo, solo celulares) -->
+    <div class="orden-fondo" [class.abierto]="ordenMovilAbierto()" (click)="ordenMovilAbierto.set(false)"></div>
+    <div class="orden-hoja" [class.abierto]="ordenMovilAbierto()">
+        <div class="orden-hoja-cabecera">
+            <span>ORDENAR POR</span>
+            <button type="button" (click)="ordenMovilAbierto.set(false)" aria-label="Cerrar">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <ul>
+            @for (o of opcionesOrden; track o.valor) {
+            <li>
+                <button type="button" [class.sel]="orden() === o.valor"
+                    (click)="elegirOrden(o.valor); ordenMovilAbierto.set(false)">
+                    {{ o.texto }}
+                </button>
+            </li>
+            }
+        </ul>
+    </div>
+
+    <div class="tienda-grid">
+        <!-- ================= FILTROS ================= -->
+        <div class="filtros-fondo" [class.abierto]="filtrosAbiertos()" (click)="filtrosAbiertos.set(false)"></div>
+        <aside class="filtros" [class.abierto]="filtrosAbiertos()">
+            <div class="filtros-cabecera-movil">
+                <span>Filtros</span>
+                <button type="button" (click)="filtrosAbiertos.set(false)" aria-label="Cerrar filtros">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <!-- Colecciones -->
+            <div class="filtro">
+                <button type="button" class="filtro-cabecera" (click)="alternarSeccion('colecciones')">
+                    <span>Colecciones</span>
+                    <span class="signo">{{ seccionAbierta()['colecciones'] ? '—' : '+' }}</span>
+                </button>
+                @if (seccionAbierta()['colecciones']) {
+                <div class="filtro-cuerpo">
+                    @for (c of colecciones; track c.nombre) {
+                    <label class="check">
+                        <input type="checkbox" [checked]="coleccionesSel().includes(c.nombre)"
+                            (change)="alternar(coleccionesSel, c.nombre)" />
+                        <span class="caja"></span>
+                        <span>{{ c.nombre }} <small>({{ c.cantidad }})</small></span>
+                    </label>
+                    }
+                </div>
+                }
+            </div>
+
+            <!-- Disponibilidad -->
+            <div class="filtro">
+                <button type="button" class="filtro-cabecera" (click)="alternarSeccion('disponibilidad')">
+                    <span>Disponibilidad</span>
+                    <span class="signo">{{ seccionAbierta()['disponibilidad'] ? '—' : '+' }}</span>
+                </button>
+                @if (seccionAbierta()['disponibilidad']) {
+                <div class="filtro-cuerpo">
+                    <label class="check">
+                        <input type="checkbox" [checked]="disponibilidadSel().includes('existencia')"
+                            (change)="alternar(disponibilidadSel, 'existencia')" />
+                        <span class="caja"></span>
+                        <span>En existencia <small>({{ enExistencia }})</small></span>
+                    </label>
+                    <label class="check">
+                        <input type="checkbox" [checked]="disponibilidadSel().includes('agotado')"
+                            (change)="alternar(disponibilidadSel, 'agotado')" />
+                        <span class="caja"></span>
+                        <span>Agotado <small>({{ agotados }})</small></span>
+                    </label>
+                </div>
+                }
+            </div>
+
+            <!-- Precio -->
+            <div class="filtro">
+                <button type="button" class="filtro-cabecera" (click)="alternarSeccion('precio')">
+                    <span>Precio</span>
+                    <span class="signo">{{ seccionAbierta()['precio'] ? '—' : '+' }}</span>
+                </button>
+                @if (seccionAbierta()['precio']) {
+                <div class="filtro-cuerpo">
+                    <div class="rango">
+                        <div class="rango-pista"></div>
+                        <div class="rango-relleno" [style.left]="relleno().left" [style.right]="relleno().right"></div>
+                        <input type="range" min="0" [max]="precioTope" step="1" [value]="precioMin()"
+                            (input)="cambiarMin($event)" aria-label="Precio mínimo" />
+                        <input type="range" min="0" [max]="precioTope" step="1" [value]="precioMax()"
+                            (input)="cambiarMax($event)" aria-label="Precio máximo" />
+                    </div>
+                    <p class="precio-etq">Precio:</p>
+                    <p class="precio-valor">
+                        {{ formato(precioMin()) }} {{ codigoMoneda }} - {{ formato(precioMax()) }} {{ codigoMoneda }}
+                    </p>
+                </div>
+                }
+            </div>
+
+            <!-- Tipo de producto -->
+            <div class="filtro">
+                <button type="button" class="filtro-cabecera" (click)="alternarSeccion('tipo')">
+                    <span>Tipo De Producto</span>
+                    <span class="signo">{{ seccionAbierta()['tipo'] ? '—' : '+' }}</span>
+                </button>
+                @if (seccionAbierta()['tipo']) {
+                <div class="filtro-cuerpo">
+                    @for (t of tipos; track t.nombre) {
+                    <label class="check">
+                        <input type="checkbox" [checked]="tiposSel().includes(t.nombre)"
+                            (change)="alternar(tiposSel, t.nombre)" />
+                        <span class="caja"></span>
+                        <span>{{ t.nombre }} <small>({{ t.cantidad }})</small></span>
+                    </label>
+                    }
+                </div>
+                }
+            </div>
+
+            <button type="button" class="btn-limpiar" (click)="limpiarFiltros()">Limpiar filtros</button>
+            <button type="button" class="btn-ver-resultados" (click)="filtrosAbiertos.set(false)">
+                Ver {{ productosFiltrados().length }} resultados
+            </button>
+        </aside>
+
+        <!-- ================= RESULTADOS ================= -->
+        <div class="resultados">
+            <div class="barra">
+                <span class="total">Hay {{ productosFiltrados().length }} resultados en total</span>
+
+                <!-- Vistas -->
+                <div class="vistas">
+                    <button type="button" class="vista" data-tip="2 columnas" [class.activa]="vista() === 2"
+                        (click)="cambiarVista(2)" aria-label="2 columnas">
+                        <svg viewBox="0 0 24 24" width="22" height="22">
+                            <g fill="currentColor">
+                                <circle cx="8" cy="8" r="3" />
+                                <circle cx="16" cy="8" r="3" />
+                                <circle cx="8" cy="16" r="3" />
+                                <circle cx="16" cy="16" r="3" />
+                            </g>
+                        </svg>
+                    </button>
+                    <button type="button" class="vista vista-3" data-tip="3 columnas" [class.activa]="vista() === 3"
+                        (click)="cambiarVista(3)" aria-label="3 columnas">
+                        <svg viewBox="0 0 24 24" width="22" height="22">
+                            <g fill="currentColor">
+                                <circle cx="5" cy="5" r="2" />
+                                <circle cx="12" cy="5" r="2" />
+                                <circle cx="19" cy="5" r="2" />
+                                <circle cx="5" cy="12" r="2" />
+                                <circle cx="12" cy="12" r="2" />
+                                <circle cx="19" cy="12" r="2" />
+                                <circle cx="5" cy="19" r="2" />
+                                <circle cx="12" cy="19" r="2" />
+                                <circle cx="19" cy="19" r="2" />
+                            </g>
+                        </svg>
+                    </button>
+                    <button type="button" class="vista vista-4" data-tip="4 columnas" [class.activa]="vista() === 4"
+                        (click)="cambiarVista(4)" aria-label="4 columnas">
+                        <svg viewBox="0 0 24 24" width="22" height="22">
+                            <g fill="currentColor">
+                                <circle cx="3.5" cy="4" r="1.5" />
+                                <circle cx="9" cy="4" r="1.5" />
+                                <circle cx="14.5" cy="4" r="1.5" />
+                                <circle cx="20" cy="4" r="1.5" />
+                                <circle cx="3.5" cy="9.5" r="1.5" />
+                                <circle cx="9" cy="9.5" r="1.5" />
+                                <circle cx="14.5" cy="9.5" r="1.5" />
+                                <circle cx="20" cy="9.5" r="1.5" />
+                                <circle cx="3.5" cy="15" r="1.5" />
+                                <circle cx="9" cy="15" r="1.5" />
+                                <circle cx="14.5" cy="15" r="1.5" />
+                                <circle cx="20" cy="15" r="1.5" />
+                                <circle cx="3.5" cy="20.5" r="1.5" />
+                                <circle cx="9" cy="20.5" r="1.5" />
+                                <circle cx="14.5" cy="20.5" r="1.5" />
+                                <circle cx="20" cy="20.5" r="1.5" />
+                            </g>
+                        </svg>
+                    </button>
+                    <button type="button" class="vista" data-tip="Lista" [class.activa]="vista() === 'lista'"
+                        (click)="cambiarVista('lista')" aria-label="Lista">
+                        <svg viewBox="0 0 24 24" width="22" height="22">
+                            <g fill="currentColor">
+                                <circle cx="4" cy="6" r="1.6" />
+                                <rect x="8" y="5" width="13" height="2" rx="1" />
+                                <circle cx="4" cy="12" r="1.6" />
+                                <rect x="8" y="11" width="13" height="2" rx="1" />
+                                <circle cx="4" cy="18" r="1.6" />
+                                <rect x="8" y="17" width="13" height="2" rx="1" />
+                            </g>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Ordenar por -->
+                <div class="orden">
+                    <span class="orden-etq">Ordenar por:</span>
+                    <button type="button" class="orden-boton" (click)="ordenAbierto.set(!ordenAbierto())">
+                        {{ textoOrdenActual() }}
+                        <i class="bi bi-chevron-down" [class.girado]="ordenAbierto()"></i>
+                    </button>
+                    @if (ordenAbierto()) {
+                    <ul class="orden-menu">
+                        @for (o of opcionesOrden; track o.valor) {
+                        <li>
+                            <button type="button" [class.sel]="orden() === o.valor" (click)="elegirOrden(o.valor)">
+                                {{ o.texto }}
+                            </button>
+                        </li>
+                        }
+                    </ul>
+                    }
+                </div>
+            </div>
+
+            <!-- Productos -->
+            <div class="productos" [class.cols-2]="vista() === 2" [class.cols-3]="vista() === 3"
+                [class.cols-4]="vista() === 4" [class.lista]="vista() === 'lista'">
+                @for (p of productosFiltrados(); track p.id) {
+                <article class="producto">
+                    <a href="#" class="producto-img">
+                        <img [src]="p.imagen" [alt]="p.nombre" loading="lazy" />
+                        @if (p.precioAnterior) {
+                        <span class="etq-descuento">-{{ porcentajeDescuento(p) }}%</span>
+                        }
+                        @if (!p.disponible) {
+                        <span class="etq-agotado">Agotado</span>
+                        }
+                    </a>
+                    <div class="producto-info">
+                        <h3 class="producto-nombre"><a href="#">{{ p.nombre }}</a></h3>
+                        @if (vista() === 'lista') {
+                        <p class="producto-desc">{{ p.descripcion }}</p>
+                        }
+                        <div class="producto-precios">
+                            <span class="precio">{{ formato(p.precio) }}</span>
+                            @if (p.precioAnterior) {
+                            <span class="precio-anterior">{{ formato(p.precioAnterior) }}</span>
+                            }
+                        </div>
+                    </div>
+                </article>
+                } @empty {
+                <p class="vacio">No se encontraron productos con esos filtros.</p>
+                }
+            </div>
+        </div>
+    </div>
+</section>

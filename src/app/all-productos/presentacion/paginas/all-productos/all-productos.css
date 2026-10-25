@@ -2,7 +2,7 @@
 .banner-productos {
     position: relative;
     width: 100%;
-    height: clamp(300px, 60vh, 640px);
+    height: clamp(300px, 75vh, 640px);
     /* alto del banner: se adapta a la pantalla */
     overflow: hidden;
     clip-path: inset(0);

@@ -1,0 +1,24 @@
+<section class="categorias" aria-label="Categorías de productos">
+    <div class="categorias-controles">
+        <button type="button" aria-label="Deslizar categorías a la izquierda" [disabled]="!puedeDeslizarIzquierda()"
+            (click)="mover(-1)">
+            <span aria-hidden="true">&#8249;</span>
+        </button>
+        <button type="button" aria-label="Deslizar categorías a la derecha" [disabled]="!puedeDeslizarDerecha()"
+            (click)="mover(1)">
+            <span aria-hidden="true">&#8250;</span>
+        </button>
+    </div>
+
+    <div #visor class="categorias-visor" role="region" aria-label="Carrusel de categorías" tabindex="0"
+        (scroll)="actualizarControles($event)">
+        <div class="categorias-pista">
+            @for (categoria of categorias; track categoria.nombre) {
+            <article class="categoria">
+                <img [src]="categoria.imagen" [alt]="categoria.nombre" draggable="false">
+                <span class="categoria-nombre">{{ categoria.nombre }}</span>
+            </article>
+            }
+        </div>
+    </div>
+</section>

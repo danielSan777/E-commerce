@@ -29,7 +29,14 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('./catalogo/presentacion/paginas/catalogo/catalogo')
                         .then(m => m.Catalogo)
+            },
+            {
+                path: 'catalogo/todos-productos/:producto',
+                loadComponent: () =>
+                    import('./detalle-producto/presentacion/paginas/detalle-producto/detalle-producto')
+                        .then(m => m.DetalleProducto)
             }
+
 
 
         ]
