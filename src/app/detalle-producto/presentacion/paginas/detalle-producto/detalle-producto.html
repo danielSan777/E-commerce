@@ -1,1 +1,136 @@
-<p>detalle-producto works!</p>
+<section class="detalle container-fluid">
+    @if (producto(); as p) {
+    <!-- Migas de pan -->
+    <nav class="migas" aria-label="breadcrumb">
+        <a routerLink="/">Inicio</a><span>/</span>
+        <a [routerLink]="rutaListado">{{ textoListado }}</a><span>/</span>
+        <span class="actual">{{ p.nombre }}</span>
+    </nav>
+
+    <div class="detalle-grid">
+        <!-- ============ IMAGEN ============ -->
+        <div class="galeria">
+            <img [src]="p.imagen" [alt]="p.nombre" />
+            <button type="button" class="btn-ampliar" (click)="verImagen.set(true)" aria-label="Ver imagen completa">
+                <i class="bi bi-arrows-fullscreen"></i>
+            </button>
+            @if (porcentajeDescuento() > 0) {
+            <span class="etq-descuento">-{{ porcentajeDescuento() }}%</span>
+            }
+        </div>
+
+        <!-- ============ INFORMACIÓN ============ -->
+        <div class="info">
+            <h1 class="titulo">{{ p.nombre }}</h1>
+
+            <p class="vendidos"><span class="fuego">🔥</span> {{ p.vendidos }} vendidos</p>
+
+            <div class="precios">
+                <span class="precio">{{ formato(p.precio) }} {{ codigoMoneda }}</span>
+                @if (p.precioAnterior) {
+                <span class="precio-anterior">{{ formato(p.precioAnterior) }}</span>
+                }
+            </div>
+
+            <p class="descripcion">{{ p.descripcion }}</p>
+
+            @if (!p.disponible) {
+            <p class="aviso-agotado"><i class="bi bi-exclamation-circle"></i> Producto agotado por el momento</p>
+            }
+
+            <!-- Dedicatoria -->
+            <label class="campo-titulo" for="dedicatoria">Dedicatoria <i class="bi bi-question-circle-fill"
+                    title="Escribe el mensaje que irá en la dedicatoria"></i></label>
+            <div class="dedicatoria-caja">
+                <textarea id="dedicatoria" rows="3" [maxLength]="maxDedicatoria" [value]="dedicatoria()"
+                    (input)="escribirDedicatoria($event)"></textarea>
+                <span class="contador">{{ dedicatoria().length }}/{{ maxDedicatoria }}</span>
+            </div>
+
+            <!-- Foto -->
+            <label class="campo-titulo">Agrega tu foto a tu dedicatoria GRATIS <i class="bi bi-question-circle-fill"
+                    title="Sube una foto para imprimirla en tu dedicatoria"></i></label>
+            <input #archivo type="file" accept="image/*" hidden (change)="elegirFoto($event)" />
+            <div class="zona-foto" [class.con-foto]="fotoUrl()">
+                @if (fotoUrl(); as url) {
+                <img [src]="url" alt="Tu foto" class="foto-previa" />
+                <div class="foto-acciones">
+                    <span class="foto-nombre">{{ fotoNombre() }}</span>
+                    <button type="button" class="btn-gris" (click)="archivo.click()">Cambiar</button>
+                    <button type="button" class="btn-gris" (click)="quitarFoto(archivo)">Quitar</button>
+                </div>
+                } @else {
+                <button type="button" class="btn-gris" (click)="archivo.click()">Elegir Foto</button>
+                }
+            </div>
+            @if (errorFoto()) { <p class="error">{{ errorFoto() }}</p> }
+
+            <!-- Fecha de entrega -->
+            <label class="campo-titulo" for="fecha">Fecha de entrega <span class="req">*</span></label>
+            <input id="fecha" type="date" class="campo-fecha" [class.invalido]="errorFecha()" [min]="hoy"
+                [value]="fechaEntrega()" (change)="cambiarFecha($event)" (blur)="fechaTocada.set(true)" required />
+            @if (errorFecha()) { <p class="error">{{ errorFecha() }}</p> }
+
+            <!-- Acciones -->
+            <div class="acciones">
+                <button type="button" class="btn-comprar" [disabled]="!p.disponible" (click)="agregarAlCarrito()">
+                    <i class="bi bi-cart3"></i> Agregar al carrito
+                </button>
+                <button type="button" class="btn-compartir" (click)="compartirAbierto.set(true)">
+                    <i class="bi bi-share"></i> Compartir
+                </button>
+            </div>
+            @if (agregado()) {
+            <p class="exito"><i class="bi bi-check-circle-fill"></i> Producto agregado con entrega el {{ fechaEntrega()
+                }}</p>
+            }
+        </div>
+    </div>
+
+    <!-- ============ MODAL COMPARTIR ============ -->
+    @if (compartirAbierto()) {
+    <div class="modal-fondo" (click)="compartirAbierto.set(false)">
+        <div class="modal-compartir" (click)="$event.stopPropagation()" role="dialog" aria-label="Compartir">
+            <button type="button" class="modal-cerrar" (click)="compartirAbierto.set(false)" aria-label="Cerrar">
+                <i class="bi bi-x-lg"></i>
+            </button>
+
+            <h2>Copiar link</h2>
+            <div class="copiar-fila">
+                <input #campoEnlace type="text" readonly [value]="enlace()" (focus)="campoEnlace.select()" />
+                <button type="button" class="btn-copiar" (click)="copiarEnlace(campoEnlace)" aria-label="Copiar link">
+                    <i class="bi" [class.bi-clipboard]="!copiado()" [class.bi-check-lg]="copiado()"></i>
+                </button>
+            </div>
+            @if (copiado()) { <p class="copiado">¡Link copiado!</p> }
+
+            <h2 class="sub">Compartir</h2>
+            <div class="redes">
+                <a [href]="enlaceFacebook()" target="_blank" rel="noopener" aria-label="Facebook"><i
+                        class="bi bi-facebook"></i></a>
+                <a [href]="enlaceTwitter()" target="_blank" rel="noopener" aria-label="Twitter"><i
+                        class="bi bi-twitter"></i></a>
+                <a [href]="enlacePinterest()" target="_blank" rel="noopener" aria-label="Pinterest"><i
+                        class="bi bi-pinterest"></i></a>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- ============ IMAGEN AMPLIADA ============ -->
+    @if (verImagen()) {
+    <div class="modal-fondo oscuro" (click)="verImagen.set(false)">
+        <button type="button" class="modal-cerrar claro" (click)="verImagen.set(false)" aria-label="Cerrar">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <img class="imagen-grande" [src]="p.imagen" [alt]="p.nombre" (click)="$event.stopPropagation()" />
+    </div>
+    }
+    } @else {
+    <div class="no-encontrado">
+        <h1>Producto no encontrado</h1>
+        <p>No encontramos «{{ nombre() }}».</p>
+        <a [routerLink]="rutaListado" class="btn-comprar">Ver todos los productos</a>
+    </div>
+    }
+</section>

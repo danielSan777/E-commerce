@@ -1,10 +1,11 @@
 import { Component, HostListener, computed, signal } from '@angular/core';
 import { Producto, productos } from '../../../dominio/muestra_producto';
+import { RouterLink } from '@angular/router';
 
 export type Vista = 2 | 3 | 4 | 'lista';
 
 @Component({
-  imports: [],
+  imports: [RouterLink],
   selector: 'app-muestra-todos-productos',
   styleUrl: './muestra-todos-productos.css',
   templateUrl: './muestra-todos-productos.html',

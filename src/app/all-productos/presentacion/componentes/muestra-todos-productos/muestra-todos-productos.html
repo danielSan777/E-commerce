@@ -229,14 +229,18 @@
 
             <!-- Productos -->
             <div class="productos" [class.cols-2]="vista() === 2" [class.cols-3]="vista() === 3"
-                [class.cols-4]="vista() === 4" [class.lista]="vista() === 'lista'">
-                @for (p of productosFiltrados(); track p.id) {
+                [class.cols-4]="vista() === 4" [class.lista]="vista()==='lista'">
+                @for (p of productosFiltrados(); track p.id){
                 <article class="producto">
-                    <a href="#" class="producto-img">
+                    <a [routerLink]="['/catalogo/todos-productos',p.nombre]" class="producto-img">
                         <img [src]="p.imagen" [alt]="p.nombre" loading="lazy" />
-                        @if (p.precioAnterior) {
-                        <span class="etq-descuento">-{{ porcentajeDescuento(p) }}%</span>
+
+                        @if(p.precioAnterior){
+                        <span class="etq-descuento">
+                            -{{ porcentajeDescuento(p) }}%
+                        </span>
                         }
+
                         @if (!p.disponible) {
                         <span class="etq-agotado">Agotado</span>
                         }
@@ -258,6 +262,8 @@
                 <p class="vacio">No se encontraron productos con esos filtros.</p>
                 }
             </div>
+
+
         </div>
     </div>
 </section>
