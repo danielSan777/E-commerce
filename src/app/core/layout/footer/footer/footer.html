@@ -92,7 +92,11 @@
 
         <!-- Parte de abajo: derechos y medios de pago -->
         <div class="footer-abajo">
-            <p class="footer-derechos">{{ derechos }} <strong>{{ autor }}</strong></p>
+            <p class="footer-derechos">
+                {{ derechos }} <strong>{{ autor }}
+                    <a [href]="enlaceCorreoAutor" target="_blank" rel="noopener">{{ correoAutor }}</a>
+                </strong>
+            </p>
             <div class="footer-pagos">
                 @for (pago of mediosPago; track pago.nombre) {
                 <img [src]="pago.imagen" [alt]="pago.nombre">

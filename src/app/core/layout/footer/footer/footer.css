@@ -210,6 +210,10 @@
     font-size: 1rem;
 }
 
+.footer-derechos a {
+    color: inherit;
+}
+
 .footer-pagos {
     display: flex;
     justify-content: center;
