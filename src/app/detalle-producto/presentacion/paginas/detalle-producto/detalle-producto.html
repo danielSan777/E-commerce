@@ -136,8 +136,8 @@
 </section>
 <!-- Fondo del modal -->
 @if (personalizadorAbierto()) {
-<div class="modal-personalizador">
-    <div class="modal-contenido">
+<div class="modal-personalizador" (click)="cerrarPorFondo()">
+    <div class="modal-contenido" (click)="$event.stopPropagation()">
 
         <div class="modal-cabecera">
             <h5 class="titulo-pagina">Personaliza tu producto</h5>

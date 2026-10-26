@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -15,7 +15,7 @@ import { Personalizador } from '../../../../personalizador/presentacion/paginas/
   templateUrl: './detalle-producto.html',
 })
 
-export class DetalleProducto {
+export class DetalleProducto implements OnDestroy {
   private route = inject(ActivatedRoute);
   private document = inject(DOCUMENT);
   private location = inject(Location);
@@ -168,12 +168,28 @@ export class DetalleProducto {
     }
   }
 
+  // En celular el personalizador sube desde abajo (hoja); en pantalla media y grande es un modal.
+  // El cambio de aspecto lo hace el CSS; aquí solo se bloquea el scroll de la página de atrás.
   abrirPersonalizador(): void {
     this.personalizadorAbierto.set(true);
+    this.document.body.style.overflow = 'hidden';
   }
 
   cerrarPersonalizador(): void {
     this.personalizadorAbierto.set(false);
+    this.document.body.style.overflow = '';
+  }
+
+  // Tocar el fondo oscuro cierra la hoja, pero solo en celular
+  // (en pantallas grandes no, para no perder lo elegido sin querer)
+  cerrarPorFondo(): void {
+    if (this.document.defaultView?.matchMedia('(max-width: 767.98px)').matches) {
+      this.cerrarPersonalizador();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.document.body.style.overflow = '';
   }
 
 

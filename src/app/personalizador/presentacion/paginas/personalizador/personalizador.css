@@ -30,16 +30,23 @@
     top: 16px;
 }
 
-.visor {
+.visor-marco {
+    position: relative;
     width: 100%;
     max-width: 75vh;
-    aspect-ratio: 1 / 1;
     margin: 0 auto;
-    position: relative;
     overflow: hidden;
     border-radius: 18px;
     background: #fff;
     box-shadow: 0 6px 22px rgba(60, 40, 20, .15);
+    isolation: isolate;
+}
+
+.visor {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+    overflow: hidden;
     isolation: isolate;
 }
 
@@ -365,9 +372,30 @@
         position: static;
     }
 
-    .visor,
+    .visor-marco,
     .campo-nombre {
         max-width: 100%;
+    }
+}
+
+/* Celular: el visor ocupa poca altura (menos de la mitad de la pantalla).
+   Sigue siendo cuadrado por dentro, así los accesorios no se mueven de su lugar. */
+@media (max-width: 767.98px) {
+    .visor-marco {
+        display: flex;
+        justify-content: center;
+        height: clamp(190px, 33vh, 300px);
+        border-radius: 14px;
+    }
+
+    .visor {
+        flex: none;
+        width: auto;
+        height: 100%;
+    }
+
+    .campo-nombre {
+        margin-top: 12px;
     }
 }
 

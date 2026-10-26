@@ -4,54 +4,59 @@
         <!-- ================= PRODUCTO ================= -->
         <div class="col-12 col-lg-6">
             <div class="columna-visor">
-                <div class="visor" #visor>
+                <!-- Marco: en celular es más bajo y ancho; el visor cuadrado queda centrado dentro -->
+                <div class="visor-marco">
 
                     <!-- Fondo difuminado de la misma foto: rellena los lados en vez de dejarlos en blanco -->
                     <img src="imagenes/maceta_vacia.png" class="maceta-fondo" alt="" aria-hidden="true">
-                    <img src="imagenes/maceta_vacia.png" class="maceta">
 
-                    @for (accesorio of accesoriosSeleccionados(); track accesorio.id){
+                    <div class="visor" #visor>
 
-                    @if (accesorio.tipo === 'texto'){
+                        <img src="imagenes/maceta_vacia.png" class="maceta">
 
-                    <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
-                        [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
-                        [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
-                        [style.outline]="contorno(accesorio.accesorioId)"
-                        (click)="seleccionarPuesto(accesorio.accesorioId)">
-                        <div class="contenido-3d" [style.transform]="transformar(accesorio)">
-                            <canvas [appTextoCanvas]="nombreCliente() || (accesorio.texto ?? '')"></canvas>
+                        @for (accesorio of accesoriosSeleccionados(); track accesorio.id){
+
+                        @if (accesorio.tipo === 'texto'){
+
+                        <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
+                            [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
+                            [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
+                            [style.outline]="contorno(accesorio.accesorioId)"
+                            (click)="seleccionarPuesto(accesorio.accesorioId)">
+                            <div class="contenido-3d" [style.transform]="transformar(accesorio)">
+                                <canvas [appTextoCanvas]="nombreCliente() || (accesorio.texto ?? '')"></canvas>
+                            </div>
                         </div>
-                    </div>
 
-                    } @else if (accesorio.accesorioId == 1) {
+                        } @else if (accesorio.accesorioId == 1) {
 
-                    <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
-                        [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
-                        [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
-                        [style.outline]="contorno(accesorio.accesorioId)"
-                        (click)="seleccionarPuesto(accesorio.accesorioId)">
-                        <div class="contenido-3d" [style.transform]="transformar(accesorio)">
-                            @if (hayLentes()) {
-                            <canvas #canvasLentes></canvas>
-                            }
+                        <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
+                            [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
+                            [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
+                            [style.outline]="contorno(accesorio.accesorioId)"
+                            (click)="seleccionarPuesto(accesorio.accesorioId)">
+                            <div class="contenido-3d" [style.transform]="transformar(accesorio)">
+                                @if (hayLentes()) {
+                                <canvas #canvasLentes></canvas>
+                                }
+                            </div>
                         </div>
-                    </div>
 
-                    } @else {
+                        } @else {
 
-                    <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
-                        [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
-                        [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
-                        [style.outline]="contorno(accesorio.accesorioId)"
-                        (click)="seleccionarPuesto(accesorio.accesorioId)">
-                        <div class="contenido-3d" [style.transform]="transformar(accesorio)">
-                            <img [src]="accesorio.imagen" [alt]="accesorio.nombre">
+                        <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
+                            [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
+                            [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
+                            [style.outline]="contorno(accesorio.accesorioId)"
+                            (click)="seleccionarPuesto(accesorio.accesorioId)">
+                            <div class="contenido-3d" [style.transform]="transformar(accesorio)">
+                                <img [src]="accesorio.imagen" [alt]="accesorio.nombre">
+                            </div>
                         </div>
-                    </div>
-                    }
-                    }
+                        }
+                        }
 
+                    </div>
                 </div>
 
                 <!-- Nombre del cliente (cuando el accesorio de texto está puesto) -->
