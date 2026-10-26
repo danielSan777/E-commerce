@@ -166,5 +166,24 @@ export const productos: Producto[] = [
         fecha: '2025-11-23',
         vendidos: 65,
         relevancia: 6
+    },
+    {
+        id: 10,
+        nombre: 'enfermera',
+        slug: 'enfermera',
+        descripcion: '*Incluye:*' +
+            '🌿 Plantita natural' +
+            '💌 Dedicatoria personalizada' +
+            '🛍️ Funda kraft JDS' +
+            '📄 Guía de cuidados' +
+            '🪨 Piedritas de repuesto.',
+        precio: 21,
+        imagen: 'imagenes/maceta2.png',
+        tipo: 'profesionales',
+        coleccion: 'Graduación',
+        disponible: true,
+        fecha: '2025-10-05',
+        vendidos: 88,
+        relevancia: 8
     }
 ];

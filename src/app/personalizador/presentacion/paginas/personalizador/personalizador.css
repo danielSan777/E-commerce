@@ -1,0 +1,105 @@
+.visor {
+    width: 75vh;
+    height: 75vh;
+    position: relative;
+    overflow: hidden;
+}
+
+.maceta {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.accesorio-colocado {
+    position: absolute;
+    pointer-events: auto;
+    cursor: grab;
+    touch-action: none;
+}
+
+
+.color-negro,
+.color-cafe {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 1px solid #777;
+    border-radius: 50%;
+}
+
+.color-negro {
+    background-color: #000;
+}
+
+.color-cafe {
+    background-color: #795548;
+}
+
+.accesorio-colocado canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.accesorio-colocado img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Contenedor que recibe la rotación 3D guardada en el editor */
+.contenido-3d {
+    width: 100%;
+    height: 100%;
+    transform-origin: center center;
+    pointer-events: none;
+}
+
+@font-face {
+    font-family: 'Lobster';
+    src: url('/fonts/Lobster-Regular.ttf') format('truetype');
+    font-display: swap;
+}
+
+/* Lista de accesorios por categoría (con check) */
+.lista-categoria {
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.item-categoria {
+    cursor: pointer;
+    padding: 6px 8px;
+    margin-bottom: 0;
+    border-radius: 6px;
+}
+
+.item-categoria:hover {
+    background: rgba(13, 110, 253, 0.08);
+}
+
+.mini-imagen {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.mini-canvas {
+    width: 48px;
+    height: 24px;
+    display: block;
+    flex-shrink: 0;
+}
+
+/* Lista de accesorios marcados: barra de desplazamiento vertical si hay muchos */
+.lista-marcados {
+    max-height: 60vh;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+}

@@ -4,9 +4,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Producto } from '../../../../all-productos/dominio/muestra_producto';
 import { productos } from '../../../../all-productos/dominio/muestra_producto';
+import { Location } from '@angular/common';
+import { Router } from '@angular/router';
+import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
 
 @Component({
-  imports: [RouterLink],
+  imports: [RouterLink, Personalizador],
   selector: 'app-detalle-producto',
   styleUrl: './detalle-producto.css',
   templateUrl: './detalle-producto.html',
@@ -15,16 +18,16 @@ import { productos } from '../../../../all-productos/dominio/muestra_producto';
 export class DetalleProducto {
   private route = inject(ActivatedRoute);
   private document = inject(DOCUMENT);
-
+  private location = inject(Location);
   // ====== EDITABLE ======
   moneda = '$.';
   codigoMoneda = 'USD';
-  rutaListado = '/productos';
+  rutaListado = 'todos-productos';
   textoListado = 'Productos';
   maxDedicatoria = 250;
   maxMbFoto = 5;
   // =======================
-
+  private router = inject(Router);
   // Nombre del producto que viene en la ruta (ej: /productos/Abogada)
   private parametros = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
   nombre = computed(() => this.parametros().get('producto'));
@@ -74,6 +77,9 @@ export class DetalleProducto {
     return p?.precioAnterior ? Math.round((1 - p.precio / p.precioAnterior) * 100) : 0;
   });
 
+
+  personalizadorAbierto = signal(false);
+
   formato(valor: number) {
     return `${this.moneda} ${valor.toFixed(2)}`;
   }
@@ -120,18 +126,18 @@ export class DetalleProducto {
     this.agregado.set(false);
   }
 
-  agregarAlCarrito() {
-    this.fechaTocada.set(true);
-    if (this.errorFecha()) return;
-    // Aquí va la lógica de tu carrito. Datos del pedido:
-    console.log({
-      producto: this.producto(),
-      dedicatoria: this.dedicatoria(),
-      foto: this.fotoNombre(),
-      fechaEntrega: this.fechaEntrega(),
-    });
-    this.agregado.set(true);
+
+  personalizar() {
+
+
+
+    //this.router.navigate(['/catalogo/todos-productos/personalizador']);
+
+
+
   }
+
+
 
   async copiarEnlace(campo: HTMLInputElement) {
     try {
@@ -149,4 +155,28 @@ export class DetalleProducto {
     const dia = String(d.getDate()).padStart(2, '0');
     return `${d.getFullYear()}-${mes}-${dia}`;
   }
+
+
+  volverAtras(event: Event) {
+    event.preventDefault();
+    // Si hay una página anterior dentro de tu tienda, regresa a ella.
+    if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
+      this.location.back();
+    } else {
+      // Si entró directamente, ir al listado de productos.
+      this.router.navigate(['/catalogo/todos-productos']);
+    }
+  }
+
+  abrirPersonalizador(): void {
+    this.personalizadorAbierto.set(true);
+  }
+
+  cerrarPersonalizador(): void {
+    this.personalizadorAbierto.set(false);
+  }
+
+
+
+
 }

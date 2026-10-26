@@ -1,0 +1,166 @@
+{
+    "productoId": 1,
+    "ubicaciones": [
+        {
+            "id": 1,
+            "nombre": "Cabeza",
+            "categorias": [
+                "Moda"
+            ],
+            "estado": "libre",
+            "prioridad": 1,
+            "capa": 1,
+            "fijoId": null,
+            "preset": {
+                "x": 35.288650973273064,
+                "y": 25.775788522909487,
+                "ancho": 27,
+                "alto": 10,
+                "rotX": 0,
+                "rotY": 0,
+                "rotZ": 0,
+                "espejo": false
+            }
+        },
+        {
+            "id": 2,
+            "nombre": "Pie izquierdo",
+            "excluidas": [
+                "Moda",
+                "Personalización"
+            ],
+            "estado": "libre",
+            "prioridad": 2,
+            "capa": 1,
+            "fijoId": null,
+            "preset": {
+                "x": 63.666861432876885,
+                "y": 77.49,
+                "ancho": 9.7,
+                "alto": 9.7,
+                "rotX": 0,
+                "rotY": 0,
+                "rotZ": 0,
+                "espejo": false
+            }
+        },
+        {
+            "id": 3,
+            "nombre": "Pie derecho",
+            "excluidas": [
+                "Moda",
+                "Personalización"
+            ],
+            "estado": "libre",
+            "prioridad": 3,
+            "capa": 1,
+            "fijoId": null,
+            "preset": {
+                "x": 30.37745743752091,
+                "y": 77.02,
+                "ancho": 9.79,
+                "alto": 9.79,
+                "rotX": 0,
+                "rotY": 0,
+                "rotZ": 0,
+                "espejo": false
+            }
+        },
+        {
+            "id": 4,
+            "nombre": "Entre las piernas",
+            "excluidas": [
+                "Moda",
+                "Personalización"
+            ],
+            "estado": "libre",
+            "prioridad": 4,
+            "capa": 1,
+            "fijoId": null,
+            "preset": {
+                "x": 47.411203715301326,
+                "y": 74.83,
+                "ancho": 8.9,
+                "alto": 12.13,
+                "rotX": 0,
+                "rotY": 0,
+                "rotZ": 0,
+                "espejo": false
+            }
+        },
+        {
+            "id": 5,
+            "nombre": "Base",
+            "categorias": [
+                "Personalización"
+            ],
+            "estado": "fija",
+            "prioridad": 5,
+            "capa": 1,
+            "fijoId": 2,
+            "preset": {
+                "x": 31.60624354267041,
+                "y": 88.9892630104729,
+                "ancho": 39,
+                "alto": 5,
+                "rotX": 0,
+                "rotY": 0,
+                "rotZ": 0,
+                "espejo": false
+            }
+        }
+    ],
+    "excepciones": [],
+    "catalogo": [
+        {
+            "id": 1,
+            "nombre": "Lentes",
+            "imagen": "accesorios/lentes.png",
+            "categoria": "Moda"
+        },
+        {
+            "id": 2,
+            "nombre": "Nombre",
+            "imagen": "",
+            "tipo": "texto",
+            "texto": "Ingrese su nombre.",
+            "categoria": "Personalización"
+        },
+        {
+            "id": 3,
+            "nombre": "caja-herramienta",
+            "imagen": "accesorios/caja_herramientas.png",
+            "categoria": "Objetos"
+        },
+        {
+            "id": 4,
+            "nombre": "regalo",
+            "imagen": "accesorios/regalo.png",
+            "categoria": "Objetos"
+        },
+        {
+            "id": 5,
+            "nombre": "vaso de café",
+            "imagen": "accesorios/vaso_cafe.png",
+            "categoria": "Objetos"
+        },
+        {
+            "id": 6,
+            "nombre": "gato amarillo",
+            "imagen": "accesorios/gatito.png",
+            "categoria": "Animales"
+        },
+        {
+            "id": 7,
+            "nombre": "perro",
+            "imagen": "accesorios/perro.png",
+            "categoria": "Animales"
+        },
+        {
+            "id": 8,
+            "nombre": "flor",
+            "imagen": "accesorios/flores.png",
+            "categoria": "Flores "
+        }
+    ]
+}

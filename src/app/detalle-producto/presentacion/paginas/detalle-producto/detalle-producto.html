@@ -3,7 +3,7 @@
     <!-- Migas de pan -->
     <nav class="migas" aria-label="breadcrumb">
         <a routerLink="/">Inicio</a><span>/</span>
-        <a [routerLink]="rutaListado">{{ textoListado }}</a><span>/</span>
+        <a href="#" (click)="volverAtras($event)">{{ textoListado }}</a><span>/</span>
         <span class="actual">{{ p.nombre }}</span>
     </nav>
 
@@ -73,7 +73,7 @@
 
             <!-- Acciones -->
             <div class="acciones">
-                <button type="button" class="btn-comprar" [disabled]="!p.disponible" (click)="agregarAlCarrito()">
+                <button type="button" class="btn-comprar" [disabled]="!p.disponible" (click)="abrirPersonalizador()">
                     <i class="bi bi-magic"></i>Personalizar Ahora
                 </button>
                 <button type="button" class="btn-compartir" (click)="compartirAbierto.set(true)">
@@ -134,3 +134,23 @@
     </div>
     }
 </section>
+<!-- Fondo del modal -->
+@if (personalizadorAbierto()) {
+<div class="modal-personalizador">
+    <div class="modal-contenido">
+
+        <div class="modal-cabecera">
+            <h5>Personaliza tu producto</h5>
+
+            <button type="button" class="btn-cerrar" (click)="cerrarPersonalizador()" aria-label="Cerrar">
+                &times;
+            </button>
+        </div>
+
+        <div class="modal-cuerpo">
+            <app-personalizador></app-personalizador>
+        </div>
+
+    </div>
+</div>
+}

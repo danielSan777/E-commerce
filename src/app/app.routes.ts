@@ -25,6 +25,12 @@ export const routes: Routes = [
                         .then(m => m.Catalogo)
             },
             {
+                path: 'catalogo/todos-productos/personalizador',
+                loadComponent: () =>
+                    import('./personalizador/presentacion/paginas/personalizador/personalizador')
+                        .then(m => m.Personalizador)
+            },
+            {
                 path: 'catalogo/:slug',
                 loadComponent: () =>
                     import('./catalogo/presentacion/paginas/catalogo/catalogo')
