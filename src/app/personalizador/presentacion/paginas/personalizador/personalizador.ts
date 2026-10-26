@@ -232,12 +232,18 @@ export class Personalizador {
   async agregarAccesorio(accesorio: Accesorio): Promise<void> {
     if (this.esFijo(accesorio.id) || this.estaSeleccionado(accesorio.id)) return;
 
+    // Si el lugar donde iría ya está ocupado, el accesorio REEMPLAZA a otro: no se suma un
+    // accesorio más, así que no hay nada que preguntar. (Ej.: 3 accesorios en pies y centro,
+    // la cabeza vacía, y el nuevo no es de Moda: no puede ir en la cabeza, reemplaza a uno.)
+    const destinoId = this.destino(accesorio);
+    const reemplazaOtro = destinoId !== null && !!this.ocupante(destinoId);
+
     const esCuarto = this.cuenta(accesorio)
-      && this.cantidadContada() === this.ACCESORIOS_SIN_PREGUNTAR;
+      && this.cantidadContada() === this.ACCESORIOS_SIN_PREGUNTAR
+      && !reemplazaOtro;
 
     if (esCuarto) {
       // Se dice la ubicación real que quedó disponible (derecha, izquierda, centro...)
-      const destinoId = this.destino(accesorio);
       const nombreDestino = destinoId !== null ? this.ubicacion(destinoId)?.nombre : undefined;
 
       const respuesta = await Swal.fire({
