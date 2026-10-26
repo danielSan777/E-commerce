@@ -1,237 +1,183 @@
-<div class="container-fluid">
-    <h4 class="w-25  text-center">Accesorios</h4>
-    <div class="row">
+<div class="personalizador container-fluid">
+    <div class="row g-4">
 
-        <!-- ACCESORIOS -->
-        <div class="col-12 col-md-3 col-lg-3">
+        <!-- ================= PRODUCTO ================= -->
+        <div class="col-12 col-lg-6">
+            <div class="columna-visor">
+                <div class="visor" #visor>
 
-            <!-- Lista desplegable de categorías + accesorios con check -->
-            <div class="card p-3 mb-2">
+                    <!-- Fondo difuminado de la misma foto: rellena los lados en vez de dejarlos en blanco -->
+                    <img src="imagenes/maceta_vacia.png" class="maceta-fondo" alt="" aria-hidden="true">
+                    <img src="imagenes/maceta_vacia.png" class="maceta">
 
-                <label for="categoria" class="form-label fw-semibold">Categoría</label>
-                <select id="categoria" class="form-select" [ngModel]="categoriaActual()"
-                    (ngModelChange)="categoriaActual.set($event)">
-                    <option value="">Seleccione una categoría</option>
-                    @for (categoria of categorias(); track categoria) {
-                    <option [value]="categoria">{{ categoria }}</option>
-                    }
-                </select>
+                    @for (accesorio of accesoriosSeleccionados(); track accesorio.id){
 
-                @if (categoriaActual()) {
-                <div class="lista-categoria mt-3">
-                    @for (item of accesoriosDeCategoria(); track item.id) {
-                    <label class="item-categoria d-flex align-items-center gap-2">
-                        <input type="checkbox" class="form-check-input mt-0" [ngModel]="estaMarcado(item.id)"
-                            [disabled]="esFijo(item.id)" (ngModelChange)="alternarMarcado(item, $event)">
+                    @if (accesorio.tipo === 'texto'){
 
-                        @if (item.tipo === 'texto') {
-                        <canvas class="mini-canvas" [appTextoCanvas]="item.texto ?? ''"></canvas>
-                        } @else {
-                        <img class="mini-imagen" [src]="item.imagen" [alt]="item.nombre">
-                        }
-
-                        <span>{{ item.nombre }}</span>
-
-                        @if (esFijo(item.id)) {
-                        <small class="text-muted">(fijo)</small>
-                        }
-                    </label>
-                    }
-                </div>
-                }
-
-            </div>
-
-            <!-- Accesorios marcados: aquí se agregan y se quitan del visor -->
-            <div class="lista-marcados">
-
-                @if (ubicaciones().length === 0) {
-                <small class="text-muted d-block mb-2">
-                    No hay ubicaciones configuradas. Guarde la configuración desde el editor.
-                </small>
-                }
-
-                @if (accesoriosMarcados().length === 0) {
-                <small class="text-muted">Marque accesorios en la lista para verlos aquí.</small>
-                }
-
-                @for (accesorio of accesoriosMarcados(); track accesorio.id) {
-
-                <div class="card d-flex flex-column align-items-center mb-2" [id]="'tarjeta-' + accesorio.id"
-                    [class.border-primary]="reemplazoDe() === accesorio.id"
-                    [class.border-2]="reemplazoDe() === accesorio.id" [class.shadow]="reemplazoDe() === accesorio.id">
-
-                    <div class="d-flex align-items-center justify-content-center px-1 p-2" style="width: 100%;">
-
-                        @if (accesorio.tipo === 'texto') {
-                        <canvas [appTextoCanvas]="accesorio.texto ?? ''"
-                            style="width: 100%; height: 50px; display: block;"></canvas>
-                        } @else {
-                        <img [src]="accesorio.imagen" [alt]="accesorio.nombre" style="width: 25%; height: auto;">
-                        }
-
+                    <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
+                        [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
+                        [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
+                        [style.outline]="contorno(accesorio.accesorioId)"
+                        (click)="seleccionarPuesto(accesorio.accesorioId)">
+                        <div class="contenido-3d" [style.transform]="transformar(accesorio)">
+                            <canvas [appTextoCanvas]="nombreCliente() || (accesorio.texto ?? '')"></canvas>
+                        </div>
                     </div>
-                    <div>{{ accesorio.nombre }}</div>
 
-                    @if (reemplazoDe() === accesorio.id) {
-                    <small class="text-primary fw-semibold">Seleccionado</small>
-                    }
+                    } @else if (accesorio.accesorioId == 1) {
 
-                    @if (esFijo(accesorio.id)) {
-                    <small class="text-muted my-2">Elemento fijo del producto (no se puede quitar)</small>
+                    <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
+                        [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
+                        [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
+                        [style.outline]="contorno(accesorio.accesorioId)"
+                        (click)="seleccionarPuesto(accesorio.accesorioId)">
+                        <div class="contenido-3d" [style.transform]="transformar(accesorio)">
+                            @if (hayLentes()) {
+                            <canvas #canvasLentes></canvas>
+                            }
+                        </div>
+                    </div>
+
                     } @else {
 
-                    <!-- La ubicación la decide el sistema (prioridad del editor); si está llena, reemplaza -->
-                    @if (destino(accesorio) === null && !estaSeleccionado(accesorio.id)) {
-                    <small class="text-muted my-2">No hay ubicación disponible para este accesorio</small>
-                    }
-
-                    <div class="d-flex flex-wrap justify-content-center gap-2 my-2">
-                        <button type="button" class="btn btn-outline-primary" (click)="agregarAccesorio(accesorio)"
-                            [disabled]="destino(accesorio) === null || estaSeleccionado(accesorio.id)">
-                            Agregar
-                        </button>
-                        <button type="button" class="btn btn-outline-danger" (click)="quitarAccesorio(accesorio.id)"
-                            [disabled]="!estaSeleccionado(accesorio.id)">
-                            Quitar
-                        </button>
-                        @if (puedeReemplazarCon(accesorio.id)) {
-                        <button type="button" class="btn btn-primary" (click)="reemplazarPor(accesorio)">
-                            Reemplazar «{{ puestoSeleccionado()?.nombre }}» por este
-                            @if (estaSeleccionado(accesorio.id)) {
-                            <small>(cambian de lugar)</small>
-                            }
-                        </button>
-                        } @else {
-                        <button type="button" class="btn btn-outline-secondary"
-                            (click)="seleccionarPuesto(accesorio.id)" [disabled]="!estaSeleccionado(accesorio.id)">
-                            {{ reemplazoDe() === accesorio.id ? 'Cancelar selección' : 'Elegir para reemplazar' }}
-                        </button>
-                        }
-                    </div>
-                    }
-
-                    @if (accesorio.id == 1) {
-                    <div class="mt-3">
-                        <label class="form-label">Color de los lentes</label>
-
-                        <div class="d-flex gap-3">
-                            <label class="d-flex align-items-center gap-1">
-                                <input type="radio" name="colorLentes" value="negro" [(ngModel)]="colorSeleccionado"
-                                    (ngModelChange)="cambiarColorLentes($event)">
-                                <span class="color-negro"></span>
-                                Negro
-                            </label>
-
-                            <label class="d-flex align-items-center gap-1">
-                                <input type="radio" name="colorLentes" value="cafe" [(ngModel)]="colorSeleccionado"
-                                    (ngModelChange)="cambiarColorLentes($event)">
-                                <span class="color-cafe"></span>
-                                Café
-                            </label>
+                    <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
+                        [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
+                        [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
+                        [style.outline]="contorno(accesorio.accesorioId)"
+                        (click)="seleccionarPuesto(accesorio.accesorioId)">
+                        <div class="contenido-3d" [style.transform]="transformar(accesorio)">
+                            <img [src]="accesorio.imagen" [alt]="accesorio.nombre">
                         </div>
                     </div>
                     }
-                </div>
-                }
+                    }
 
-            </div>
-
-        </div>
-
-
-        <!-- PRODUCTO -->
-        <div class="col-md-9">
-            <div class="row">
-
-                <div class="col-auto">
-                    <div class="visor" #visor>
-
-                        <img src="imagenes/maceta_vacia.png" class="maceta">
-
-                        @for (accesorio of accesoriosSeleccionados(); track accesorio.id){
-
-                        @if (accesorio.tipo === 'texto'){
-
-                        <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
-                            [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
-                            [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
-                            [style.outline]="contorno(accesorio.accesorioId)"
-                            (click)="seleccionarPuesto(accesorio.accesorioId)">
-                            <div class="contenido-3d" [style.transform]="transformar(accesorio)">
-                                <canvas [appTextoCanvas]="nombreCliente() || (accesorio.texto ?? '')"></canvas>
-                            </div>
-                        </div>
-
-                        } @else if (accesorio.accesorioId == 1) {
-
-                        <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
-                            [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
-                            [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
-                            [style.outline]="contorno(accesorio.accesorioId)"
-                            (click)="seleccionarPuesto(accesorio.accesorioId)">
-                            <div class="contenido-3d" [style.transform]="transformar(accesorio)">
-                                @if (hayLentes()) {
-                                <canvas #canvasLentes></canvas>
-                                }
-                            </div>
-                        </div>
-
-                        } @else {
-
-                        <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
-                            [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
-                            [style.z-index]="capaDe(accesorio.ubicacionId)" style="cursor: pointer;"
-                            [style.outline]="contorno(accesorio.accesorioId)"
-                            (click)="seleccionarPuesto(accesorio.accesorioId)">
-                            <div class="contenido-3d" [style.transform]="transformar(accesorio)">
-                                <img [src]="accesorio.imagen" [alt]="accesorio.nombre">
-                            </div>
-                        </div>
-                        }
-                        }
-
-                    </div>
                 </div>
 
-                <!-- Al lado del visor: reemplazo del accesorio elegido y campo del nombre -->
-                <div class="col">
-
-                    @if (puestoSeleccionado(); as puesto) {
-                    <div class="card p-3 mb-3">
-                        <div class="fw-semibold mb-2">
-                            Reemplazar «{{ puesto.nombre }}»
-                            <small class="text-muted">({{ nombreUbicacion(puesto.ubicacionId) }})</small>
-                        </div>
-
-                        @if (opcionesReemplazo().length === 0) {
-                        <small class="text-muted mb-2">No hay otros accesorios disponibles para esta ubicación.</small>
-                        } @else {
-                        <small class="text-muted mb-2">
-                            Pulse «Reemplazar» en la tarjeta del accesorio que lo va a reemplazar
-                            (si no ve su tarjeta, márquelo en la lista de categorías).
-                        </small>
-                        }
-
-                        <div>
-                            <button type="button" class="btn btn-outline-secondary btn-sm"
-                                (click)="cancelarReemplazo()">
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-                    }
-
-                    @if (hayTexto()) {
+                <!-- Nombre del cliente (cuando el accesorio de texto está puesto) -->
+                @if (hayTexto()) {
+                <div class="campo-nombre">
                     <label for="nombre" class="form-label">Ingrese su nombre</label>
                     <input id="nombre" type="text" class="form-control" maxlength="30" placeholder="Escriba su nombre"
                         [ngModel]="nombreCliente()" (ngModelChange)="nombreCliente.set($event)">
-                    }
                 </div>
-
+                }
             </div>
         </div>
 
-    </div>
+        <!-- ================= SELECCIÓN ================= -->
+        <div class="col-12 col-lg-6">
 
+            <!-- Categorías -->
+            <div class="categorias" role="tablist" #listaCategorias
+                (pointerdown)="iniciarArrastre($event, listaCategorias)"
+                (pointermove)="arrastrarCategorias($event, listaCategorias)" (pointerup)="terminarArrastre()"
+                (pointerleave)="terminarArrastre()" (wheel)="ruedaCategorias($event, listaCategorias)">
+                @for (categoria of categorias(); track categoria) {
+                <button type="button" role="tab" class="categoria" [class.activa]="categoriaActual() === categoria"
+                    [attr.aria-selected]="categoriaActual() === categoria" (click)="elegirCategoria(categoria)">
+                    <span class="categoria-nombre">{{ categoria }}</span>
+                    <small>{{ cantidadEnCategoria(categoria) }} opciones</small>
+                </button>
+                }
+            </div>
+
+            <!-- Título + contador -->
+            <div class="seleccion-cabecera">
+                <h2>Selecciona un accesorio</h2>
+                <div class="contador">
+                    <span>Accesorio {{ cantidadAccesorios() }} de {{ segmentos().length }}</span>
+                    <div class="progreso">
+                        @for (s of segmentos(); track s) {
+                        <span class="segmento" [class.lleno]="s < cantidadAccesorios()"></span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @if (ubicaciones().length === 0) {
+            <small class="text-muted d-block mb-2">
+                No hay ubicaciones configuradas. Guarde la configuración desde el editor.
+            </small>
+            }
+
+            <!-- Reemplazo del accesorio elegido en el visor -->
+            @if (puestoSeleccionado(); as puesto) {
+            <div class="aviso-reemplazo">
+                <div>
+                    <strong>Reemplazar «{{ puesto.nombre }}»</strong>
+                    <small>({{ nombreUbicacion(puesto.ubicacionId) }})</small>
+                    <div class="texto-aviso">
+                        @if (opcionesReemplazo().length === 0) {
+                        No hay otros accesorios disponibles para esta ubicación.
+                        } @else {
+                        Toque el accesorio por el que lo quiere reemplazar.
+                        }
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelarReemplazo()">
+                    Cancelar
+                </button>
+            </div>
+            }
+
+            <!-- Accesorios de la categoría -->
+            <div class="rejilla">
+                @for (item of accesoriosDeCategoria(); track item.id) {
+                <button type="button" class="tarjeta" [class.elegida]="estaSeleccionado(item.id)"
+                    [class.reemplazable]="puedeReemplazarCon(item.id)" [class.apagada]="noDisponible(item)"
+                    [disabled]="esFijo(item.id) || noDisponible(item)" (click)="pulsarTarjeta(item)"
+                    [attr.aria-pressed]="estaSeleccionado(item.id)">
+
+                    @if (estaSeleccionado(item.id)) {
+                    <span class="check"><i class="bi bi-check-lg"></i></span>
+                    }
+
+                    <span class="tarjeta-imagen">
+                        @if (item.tipo === 'texto') {
+                        <canvas class="tarjeta-canvas" [appTextoCanvas]="item.texto ?? ''"></canvas>
+                        } @else {
+                        <img [src]="item.imagen" [alt]="item.nombre">
+                        }
+                    </span>
+
+                    <span class="tarjeta-nombre">{{ item.nombre }}</span>
+                    <small class="tarjeta-estado">
+                        @if (esFijo(item.id)) { Fijo }
+                        @else if (puedeReemplazarCon(item.id)) { Reemplazar }
+                        @else if (noDisponible(item)) { No disponible }
+                        @else if (estaSeleccionado(item.id)) { Agregado }
+                        @else { Agregar }
+                    </small>
+                </button>
+                } @empty {
+                <p class="text-muted">No hay accesorios en esta categoría.</p>
+                }
+            </div>
+
+            <!-- Color de los lentes (solo si están puestos) -->
+            @if (hayLentes()) {
+            <div class="color-lentes">
+                <label class="form-label">Color de los lentes</label>
+
+                <div class="d-flex gap-3">
+                    <label class="d-flex align-items-center gap-1">
+                        <input type="radio" name="colorLentes" value="negro" [(ngModel)]="colorSeleccionado"
+                            (ngModelChange)="cambiarColorLentes($event)">
+                        <span class="color-negro"></span>
+                        Negro
+                    </label>
+
+                    <label class="d-flex align-items-center gap-1">
+                        <input type="radio" name="colorLentes" value="cafe" [(ngModel)]="colorSeleccionado"
+                            (ngModelChange)="cambiarColorLentes($event)">
+                        <span class="color-cafe"></span>
+                        Café
+                    </label>
+                </div>
+            </div>
+            }
+
+        </div>
+    </div>
 </div>

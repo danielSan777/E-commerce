@@ -53,6 +53,8 @@ export class Personalizador {
 
   private platformId = inject(PLATFORM_ID);
 
+  private anfitrion = inject(ElementRef<HTMLElement>);
+
 
 
   @ViewChild('canvasLentes')
@@ -240,11 +242,18 @@ export class Personalizador {
 
       const respuesta = await Swal.fire({
         title: '¿Desea agregar un cuarto accesorio?',
-        text: nombreDestino ? `Se colocará en: ${nombreDestino}.` : '',
+        text: /* nombreDestino ? `Se colocará en: ${nombreDestino}.` : '' */"",
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Sí, agregar',
-        cancelButtonText: 'No'
+        cancelButtonText: 'No',
+        // Si el personalizador está dentro de un modal, la pregunta se dibuja dentro de ese modal
+        // (si no, queda detrás de él) y siempre por encima
+        target: this.contenedorDePregunta(),
+        didOpen: () => {
+          const contenedor = Swal.getContainer();
+          if (contenedor) contenedor.style.zIndex = '99999';
+        }
       });
 
       if (!respuesta.isConfirmed) return;
@@ -256,6 +265,101 @@ export class Personalizador {
     this.colocar(accesorio);
   }
 
+
+  // ==========================================
+  // PANEL NUEVO: contador, categorías y tarjetas
+  // ==========================================
+
+  // "Accesorio X de 3": cuántos accesorios (que cuentan) lleva puestos
+  readonly maximoAccesorios = 3;
+
+  cantidadAccesorios = computed(() =>
+    this.accesoriosSeleccionados().filter(
+      a => this.cuenta(a) && !this.esFijo(a.accesorioId)
+    ).length
+  );
+
+  // Segmentos de la barra de progreso (3, o más si agregó un cuarto)
+  segmentos = computed(() =>
+    Array.from({ length: Math.max(this.maximoAccesorios, this.cantidadAccesorios()) }, (_, i) => i)
+  );
+
+  cantidadEnCategoria(categoria: string): number {
+    return this.catalogo().filter(a => (a.categoria ?? 'Otros') === categoria).length;
+  }
+
+  // Elemento donde se dibuja la pregunta: el modal que contiene al personalizador (o el body)
+  private contenedorDePregunta(): HTMLElement {
+    const host = this.anfitrion.nativeElement as HTMLElement;
+    return (host.closest(
+      'dialog, .modal, [role="dialog"], mat-dialog-container, .cdk-overlay-pane'
+    ) as HTMLElement | null) ?? document.body;
+  }
+
+  // ----- Categorías: se desplazan arrastrando con el mouse o con la rueda -----
+  private arrastrandoCategorias = false;
+  private huboArrastre = false;
+  private inicioX = 0;
+  private inicioScroll = 0;
+
+  iniciarArrastre(evento: PointerEvent, lista: HTMLElement): void {
+    if (evento.pointerType !== 'mouse') return; // en táctil el desplazamiento ya es nativo
+    this.arrastrandoCategorias = true;
+    this.huboArrastre = false;
+    this.inicioX = evento.clientX;
+    this.inicioScroll = lista.scrollLeft;
+  }
+
+  arrastrarCategorias(evento: PointerEvent, lista: HTMLElement): void {
+    if (!this.arrastrandoCategorias) return;
+    const desplazado = evento.clientX - this.inicioX;
+    if (Math.abs(desplazado) > 5) this.huboArrastre = true;
+    lista.scrollLeft = this.inicioScroll - desplazado;
+  }
+
+  terminarArrastre(): void {
+    this.arrastrandoCategorias = false;
+  }
+
+  // La rueda del mouse mueve la lista de lado
+  ruedaCategorias(evento: WheelEvent, lista: HTMLElement): void {
+    if (lista.scrollWidth <= lista.clientWidth || Math.abs(evento.deltaX) > Math.abs(evento.deltaY)) return;
+    const antes = lista.scrollLeft;
+    lista.scrollLeft += evento.deltaY;
+    if (lista.scrollLeft !== antes) evento.preventDefault();
+  }
+
+  elegirCategoria(categoria: string): void {
+    if (this.huboArrastre) { this.huboArrastre = false; return; } // fue un arrastre, no un clic
+    this.categoriaActual.set(categoria);
+  }
+
+  // true si el accesorio no se puede poner (sin ubicación) y todavía no está puesto
+  noDisponible(accesorio: Accesorio): boolean {
+    return !this.esFijo(accesorio.id)
+      && !this.estaSeleccionado(accesorio.id)
+      && this.destino(accesorio) === null;
+  }
+
+  // Clic en una tarjeta: reemplaza (si hay uno elegido para reemplazar), quita o agrega.
+  // Al agregar el cuarto accesorio, agregarAccesorio hace la pregunta.
+  async pulsarTarjeta(accesorio: Accesorio): Promise<void> {
+    if (this.esFijo(accesorio.id)) return;
+
+    if (this.puedeReemplazarCon(accesorio.id)) {
+      this.reemplazarPor(accesorio);
+      return;
+    }
+
+    if (this.estaSeleccionado(accesorio.id)) {
+      this.quitarAccesorio(accesorio.id);
+      return;
+    }
+
+    if (this.noDisponible(accesorio)) return;
+
+    await this.agregarAccesorio(accesorio);
+  }
 
   quitarAccesorio(id: number): void {
     // Los elementos fijos no se quitan
