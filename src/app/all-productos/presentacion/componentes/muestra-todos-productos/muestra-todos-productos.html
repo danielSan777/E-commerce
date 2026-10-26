@@ -232,7 +232,7 @@
                 [class.cols-4]="vista() === 4" [class.lista]="vista()==='lista'">
                 @for (p of productosFiltrados(); track p.id){
                 <article class="producto">
-                    <a [routerLink]="['/catalogo/todos-productos',p.nombre]" class="producto-img">
+                    <a [routerLink]="['/catalogo/todos-productos',p.slug]" class="producto-img">
                         <img [src]="p.imagen" [alt]="p.nombre" loading="lazy" />
 
                         @if(p.precioAnterior){

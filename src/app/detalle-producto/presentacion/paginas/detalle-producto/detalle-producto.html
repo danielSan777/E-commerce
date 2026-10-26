@@ -74,7 +74,7 @@
             <!-- Acciones -->
             <div class="acciones">
                 <button type="button" class="btn-comprar" [disabled]="!p.disponible" (click)="agregarAlCarrito()">
-                    <i class="bi bi-cart3"></i> Agregar al carrito
+                    <i class="bi bi-magic"></i>Personalizar Ahora
                 </button>
                 <button type="button" class="btn-compartir" (click)="compartirAbierto.set(true)">
                     <i class="bi bi-share"></i> Compartir
@@ -88,7 +88,7 @@
     </div>
 
     <!-- ============ MODAL COMPARTIR ============ -->
-    @if (compartirAbierto()) {
+    @if(compartirAbierto()){
     <div class="modal-fondo" (click)="compartirAbierto.set(false)">
         <div class="modal-compartir" (click)="$event.stopPropagation()" role="dialog" aria-label="Compartir">
             <button type="button" class="modal-cerrar" (click)="compartirAbierto.set(false)" aria-label="Cerrar">

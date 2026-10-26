@@ -11,6 +11,7 @@ import { productos } from '../../../../all-productos/dominio/muestra_producto';
   styleUrl: './detalle-producto.css',
   templateUrl: './detalle-producto.html',
 })
+
 export class DetalleProducto {
   private route = inject(ActivatedRoute);
   private document = inject(DOCUMENT);
@@ -29,7 +30,7 @@ export class DetalleProducto {
   nombre = computed(() => this.parametros().get('producto'));
 
   producto = computed<Producto | undefined>(() =>
-    productos.find(p => p.nombre === this.nombre())
+    productos.find(p => p.slug === this.nombre())
   );
 
   // Dedicatoria
