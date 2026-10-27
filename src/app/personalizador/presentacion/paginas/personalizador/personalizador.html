@@ -5,12 +5,16 @@
         <div class="col-12 col-lg-6">
             <div class="columna-visor">
                 <!-- Marco: en celular es más bajo y ancho; el visor cuadrado queda centrado dentro -->
-                <div class="visor-marco" [class.ampliado]="ampliado()">
+                <div class="visor-marco" #marco [class.con-zoom]="zoom() > 1" (wheel)="ruedaZoom($event, marco)"
+                    (pointerdown)="iniciarGesto($event, marco)" (pointermove)="moverGesto($event, marco)"
+                    (pointerup)="terminarGesto($event, marco)" (pointercancel)="terminarGesto($event, marco)"
+                    (dragstart)="$event.preventDefault()">
 
                     <!-- Fondo difuminado de la misma foto: rellena los lados en vez de dejarlos en blanco -->
                     <img src="imagenes/maceta_vacia.png" class="maceta-fondo" alt="" aria-hidden="true">
 
-                    <div class="visor" #visor>
+                    <div class="visor" #visor [style.transform]="transformVisor()"
+                        [style.transition]="gesto() ? 'none' : 'transform .2s ease-out'">
 
                         <img src="imagenes/maceta_vacia.png" class="maceta">
 
@@ -58,11 +62,17 @@
 
                     </div>
 
-                    <!-- Lupa: amplía el visor a pantalla completa -->
-                    <button type="button" class="btn-zoom" (click)="ampliado.set(!ampliado())"
-                        [attr.aria-label]="ampliado() ? 'Cerrar vista ampliada' : 'Ampliar imagen'">
-                        <i class="bi" [class.bi-zoom-in]="!ampliado()" [class.bi-x-lg]="ampliado()"></i>
-                    </button>
+                    <!-- Zoom: botones + y −. También con la rueda del mouse o pellizcando con los dedos -->
+                    <div class="zoom-controles">
+                        <button type="button" (click)="acercar(marco)" [disabled]="zoom() >= zoomMax"
+                            aria-label="Acercar">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                        <button type="button" (click)="alejar(marco)" [disabled]="zoom() <= zoomMin"
+                            aria-label="Alejar">
+                            <i class="bi bi-dash-lg"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -458,8 +458,179 @@ export class Personalizador implements OnDestroy {
     this.dedicatoria.set((evento.target as HTMLTextAreaElement).value.slice(0, this.maxDedicatoria));
   }
 
-  // Imagen del visor ampliada a pantalla completa (botón de la lupa)
-  ampliado = signal(false);
+  // ==========================================
+  // ZOOM DEL VISOR: botones + / −, rueda del mouse y pellizco con los dedos
+  // ==========================================
+  // Se escala todo el visor (foto + accesorios), así los accesorios siguen en su sitio.
+
+  readonly zoomMin = 1;
+  readonly zoomMax = 3;
+
+  zoom = signal(1);
+  panX = signal(0);   // desplazamiento en px (solo cuando hay zoom)
+  panY = signal(0);
+  gesto = signal(false); // true mientras se arrastra o se pellizca (sin transición)
+
+  transformVisor = computed(() =>
+    `translate(${this.panX()}px, ${this.panY()}px) scale(${this.zoom()})`
+  );
+
+  private punteros = new Map<number, { x: number; y: number }>();
+  private distanciaPrevia = 0;
+  private centroPrevio = { x: 0, y: 0 };
+  private inicioToque = { x: 0, y: 0 };
+  private huboMovimiento = false;
+
+  // Fija zoom y desplazamiento, sin dejar que la foto se salga del marco
+  private fijarZoom(marco: HTMLElement, z: number, x: number, y: number): void {
+    if (z <= 1.001) {
+      this.zoom.set(1);
+      this.panX.set(0);
+      this.panY.set(0);
+      return;
+    }
+
+    const visor = this.visor?.nativeElement;
+    const ancho = visor?.offsetWidth ?? marco.clientWidth;
+    const alto = visor?.offsetHeight ?? marco.clientHeight;
+    const maxX = Math.max(0, (ancho * z - marco.clientWidth) / 2);
+    const maxY = Math.max(0, (alto * z - marco.clientHeight) / 2);
+
+    this.zoom.set(z);
+    this.panX.set(Math.min(maxX, Math.max(-maxX, x)));
+    this.panY.set(Math.min(maxY, Math.max(-maxY, y)));
+  }
+
+  private limitarZoom(z: number): number {
+    return Math.min(this.zoomMax, Math.max(this.zoomMin, z));
+  }
+
+  // Cambia el zoom manteniendo fijo el punto (px, py), medido desde el centro del marco
+  private zoomAlrededor(marco: HTMLElement, nuevoZoom: number, px: number, py: number): void {
+    const z0 = this.zoom();
+    const z1 = this.limitarZoom(nuevoZoom);
+    if (z1 === z0) return;
+
+    const ux = (px - this.panX()) / z0;
+    const uy = (py - this.panY()) / z0;
+    this.fijarZoom(marco, z1, px - ux * z1, py - uy * z1);
+  }
+
+  acercar(marco: HTMLElement): void {
+    this.zoomAlrededor(marco, this.zoom() * 1.4, 0, 0);
+  }
+
+  alejar(marco: HTMLElement): void {
+    this.zoomAlrededor(marco, this.zoom() / 1.4, 0, 0);
+  }
+
+  // Rueda del mouse (o pellizco del touchpad): acerca o aleja donde está el cursor
+  ruedaZoom(evento: WheelEvent, marco: HTMLElement): void {
+    evento.preventDefault();
+
+    const r = marco.getBoundingClientRect();
+    const px = evento.clientX - (r.left + r.width / 2);
+    const py = evento.clientY - (r.top + r.height / 2);
+    const delta = evento.deltaMode === 1 ? evento.deltaY * 16 : evento.deltaY;
+
+    this.zoomAlrededor(marco, this.zoom() * Math.exp(-delta * 0.0015), px, py);
+  }
+
+  // Centro del marco y medidas de los dedos puestos (para el pellizco)
+  private medirPunteros(marco: HTMLElement): { distancia: number; x: number; y: number } {
+    const r = marco.getBoundingClientRect();
+    const [a, b] = [...this.punteros.values()];
+
+    return {
+      distancia: Math.hypot(a.x - b.x, a.y - b.y),
+      x: (a.x + b.x) / 2 - (r.left + r.width / 2),
+      y: (a.y + b.y) / 2 - (r.top + r.height / 2),
+    };
+  }
+
+  iniciarGesto(evento: PointerEvent, marco: HTMLElement): void {
+    if ((evento.target as HTMLElement).closest('.zoom-controles')) return;
+    if (evento.pointerType === 'mouse' && evento.button !== 0) return;
+
+    this.punteros.set(evento.pointerId, { x: evento.clientX, y: evento.clientY });
+
+    if (this.punteros.size === 1) {
+      this.inicioToque = { x: evento.clientX, y: evento.clientY };
+      this.huboMovimiento = false;
+    }
+
+    if (this.punteros.size === 2) {
+      const m = this.medirPunteros(marco);
+      this.distanciaPrevia = m.distancia;
+      this.centroPrevio = { x: m.x, y: m.y };
+      this.huboMovimiento = true;
+      this.gesto.set(true);
+    }
+  }
+
+  moverGesto(evento: PointerEvent, marco: HTMLElement): void {
+    const puntero = this.punteros.get(evento.pointerId);
+    if (!puntero) return;
+
+    const anteriorX = puntero.x;
+    const anteriorY = puntero.y;
+    puntero.x = evento.clientX;
+    puntero.y = evento.clientY;
+
+    // Dos dedos: pellizco (zoom) y desplazamiento a la vez
+    if (this.punteros.size >= 2) {
+      const m = this.medirPunteros(marco);
+
+      if (this.distanciaPrevia > 0) {
+        const z0 = this.zoom();
+        const z1 = this.limitarZoom(z0 * m.distancia / this.distanciaPrevia);
+        const ux = (this.centroPrevio.x - this.panX()) / z0;
+        const uy = (this.centroPrevio.y - this.panY()) / z0;
+        this.fijarZoom(marco, z1, m.x - ux * z1, m.y - uy * z1);
+      }
+
+      this.distanciaPrevia = m.distancia;
+      this.centroPrevio = { x: m.x, y: m.y };
+      return;
+    }
+
+    // Un dedo o el mouse: arrastrar la foto, solo si hay zoom
+    if (this.zoom() <= 1) return;
+
+    if (!this.huboMovimiento) {
+      const lejos = Math.hypot(evento.clientX - this.inicioToque.x, evento.clientY - this.inicioToque.y);
+      if (lejos < 5) return; // todavía es un toque, no un arrastre
+
+      this.huboMovimiento = true;
+      this.gesto.set(true);
+      try { marco.setPointerCapture(evento.pointerId); } catch { /* no pasa nada */ }
+    }
+
+    this.fijarZoom(
+      marco,
+      this.zoom(),
+      this.panX() + (evento.clientX - anteriorX),
+      this.panY() + (evento.clientY - anteriorY)
+    );
+  }
+
+  terminarGesto(evento: PointerEvent, marco: HTMLElement): void {
+    if (!this.punteros.delete(evento.pointerId)) return;
+
+    if (this.punteros.size < 2) this.distanciaPrevia = 0;
+    if (this.punteros.size > 0) return;
+
+    this.gesto.set(false);
+
+    // Si fue un arrastre o un pellizco, el "clic" que sigue no debe seleccionar un accesorio
+    if (this.huboMovimiento) {
+      const bloquear = (e: Event) => e.stopPropagation();
+      marco.addEventListener('click', bloquear, true);
+      setTimeout(() => marco.removeEventListener('click', bloquear, true));
+    }
+
+    this.huboMovimiento = false;
+  }
 
   // Botón "Guardar y continuar": entrega todo lo elegido a quien use este componente
   readonly guardar = output<ConfiguracionPersonalizada>();

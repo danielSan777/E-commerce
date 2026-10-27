@@ -43,6 +43,18 @@
     background: #fff;
     box-shadow: 0 6px 22px rgba(60, 40, 20, .15);
     isolation: isolate;
+    /* El zoom con los dedos y el arrastre los maneja el componente, no el navegador */
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.visor-marco.con-zoom {
+    cursor: grab;
+}
+
+.visor-marco img {
+    -webkit-user-drag: none;
 }
 
 .visor {
@@ -51,6 +63,7 @@
     position: relative;
     overflow: hidden;
     isolation: isolate;
+    transform-origin: center center;
 }
 
 .maceta {
@@ -475,14 +488,20 @@
     color: #8a7662;
 }
 
-/* ================= LUPA ================= */
-.btn-zoom {
+/* ================= ZOOM (+ / −) ================= */
+.zoom-controles {
     position: absolute;
     right: 10px;
     bottom: 10px;
     z-index: 5;
-    width: 36px;
-    height: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.zoom-controles button {
+    width: 34px;
+    height: 34px;
     display: grid;
     place-items: center;
     background: #fff;
@@ -490,23 +509,12 @@
     border-radius: 50%;
     box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
     color: var(--texto);
+    font-size: 1rem;
 }
 
-.visor-marco.ampliado {
-    position: fixed;
-    inset: 0;
-    z-index: 3000;
-    max-width: none;
-    height: 100dvh;
-    border-radius: 0;
-    display: flex;
-    justify-content: center;
-}
-
-.visor-marco.ampliado .visor {
-    flex: none;
-    width: auto;
-    height: 100%;
+.zoom-controles button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
 }
 
 /* ================= GUARDAR ================= */
@@ -725,11 +733,6 @@
         flex: none;
         width: auto;
         height: 100%;
-    }
-
-    .visor-marco.ampliado {
-        height: 100dvh;
-        border-radius: 0;
     }
 
     .campo-nombre {
