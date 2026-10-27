@@ -84,7 +84,8 @@
             <div class="pestanas" role="tablist">
                 @for (p of pestanas; track p.id) {
                 <button type="button" role="tab" class="pestana" [class.activa]="pestana() === p.id"
-                    [attr.aria-selected]="pestana() === p.id" (click)="elegirPestana(p.id)">
+                    [class.guardada]="estaGuardada(p.id)" [attr.aria-selected]="pestana() === p.id"
+                    (click)="elegirPestana(p.id)">
                     <i class="bi" [class]="p.icono"></i>
                     <span class="pestana-titulo">{{ p.titulo }}</span>
                     @if (p.subtitulo) {
@@ -105,7 +106,7 @@
             <div class="hoja-fondo" (click)="cerrarHoja()"></div>
             }
 
-            <section class="panel" [class.abierta]="hojaAbierta()">
+            <section class="panel" [class.abierta]="hojaAbierta()" [style.--hoja-top]="hojaTop() + 'px'">
 
                 <!-- Cabecera del panel -->
                 <div class="panel-cabecera">
@@ -159,7 +160,7 @@
                 <div class="campo-nombre">
                     <label for="nombre" class="form-label">Ingrese su nombre</label>
                     <input id="nombre" type="text" class="form-control" maxlength="30" placeholder="Escriba su nombre"
-                        [ngModel]="nombreCliente()" (ngModelChange)="nombreCliente.set($event)">
+                        [ngModel]="nombreCliente()" (ngModelChange)="cambiarNombre($event)">
                 </div>
                 } @else {
                 <ng-container *ngTemplateOutlet="rejillaTpl; context: { $implicit: accesoriosPersonalizacion() }" />
@@ -212,10 +213,23 @@
                 <ng-container *ngTemplateOutlet="rejillaTpl; context: { $implicit: accesoriosDeCategoria() }" />
                 }
 
-                <!-- ===== MARCO DORADO (subir foto) ===== -->
+                <!-- ===== MARCO DORADO: texto (60) O foto ===== -->
                 @case ('marco') {
                 <input #archivoMarco type="file" accept="image/*" hidden (change)="elegirFotoMarco($event)" />
-                <div class="zona-foto" [class.con-foto]="fotoMarcoUrl()">
+
+                <div class="caja-dedicatoria">
+                    <textarea id="textoMarco" rows="2" [maxLength]="maxTextoMarco" [value]="textoMarco()"
+                        [disabled]="!!fotoMarcoUrl()" placeholder="Escribe el texto del marco (hasta 60 caracteres)"
+                        (input)="escribirTextoMarco($event)"></textarea>
+                    <span class="contador-texto">{{ textoMarco().length }}/{{ maxTextoMarco }}</span>
+                </div>
+                @if (fotoMarcoUrl()) {
+                <small class="ayuda-bloqueo">Quita la foto para poder escribir un texto.</small>
+                }
+
+                <p class="separador-o"><span>o</span></p>
+
+                <div class="zona-foto" [class.con-foto]="fotoMarcoUrl()" [class.bloqueada]="textoMarco().trim()">
                     @if (fotoMarcoUrl(); as url) {
                     <img [src]="url" alt="Tu foto" class="foto-previa" />
                     <div class="foto-acciones">
@@ -224,7 +238,7 @@
                         <button type="button" class="btn-gris" (click)="quitarFotoMarco(archivoMarco)">Quitar</button>
                     </div>
                     } @else {
-                    <button type="button" class="btn-gris" (click)="archivoMarco.click()">Elegir foto</button>
+                    <button type="button" class="btn-gris" (click)="pedirFotoMarco(archivoMarco)">Subir foto</button>
                     }
                 </div>
                 @if (errorFotoMarco()) {
@@ -232,16 +246,46 @@
                 }
                 }
 
-                <!-- ===== DEDICATORIA (caja de texto) ===== -->
+                <!-- ===== TARJETA DEDICATORIA: foto Y frase (200) ===== -->
                 @case ('dedicatoria') {
-                <div class="caja-dedicatoria">
+                <input #archivoTarjeta type="file" accept="image/*" hidden (change)="elegirFotoTarjeta($event)" />
+
+                <div class="zona-foto" [class.con-foto]="fotoTarjetaUrl()">
+                    @if (fotoTarjetaUrl(); as url) {
+                    <img [src]="url" alt="Tu foto" class="foto-previa" />
+                    <div class="foto-acciones">
+                        <span class="foto-nombre">{{ fotoTarjetaNombre() }}</span>
+                        <button type="button" class="btn-gris" (click)="archivoTarjeta.click()">Cambiar</button>
+                        <button type="button" class="btn-gris"
+                            (click)="quitarFotoTarjeta(archivoTarjeta)">Quitar</button>
+                    </div>
+                    } @else {
+                    <button type="button" class="btn-gris" (click)="archivoTarjeta.click()">Subir foto</button>
+                    }
+                </div>
+                @if (errorFotoTarjeta()) {
+                <p class="error-foto">{{ errorFotoTarjeta() }}</p>
+                }
+
+                <div class="caja-dedicatoria separada">
                     <textarea id="dedicatoria" rows="4" [maxLength]="maxDedicatoria" [value]="dedicatoria()"
-                        placeholder="Escribe tu mensaje" (input)="escribirDedicatoria($event)"></textarea>
+                        placeholder="Escribe tu frase (hasta 200 caracteres)"
+                        (input)="escribirDedicatoria($event)"></textarea>
                     <span class="contador-texto">{{ dedicatoria().length }}/{{ maxDedicatoria }}</span>
                 </div>
                 }
 
                 }
+
+                <!-- Continuar: guarda lo elegido en esta opción -->
+                @if (errorPanel()) {
+                <p class="error-foto error-panel" role="alert">{{ errorPanel() }}</p>
+                }
+                <div class="continuar-fila">
+                    <button type="button" class="btn-guardar" (click)="continuarPestana()">
+                        Continuar <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
             </section>
         </div>
     </div>

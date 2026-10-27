@@ -8,6 +8,8 @@
     --tarjeta: #fefbf4;
     --panel: #fefbf6;
     --borde-suave: #f3ead9;
+    --azul: #1565d8;
+    --azul-claro: #e8f0fd;
     display: block;
     background: var(--crema);
     color: var(--texto);
@@ -181,6 +183,18 @@
 .pestana.activa small,
 .pestana.activa .pestana-titulo {
     color: var(--verde);
+}
+
+/* Opción ya guardada con "Continuar": azul (gana al verde de "activa") */
+.pestana.guardada {
+    background: var(--azul-claro);
+    border-color: var(--azul);
+}
+
+.pestana.guardada i,
+.pestana.guardada small,
+.pestana.guardada .pestana-titulo {
+    color: var(--azul);
 }
 
 /* ================= PANEL ================= */
@@ -459,6 +473,39 @@
     color: #b02a37;
 }
 
+.zona-foto.bloqueada .btn-gris {
+    opacity: .55;
+}
+
+.separador-o {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+    font-size: .8rem;
+    color: #8a7662;
+}
+
+.separador-o::before,
+.separador-o::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--borde-suave);
+}
+
+.ayuda-bloqueo {
+    display: block;
+    margin-top: 6px;
+    font-size: .78rem;
+    color: #8a7662;
+}
+
+/* ================= CONTINUAR ================= */
+.continuar-fila {
+    margin-top: 14px;
+}
+
 /* ================= DEDICATORIA ================= */
 .caja-dedicatoria {
     position: relative;
@@ -478,6 +525,16 @@
 .caja-dedicatoria textarea:focus {
     outline: none;
     border-color: var(--verde);
+}
+
+.caja-dedicatoria textarea:disabled {
+    background: #f3efe6;
+    color: #8a7662;
+    cursor: not-allowed;
+}
+
+.caja-dedicatoria.separada {
+    margin-top: 12px;
 }
 
 .contador-texto {
@@ -660,9 +717,10 @@
         bottom: 0;
         z-index: 2500;
         margin: 0;
-        max-height: 80dvh;
+        /* Empieza justo debajo de la imagen (la posición la calcula el componente) */
+        top: var(--hoja-top, 45dvh);
         overflow-y: auto;
-        padding: 18px 16px 24px;
+        padding: 18px 16px 0;
         background: var(--panel);
         border: 0;
         border-radius: 20px 20px 0 0;
@@ -672,6 +730,15 @@
 
     .panel.abierta .panel-cabecera {
         padding-right: 40px;
+    }
+
+    /* El botón Continuar queda fijo abajo de la hoja */
+    .panel.abierta .continuar-fila {
+        position: sticky;
+        bottom: 0;
+        margin: 14px -16px 0;
+        padding: 10px 16px 16px;
+        background: var(--panel);
     }
 
     .btn-cerrar-hoja {

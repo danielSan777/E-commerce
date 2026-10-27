@@ -26,8 +26,10 @@ export interface ConfiguracionPersonalizada {
   accesorios: AccesorioColocado[];
   nombre: string;
   colorLentes: string;
-  dedicatoria: string;
-  fotoMarco: File | null;
+  dedicatoria: string;       // frase de la tarjeta dedicatoria
+  fotoDedicatoria: File | null; // foto de la tarjeta dedicatoria
+  textoMarco: string;        // texto del marco dorado (alternativa a la foto)
+  fotoMarco: File | null;    // foto del marco dorado (alternativa al texto)
 }
 
 @Component({
@@ -62,6 +64,9 @@ export class Personalizador implements OnDestroy {
 
   @ViewChild('visor')
   visor!: ElementRef<HTMLDivElement>;
+
+  @ViewChild('marco')
+  marcoRef?: ElementRef<HTMLElement>;
 
   nombreCliente = signal('');
 
@@ -247,6 +252,7 @@ export class Personalizador implements OnDestroy {
       ...lista.filter(s => s.ubicacionId !== ubicacionId),
       nuevo
     ]);
+    this.invalidarPorCategoria(accesorio.categoria);
   }
 
   // Botón "Agregar". Si va a ser el cuarto accesorio (el del centro), antes se pregunta.
@@ -333,11 +339,11 @@ export class Personalizador implements OnDestroy {
     },
     {
       id: 'marco', titulo: 'Marco dorado', subtitulo: 'Foto o frase', icono: 'bi-image',
-      ayuda: 'Sube la foto para tu marco dorado.'
+      ayuda: 'Escribe un texto o sube una foto. Solo puedes elegir una de las dos.'
     },
     {
-      id: 'dedicatoria', titulo: 'Dedicatoria', subtitulo: 'Escribe su mensaje', icono: 'bi-card-text',
-      ayuda: 'Escribe el mensaje de tu dedicatoria.'
+      id: 'dedicatoria', titulo: 'Tarjeta dedicatoria', subtitulo: 'Foto y frase', icono: 'bi-card-text',
+      ayuda: 'Sube una foto y escribe una frase. Necesitas las dos.'
     },
   ];
 
@@ -351,6 +357,19 @@ export class Personalizador implements OnDestroy {
   // En pantallas medias y grandes el panel se ve siempre en su lugar.
   hojaAbierta = signal(false);
 
+  // Distancia desde arriba donde empieza la hoja: justo debajo de la imagen del visor,
+  // así la hoja ocupa todo el alto que queda hasta abajo de la pantalla
+  hojaTop = signal(300);
+
+  private abrirHoja(): void {
+    const marco = this.marcoRef?.nativeElement;
+    if (marco && typeof window !== 'undefined') {
+      const bajoImagen = Math.round(marco.getBoundingClientRect().bottom + 8);
+      this.hojaTop.set(Math.min(bajoImagen, Math.round(window.innerHeight * 0.55)));
+    }
+    this.hojaAbierta.set(true);
+  }
+
   cerrarHoja(): void {
     this.hojaAbierta.set(false);
     this.cancelarReemplazo();
@@ -358,13 +377,98 @@ export class Personalizador implements OnDestroy {
 
   elegirPestana(id: IdPestana): void {
     this.cancelarReemplazo();
+    this.errorPanel.set('');
     this.pestana.set(id);
-    this.hojaAbierta.set(true);
+    this.abrirHoja();
 
     // En "Accesorios" la categoría elegida debe ser una de sus categorías
     if (id === 'accesorios' && !this.categoriasAccesorios().includes(this.categoriaActual())) {
       this.categoriaActual.set(this.categoriasAccesorios()[0] ?? '');
     }
+  }
+
+  // ==========================================
+  // CONTINUAR: guarda lo elegido en cada opción y la pone en azul
+  // ==========================================
+
+  guardadas = signal<ReadonlySet<IdPestana>>(new Set());
+  errorPanel = signal('');
+
+  estaGuardada(id: IdPestana): boolean {
+    return this.guardadas().has(id);
+  }
+
+  // Si el cliente cambia algo de una opción ya guardada, deja de estar guardada
+  private invalidarGuardado(id: IdPestana): void {
+    if (!this.guardadas().has(id)) return;
+
+    this.guardadas.update(conjunto => {
+      const nuevo = new Set(conjunto);
+      nuevo.delete(id);
+      return nuevo;
+    });
+  }
+
+  private invalidarPorCategoria(categoria: string | undefined): void {
+    const c = categoria ?? 'Otros';
+    this.invalidarGuardado(
+      c === this.CATEGORIA_MODA ? 'lentes' : c === this.CATEGORIA_PERSONALIZACION ? 'nombre' : 'accesorios'
+    );
+  }
+
+  // Mensaje de error si la opción todavía no se puede guardar ('' = todo bien)
+  private errorDePestana(id: IdPestana): string {
+    const lista = this.accesoriosSeleccionados();
+
+    switch (id) {
+      case 'nombre':
+        if (!this.hayTexto()) return 'Primero elige el nombre en la lista.';
+        return this.nombreCliente().trim() ? '' : 'Escribe tu nombre para continuar.';
+
+      case 'lentes':
+        return lista.some(a => (a.categoria ?? 'Otros') === this.CATEGORIA_MODA)
+          ? '' : 'Elige unos lentes o gafas para continuar.';
+
+      case 'accesorios':
+        return lista.some(a => {
+          const c = a.categoria ?? 'Otros';
+          return c !== this.CATEGORIA_MODA && c !== this.CATEGORIA_PERSONALIZACION && !this.esFijo(a.accesorioId);
+        }) ? '' : 'Elige al menos un accesorio para continuar.';
+
+      case 'marco':
+        return this.textoMarco().trim() || this.fotoMarcoArchivo
+          ? '' : 'Escribe un texto o sube una foto para continuar.';
+
+      case 'dedicatoria': {
+        const hayFoto = !!this.fotoTarjetaArchivo;
+        const hayFrase = this.dedicatoria().trim().length > 0;
+        if (!hayFoto && !hayFrase) return 'Sube una foto y escribe una frase para continuar.';
+        if (!hayFoto) return 'Falta la foto: la tarjeta lleva una foto y una frase.';
+        if (!hayFrase) return 'Falta la frase: la tarjeta lleva una foto y una frase.';
+        return '';
+      }
+    }
+  }
+
+  // Botón "Continuar" de cada opción
+  continuarPestana(): void {
+    const id = this.pestana();
+    const error = this.errorDePestana(id);
+
+    if (error) {
+      this.errorPanel.set(error);
+      return;
+    }
+
+    this.errorPanel.set('');
+    this.guardadas.update(conjunto => new Set(conjunto).add(id));
+    this.cerrarHoja();
+  }
+
+  cambiarNombre(texto: string): void {
+    this.nombreCliente.set(texto);
+    this.errorPanel.set('');
+    this.invalidarGuardado('nombre');
   }
 
   // Categorías de la pestaña "Accesorios": todas menos Moda (va en "Lentes / Gafas")
@@ -405,36 +509,67 @@ export class Personalizador implements OnDestroy {
     return 'Agregar';
   }
 
-  // Pestaña "Marco dorado": subir una foto
+  // Valida un archivo de imagen ('' = correcto)
+  private errorDeImagen(archivo: File): string {
+    if (!archivo.type.startsWith('image/')) return 'Elige un archivo de imagen.';
+    if (archivo.size > this.maxMbFoto * 1024 * 1024) return `La imagen no debe pesar más de ${this.maxMbFoto} MB.`;
+    return '';
+  }
+
+  readonly maxMbFoto = 5;
+
+  // ----- Marco dorado: un texto (hasta 60 caracteres) O una foto, no las dos -----
+  readonly maxTextoMarco = 60;
+  textoMarco = signal('');
+
   fotoMarcoUrl = signal<string | null>(null);
   fotoMarcoNombre = signal('');
   errorFotoMarco = signal('');
   private fotoMarcoArchivo: File | null = null;
-  readonly maxMbFoto = 5;
+
+  escribirTextoMarco(evento: Event): void {
+    this.textoMarco.set((evento.target as HTMLTextAreaElement).value.slice(0, this.maxTextoMarco));
+    this.errorPanel.set('');
+    if (!this.textoMarco().trim()) this.errorFotoMarco.set('');
+    this.invalidarGuardado('marco');
+  }
+
+  // Botón "Elegir foto": si ya hay texto escrito, no deja subir la foto
+  pedirFotoMarco(input: HTMLInputElement): void {
+    if (this.textoMarco().trim()) {
+      this.errorFotoMarco.set('Primero borra tu mensaje de arriba para subir la foto.');
+      return;
+    }
+
+    this.errorFotoMarco.set('');
+    input.click();
+  }
 
   elegirFotoMarco(evento: Event): void {
     const input = evento.target as HTMLInputElement;
     const archivo = input.files?.[0];
     if (!archivo) return;
 
+    if (this.textoMarco().trim()) {
+      this.errorFotoMarco.set('Primero borra tu mensaje de arriba para subir la foto.');
+      input.value = '';
+      return;
+    }
+
+    const error = this.errorDeImagen(archivo);
+    if (error) {
+      this.errorFotoMarco.set(error);
+      input.value = '';
+      return;
+    }
+
     this.errorFotoMarco.set('');
-
-    if (!archivo.type.startsWith('image/')) {
-      this.errorFotoMarco.set('Elige un archivo de imagen.');
-      input.value = '';
-      return;
-    }
-
-    if (archivo.size > this.maxMbFoto * 1024 * 1024) {
-      this.errorFotoMarco.set(`La imagen no debe pesar más de ${this.maxMbFoto} MB.`);
-      input.value = '';
-      return;
-    }
-
+    this.errorPanel.set('');
     this.liberarFotoMarco();
     this.fotoMarcoArchivo = archivo;
     this.fotoMarcoUrl.set(URL.createObjectURL(archivo));
     this.fotoMarcoNombre.set(archivo.name);
+    this.invalidarGuardado('marco');
   }
 
   quitarFotoMarco(input: HTMLInputElement): void {
@@ -442,7 +577,9 @@ export class Personalizador implements OnDestroy {
     this.fotoMarcoArchivo = null;
     this.fotoMarcoUrl.set(null);
     this.fotoMarcoNombre.set('');
+    this.errorFotoMarco.set('');
     input.value = '';
+    this.invalidarGuardado('marco');
   }
 
   private liberarFotoMarco(): void {
@@ -450,12 +587,55 @@ export class Personalizador implements OnDestroy {
     if (actual) URL.revokeObjectURL(actual);
   }
 
-  // Pestaña "Dedicatoria": caja de texto
-  readonly maxDedicatoria = 250;
+  // ----- Tarjeta dedicatoria: una foto Y una frase (hasta 200 caracteres) -----
+  readonly maxDedicatoria = 200;
   dedicatoria = signal('');
+
+  fotoTarjetaUrl = signal<string | null>(null);
+  fotoTarjetaNombre = signal('');
+  errorFotoTarjeta = signal('');
+  private fotoTarjetaArchivo: File | null = null;
 
   escribirDedicatoria(evento: Event): void {
     this.dedicatoria.set((evento.target as HTMLTextAreaElement).value.slice(0, this.maxDedicatoria));
+    this.errorPanel.set('');
+    this.invalidarGuardado('dedicatoria');
+  }
+
+  elegirFotoTarjeta(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    if (!archivo) return;
+
+    const error = this.errorDeImagen(archivo);
+    if (error) {
+      this.errorFotoTarjeta.set(error);
+      input.value = '';
+      return;
+    }
+
+    this.errorFotoTarjeta.set('');
+    this.errorPanel.set('');
+    this.liberarFotoTarjeta();
+    this.fotoTarjetaArchivo = archivo;
+    this.fotoTarjetaUrl.set(URL.createObjectURL(archivo));
+    this.fotoTarjetaNombre.set(archivo.name);
+    this.invalidarGuardado('dedicatoria');
+  }
+
+  quitarFotoTarjeta(input: HTMLInputElement): void {
+    this.liberarFotoTarjeta();
+    this.fotoTarjetaArchivo = null;
+    this.fotoTarjetaUrl.set(null);
+    this.fotoTarjetaNombre.set('');
+    this.errorFotoTarjeta.set('');
+    input.value = '';
+    this.invalidarGuardado('dedicatoria');
+  }
+
+  private liberarFotoTarjeta(): void {
+    const actual = this.fotoTarjetaUrl();
+    if (actual) URL.revokeObjectURL(actual);
   }
 
   // ==========================================
@@ -641,12 +821,15 @@ export class Personalizador implements OnDestroy {
       nombre: this.nombreCliente(),
       colorLentes: this.colorSeleccionado,
       dedicatoria: this.dedicatoria(),
+      fotoDedicatoria: this.fotoTarjetaArchivo,
+      textoMarco: this.textoMarco(),
       fotoMarco: this.fotoMarcoArchivo,
     });
   }
 
   ngOnDestroy(): void {
     this.liberarFotoMarco();
+    this.liberarFotoTarjeta();
   }
 
   cantidadEnCategoria(categoria: string): number {
@@ -732,6 +915,8 @@ export class Personalizador implements OnDestroy {
 
     if (this.reemplazoDe() === id) this.reemplazoDe.set(null);
 
+    this.invalidarPorCategoria(this.accesoriosSeleccionados().find(a => a.accesorioId === id)?.categoria);
+
     this.accesoriosSeleccionados.update(lista =>
       lista.filter(accesorio => accesorio.accesorioId !== id)
     );
@@ -805,7 +990,7 @@ export class Personalizador implements OnDestroy {
           this.pestana.set('accesorios');
           this.categoriaActual.set(categoria);
         }
-        this.hojaAbierta.set(true);
+        this.abrirHoja();
       }
 
       setTimeout(() =>
@@ -854,6 +1039,7 @@ export class Personalizador implements OnDestroy {
       ...(intercambiado ? [intercambiado] : [])
     ]);
 
+    this.invalidarPorCategoria(nuevo.categoria);
     this.cancelarReemplazo();
   }
 
@@ -907,6 +1093,7 @@ export class Personalizador implements OnDestroy {
   cambiarColorLentes(color: string): void {
 
     this.colorSeleccionado = color;
+    this.invalidarGuardado('lentes');
 
     // Si los lentes no están en el visor, solo se recuerda el color:
     // se aplicará cuando se agreguen (dibujarLentes lo lee)
