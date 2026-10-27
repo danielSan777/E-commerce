@@ -90,7 +90,12 @@
             </small>
             }
 
-            <section class="panel">
+            <!-- Fondo oscuro de la hoja (solo en celular) -->
+            @if (hojaAbierta()) {
+            <div class="hoja-fondo" (click)="cerrarHoja()"></div>
+            }
+
+            <section class="panel" [class.abierta]="hojaAbierta()">
 
                 <!-- Cabecera del panel -->
                 <div class="panel-cabecera">
@@ -100,6 +105,10 @@
                     @if (pestana() === 'accesorios') {
                     <span class="pildora">Hasta {{ maximoAccesorios }} complementos incluidos</span>
                     }
+
+                    <button type="button" class="btn-cerrar-hoja" (click)="cerrarHoja()" aria-label="Cerrar">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
 
                 <p class="panel-ayuda">

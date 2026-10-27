@@ -347,9 +347,19 @@ export class Personalizador implements OnDestroy {
     this.pestanas.find(p => p.id === this.pestana()) ?? this.pestanas[2]
   );
 
+  // En celular las opciones salen de abajo hacia arriba como una hoja (ver el CSS).
+  // En pantallas medias y grandes el panel se ve siempre en su lugar.
+  hojaAbierta = signal(false);
+
+  cerrarHoja(): void {
+    this.hojaAbierta.set(false);
+    this.cancelarReemplazo();
+  }
+
   elegirPestana(id: IdPestana): void {
     this.cancelarReemplazo();
     this.pestana.set(id);
+    this.hojaAbierta.set(true);
 
     // En "Accesorios" la categoría elegida debe ser una de sus categorías
     if (id === 'accesorios' && !this.categoriasAccesorios().includes(this.categoriaActual())) {
@@ -614,6 +624,19 @@ export class Personalizador implements OnDestroy {
 
     // Muestra su tarjeta en el panel, en un punto donde se vea
     if (this.reemplazoDe() === accesorioId) {
+      // En celular, abre la hoja con la pestaña a la que pertenece el accesorio
+      const puesto = this.accesoriosSeleccionados().find(a => a.accesorioId === accesorioId);
+      const categoria = puesto?.categoria ?? 'Otros';
+      if (categoria !== this.CATEGORIA_PERSONALIZACION) {
+        if (categoria === this.CATEGORIA_MODA) {
+          this.pestana.set('lentes');
+        } else {
+          this.pestana.set('accesorios');
+          this.categoriaActual.set(categoria);
+        }
+        this.hojaAbierta.set(true);
+      }
+
       setTimeout(() =>
         document.getElementById('tarjeta-' + accesorioId)
           ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })

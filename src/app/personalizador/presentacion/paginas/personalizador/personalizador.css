@@ -564,6 +564,136 @@
     background-color: #795548;
 }
 
+/* ================= ANIMACIÓN: las opciones suben desde abajo ================= */
+/* Al elegir Nombre, Lentes / Gafas, Accesorios, Marco dorado o Dedicatoria, su contenido
+   se crea de nuevo y sube de abajo hacia arriba. "backwards" solo aplica el estado inicial,
+   así no pisa el :hover de las tarjetas. */
+@keyframes subir-opciones {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Pantallas medias y grandes: el panel está siempre a la vista y su contenido sube un poco */
+@media (min-width: 768px) {
+
+    .campo-nombre,
+    .subpestanas,
+    .rejilla,
+    .color-lentes,
+    .zona-foto,
+    .error-foto,
+    .caja-dedicatoria {
+        animation: subir-opciones .4s cubic-bezier(.22, .8, .3, 1) backwards;
+    }
+
+    /* Con categorías, la lista de accesorios sube un instante después */
+    .subpestanas+.rejilla {
+        animation-delay: .06s;
+    }
+
+    .color-lentes {
+        animation-delay: .1s;
+    }
+}
+
+/* ================= HOJA INFERIOR (celular) ================= */
+/* Al elegir una opción, el panel sale de abajo hacia arriba sobre un fondo oscuro. */
+.hoja-fondo,
+.btn-cerrar-hoja {
+    display: none;
+}
+
+@keyframes subir-hoja-opciones {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes aparecer-fondo-hoja {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .panel {
+        display: none;
+    }
+
+    .hoja-fondo {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 2400;
+        background: rgba(0, 0, 0, .45);
+        animation: aparecer-fondo-hoja .25s ease-out;
+    }
+
+    .panel.abierta {
+        display: block;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 2500;
+        margin: 0;
+        max-height: 80dvh;
+        overflow-y: auto;
+        padding: 18px 16px 24px;
+        background: var(--panel);
+        border: 0;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, .18);
+        animation: subir-hoja-opciones .35s cubic-bezier(.22, .8, .3, 1);
+    }
+
+    .panel.abierta .panel-cabecera {
+        padding-right: 40px;
+    }
+
+    .btn-cerrar-hoja {
+        display: grid;
+        place-items: center;
+        position: absolute;
+        top: 14px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        background: none;
+        border: 0;
+        color: var(--texto);
+        font-size: 1.1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .campo-nombre,
+    .subpestanas,
+    .rejilla,
+    .color-lentes,
+    .zona-foto,
+    .error-foto,
+    .caja-dedicatoria {
+        animation: none;
+    }
+}
+
 /* ================= RESPONSIVE ================= */
 @media (max-width: 991.98px) {
     .columna-visor {
