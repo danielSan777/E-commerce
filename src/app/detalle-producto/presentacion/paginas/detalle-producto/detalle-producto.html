@@ -134,13 +134,16 @@
     </div>
     }
 </section>
-<!-- Fondo del modal -->
+<!-- Personalizador a pantalla completa -->
 @if (personalizadorAbierto()) {
 <div class="modal-personalizador" (click)="cerrarPorFondo()">
     <div class="modal-contenido" (click)="$event.stopPropagation()">
 
         <div class="modal-cabecera">
-            <h5 class="titulo-pagina">Personaliza tu producto</h5>
+            <div class="modal-titulo-grupo">
+                <h5 class="titulo-pagina">Personaliza tu producto</h5>
+                <p class="modal-subtitulo">Toca cada opción para configurar tu maceta</p>
+            </div>
 
             <button type="button" class="btn-cerrar" (click)="cerrarPersonalizador()" aria-label="Cerrar">
                 &times;
@@ -148,7 +151,7 @@
         </div>
 
         <div class="modal-cuerpo">
-            <app-personalizador></app-personalizador>
+            <app-personalizador (guardar)="guardarPersonalizacion($event)"></app-personalizador>
         </div>
 
     </div>

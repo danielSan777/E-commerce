@@ -188,6 +188,15 @@ export class DetalleProducto implements OnDestroy {
     }
   }
 
+  // Cuando el personalizador emite "guardar", cierra el modal
+  guardarPersonalizacion(config: any): void {
+    // Aquí puedes procesar la configuración (nombre, accesorios, dedicatoria, foto, color lentes)
+    // Por ahora solo cerramos
+    console.log('Configuración guardada:', config);
+    this.cerrarPersonalizador();
+    this.agregado.set(true);
+  }
+
   ngOnDestroy(): void {
     this.document.body.style.overflow = '';
   }

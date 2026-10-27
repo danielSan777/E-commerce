@@ -1,10 +1,13 @@
 :host {
-    --verde: #1f5b3a;
-    --verde-claro: #e3efe6;
-    --crema: #fbf4e8;
+    --verde: #175437;
+    --verde-claro: #eaf3ed;
+    --crema: #fff9ef;
     --beige: #f3e8d6;
     --borde: #eadcc6;
     --texto: #3b2a1e;
+    --tarjeta: #fefbf4;
+    --panel: #fefbf6;
+    --borde-suave: #f3ead9;
     display: block;
     background: var(--crema);
     color: var(--texto);
@@ -13,7 +16,7 @@
 .personalizador {
     max-width: 1300px;
     margin: 0 auto;
-    padding: 18px 16px 40px;
+    padding: 6px 16px 0;
 }
 
 .titulo-pagina {
@@ -72,8 +75,7 @@
 }
 
 .campo-nombre {
-    max-width: 75vh;
-    margin: 16px auto 0;
+    margin: 4px 0 0;
 }
 
 .accesorio-colocado {
@@ -113,12 +115,114 @@
     font-display: swap;
 }
 
-/* ================= CATEGORÍAS ================= */
-.categorias {
+/* ================= PESTAÑAS ================= */
+.pestanas {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+
+.pestana {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 84px;
+    padding: 10px 4px;
+    background: var(--crema);
+    border: 1.5px solid var(--borde-suave);
+    border-radius: 12px;
+    color: var(--texto);
+    text-align: center;
+    line-height: 1.15;
+    transition: border-color .15s, background .15s;
+}
+
+.pestana i {
+    font-size: 1.55rem;
+    line-height: 1;
+    color: #4a2a1a;
+}
+
+.pestana-titulo {
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+.pestana small {
+    font-size: .66rem;
+    color: #8a7662;
+}
+
+.pestana:hover {
+    border-color: #c9b594;
+}
+
+.pestana.activa {
+    background: var(--verde-claro);
+    border-color: var(--verde);
+}
+
+.pestana.activa i,
+.pestana.activa small,
+.pestana.activa .pestana-titulo {
+    color: var(--verde);
+}
+
+/* ================= PANEL ================= */
+.panel {
+    margin-top: 12px;
+    padding: 12px 10px 10px;
+    background: var(--panel);
+    border: 1px solid var(--borde-suave);
+    border-radius: 14px;
+}
+
+.panel-cabecera {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.panel-cabecera>i {
+    font-size: 1.4rem;
+    line-height: 1;
+    color: #4a2a1a;
+}
+
+.panel-titulo {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.2rem, 2.4vw, 1.5rem);
+    font-weight: 700;
+    color: #4a2a1a;
+    margin: 0;
+}
+
+.pildora {
+    margin-left: auto;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--verde-claro);
+    color: var(--verde);
+    font-size: .72rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.panel-ayuda {
+    margin: 6px 0 12px;
+    font-size: .82rem;
+    color: #7d7265;
+}
+
+/* ================= SUBPESTAÑAS (categorías) ================= */
+.subpestanas {
+    display: flex;
+    gap: 8px;
     overflow-x: auto;
-    padding: 4px 2px 10px;
+    padding: 2px 0 12px;
     scrollbar-width: none;
     min-width: 0;
     max-width: 100%;
@@ -127,92 +231,49 @@
     -webkit-overflow-scrolling: touch;
 }
 
-.categorias:active {
+.subpestanas:active {
     cursor: grabbing;
 }
 
-.categorias::-webkit-scrollbar {
+.subpestanas::-webkit-scrollbar {
     display: none;
 }
 
-.categoria {
-    flex: none;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    min-width: 118px;
-    padding: 10px 16px;
-    background: #fdf1e0;
-    border: 1.5px solid var(--borde);
-    border-radius: 14px;
+.subpestana {
+    position: relative;
+    flex: 1 0 auto;
+    min-width: 96px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--tarjeta);
+    border: 1.5px solid var(--borde-suave);
+    border-radius: 10px;
     color: var(--texto);
-    text-align: left;
+    font-size: .85rem;
+    font-weight: 600;
     transition: .15s;
 }
 
-.categoria:hover {
-    border-color: #c9b594;
-}
-
-.categoria.activa {
-    background: var(--verde-claro);
-    border-color: var(--verde);
-    box-shadow: 0 0 0 1px var(--verde) inset;
-}
-
-.categoria-nombre {
-    font-weight: 700;
-    font-size: .98rem;
-}
-
-.categoria small {
-    color: #8a7662;
-    font-size: .78rem;
-}
-
-/* ================= TÍTULO + CONTADOR ================= */
-.seleccion-cabecera {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin: 14px 0 16px;
-}
-
-.seleccion-cabecera h2 {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: clamp(1.25rem, 2.4vw, 1.6rem);
-    font-weight: 700;
-    color: #4a2a1a;
-    margin: 0;
-}
-
-.contador {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 5px;
-    font-size: .82rem;
-    color: #6b5a49;
-}
-
-.progreso {
-    display: flex;
-    gap: 5px;
-}
-
-.segmento {
-    width: 26px;
-    height: 6px;
-    border-radius: 4px;
-    background: #ddd6ca;
-    transition: background .2s;
-}
-
-.segmento.lleno {
+.subpestana.activa {
     background: var(--verde);
+    border-color: var(--verde);
+    color: #fff;
+}
+
+/* Muesca bajo la categoría elegida */
+.subpestana.activa::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    width: 8px;
+    height: 8px;
+    background: var(--verde);
+    transform: translateX(-50%) rotate(45deg);
+    border-radius: 0 0 2px 0;
 }
 
 /* ================= REEMPLAZO ================= */
@@ -240,104 +301,241 @@
 /* ================= REJILLA DE ACCESORIOS ================= */
 .rejilla {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
 }
 
-.tarjeta {
+.vacio {
+    grid-column: 1 / -1;
+}
+
+.tile {
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 0 0 10px;
-    background: #fff;
-    border: 1.5px solid var(--borde);
-    border-radius: 14px;
-    overflow: hidden;
+    gap: 2px;
+    padding: 4px 3px 6px;
+    background: var(--tarjeta);
+    border: 1px solid var(--borde-suave);
+    border-radius: 12px;
     color: var(--texto);
     transition: transform .15s, border-color .15s, box-shadow .15s;
 }
 
-.tarjeta:hover:not(:disabled) {
+.tile:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 6px 14px rgba(60, 40, 20, .12);
 }
 
-.tarjeta.elegida {
+.tile.elegida {
     border-color: var(--verde);
     box-shadow: 0 0 0 1px var(--verde) inset;
 }
 
-.tarjeta.reemplazable {
+.tile.reemplazable {
     border-color: #0d6efd;
     border-style: dashed;
 }
 
-.tarjeta.apagada,
-.tarjeta:disabled:not(.elegida) {
+.tile.apagada,
+.tile:disabled:not(.elegida) {
     opacity: .5;
     cursor: not-allowed;
 }
 
 /* Recuadro de tamaño fijo: todas las imágenes quedan del mismo tamaño */
-.tarjeta-imagen {
-    --margen: 10px;
+.tile-img {
     position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
     display: grid;
     place-items: center;
-    background: var(--beige);
     overflow: hidden;
 }
 
-.tarjeta-imagen img {
+.tile-img img {
     position: absolute;
-    top: var(--margen);
-    left: var(--margen);
-    width: calc(100% - 2 * var(--margen));
-    height: calc(100% - 2 * var(--margen));
+    inset: 2px;
+    width: calc(100% - 15px);
+    height: calc(100% - 15px);
     object-fit: contain;
 }
 
-.tarjeta-canvas {
+.tile-canvas {
     width: 100%;
-    height: 44px;
+    height: 40px;
     display: block;
 }
 
-.tarjeta-nombre {
-    font-weight: 700;
-    font-size: .88rem;
-    padding: 0 6px;
+.tile-nombre {
+    font-weight: 500;
+    font-size: .72rem;
     text-align: center;
-    line-height: 1.2;
-}
-
-.tarjeta-estado {
-    color: #8a7662;
-    font-size: .76rem;
-}
-
-.tarjeta.elegida .tarjeta-estado {
-    color: var(--verde);
-    font-weight: 600;
+    line-height: 1.15;
 }
 
 .check {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 4px;
+    right: 4px;
     z-index: 2;
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: var(--verde);
     color: #fff;
     display: grid;
     place-items: center;
+    font-size: .65rem;
+}
+
+/* ================= MARCO DORADO (foto) ================= */
+.zona-foto {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 16px;
+    background: #fff;
+    border: 1.5px dashed var(--borde);
+    border-radius: 14px;
+}
+
+.foto-previa {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 10px;
+    object-fit: contain;
+}
+
+.foto-acciones {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.foto-nombre {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: .8rem;
+    color: #8a7662;
+}
+
+.btn-gris {
+    padding: 8px 18px;
+    background: var(--beige);
+    border: 1.5px solid var(--borde);
+    border-radius: 10px;
+    color: var(--texto);
+    font-weight: 600;
+    font-size: .85rem;
+}
+
+.btn-gris:hover {
+    border-color: #c9b594;
+}
+
+.error-foto {
+    margin: 8px 0 0;
+    font-size: .8rem;
+    color: #b02a37;
+}
+
+/* ================= DEDICATORIA ================= */
+.caja-dedicatoria {
+    position: relative;
+}
+
+.caja-dedicatoria textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 12px 14px 24px;
+    background: #fff;
+    border: 1.5px solid var(--borde);
+    border-radius: 14px;
+    color: var(--texto);
+    resize: vertical;
+}
+
+.caja-dedicatoria textarea:focus {
+    outline: none;
+    border-color: var(--verde);
+}
+
+.contador-texto {
+    position: absolute;
+    right: 12px;
+    bottom: 8px;
+    font-size: .72rem;
+    color: #8a7662;
+}
+
+/* ================= LUPA ================= */
+.btn-zoom {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    z-index: 5;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    background: #fff;
+    border: 0;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+    color: var(--texto);
+}
+
+.visor-marco.ampliado {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    max-width: none;
+    height: 100dvh;
+    border-radius: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.visor-marco.ampliado .visor {
+    flex: none;
+    width: auto;
+    height: 100%;
+}
+
+/* ================= GUARDAR ================= */
+.barra-guardar {
+    position: sticky;
+    bottom: 0;
+    z-index: 6;
+    margin: 10px -16px 0;
+    padding: 8px 16px 12px;
+    background: var(--crema);
+}
+
+.btn-guardar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 18px;
+    background: var(--verde);
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.btn-guardar:hover {
+    filter: brightness(1.08);
 }
 
 /* ================= COLOR DE LENTES ================= */
@@ -376,10 +574,15 @@
     .campo-nombre {
         max-width: 100%;
     }
+
+    /* Separación vertical entre foto y botones (12px) */
+    .personalizador .row {
+        --bs-gutter-y: .75rem;
+    }
 }
 
-/* Celular: el visor ocupa poca altura (menos de la mitad de la pantalla).
-   Sigue siendo cuadrado por dentro, así los accesorios no se mueven de su lugar. */
+/* Celular: el visor es un banner ancho (el visor cuadrado queda centrado dentro,
+   así los accesorios no se mueven de su lugar). */
 @media (max-width: 767.98px) {
     .visor-marco {
         display: flex;
@@ -394,27 +597,49 @@
         height: 100%;
     }
 
+    .visor-marco.ampliado {
+        height: 100dvh;
+        border-radius: 0;
+    }
+
     .campo-nombre {
         margin-top: 12px;
     }
 }
 
 @media (max-width: 575.98px) {
+    .personalizador {
+        padding: 6px 8px 0;
+    }
+
+    .barra-guardar {
+        margin: 8px -8px 0;
+        padding: 8px 10px 12px;
+    }
+
+    .pestanas {
+        gap: 6px;
+    }
+
+    .pestana {
+        min-height: 64px;
+        padding: 6px 2px;
+        border-radius: 12px;
+    }
+
+    .pestana-titulo {
+        font-size: .7rem;
+    }
+
+    .pestana small {
+        font-size: .58rem;
+    }
+
     .rejilla {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
+        gap: 7px;
     }
 
-    .tarjeta-nombre {
-        font-size: .76rem;
-    }
-
-    .tarjeta-imagen {
-        --margen: 6px;
-    }
-
-    .categoria {
-        min-width: 104px;
-        padding: 8px 12px;
+    .tile-nombre {
+        font-size: .68rem;
     }
 }

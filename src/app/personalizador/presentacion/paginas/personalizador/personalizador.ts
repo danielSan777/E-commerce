@@ -1,24 +1,45 @@
 import {
-  Component, OnInit, signal, ViewChild, ElementRef,
+  Component, OnInit, OnDestroy, signal, ViewChild, ElementRef,
   computed,
   inject,
+  output,
   PLATFORM_ID
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TextoCanvas } from '../../../../shared/directivas/texto-canvas';
 import { ExcepcionGuardada, Geometria, UbicacionGuardada } from '../../../dominio/ubicaciones';
 import Swal from 'sweetalert2';
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+
+export type IdPestana = 'nombre' | 'lentes' | 'accesorios' | 'marco' | 'dedicatoria';
+
+export interface Pestana {
+  id: IdPestana;
+  titulo: string;
+  subtitulo?: string;
+  icono: string; // clase de Bootstrap Icons
+  ayuda: string;
+}
+
+// Lo que se entrega al pulsar "Guardar y continuar"
+export interface ConfiguracionPersonalizada {
+  accesorios: AccesorioColocado[];
+  nombre: string;
+  colorLentes: string;
+  dedicatoria: string;
+  fotoMarco: File | null;
+}
 
 @Component({
   imports: [FormsModule,
-    TextoCanvas],
+    TextoCanvas,
+    NgTemplateOutlet],
   selector: 'app-personalizador',
   styleUrl: './personalizador.css',
   templateUrl: './personalizador.html',
 })
 
-export class Personalizador {
+export class Personalizador implements OnDestroy {
 
 
   accesoriosSeleccionados = signal<AccesorioColocado[]>([]);
@@ -98,8 +119,8 @@ export class Personalizador {
 
       this.agregarPorDefecto();
 
-      // Abrir la primera categoría para mostrar los checks.
-      this.categoriaActual.set(this.categorias()[0] ?? '');
+      // Abrir la primera categoría de la pestaña "Accesorios" (sin Moda ni Personalización).
+      this.categoriaActual.set(this.categoriasAccesorios()[0] ?? this.categorias()[0] ?? '');
 
     } catch (error) {
       console.error('Error al cargar la configuración:', error);
@@ -289,6 +310,163 @@ export class Personalizador {
   segmentos = computed(() =>
     Array.from({ length: Math.max(this.maximoAccesorios, this.cantidadAccesorios()) }, (_, i) => i)
   );
+
+  // ==========================================
+  // PESTAÑAS: Nombre · Lentes / Gafas · Accesorios · Marco dorado · Dedicatoria
+  // ==========================================
+
+  private readonly CATEGORIA_MODA = 'Moda';
+  private readonly CATEGORIA_PERSONALIZACION = 'Personalización';
+
+  readonly pestanas: Pestana[] = [
+    {
+      id: 'nombre', titulo: 'Nombre', icono: 'bi-person',
+      ayuda: 'Escribe el nombre que aparecerá en tu maceta.'
+    },
+    {
+      id: 'lentes', titulo: 'Lentes / Gafas', icono: 'bi-eyeglasses',
+      ayuda: 'Elige el accesorio de moda para tu maceta.'
+    },
+    {
+      id: 'accesorios', titulo: 'Accesorios', icono: 'bi-gift',
+      ayuda: `Elige hasta ${this.maximoAccesorios} complementos para personalizar tu maceta.`
+    },
+    {
+      id: 'marco', titulo: 'Marco dorado', subtitulo: 'Foto o frase', icono: 'bi-image',
+      ayuda: 'Sube la foto para tu marco dorado.'
+    },
+    {
+      id: 'dedicatoria', titulo: 'Dedicatoria', subtitulo: 'Escribe su mensaje', icono: 'bi-card-text',
+      ayuda: 'Escribe el mensaje de tu dedicatoria.'
+    },
+  ];
+
+  pestana = signal<IdPestana>('accesorios');
+
+  pestanaActual = computed(() =>
+    this.pestanas.find(p => p.id === this.pestana()) ?? this.pestanas[2]
+  );
+
+  elegirPestana(id: IdPestana): void {
+    this.cancelarReemplazo();
+    this.pestana.set(id);
+
+    // En "Accesorios" la categoría elegida debe ser una de sus categorías
+    if (id === 'accesorios' && !this.categoriasAccesorios().includes(this.categoriaActual())) {
+      this.categoriaActual.set(this.categoriasAccesorios()[0] ?? '');
+    }
+  }
+
+  // Categorías de la pestaña "Accesorios": todas menos Moda (va en "Lentes / Gafas")
+  // y Personalización (va en "Nombre")
+  categoriasAccesorios = computed(() =>
+    this.categorias().filter(c => c !== this.CATEGORIA_MODA && c !== this.CATEGORIA_PERSONALIZACION)
+  );
+
+  // Pestaña "Lentes / Gafas": accesorios de tipo Moda
+  accesoriosModa = computed(() =>
+    this.catalogo().filter(a => (a.categoria ?? 'Otros') === this.CATEGORIA_MODA)
+  );
+
+  // Pestaña "Nombre": accesorios de Personalización (el texto con el nombre)
+  accesoriosPersonalizacion = computed(() =>
+    this.catalogo().filter(a => (a.categoria ?? 'Otros') === this.CATEGORIA_PERSONALIZACION)
+  );
+
+  // Icono de cada categoría (Bootstrap Icons). Se puede editar o ampliar.
+  private readonly iconosCategoria: Record<string, string> = {
+    Hobbies: 'bi-stopwatch',
+    Deportes: 'bi-dribbble',
+    Mascotas: 'bi-heart',
+    Animales: 'bi-heart',
+    Objetos: 'bi-box-seam',
+  };
+
+  iconoCategoria(categoria: string): string {
+    return this.iconosCategoria[categoria] ?? 'bi-tag';
+  }
+
+  // Texto de estado de una tarjeta (se usa como título y para lectores de pantalla)
+  etiquetaTarjeta(accesorio: Accesorio): string {
+    if (this.esFijo(accesorio.id)) return 'Fijo';
+    if (this.puedeReemplazarCon(accesorio.id)) return 'Reemplazar';
+    if (this.noDisponible(accesorio)) return 'No disponible';
+    if (this.estaSeleccionado(accesorio.id)) return 'Agregado';
+    return 'Agregar';
+  }
+
+  // Pestaña "Marco dorado": subir una foto
+  fotoMarcoUrl = signal<string | null>(null);
+  fotoMarcoNombre = signal('');
+  errorFotoMarco = signal('');
+  private fotoMarcoArchivo: File | null = null;
+  readonly maxMbFoto = 5;
+
+  elegirFotoMarco(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    if (!archivo) return;
+
+    this.errorFotoMarco.set('');
+
+    if (!archivo.type.startsWith('image/')) {
+      this.errorFotoMarco.set('Elige un archivo de imagen.');
+      input.value = '';
+      return;
+    }
+
+    if (archivo.size > this.maxMbFoto * 1024 * 1024) {
+      this.errorFotoMarco.set(`La imagen no debe pesar más de ${this.maxMbFoto} MB.`);
+      input.value = '';
+      return;
+    }
+
+    this.liberarFotoMarco();
+    this.fotoMarcoArchivo = archivo;
+    this.fotoMarcoUrl.set(URL.createObjectURL(archivo));
+    this.fotoMarcoNombre.set(archivo.name);
+  }
+
+  quitarFotoMarco(input: HTMLInputElement): void {
+    this.liberarFotoMarco();
+    this.fotoMarcoArchivo = null;
+    this.fotoMarcoUrl.set(null);
+    this.fotoMarcoNombre.set('');
+    input.value = '';
+  }
+
+  private liberarFotoMarco(): void {
+    const actual = this.fotoMarcoUrl();
+    if (actual) URL.revokeObjectURL(actual);
+  }
+
+  // Pestaña "Dedicatoria": caja de texto
+  readonly maxDedicatoria = 250;
+  dedicatoria = signal('');
+
+  escribirDedicatoria(evento: Event): void {
+    this.dedicatoria.set((evento.target as HTMLTextAreaElement).value.slice(0, this.maxDedicatoria));
+  }
+
+  // Imagen del visor ampliada a pantalla completa (botón de la lupa)
+  ampliado = signal(false);
+
+  // Botón "Guardar y continuar": entrega todo lo elegido a quien use este componente
+  readonly guardar = output<ConfiguracionPersonalizada>();
+
+  continuar(): void {
+    this.guardar.emit({
+      accesorios: this.accesoriosSeleccionados(),
+      nombre: this.nombreCliente(),
+      colorLentes: this.colorSeleccionado,
+      dedicatoria: this.dedicatoria(),
+      fotoMarco: this.fotoMarcoArchivo,
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.liberarFotoMarco();
+  }
 
   cantidadEnCategoria(categoria: string): number {
     return this.catalogo().filter(a => (a.categoria ?? 'Otros') === categoria).length;

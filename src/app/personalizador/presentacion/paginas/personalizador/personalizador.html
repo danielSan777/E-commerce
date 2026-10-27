@@ -1,11 +1,11 @@
 <div class="personalizador container-fluid">
-    <div class="row g-4">
+    <div class="row g-3 g-lg-4">
 
         <!-- ================= PRODUCTO ================= -->
         <div class="col-12 col-lg-6">
             <div class="columna-visor">
                 <!-- Marco: en celular es más bajo y ancho; el visor cuadrado queda centrado dentro -->
-                <div class="visor-marco">
+                <div class="visor-marco" [class.ampliado]="ampliado()">
 
                     <!-- Fondo difuminado de la misma foto: rellena los lados en vez de dejarlos en blanco -->
                     <img src="imagenes/maceta_vacia.png" class="maceta-fondo" alt="" aria-hidden="true">
@@ -57,132 +57,210 @@
                         }
 
                     </div>
+
+                    <!-- Lupa: amplía el visor a pantalla completa -->
+                    <button type="button" class="btn-zoom" (click)="ampliado.set(!ampliado())"
+                        [attr.aria-label]="ampliado() ? 'Cerrar vista ampliada' : 'Ampliar imagen'">
+                        <i class="bi" [class.bi-zoom-in]="!ampliado()" [class.bi-x-lg]="ampliado()"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= OPCIONES ================= -->
+        <div class="col-12 col-lg-6">
+
+            <!-- Botones: Nombre · Lentes / Gafas · Accesorios · Marco dorado · Dedicatoria -->
+            <div class="pestanas" role="tablist">
+                @for (p of pestanas; track p.id) {
+                <button type="button" role="tab" class="pestana" [class.activa]="pestana() === p.id"
+                    [attr.aria-selected]="pestana() === p.id" (click)="elegirPestana(p.id)">
+                    <i class="bi" [class]="p.icono"></i>
+                    <span class="pestana-titulo">{{ p.titulo }}</span>
+                    @if (p.subtitulo) {
+                    <small>{{ p.subtitulo }}</small>
+                    }
+                </button>
+                }
+            </div>
+
+            @if (ubicaciones().length === 0) {
+            <small class="text-muted d-block mt-2">
+                No hay ubicaciones configuradas. Guarde la configuración desde el editor.
+            </small>
+            }
+
+            <section class="panel">
+
+                <!-- Cabecera del panel -->
+                <div class="panel-cabecera">
+                    <i class="bi" [class]="pestanaActual().icono"></i>
+                    <h2 class="panel-titulo">{{ pestanaActual().titulo }}</h2>
+
+                    @if (pestana() === 'accesorios') {
+                    <span class="pildora">Hasta {{ maximoAccesorios }} complementos incluidos</span>
+                    }
                 </div>
 
-                <!-- Nombre del cliente (cuando el accesorio de texto está puesto) -->
+                <p class="panel-ayuda">
+                    {{ pestanaActual().ayuda }}
+                    @if (pestana() === 'accesorios') {
+                    <i class="bi bi-info-circle"
+                        title="El nombre y los elementos fijos no cuentan como complementos"></i>
+                    }
+                </p>
+
+                <!-- Reemplazo del accesorio elegido en el visor -->
+                @if (puestoSeleccionado(); as puesto) {
+                @if (pestana() === 'lentes' || pestana() === 'accesorios') {
+                <div class="aviso-reemplazo">
+                    <div>
+                        <strong>Reemplazar «{{ puesto.nombre }}»</strong>
+                        <small>({{ nombreUbicacion(puesto.ubicacionId) }})</small>
+                        <div class="texto-aviso">
+                            @if (opcionesReemplazo().length === 0) {
+                            No hay otros accesorios disponibles para esta ubicación.
+                            } @else {
+                            Toque el accesorio por el que lo quiere reemplazar.
+                            }
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelarReemplazo()">
+                        Cancelar
+                    </button>
+                </div>
+                }
+                }
+
+                @switch (pestana()) {
+
+                <!-- ===== NOMBRE ===== -->
+                @case ('nombre') {
                 @if (hayTexto()) {
                 <div class="campo-nombre">
                     <label for="nombre" class="form-label">Ingrese su nombre</label>
                     <input id="nombre" type="text" class="form-control" maxlength="30" placeholder="Escriba su nombre"
                         [ngModel]="nombreCliente()" (ngModelChange)="nombreCliente.set($event)">
                 </div>
+                } @else {
+                <ng-container *ngTemplateOutlet="rejillaTpl; context: { $implicit: accesoriosPersonalizacion() }" />
                 }
-            </div>
-        </div>
-
-        <!-- ================= SELECCIÓN ================= -->
-        <div class="col-12 col-lg-6">
-
-            <!-- Categorías -->
-            <div class="categorias" role="tablist" #listaCategorias
-                (pointerdown)="iniciarArrastre($event, listaCategorias)"
-                (pointermove)="arrastrarCategorias($event, listaCategorias)" (pointerup)="terminarArrastre()"
-                (pointerleave)="terminarArrastre()" (wheel)="ruedaCategorias($event, listaCategorias)">
-                @for (categoria of categorias(); track categoria) {
-                <button type="button" role="tab" class="categoria" [class.activa]="categoriaActual() === categoria"
-                    [attr.aria-selected]="categoriaActual() === categoria" (click)="elegirCategoria(categoria)">
-                    <span class="categoria-nombre">{{ categoria }}</span>
-                    <small>{{ cantidadEnCategoria(categoria) }} opciones</small>
-                </button>
                 }
-            </div>
 
-            <!-- Título + contador -->
-            <div class="seleccion-cabecera">
-                <h2>Selecciona un accesorio</h2>
-                <div class="contador">
-                    <span>Accesorio {{ cantidadAccesorios() }} de {{ segmentos().length }}</span>
-                    <div class="progreso">
-                        @for (s of segmentos(); track s) {
-                        <span class="segmento" [class.lleno]="s < cantidadAccesorios()"></span>
-                        }
+                <!-- ===== LENTES / GAFAS (accesorios de Moda) ===== -->
+                @case ('lentes') {
+                <ng-container *ngTemplateOutlet="rejillaTpl; context: { $implicit: accesoriosModa() }" />
+
+                <!-- Color de los lentes (solo si están puestos) -->
+                @if (hayLentes()) {
+                <div class="color-lentes">
+                    <label class="form-label">Color de los lentes</label>
+
+                    <div class="d-flex gap-3">
+                        <label class="d-flex align-items-center gap-1">
+                            <input type="radio" name="colorLentes" value="negro" [(ngModel)]="colorSeleccionado"
+                                (ngModelChange)="cambiarColorLentes($event)">
+                            <span class="color-negro"></span>
+                            Negro
+                        </label>
+
+                        <label class="d-flex align-items-center gap-1">
+                            <input type="radio" name="colorLentes" value="cafe" [(ngModel)]="colorSeleccionado"
+                                (ngModelChange)="cambiarColorLentes($event)">
+                            <span class="color-cafe"></span>
+                            Café
+                        </label>
                     </div>
                 </div>
-            </div>
+                }
+                }
 
-            @if (ubicaciones().length === 0) {
-            <small class="text-muted d-block mb-2">
-                No hay ubicaciones configuradas. Guarde la configuración desde el editor.
-            </small>
-            }
-
-            <!-- Reemplazo del accesorio elegido en el visor -->
-            @if (puestoSeleccionado(); as puesto) {
-            <div class="aviso-reemplazo">
-                <div>
-                    <strong>Reemplazar «{{ puesto.nombre }}»</strong>
-                    <small>({{ nombreUbicacion(puesto.ubicacionId) }})</small>
-                    <div class="texto-aviso">
-                        @if (opcionesReemplazo().length === 0) {
-                        No hay otros accesorios disponibles para esta ubicación.
-                        } @else {
-                        Toque el accesorio por el que lo quiere reemplazar.
-                        }
-                    </div>
-                </div>
-                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelarReemplazo()">
-                    Cancelar
-                </button>
-            </div>
-            }
-
-            <!-- Accesorios de la categoría -->
-            <div class="rejilla">
-                @for (item of accesoriosDeCategoria(); track item.id) {
-                <button type="button" class="tarjeta" [class.elegida]="estaSeleccionado(item.id)"
-                    [class.reemplazable]="puedeReemplazarCon(item.id)" [class.apagada]="noDisponible(item)"
-                    [disabled]="esFijo(item.id) || noDisponible(item)" (click)="pulsarTarjeta(item)"
-                    [attr.aria-pressed]="estaSeleccionado(item.id)">
-
-                    @if (estaSeleccionado(item.id)) {
-                    <span class="check"><i class="bi bi-check-lg"></i></span>
+                <!-- ===== ACCESORIOS (clasificados por categoría) ===== -->
+                @case ('accesorios') {
+                <div class="subpestanas" role="tablist" #listaCategorias
+                    (pointerdown)="iniciarArrastre($event, listaCategorias)"
+                    (pointermove)="arrastrarCategorias($event, listaCategorias)" (pointerup)="terminarArrastre()"
+                    (pointerleave)="terminarArrastre()" (wheel)="ruedaCategorias($event, listaCategorias)">
+                    @for (categoria of categoriasAccesorios(); track categoria) {
+                    <button type="button" role="tab" class="subpestana" [class.activa]="categoriaActual() === categoria"
+                        [attr.aria-selected]="categoriaActual() === categoria" (click)="elegirCategoria(categoria)">
+                        <i class="bi" [class]="iconoCategoria(categoria)"></i>
+                        {{ categoria }}
+                    </button>
                     }
-
-                    <span class="tarjeta-imagen">
-                        @if (item.tipo === 'texto') {
-                        <canvas class="tarjeta-canvas" [appTextoCanvas]="item.texto ?? ''"></canvas>
-                        } @else {
-                        <img [src]="item.imagen" [alt]="item.nombre">
-                        }
-                    </span>
-
-                    <span class="tarjeta-nombre">{{ item.nombre }}</span>
-                    <small class="tarjeta-estado">
-                        @if (esFijo(item.id)) { Fijo }
-                        @else if (puedeReemplazarCon(item.id)) { Reemplazar }
-                        @else if (noDisponible(item)) { No disponible }
-                        @else if (estaSeleccionado(item.id)) { Agregado }
-                        @else { Agregar }
-                    </small>
-                </button>
-                } @empty {
-                <p class="text-muted">No hay accesorios en esta categoría.</p>
-                }
-            </div>
-
-            <!-- Color de los lentes (solo si están puestos) -->
-            @if (hayLentes()) {
-            <div class="color-lentes">
-                <label class="form-label">Color de los lentes</label>
-
-                <div class="d-flex gap-3">
-                    <label class="d-flex align-items-center gap-1">
-                        <input type="radio" name="colorLentes" value="negro" [(ngModel)]="colorSeleccionado"
-                            (ngModelChange)="cambiarColorLentes($event)">
-                        <span class="color-negro"></span>
-                        Negro
-                    </label>
-
-                    <label class="d-flex align-items-center gap-1">
-                        <input type="radio" name="colorLentes" value="cafe" [(ngModel)]="colorSeleccionado"
-                            (ngModelChange)="cambiarColorLentes($event)">
-                        <span class="color-cafe"></span>
-                        Café
-                    </label>
                 </div>
-            </div>
-            }
 
+                <ng-container *ngTemplateOutlet="rejillaTpl; context: { $implicit: accesoriosDeCategoria() }" />
+                }
+
+                <!-- ===== MARCO DORADO (subir foto) ===== -->
+                @case ('marco') {
+                <input #archivoMarco type="file" accept="image/*" hidden (change)="elegirFotoMarco($event)" />
+                <div class="zona-foto" [class.con-foto]="fotoMarcoUrl()">
+                    @if (fotoMarcoUrl(); as url) {
+                    <img [src]="url" alt="Tu foto" class="foto-previa" />
+                    <div class="foto-acciones">
+                        <span class="foto-nombre">{{ fotoMarcoNombre() }}</span>
+                        <button type="button" class="btn-gris" (click)="archivoMarco.click()">Cambiar</button>
+                        <button type="button" class="btn-gris" (click)="quitarFotoMarco(archivoMarco)">Quitar</button>
+                    </div>
+                    } @else {
+                    <button type="button" class="btn-gris" (click)="archivoMarco.click()">Elegir foto</button>
+                    }
+                </div>
+                @if (errorFotoMarco()) {
+                <p class="error-foto">{{ errorFotoMarco() }}</p>
+                }
+                }
+
+                <!-- ===== DEDICATORIA (caja de texto) ===== -->
+                @case ('dedicatoria') {
+                <div class="caja-dedicatoria">
+                    <textarea id="dedicatoria" rows="4" [maxLength]="maxDedicatoria" [value]="dedicatoria()"
+                        placeholder="Escribe tu mensaje" (input)="escribirDedicatoria($event)"></textarea>
+                    <span class="contador-texto">{{ dedicatoria().length }}/{{ maxDedicatoria }}</span>
+                </div>
+                }
+
+                }
+            </section>
         </div>
     </div>
+
+    <!-- ================= GUARDAR ================= -->
+    <div class="barra-guardar">
+        <button type="button" class="btn-guardar" (click)="continuar()">
+            Guardar y continuar <i class="bi bi-arrow-right"></i>
+        </button>
+    </div>
 </div>
+
+<!-- Rejilla de tarjetas (se reutiliza en Nombre, Lentes / Gafas y Accesorios) -->
+<ng-template #rejillaTpl let-lista>
+    <div class="rejilla">
+        @for (item of lista; track item.id) {
+        <button type="button" class="tile" [class.elegida]="estaSeleccionado(item.id)"
+            [class.reemplazable]="puedeReemplazarCon(item.id)" [class.apagada]="noDisponible(item)"
+            [disabled]="esFijo(item.id) || noDisponible(item)" [title]="etiquetaTarjeta(item)"
+            [attr.aria-label]="item.nombre + ' — ' + etiquetaTarjeta(item)"
+            [attr.aria-pressed]="estaSeleccionado(item.id)" (click)="pulsarTarjeta(item)">
+
+            @if (estaSeleccionado(item.id)) {
+            <span class="check"><i class="bi bi-check-lg"></i></span>
+            }
+
+            <span class="tile-img">
+                @if (item.tipo === 'texto') {
+                <canvas class="tile-canvas" [appTextoCanvas]="item.texto ?? ''"></canvas>
+                } @else {
+                <img [src]="item.imagen" [alt]="item.nombre">
+                }
+            </span>
+
+            <span class="tile-nombre">{{ item.nombre }}</span>
+        </button>
+        } @empty {
+        <p class="text-muted vacio">No hay accesorios en esta categoría.</p>
+        }
+    </div>
+</ng-template>

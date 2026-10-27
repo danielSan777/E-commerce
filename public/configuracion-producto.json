@@ -128,7 +128,7 @@
         },
         {
             "id": 3,
-            "nombre": "caja-herramienta",
+            "nombre": "herramienta",
             "imagen": "accesorios/caja_herramientas.png",
             "categoria": "Objetos"
         },
