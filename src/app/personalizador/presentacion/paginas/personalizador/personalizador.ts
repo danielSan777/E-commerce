@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, OnDestroy, signal, ViewChild, ElementRef,
+  Component, OnInit, OnDestroy, signal, ViewChild, ElementRef, HostListener,
   computed,
   inject,
   output,
@@ -361,18 +361,62 @@ export class Personalizador implements OnDestroy {
   // así la hoja ocupa todo el alto que queda hasta abajo de la pantalla
   hojaTop = signal(300);
 
+  // true mientras la hoja baja y desaparece (animación de cierre)
+  hojaCerrando = signal(false);
+
+  // true si al abrir la hoja se añadió una entrada al historial (para el botón "atrás" del celular)
+  private entradaHistorial = false;
+
+  private esCelular(): boolean {
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 767.98px)').matches;
+  }
+
   private abrirHoja(): void {
     const marco = this.marcoRef?.nativeElement;
     if (marco && typeof window !== 'undefined') {
       const bajoImagen = Math.round(marco.getBoundingClientRect().bottom + 8);
       this.hojaTop.set(Math.min(bajoImagen, Math.round(window.innerHeight * 0.55)));
     }
+
+    // En celular, el botón "atrás" debe cerrar la hoja y no salir de la pantalla
+    if (!this.hojaAbierta() && this.esCelular() && !this.entradaHistorial) {
+      history.pushState({ ...(history.state ?? {}), hojaPersonalizador: true }, '');
+      this.entradaHistorial = true;
+    }
+
+    this.hojaCerrando.set(false);
     this.hojaAbierta.set(true);
   }
 
-  cerrarHoja(): void {
+  // Cierra la hoja con su animación de bajada
+  private ocultarHoja(): void {
+    if (!this.hojaAbierta()) return;
+
     this.hojaAbierta.set(false);
     this.cancelarReemplazo();
+
+    this.hojaCerrando.set(true);
+    setTimeout(() => this.hojaCerrando.set(false), 260);
+  }
+
+  // X, fondo oscuro o "Continuar"
+  cerrarHoja(): void {
+    this.ocultarHoja();
+
+    // Quita la entrada del historial que se añadió al abrir (así "atrás" no queda de más)
+    if (this.entradaHistorial) {
+      this.entradaHistorial = false;
+      history.back();
+    }
+  }
+
+  // Botón "atrás" del celular: baja la hoja y se queda en el personalizador
+  @HostListener('window:popstate')
+  alPulsarAtras(): void {
+    if (!this.hojaAbierta()) return;
+
+    this.entradaHistorial = false;
+    this.ocultarHoja();
   }
 
   elegirPestana(id: IdPestana): void {
@@ -426,8 +470,8 @@ export class Personalizador implements OnDestroy {
         return this.nombreCliente().trim() ? '' : 'Escribe tu nombre para continuar.';
 
       case 'lentes':
-        return lista.some(a => (a.categoria ?? 'Otros') === this.CATEGORIA_MODA)
-          ? '' : 'Elige unos lentes o gafas para continuar.';
+        // Opcional: se puede continuar con o sin lentes
+        return '';
 
       case 'accesorios':
         return lista.some(a => {
@@ -828,6 +872,7 @@ export class Personalizador implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.entradaHistorial && history.state?.hojaPersonalizador) history.back();
     this.liberarFotoMarco();
     this.liberarFotoTarjeta();
   }

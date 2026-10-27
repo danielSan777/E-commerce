@@ -102,11 +102,12 @@
             }
 
             <!-- Fondo oscuro de la hoja (solo en celular) -->
-            @if (hojaAbierta()) {
-            <div class="hoja-fondo" (click)="cerrarHoja()"></div>
+            @if (hojaAbierta() || hojaCerrando()) {
+            <div class="hoja-fondo" [class.cerrando]="hojaCerrando()" (click)="cerrarHoja()"></div>
             }
 
-            <section class="panel" [class.abierta]="hojaAbierta()" [style.--hoja-top]="hojaTop() + 'px'">
+            <section class="panel" [class.abierta]="hojaAbierta() || hojaCerrando()" [class.cerrando]="hojaCerrando()"
+                [style.--hoja-top]="hojaTop() + 'px'">
 
                 <!-- Cabecera del panel -->
                 <div class="panel-cabecera">
@@ -247,7 +248,11 @@
                 }
 
                 <!-- ===== TARJETA DEDICATORIA: foto Y frase (200) ===== -->
-                @case ('dedicatoria') {
+                @case ('dedicatoria'){
+                <!-- Continuar: guarda lo elegido en esta opción -->
+                @if (errorPanel()){
+                <p class="error-foto error-panel" role="alert">{{ errorPanel() }}</p>
+                }
                 <input #archivoTarjeta type="file" accept="image/*" hidden (change)="elegirFotoTarjeta($event)" />
 
                 <div class="zona-foto" [class.con-foto]="fotoTarjetaUrl()">
