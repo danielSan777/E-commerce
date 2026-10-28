@@ -1,4 +1,6 @@
 :host {
+    /*EDITABLE: alto del personalizador que sube desde abajo en celular (% de la pantalla) */
+    --alto-modal: 97dvh;
     display: block;
     color: #222;
 }
@@ -573,14 +575,15 @@ button {
 @media (max-width: 767.98px) {
     .modal-personalizador {
         padding: 0;
+        background: rgba(0, 0, 0, .5);
         align-items: flex-end;
         animation: aparecer-fondo .25s ease-out;
     }
 
     .modal-contenido {
-        height: 100dvh;
+        height: var(--alto-modal, 85dvh);
         max-width: none;
-        border-radius: 0;
+        border-radius: 20px 20px 0 0;
         animation: subir-hoja .35s cubic-bezier(.22, .8, .3, 1);
     }
 

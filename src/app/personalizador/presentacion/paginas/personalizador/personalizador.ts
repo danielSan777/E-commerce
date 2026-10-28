@@ -8,10 +8,9 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TextoCanvas } from '../../../../shared/directivas/texto-canvas';
 import { ExcepcionGuardada, Geometria, UbicacionGuardada } from '../../../dominio/ubicaciones';
-import Swal from 'sweetalert2';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 
-export type IdPestana = 'nombre' | 'lentes' | 'accesorios' | 'marco' | 'dedicatoria';
+export type IdPestana = 'nombre' | 'lentes' | 'accesorios' | 'dedicatoria';
 
 export interface Pestana {
   id: IdPestana;
@@ -26,10 +25,13 @@ export interface ConfiguracionPersonalizada {
   accesorios: AccesorioColocado[];
   nombre: string;
   colorLentes: string;
-  dedicatoria: string;       // frase de la tarjeta dedicatoria
-  fotoDedicatoria: File | null; // foto de la tarjeta dedicatoria
-  textoMarco: string;        // texto del marco dorado (alternativa a la foto)
-  fotoMarco: File | null;    // foto del marco dorado (alternativa al texto)
+  dedicatoria: string;          // mensaje de la tarjeta de dedicatoria
+  fotoDedicatoria: File | null; // foto de la tarjeta (opcional)
+  textoMarco: string;           // frase del marco (solo si eligió el accesorio 4)
+  fotoMarco: File | null;       // foto del marco (solo si eligió el accesorio 3)
+  sinTarjeta: boolean;          // "No deseo tarjeta de dedicatoria"
+  tarjetaPorWhatsapp: boolean;  // "Prefiero enviar mi tarjeta por WhatsApp"
+  fotoMarcoPorWhatsapp: boolean; // "Prefiero enviar la foto de mi marco por WhatsApp"
 }
 
 @Component({
@@ -65,9 +67,6 @@ export class Personalizador implements OnDestroy {
   @ViewChild('visor')
   visor!: ElementRef<HTMLDivElement>;
 
-  @ViewChild('marco')
-  marcoRef?: ElementRef<HTMLElement>;
-
   nombreCliente = signal('');
 
   // true cuando el accesorio de texto está agregado al visor
@@ -79,7 +78,6 @@ export class Personalizador implements OnDestroy {
 
   private platformId = inject(PLATFORM_ID);
 
-  private anfitrion = inject(ElementRef<HTMLElement>);
 
 
 
@@ -225,19 +223,41 @@ export class Personalizador implements OnDestroy {
   // CUÁNTOS ACCESORIOS SE CUENTAN
   // ==========================================
 
-  // Hasta este número se agrega sin preguntar; el siguiente (el 4.º, al centro) pide confirmación
-  private readonly ACCESORIOS_SIN_PREGUNTAR = 3;
-
-  // Solo cuentan los accesorios que no son de "Personalización" (el nombre no cuenta)
+  // ----- Límite: solo cuentan 2 accesorios -----
+  // NO cuentan: los de categoría Moda (lentes), el nombre (Personalización) ni los elementos fijos.
   private cuenta(accesorio: { categoria?: string }): boolean {
-    return (accesorio.categoria ?? 'Otros') !== 'Personalización';
+    const c = accesorio.categoria ?? 'Otros';
+    return c !== 'Moda' && c !== 'Personalización';
   }
 
-  // Cuántos accesorios que cuentan hay puestos (los elementos fijos no cuentan)
+  // Cuántos accesorios que cuentan hay puestos
   cantidadContada(): number {
     return this.accesoriosSeleccionados().filter(
       a => this.cuenta(a) && !this.esFijo(a.accesorioId)
     ).length;
+  }
+
+  // true si ya hay 2 accesorios que cuentan y este también contaría (hay que quitar uno)
+  private limiteAlcanzado(accesorio: { id: number; categoria?: string }): boolean {
+    return this.cuenta(accesorio)
+      && !this.esFijo(accesorio.id)
+      && this.cantidadContada() >= this.maximoAccesorios;
+  }
+
+  // ----- Accesorios que no se pueden elegir juntos: el 3 y el 4 -----
+  private readonly ID_MARCO_FOTO = 3;   // marco con foto
+  private readonly ID_MARCO_FRASE = 4;  // marco con frase
+
+  private companeroExcluyente(id: number): number | null {
+    if (id === this.ID_MARCO_FOTO) return this.ID_MARCO_FRASE;
+    if (id === this.ID_MARCO_FRASE) return this.ID_MARCO_FOTO;
+    return null;
+  }
+
+  // true si el accesorio no se puede elegir porque ya está elegido su opuesto (3 ↔ 4)
+  private choca(accesorio: { id: number }, ignorarId?: number): boolean {
+    const otro = this.companeroExcluyente(accesorio.id);
+    return otro !== null && otro !== ignorarId && this.estaSeleccionado(otro);
   }
 
   // Pone el accesorio en su destino. Si ahí había otro accesorio, lo reemplaza.
@@ -248,52 +268,24 @@ export class Personalizador implements OnDestroy {
     const nuevo = this.construir(accesorio, ubicacionId);
     if (!nuevo) return;
 
+    const desplazado = this.ocupante(ubicacionId);
+
     this.accesoriosSeleccionados.update(lista => [
       ...lista.filter(s => s.ubicacionId !== ubicacionId),
       nuevo
     ]);
-    this.invalidarPorCategoria(accesorio.categoria);
+
+    this.invalidarPorAccesorio(accesorio);
+    if (desplazado) {
+      this.invalidarPorAccesorio({ id: desplazado.accesorioId, categoria: desplazado.categoria });
+    }
   }
 
-  // Botón "Agregar". Si va a ser el cuarto accesorio (el del centro), antes se pregunta.
+  // Agregar un accesorio. Ya no hay pregunta del cuarto accesorio: el límite es 2
+  // y, para elegir otro, primero hay que quitar uno.
   async agregarAccesorio(accesorio: Accesorio): Promise<void> {
     if (this.esFijo(accesorio.id) || this.estaSeleccionado(accesorio.id)) return;
-
-    // Si el lugar donde iría ya está ocupado, el accesorio REEMPLAZA a otro: no se suma un
-    // accesorio más, así que no hay nada que preguntar. (Ej.: 3 accesorios en pies y centro,
-    // la cabeza vacía, y el nuevo no es de Moda: no puede ir en la cabeza, reemplaza a uno.)
-    const destinoId = this.destino(accesorio);
-    const reemplazaOtro = destinoId !== null && !!this.ocupante(destinoId);
-
-    const esCuarto = this.cuenta(accesorio)
-      && this.cantidadContada() === this.ACCESORIOS_SIN_PREGUNTAR
-      && !reemplazaOtro;
-
-    if (esCuarto) {
-      // Se dice la ubicación real que quedó disponible (derecha, izquierda, centro...)
-      const nombreDestino = destinoId !== null ? this.ubicacion(destinoId)?.nombre : undefined;
-
-      const respuesta = await Swal.fire({
-        title: '¿Desea agregar un cuarto accesorio?',
-        text: /* nombreDestino ? `Se colocará en: ${nombreDestino}.` : '' */"",
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, agregar',
-        cancelButtonText: 'No',
-        // Si el personalizador está dentro de un modal, la pregunta se dibuja dentro de ese modal
-        // (si no, queda detrás de él) y siempre por encima
-        target: this.contenedorDePregunta(),
-        didOpen: () => {
-          const contenedor = Swal.getContainer();
-          if (contenedor) contenedor.style.zIndex = '99999';
-        }
-      });
-
-      if (!respuesta.isConfirmed) return;
-
-      // Por si mientras tanto cambió algo
-      if (this.estaSeleccionado(accesorio.id)) return;
-    }
+    if (this.choca(accesorio) || this.limiteAlcanzado(accesorio)) return;
 
     this.colocar(accesorio);
   }
@@ -303,8 +295,8 @@ export class Personalizador implements OnDestroy {
   // PANEL NUEVO: contador, categorías y tarjetas
   // ==========================================
 
-  // "Accesorio X de 3": cuántos accesorios (que cuentan) lleva puestos
-  readonly maximoAccesorios = 3;
+  // "0/2 elegidos": cuántos accesorios (que cuentan) lleva puestos
+  readonly maximoAccesorios = 2;   // EDITABLE: cuántos accesorios pueden elegirse
 
   cantidadAccesorios = computed(() =>
     this.accesoriosSeleccionados().filter(
@@ -318,7 +310,7 @@ export class Personalizador implements OnDestroy {
   );
 
   // ==========================================
-  // PESTAÑAS: Nombre · Lentes / Gafas · Accesorios · Marco dorado · Dedicatoria
+  // PESTAÑAS: Nombre · Lentes / Gafas · Accesorios · Dedicatoria / Marcos
   // ==========================================
 
   private readonly CATEGORIA_MODA = 'Moda';
@@ -334,16 +326,12 @@ export class Personalizador implements OnDestroy {
       ayuda: 'Elige el accesorio de moda para tu maceta.'
     },
     {
-      id: 'accesorios', titulo: 'Accesorios', icono: 'bi-gift',
-      ayuda: `Elige hasta ${this.maximoAccesorios} complementos para personalizar tu maceta.`
+      id: 'accesorios', titulo: 'Accesorios', subtitulo: `Hasta ${this.maximoAccesorios}`, icono: 'bi-gift',
+      ayuda: `Selecciona hasta ${this.maximoAccesorios} complementos.`
     },
     {
-      id: 'marco', titulo: 'Marco dorado', subtitulo: 'Foto o frase', icono: 'bi-image',
-      ayuda: 'Escribe un texto o sube una foto. Solo puedes elegir una de las dos.'
-    },
-    {
-      id: 'dedicatoria', titulo: 'Tarjeta dedicatoria', subtitulo: 'Foto y frase', icono: 'bi-card-text',
-      ayuda: 'Sube una foto y escribe una frase. Necesitas las dos.'
+      id: 'dedicatoria', titulo: 'Dedicatoria / Marcos', icono: 'bi-card-text',
+      ayuda: 'Completa la información de tu tarjeta y marco.'
     },
   ];
 
@@ -357,10 +345,6 @@ export class Personalizador implements OnDestroy {
   // En pantallas medias y grandes el panel se ve siempre en su lugar.
   hojaAbierta = signal(false);
 
-  // Distancia desde arriba donde empieza la hoja: justo debajo de la imagen del visor,
-  // así la hoja ocupa todo el alto que queda hasta abajo de la pantalla
-  hojaTop = signal(300);
-
   // true mientras la hoja baja y desaparece (animación de cierre)
   hojaCerrando = signal(false);
 
@@ -372,12 +356,6 @@ export class Personalizador implements OnDestroy {
   }
 
   private abrirHoja(): void {
-    const marco = this.marcoRef?.nativeElement;
-    if (marco && typeof window !== 'undefined') {
-      const bajoImagen = Math.round(marco.getBoundingClientRect().bottom + 8);
-      this.hojaTop.set(Math.min(bajoImagen, Math.round(window.innerHeight * 0.55)));
-    }
-
     // En celular, el botón "atrás" debe cerrar la hoja y no salir de la pantalla
     if (!this.hojaAbierta() && this.esCelular() && !this.entradaHistorial) {
       history.pushState({ ...(history.state ?? {}), hojaPersonalizador: true }, '');
@@ -460,6 +438,15 @@ export class Personalizador implements OnDestroy {
     );
   }
 
+  // Cambió un accesorio: la opción a la que pertenece deja de estar guardada.
+  // Los accesorios 3 y 4 cambian la sección 3 de "Dedicatoria / Marcos".
+  private invalidarPorAccesorio(accesorio: { id: number; categoria?: string }): void {
+    this.invalidarPorCategoria(accesorio.categoria);
+    if (accesorio.id === this.ID_MARCO_FOTO || accesorio.id === this.ID_MARCO_FRASE) {
+      this.invalidarGuardado('dedicatoria');
+    }
+  }
+
   // Mensaje de error si la opción todavía no se puede guardar ('' = todo bien)
   private errorDePestana(id: IdPestana): string {
     const lista = this.accesoriosSeleccionados();
@@ -479,22 +466,23 @@ export class Personalizador implements OnDestroy {
           return c !== this.CATEGORIA_MODA && c !== this.CATEGORIA_PERSONALIZACION && !this.esFijo(a.accesorioId);
         }) ? '' : 'Elige al menos un accesorio para continuar.';
 
-      case 'marco':
-        return this.textoMarco().trim() || this.fotoMarcoArchivo
-          ? '' : 'Escribe un texto o sube una foto para continuar.';
-
-      case 'dedicatoria': {
-        const hayFoto = !!this.fotoTarjetaArchivo;
-        const hayFrase = this.dedicatoria().trim().length > 0;
-        if (!hayFoto && !hayFrase) return 'Sube una foto y escribe una frase para continuar.';
-        if (!hayFoto) return 'Falta la foto: la tarjeta lleva una foto y una frase.';
-        if (!hayFrase) return 'Falta la frase: la tarjeta lleva una foto y una frase.';
+      case 'dedicatoria':
+        // 1) mensaje de la tarjeta
+        if (this.tarjetaObligatoria() && !this.dedicatoria().trim()) {
+          return 'Escribe el mensaje para la tarjeta de dedicatoria.';
+        }
+        // 3) marco con foto (accesorio 3) o con frase (accesorio 4)
+        if (this.hayMarcoFoto() && !this.marcoWhatsapp() && !this.fotoMarcoArchivo) {
+          return 'Sube la foto para tu marco.';
+        }
+        if (this.hayMarcoFrase() && !this.textoMarco().trim()) {
+          return 'Escribe la frase para tu marco.';
+        }
         return '';
-      }
     }
   }
 
-  // Botón "Continuar" de cada opción
+  // Botón "Aceptar" de cada opción
   continuarPestana(): void {
     const id = this.pestana();
     const error = this.errorDePestana(id);
@@ -517,9 +505,13 @@ export class Personalizador implements OnDestroy {
 
   // Categorías de la pestaña "Accesorios": todas menos Moda (va en "Lentes / Gafas")
   // y Personalización (va en "Nombre")
-  categoriasAccesorios = computed(() =>
-    this.categorias().filter(c => c !== this.CATEGORIA_MODA && c !== this.CATEGORIA_PERSONALIZACION)
-  );
+  // La primera es "Todos" (todos los accesorios de esta pestaña juntos)
+  private readonly TODOS = 'Todos';
+
+  categoriasAccesorios = computed(() => [
+    this.TODOS,
+    ...this.categorias().filter(c => c !== this.CATEGORIA_MODA && c !== this.CATEGORIA_PERSONALIZACION)
+  ]);
 
   // Pestaña "Lentes / Gafas": accesorios de tipo Moda
   accesoriosModa = computed(() =>
@@ -533,6 +525,7 @@ export class Personalizador implements OnDestroy {
 
   // Icono de cada categoría (Bootstrap Icons). Se puede editar o ampliar.
   private readonly iconosCategoria: Record<string, string> = {
+    Todos: 'bi-box',
     Hobbies: 'bi-stopwatch',
     Deportes: 'bi-dribbble',
     Mascotas: 'bi-heart',
@@ -548,7 +541,13 @@ export class Personalizador implements OnDestroy {
   etiquetaTarjeta(accesorio: Accesorio): string {
     if (this.esFijo(accesorio.id)) return 'Fijo';
     if (this.puedeReemplazarCon(accesorio.id)) return 'Reemplazar';
-    if (this.noDisponible(accesorio)) return 'No disponible';
+    if (this.noDisponible(accesorio)) {
+      if (this.choca(accesorio)) return 'No se puede elegir junto al otro accesorio';
+      if (this.limiteAlcanzado(accesorio)) {
+        return `Máximo ${this.maximoAccesorios} accesorios: quita uno para elegir este`;
+      }
+      return 'No disponible';
+    }
     if (this.estaSeleccionado(accesorio.id)) return 'Agregado';
     return 'Agregar';
   }
@@ -562,89 +561,38 @@ export class Personalizador implements OnDestroy {
 
   readonly maxMbFoto = 5;
 
-  // ----- Marco dorado: un texto (hasta 60 caracteres) O una foto, no las dos -----
-  readonly maxTextoMarco = 60;
-  textoMarco = signal('');
+  // ==========================================
+  // DEDICATORIA / MARCOS
+  // ==========================================
+  // 1) Mensaje de la tarjeta (obligatorio)
+  // 2) Foto de la tarjeta (opcional)
+  // 3) Solo aparece si eligió el accesorio 3 (foto para el marco) o el 4 (frase para el marco)
+  // Al final: opciones adicionales (sin tarjeta / enviar por WhatsApp)
 
-  fotoMarcoUrl = signal<string | null>(null);
-  fotoMarcoNombre = signal('');
-  errorFotoMarco = signal('');
-  private fotoMarcoArchivo: File | null = null;
+  readonly maxDedicatoria = 250;  // EDITABLE: caracteres del mensaje de la tarjeta
+  readonly maxTextoMarco = 60;    // EDITABLE: caracteres de la frase del marco
 
-  escribirTextoMarco(evento: Event): void {
-    this.textoMarco.set((evento.target as HTMLTextAreaElement).value.slice(0, this.maxTextoMarco));
-    this.errorPanel.set('');
-    if (!this.textoMarco().trim()) this.errorFotoMarco.set('');
-    this.invalidarGuardado('marco');
-  }
+  hayMarcoFoto = computed(() =>
+    this.accesoriosSeleccionados().some(a => a.accesorioId === this.ID_MARCO_FOTO)
+  );
 
-  // Botón "Elegir foto": si ya hay texto escrito, no deja subir la foto
-  pedirFotoMarco(input: HTMLInputElement): void {
-    if (this.textoMarco().trim()) {
-      this.errorFotoMarco.set('Primero borra tu mensaje de arriba para subir la foto.');
-      return;
-    }
+  hayMarcoFrase = computed(() =>
+    this.accesoriosSeleccionados().some(a => a.accesorioId === this.ID_MARCO_FRASE)
+  );
 
-    this.errorFotoMarco.set('');
-    input.click();
-  }
-
-  elegirFotoMarco(evento: Event): void {
-    const input = evento.target as HTMLInputElement;
-    const archivo = input.files?.[0];
-    if (!archivo) return;
-
-    if (this.textoMarco().trim()) {
-      this.errorFotoMarco.set('Primero borra tu mensaje de arriba para subir la foto.');
-      input.value = '';
-      return;
-    }
-
-    const error = this.errorDeImagen(archivo);
-    if (error) {
-      this.errorFotoMarco.set(error);
-      input.value = '';
-      return;
-    }
-
-    this.errorFotoMarco.set('');
-    this.errorPanel.set('');
-    this.liberarFotoMarco();
-    this.fotoMarcoArchivo = archivo;
-    this.fotoMarcoUrl.set(URL.createObjectURL(archivo));
-    this.fotoMarcoNombre.set(archivo.name);
-    this.invalidarGuardado('marco');
-  }
-
-  quitarFotoMarco(input: HTMLInputElement): void {
-    this.liberarFotoMarco();
-    this.fotoMarcoArchivo = null;
-    this.fotoMarcoUrl.set(null);
-    this.fotoMarcoNombre.set('');
-    this.errorFotoMarco.set('');
-    input.value = '';
-    this.invalidarGuardado('marco');
-  }
-
-  private liberarFotoMarco(): void {
-    const actual = this.fotoMarcoUrl();
-    if (actual) URL.revokeObjectURL(actual);
-  }
-
-  // ----- Tarjeta dedicatoria: una foto Y una frase (hasta 200 caracteres) -----
-  readonly maxDedicatoria = 200;
+  // ----- 1) Mensaje de la tarjeta -----
   dedicatoria = signal('');
 
+  escribirDedicatoria(evento: Event): void {
+    this.dedicatoria.set((evento.target as HTMLTextAreaElement).value.slice(0, this.maxDedicatoria));
+    this.cambioDedicatoria();
+  }
+
+  // ----- 2) Foto de la tarjeta (opcional) -----
   fotoTarjetaUrl = signal<string | null>(null);
   fotoTarjetaNombre = signal('');
   errorFotoTarjeta = signal('');
   private fotoTarjetaArchivo: File | null = null;
-
-  escribirDedicatoria(evento: Event): void {
-    this.dedicatoria.set((evento.target as HTMLTextAreaElement).value.slice(0, this.maxDedicatoria));
-    this.errorPanel.set('');
-    this.invalidarGuardado('dedicatoria');
-  }
 
   elegirFotoTarjeta(evento: Event): void {
     const input = evento.target as HTMLInputElement;
@@ -659,12 +607,11 @@ export class Personalizador implements OnDestroy {
     }
 
     this.errorFotoTarjeta.set('');
-    this.errorPanel.set('');
     this.liberarFotoTarjeta();
     this.fotoTarjetaArchivo = archivo;
     this.fotoTarjetaUrl.set(URL.createObjectURL(archivo));
     this.fotoTarjetaNombre.set(archivo.name);
-    this.invalidarGuardado('dedicatoria');
+    this.cambioDedicatoria();
   }
 
   quitarFotoTarjeta(input: HTMLInputElement): void {
@@ -674,12 +621,94 @@ export class Personalizador implements OnDestroy {
     this.fotoTarjetaNombre.set('');
     this.errorFotoTarjeta.set('');
     input.value = '';
-    this.invalidarGuardado('dedicatoria');
+    this.cambioDedicatoria();
   }
 
   private liberarFotoTarjeta(): void {
     const actual = this.fotoTarjetaUrl();
     if (actual) URL.revokeObjectURL(actual);
+  }
+
+  // ----- 3a) Marco con foto (accesorio 3) -----
+  fotoMarcoUrl = signal<string | null>(null);
+  fotoMarcoNombre = signal('');
+  errorFotoMarco = signal('');
+  private fotoMarcoArchivo: File | null = null;
+
+  elegirFotoMarco(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    if (!archivo) return;
+
+    const error = this.errorDeImagen(archivo);
+    if (error) {
+      this.errorFotoMarco.set(error);
+      input.value = '';
+      return;
+    }
+
+    this.errorFotoMarco.set('');
+    this.liberarFotoMarco();
+    this.fotoMarcoArchivo = archivo;
+    this.fotoMarcoUrl.set(URL.createObjectURL(archivo));
+    this.fotoMarcoNombre.set(archivo.name);
+    this.cambioDedicatoria();
+  }
+
+  quitarFotoMarco(input: HTMLInputElement): void {
+    this.liberarFotoMarco();
+    this.fotoMarcoArchivo = null;
+    this.fotoMarcoUrl.set(null);
+    this.fotoMarcoNombre.set('');
+    this.errorFotoMarco.set('');
+    input.value = '';
+    this.cambioDedicatoria();
+  }
+
+  private liberarFotoMarco(): void {
+    const actual = this.fotoMarcoUrl();
+    if (actual) URL.revokeObjectURL(actual);
+  }
+
+  // ----- 3b) Marco con frase (accesorio 4) -----
+  textoMarco = signal('');
+
+  escribirTextoMarco(evento: Event): void {
+    this.textoMarco.set((evento.target as HTMLTextAreaElement).value.slice(0, this.maxTextoMarco));
+    this.cambioDedicatoria();
+  }
+
+  // ----- Opciones adicionales -----
+  sinTarjeta = signal(false);       // No deseo tarjeta de dedicatoria
+  tarjetaWhatsapp = signal(false);  // Enviaré mi tarjeta por WhatsApp
+  marcoWhatsapp = signal(false);    // Enviaré la foto de mi marco por WhatsApp
+
+  // El mensaje de la tarjeta es obligatorio, salvo que no quiera tarjeta o la envíe por WhatsApp
+  tarjetaObligatoria = computed(() => !this.sinTarjeta() && !this.tarjetaWhatsapp());
+
+  alternarSinTarjeta(): void {
+    const marcada = !this.sinTarjeta();
+    this.sinTarjeta.set(marcada);
+    if (marcada) this.tarjetaWhatsapp.set(false); // no pueden ir las dos a la vez
+    this.cambioDedicatoria();
+  }
+
+  alternarTarjetaWhatsapp(): void {
+    const marcada = !this.tarjetaWhatsapp();
+    this.tarjetaWhatsapp.set(marcada);
+    if (marcada) this.sinTarjeta.set(false);
+    this.cambioDedicatoria();
+  }
+
+  alternarMarcoWhatsapp(): void {
+    this.marcoWhatsapp.update(v => !v);
+    this.cambioDedicatoria();
+  }
+
+  // Cualquier cambio en esta pestaña: quita el error y deja de estar "guardada" (azul)
+  private cambioDedicatoria(): void {
+    this.errorPanel.set('');
+    this.invalidarGuardado('dedicatoria');
   }
 
   // ==========================================
@@ -866,8 +895,11 @@ export class Personalizador implements OnDestroy {
       colorLentes: this.colorSeleccionado,
       dedicatoria: this.dedicatoria(),
       fotoDedicatoria: this.fotoTarjetaArchivo,
-      textoMarco: this.textoMarco(),
-      fotoMarco: this.fotoMarcoArchivo,
+      textoMarco: this.hayMarcoFrase() ? this.textoMarco() : '',
+      fotoMarco: this.hayMarcoFoto() ? this.fotoMarcoArchivo : null,
+      sinTarjeta: this.sinTarjeta(),
+      tarjetaPorWhatsapp: this.tarjetaWhatsapp(),
+      fotoMarcoPorWhatsapp: this.marcoWhatsapp(),
     });
   }
 
@@ -879,14 +911,6 @@ export class Personalizador implements OnDestroy {
 
   cantidadEnCategoria(categoria: string): number {
     return this.catalogo().filter(a => (a.categoria ?? 'Otros') === categoria).length;
-  }
-
-  // Elemento donde se dibuja la pregunta: el modal que contiene al personalizador (o el body)
-  private contenedorDePregunta(): HTMLElement {
-    const host = this.anfitrion.nativeElement as HTMLElement;
-    return (host.closest(
-      'dialog, .modal, [role="dialog"], mat-dialog-container, .cdk-overlay-pane'
-    ) as HTMLElement | null) ?? document.body;
   }
 
   // ----- Categorías: se desplazan arrastrando con el mouse o con la rueda -----
@@ -927,15 +951,18 @@ export class Personalizador implements OnDestroy {
     this.categoriaActual.set(categoria);
   }
 
-  // true si el accesorio no se puede poner (sin ubicación) y todavía no está puesto
+  // true si el accesorio no se puede elegir y todavía no está puesto:
+  // sin ubicación, el opuesto (3 ↔ 4) ya está elegido, o ya hay 2 accesorios
   noDisponible(accesorio: Accesorio): boolean {
     return !this.esFijo(accesorio.id)
       && !this.estaSeleccionado(accesorio.id)
-      && this.destino(accesorio) === null;
+      && !this.puedeReemplazarCon(accesorio.id)
+      && (this.destino(accesorio) === null
+        || this.choca(accesorio)
+        || this.limiteAlcanzado(accesorio));
   }
 
   // Clic en una tarjeta: reemplaza (si hay uno elegido para reemplazar), quita o agrega.
-  // Al agregar el cuarto accesorio, agregarAccesorio hace la pregunta.
   async pulsarTarjeta(accesorio: Accesorio): Promise<void> {
     if (this.esFijo(accesorio.id)) return;
 
@@ -960,7 +987,8 @@ export class Personalizador implements OnDestroy {
 
     if (this.reemplazoDe() === id) this.reemplazoDe.set(null);
 
-    this.invalidarPorCategoria(this.accesoriosSeleccionados().find(a => a.accesorioId === id)?.categoria);
+    const quitado = this.accesoriosSeleccionados().find(a => a.accesorioId === id);
+    if (quitado) this.invalidarPorAccesorio({ id, categoria: quitado.categoria });
 
     this.accesoriosSeleccionados.update(lista =>
       lista.filter(accesorio => accesorio.accesorioId !== id)
@@ -1006,6 +1034,7 @@ export class Personalizador implements OnDestroy {
 
     return this.catalogo().filter(a => {
       if (a.id === puesto.accesorioId || this.esFijo(a.id)) return false;
+      if (this.choca(a, puesto.accesorioId)) return false; // 3 y 4 no pueden ir juntos
       if (this.motivoNoDisponible(ubicacion, a) !== '') return false;
 
       const otro = this.accesoriosSeleccionados().find(s => s.accesorioId === a.id);
@@ -1084,7 +1113,8 @@ export class Personalizador implements OnDestroy {
       ...(intercambiado ? [intercambiado] : [])
     ]);
 
-    this.invalidarPorCategoria(nuevo.categoria);
+    this.invalidarPorAccesorio(nuevo);
+    this.invalidarPorAccesorio({ id: puesto.accesorioId, categoria: puesto.categoria });
     this.cancelarReemplazo();
   }
 
@@ -1181,9 +1211,16 @@ export class Personalizador implements OnDestroy {
   );
 
   // Accesorios de la categoría elegida
-  accesoriosDeCategoria = computed(() =>
-    this.catalogo().filter(a => (a.categoria ?? 'Otros') === this.categoriaActual())
-  );
+  accesoriosDeCategoria = computed(() => {
+    const actual = this.categoriaActual();
+
+    return this.catalogo().filter(a => {
+      const c = a.categoria ?? 'Otros';
+      return actual === this.TODOS
+        ? c !== this.CATEGORIA_MODA && c !== this.CATEGORIA_PERSONALIZACION
+        : c === actual;
+    });
+  });
 
   // Ids marcados con el check (de todas las categorías), en el orden en que se marcaron
   idsMarcados = signal<number[]>([]);
@@ -1234,12 +1271,11 @@ export class Personalizador implements OnDestroy {
 
     this.accesoriosSeleccionados.set(fijos);
 
-    // 2) Al iniciar salen puestos los accesorios que no necesitan pregunta: hasta 3 que
-    // cuentan (izquierda, derecha y cabeza) más los de Personalización (el nombre).
-    // El cuarto accesorio (centro) lo agrega el cliente y se le pregunta.
+    // 2) Al iniciar salen puestos los accesorios por defecto: hasta 2 que cuentan
+    // (más los de Moda y el nombre, que no cuentan). El 3 y el 4 nunca salen juntos.
     for (const accesorio of this.catalogo()) {
       if (this.esFijo(accesorio.id)) continue;
-      if (this.cuenta(accesorio) && this.cantidadContada() >= this.ACCESORIOS_SIN_PREGUNTAR) continue;
+      if (this.limiteAlcanzado(accesorio) || this.choca(accesorio)) continue;
 
       const ubicacionId = this.destino(accesorio);
       if (ubicacionId === null || this.ocupante(ubicacionId)) continue;

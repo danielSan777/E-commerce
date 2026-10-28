@@ -80,7 +80,7 @@
         <!-- ================= OPCIONES ================= -->
         <div class="col-12 col-lg-6">
 
-            <!-- Botones: Nombre · Lentes / Gafas · Accesorios · Marco dorado · Dedicatoria -->
+            <!-- Botones: Nombre · Lentes / Gafas · Accesorios · Dedicatoria / Marcos -->
             <div class="pestanas" role="tablist">
                 @for (p of pestanas; track p.id) {
                 <button type="button" role="tab" class="pestana" [class.activa]="pestana() === p.id"
@@ -106,8 +106,7 @@
             <div class="hoja-fondo" [class.cerrando]="hojaCerrando()" (click)="cerrarHoja()"></div>
             }
 
-            <section class="panel" [class.abierta]="hojaAbierta() || hojaCerrando()" [class.cerrando]="hojaCerrando()"
-                [style.--hoja-top]="hojaTop() + 'px'">
+            <section class="panel" [class.abierta]="hojaAbierta() || hojaCerrando()" [class.cerrando]="hojaCerrando()">
 
                 <!-- Cabecera del panel -->
                 <div class="panel-cabecera">
@@ -115,7 +114,7 @@
                     <h2 class="panel-titulo">{{ pestanaActual().titulo }}</h2>
 
                     @if (pestana() === 'accesorios') {
-                    <span class="pildora">Hasta {{ maximoAccesorios }} complementos incluidos</span>
+                    <span class="pildora">{{ cantidadAccesorios() }}/{{ maximoAccesorios }} elegidos</span>
                     }
 
                     <button type="button" class="btn-cerrar-hoja" (click)="cerrarHoja()" aria-label="Cerrar">
@@ -127,7 +126,7 @@
                     {{ pestanaActual().ayuda }}
                     @if (pestana() === 'accesorios') {
                     <i class="bi bi-info-circle"
-                        title="El nombre y los elementos fijos no cuentan como complementos"></i>
+                        title="Los lentes, el nombre y los elementos fijos no cuentan como complementos"></i>
                     }
                 </p>
 
@@ -214,81 +213,159 @@
                 <ng-container *ngTemplateOutlet="rejillaTpl; context: { $implicit: accesoriosDeCategoria() }" />
                 }
 
-                <!-- ===== MARCO DORADO: texto (60) O foto ===== -->
-                @case ('marco') {
-                <input #archivoMarco type="file" accept="image/*" hidden (change)="elegirFotoMarco($event)" />
+                <!-- ===== DEDICATORIA / MARCOS ===== -->
+                @case ('dedicatoria') {
 
-                <div class="caja-dedicatoria">
-                    <textarea id="textoMarco" rows="2" [maxLength]="maxTextoMarco" [value]="textoMarco()"
-                        [disabled]="!!fotoMarcoUrl()" placeholder="Escribe el texto del marco (hasta 60 caracteres)"
-                        (input)="escribirTextoMarco($event)"></textarea>
-                    <span class="contador-texto">{{ textoMarco().length }}/{{ maxTextoMarco }}</span>
-                </div>
-                @if (fotoMarcoUrl()) {
-                <small class="ayuda-bloqueo">Quita la foto para poder escribir un texto.</small>
-                }
-
-                <p class="separador-o"><span>o</span></p>
-
-                <div class="zona-foto" [class.con-foto]="fotoMarcoUrl()" [class.bloqueada]="textoMarco().trim()">
-                    @if (fotoMarcoUrl(); as url) {
-                    <img [src]="url" alt="Tu foto" class="foto-previa" />
-                    <div class="foto-acciones">
-                        <span class="foto-nombre">{{ fotoMarcoNombre() }}</span>
-                        <button type="button" class="btn-gris" (click)="archivoMarco.click()">Cambiar</button>
-                        <button type="button" class="btn-gris" (click)="quitarFotoMarco(archivoMarco)">Quitar</button>
+                <!-- 1. Mensaje de la tarjeta -->
+                <div class="bloque">
+                    <div class="bloque-cabecera">
+                        <span class="num-paso">1</span>
+                        <h3 class="bloque-titulo">Mensaje para la tarjeta de dedicatoria</h3>
+                        @if (tarjetaObligatoria()) {
+                        <span class="etiqueta-obligatorio">Obligatorio</span>
+                        } @else {
+                        <span class="etiqueta-opcional">Opcional</span>
+                        }
                     </div>
-                    } @else {
-                    <button type="button" class="btn-gris" (click)="pedirFotoMarco(archivoMarco)">Subir foto</button>
-                    }
+                    <div class="caja-dedicatoria">
+                        <textarea id="dedicatoria" rows="3" [maxLength]="maxDedicatoria" [value]="dedicatoria()"
+                            placeholder="Escribe tu mensaje aquí..." (input)="escribirDedicatoria($event)"></textarea>
+                        <span class="contador-texto">{{ dedicatoria().length }}/{{ maxDedicatoria }}</span>
+                    </div>
                 </div>
-                @if (errorFotoMarco()) {
-                <p class="error-foto">{{ errorFotoMarco() }}</p>
-                }
-                }
 
-                <!-- ===== TARJETA DEDICATORIA: foto Y frase (200) ===== -->
-                @case ('dedicatoria'){
-                <!-- Continuar: guarda lo elegido en esta opción -->
-                @if (errorPanel()){
-                <p class="error-foto error-panel" role="alert">{{ errorPanel() }}</p>
-                }
-                <input #archivoTarjeta type="file" accept="image/*" hidden (change)="elegirFotoTarjeta($event)" />
+                <!-- 2. Foto de la tarjeta (opcional) -->
+                <div class="bloque">
+                    <div class="bloque-cabecera">
+                        <span class="num-paso">2</span>
+                        <h3 class="bloque-titulo">Foto para la tarjeta de dedicatoria</h3>
+                        <span class="etiqueta-opcional">Opcional</span>
+                    </div>
+                    <p class="bloque-ayuda">Puedes incluir una foto junto a tu mensaje.</p>
 
-                <div class="zona-foto" [class.con-foto]="fotoTarjetaUrl()">
+                    <input #archivoTarjeta type="file" accept="image/*" hidden (change)="elegirFotoTarjeta($event)" />
                     @if (fotoTarjetaUrl(); as url) {
-                    <img [src]="url" alt="Tu foto" class="foto-previa" />
-                    <div class="foto-acciones">
-                        <span class="foto-nombre">{{ fotoTarjetaNombre() }}</span>
-                        <button type="button" class="btn-gris" (click)="archivoTarjeta.click()">Cambiar</button>
-                        <button type="button" class="btn-gris"
-                            (click)="quitarFotoTarjeta(archivoTarjeta)">Quitar</button>
+                    <div class="subida con-foto">
+                        <img [src]="url" alt="Tu foto" class="foto-previa" />
+                        <div class="foto-acciones">
+                            <span class="foto-nombre">{{ fotoTarjetaNombre() }}</span>
+                            <button type="button" class="btn-gris" (click)="archivoTarjeta.click()">Cambiar</button>
+                            <button type="button" class="btn-gris"
+                                (click)="quitarFotoTarjeta(archivoTarjeta)">Quitar</button>
+                        </div>
                     </div>
                     } @else {
-                    <button type="button" class="btn-gris" (click)="archivoTarjeta.click()">Subir foto</button>
+                    <button type="button" class="subida" (click)="archivoTarjeta.click()">
+                        <i class="bi bi-paperclip"></i>
+                        <span>
+                            <strong>Subir foto</strong>
+                            <small>JPG, PNG (máx. {{ maxMbFoto }} MB)</small>
+                        </span>
+                    </button>
+                    }
+                    @if (errorFotoTarjeta()) {
+                    <p class="error-foto">{{ errorFotoTarjeta() }}</p>
                     }
                 </div>
-                @if (errorFotoTarjeta()) {
-                <p class="error-foto">{{ errorFotoTarjeta() }}</p>
+
+                <!-- 3. Solo si eligió el accesorio 3 (foto) o el 4 (frase) -->
+                @if (hayMarcoFoto()) {
+                <div class="bloque">
+                    <div class="bloque-cabecera">
+                        <span class="num-paso">3</span>
+                        <h3 class="bloque-titulo">Foto para tu marco</h3>
+                        @if (marcoWhatsapp()) {
+                        <span class="etiqueta-opcional">Opcional</span>
+                        } @else {
+                        <span class="etiqueta-obligatorio">Obligatorio</span>
+                        }
+                    </div>
+                    <p class="bloque-ayuda">Seleccionaste un marco con foto. Sube la imagen que irá en tu marco.</p>
+
+                    <input #archivoMarco type="file" accept="image/*" hidden (change)="elegirFotoMarco($event)" />
+                    @if (fotoMarcoUrl(); as url) {
+                    <div class="subida con-foto">
+                        <img [src]="url" alt="Tu foto" class="foto-previa" />
+                        <div class="foto-acciones">
+                            <span class="foto-nombre">{{ fotoMarcoNombre() }}</span>
+                            <button type="button" class="btn-gris" (click)="archivoMarco.click()">Cambiar</button>
+                            <button type="button" class="btn-gris"
+                                (click)="quitarFotoMarco(archivoMarco)">Quitar</button>
+                        </div>
+                    </div>
+                    } @else {
+                    <button type="button" class="subida" (click)="archivoMarco.click()">
+                        <i class="bi bi-paperclip"></i>
+                        <span>
+                            <strong>Subir foto del marco</strong>
+                            <small>JPG, PNG (máx. {{ maxMbFoto }} MB)</small>
+                        </span>
+                    </button>
+                    }
+                    @if (errorFotoMarco()) {
+                    <p class="error-foto">{{ errorFotoMarco() }}</p>
+                    }
+                </div>
+                } @else if (hayMarcoFrase()) {
+                <div class="bloque">
+                    <div class="bloque-cabecera">
+                        <span class="num-paso">3</span>
+                        <h3 class="bloque-titulo">Frase para tu marco</h3>
+                        <span class="etiqueta-obligatorio">Obligatorio</span>
+                    </div>
+                    <p class="bloque-ayuda">Seleccionaste un marco con frase. Escribe el texto que irá en tu marco.</p>
+
+                    <div class="caja-dedicatoria">
+                        <textarea id="textoMarco" rows="2" [maxLength]="maxTextoMarco" [value]="textoMarco()"
+                            placeholder="Escribe la frase para tu marco..."
+                            (input)="escribirTextoMarco($event)"></textarea>
+                        <span class="contador-texto">{{ textoMarco().length }}/{{ maxTextoMarco }}</span>
+                    </div>
+                </div>
                 }
 
-                <div class="caja-dedicatoria separada">
-                    <textarea id="dedicatoria" rows="4" [maxLength]="maxDedicatoria" [value]="dedicatoria()"
-                        placeholder="Escribe tu frase (hasta 200 caracteres)"
-                        (input)="escribirDedicatoria($event)"></textarea>
-                    <span class="contador-texto">{{ dedicatoria().length }}/{{ maxDedicatoria }}</span>
+                <!-- Opciones adicionales -->
+                <div class="opciones-extra">
+                    <h3 class="opciones-extra-titulo">Opciones adicionales</h3>
+
+                    <button type="button" class="opcion-extra" [class.marcada]="sinTarjeta()" role="checkbox"
+                        [attr.aria-checked]="sinTarjeta()" (click)="alternarSinTarjeta()">
+                        <span class="circulo">@if (sinTarjeta()) {<i class="bi bi-check-lg"></i>}</span>
+                        <span>
+                            <strong>No deseo tarjeta de dedicatoria.</strong>
+                            <small>No incluiremos la tarjeta de dedicatoria en tu pedido.</small>
+                        </span>
+                    </button>
+
+                    <button type="button" class="opcion-extra" [class.marcada]="tarjetaWhatsapp()" role="checkbox"
+                        [attr.aria-checked]="tarjetaWhatsapp()" (click)="alternarTarjetaWhatsapp()">
+                        <span class="circulo">@if (tarjetaWhatsapp()) {<i class="bi bi-check-lg"></i>}</span>
+                        <span>
+                            <strong>Prefiero enviar mi tarjeta de dedicatoria por WhatsApp.</strong>
+                            <small>Te pediremos el número de contacto que nos proporciones luego.</small>
+                        </span>
+                    </button>
+
+                    <button type="button" class="opcion-extra" [class.marcada]="marcoWhatsapp()" role="checkbox"
+                        [attr.aria-checked]="marcoWhatsapp()" (click)="alternarMarcoWhatsapp()">
+                        <span class="circulo">@if (marcoWhatsapp()) {<i class="bi bi-check-lg"></i>}</span>
+                        <span>
+                            <strong>Prefiero enviar la foto de mi marco por WhatsApp.</strong>
+                            <small>Te pediremos el número de contacto que nos proporciones luego.</small>
+                        </span>
+                    </button>
                 </div>
                 }
 
                 }
 
-                <!-- Continuar: guarda lo elegido en esta opción -->
-                @if (errorPanel()) {
-                <p class="error-foto error-panel" role="alert">{{ errorPanel() }}</p>
-                }
+                <!-- Aceptar: guarda lo elegido en esta opción (el error sale junto al botón) -->
                 <div class="continuar-fila">
+                    @if (errorPanel()) {
+                    <p class="error-foto error-panel" role="alert">{{ errorPanel() }}</p>
+                    }
                     <button type="button" class="btn-guardar" (click)="continuarPestana()">
-                        Continuar <i class="bi bi-arrow-right"></i>
+                        Aceptar <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
             </section>

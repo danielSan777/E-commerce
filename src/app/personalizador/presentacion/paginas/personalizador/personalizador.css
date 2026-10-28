@@ -10,6 +10,13 @@
     --borde-suave: #f3ead9;
     --azul: #1565d8;
     --azul-claro: #e8f0fd;
+
+    /* ===== EDITABLES (celular) ===== */
+    --alto-visor: 65dvh;
+    /* alto de la imagen del visor, en % de la pantalla */
+    --alto-hoja: 70dvh;
+    /* alto de lo que sale de abajo hacia arriba (Lentes, Accesorios...) */
+
     display: block;
     background: var(--crema);
     color: var(--texto);
@@ -133,7 +140,7 @@
 /* ================= PESTAÑAS ================= */
 .pestanas {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
 }
 
@@ -501,9 +508,14 @@
     color: #8a7662;
 }
 
-/* ================= CONTINUAR ================= */
+/* ================= ACEPTAR ================= */
 .continuar-fila {
     margin-top: 14px;
+}
+
+.continuar-fila .error-foto {
+    margin: 0 0 8px;
+    text-align: center;
 }
 
 /* ================= DEDICATORIA ================= */
@@ -543,6 +555,164 @@
     bottom: 8px;
     font-size: .72rem;
     color: #8a7662;
+}
+
+/* ================= DEDICATORIA / MARCOS ================= */
+.bloque {
+    margin-bottom: 16px;
+}
+
+.bloque-cabecera {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.num-paso {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--verde-claro);
+    color: var(--verde);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 700;
+    font-size: .9rem;
+}
+
+.bloque-titulo {
+    margin: 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: .95rem;
+    font-weight: 700;
+    color: #4a2a1a;
+}
+
+.etiqueta-obligatorio,
+.etiqueta-opcional {
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.etiqueta-obligatorio {
+    background: #fde8e8;
+    color: #c0262d;
+}
+
+.etiqueta-opcional {
+    background: var(--beige);
+    color: #7d7265;
+}
+
+.bloque-ayuda {
+    margin: 0 0 8px;
+    font-size: .76rem;
+    color: #8a7662;
+}
+
+/* Caja para subir una foto (clip + texto) */
+.subida {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 12px 14px;
+    background: #fff;
+    border: 1.5px solid var(--borde-suave);
+    border-radius: 12px;
+    color: var(--texto);
+    text-align: left;
+}
+
+.subida i {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.subida strong {
+    display: block;
+    font-size: .9rem;
+}
+
+.subida small {
+    display: block;
+    font-size: .74rem;
+    color: #8a7662;
+}
+
+.subida.con-foto {
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Opciones adicionales */
+.opciones-extra {
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top: 1px solid var(--borde-suave);
+}
+
+.opciones-extra-titulo {
+    margin: 0 0 4px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: .92rem;
+    font-weight: 700;
+    color: #4a2a1a;
+}
+
+.opcion-extra {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1.5px solid var(--borde-suave);
+    border-radius: 12px;
+    color: var(--texto);
+    text-align: left;
+}
+
+.opcion-extra strong {
+    display: block;
+    font-size: .82rem;
+}
+
+.opcion-extra small {
+    display: block;
+    font-size: .72rem;
+    color: #8a7662;
+}
+
+.opcion-extra.marcada {
+    border-color: var(--verde);
+    background: var(--verde-claro);
+}
+
+.circulo {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin-top: 2px;
+    display: grid;
+    place-items: center;
+    border: 2px solid #cdbfa8;
+    border-radius: 50%;
+    font-size: .7rem;
+    color: #fff;
+}
+
+.opcion-extra.marcada .circulo {
+    background: var(--verde);
+    border-color: var(--verde);
 }
 
 /* ================= ZOOM (+ / −) ================= */
@@ -712,6 +882,11 @@
         display: none;
     }
 
+    /* 4 tarjetas por fila dentro de la hoja */
+    .rejilla {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
     .hoja-fondo {
         display: block;
         position: fixed;
@@ -729,8 +904,8 @@
         bottom: 0;
         z-index: 2500;
         margin: 0;
-        /* Empieza justo debajo de la imagen (la posición la calcula el componente) */
-        top: var(--hoja-top, 45dvh);
+        /* Alto de la hoja: se cambia arriba, en --alto-hoja */
+        height: var(--alto-hoja, 70dvh);
         overflow-y: auto;
         padding: 18px 16px 0;
         background: var(--panel);
@@ -815,7 +990,7 @@
     .visor-marco {
         display: flex;
         justify-content: center;
-        height: clamp(190px, 33vh, 300px);
+        height: var(--alto-visor, 65dvh);
         border-radius: 14px;
     }
 
