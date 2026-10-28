@@ -128,36 +128,48 @@
         },
         {
             "id": 3,
+            "nombre": "marco-foto",
+            "imagen": "accesorios/marco-foto.png",
+            "categoria": "Objetos"
+        },
+        {
+            "id": 4,
+            "nombre": "marco-frase",
+            "imagen": "accesorios/marco-frase.png",
+            "categoria": "Objetos"
+        },
+        {
+            "id": 5,
             "nombre": "herramienta",
             "imagen": "accesorios/caja_herramientas.png",
             "categoria": "Objetos"
         },
         {
-            "id": 4,
+            "id": 6,
             "nombre": "regalo",
             "imagen": "accesorios/regalo.png",
             "categoria": "Objetos"
         },
         {
-            "id": 5,
+            "id": 7,
             "nombre": "vaso de café",
             "imagen": "accesorios/vaso_cafe.png",
             "categoria": "Objetos"
         },
         {
-            "id": 6,
+            "id": 8,
             "nombre": "gato amarillo",
             "imagen": "accesorios/gatito.png",
             "categoria": "Animales"
         },
         {
-            "id": 7,
+            "id": 9,
             "nombre": "perro",
             "imagen": "accesorios/perro.png",
             "categoria": "Animales"
         },
         {
-            "id": 8,
+            "id": 10,
             "nombre": "flor",
             "imagen": "accesorios/flores.png",
             "categoria": "Flores "
