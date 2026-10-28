@@ -31,7 +31,8 @@ export interface ConfiguracionPersonalizada {
   fotoMarco: File | null;       // foto del marco (solo si eligió el accesorio 3)
   sinTarjeta: boolean;          // "No deseo tarjeta de dedicatoria"
   tarjetaPorWhatsapp: boolean;  // "Prefiero enviar mi tarjeta por WhatsApp"
-  fotoMarcoPorWhatsapp: boolean; // "Prefiero enviar la foto de mi marco por WhatsApp"
+  fotoMarcoPorWhatsapp: boolean; // marco con foto (accesorio 3): "enviar la foto de mi marco por WhatsApp"
+  fraseMarcoPorWhatsapp: boolean; // marco con frase (accesorio 4): "enviar mi frase por WhatsApp"
 }
 
 @Component({
@@ -66,6 +67,10 @@ export class Personalizador implements OnDestroy {
 
   @ViewChild('visor')
   visor!: ElementRef<HTMLDivElement>;
+
+  // Caja de "accesorios seleccionados" (arriba de la lista de Accesorios)
+  @ViewChild('chips')
+  chips?: ElementRef<HTMLElement>;
 
   nombreCliente = signal('');
 
@@ -304,6 +309,13 @@ export class Personalizador implements OnDestroy {
     ).length
   );
 
+  // Accesorios que cuentan para el límite (los que se muestran arriba con su X para quitarlos)
+  accesoriosElegidos = computed(() =>
+    this.accesoriosSeleccionados().filter(
+      a => this.cuenta(a) && !this.esFijo(a.accesorioId)
+    )
+  );
+
   // Segmentos de la barra de progreso (3, o más si agregó un cuarto)
   segmentos = computed(() =>
     Array.from({ length: Math.max(this.maximoAccesorios, this.cantidadAccesorios()) }, (_, i) => i)
@@ -443,6 +455,7 @@ export class Personalizador implements OnDestroy {
   private invalidarPorAccesorio(accesorio: { id: number; categoria?: string }): void {
     this.invalidarPorCategoria(accesorio.categoria);
     if (accesorio.id === this.ID_MARCO_FOTO || accesorio.id === this.ID_MARCO_FRASE) {
+      this.marcoWhatsapp.set(false);
       this.invalidarGuardado('dedicatoria');
     }
   }
@@ -475,7 +488,7 @@ export class Personalizador implements OnDestroy {
         if (this.hayMarcoFoto() && !this.marcoWhatsapp() && !this.fotoMarcoArchivo) {
           return 'Sube la foto para tu marco.';
         }
-        if (this.hayMarcoFrase() && !this.textoMarco().trim()) {
+        if (this.hayMarcoFrase() && !this.marcoWhatsapp() && !this.textoMarco().trim()) {
           return 'Escribe la frase para tu marco.';
         }
         return '';
@@ -681,7 +694,7 @@ export class Personalizador implements OnDestroy {
   // ----- Opciones adicionales -----
   sinTarjeta = signal(false);       // No deseo tarjeta de dedicatoria
   tarjetaWhatsapp = signal(false);  // Enviaré mi tarjeta por WhatsApp
-  marcoWhatsapp = signal(false);    // Enviaré la foto de mi marco por WhatsApp
+  marcoWhatsapp = signal(false);    // Enviaré la foto (accesorio 3) o la frase (accesorio 4) de mi marco por WhatsApp
 
   // El mensaje de la tarjeta es obligatorio, salvo que no quiera tarjeta o la envíe por WhatsApp
   tarjetaObligatoria = computed(() => !this.sinTarjeta() && !this.tarjetaWhatsapp());
@@ -899,11 +912,13 @@ export class Personalizador implements OnDestroy {
       fotoMarco: this.hayMarcoFoto() ? this.fotoMarcoArchivo : null,
       sinTarjeta: this.sinTarjeta(),
       tarjetaPorWhatsapp: this.tarjetaWhatsapp(),
-      fotoMarcoPorWhatsapp: this.marcoWhatsapp(),
+      fotoMarcoPorWhatsapp: this.hayMarcoFoto() && this.marcoWhatsapp(),
+      fraseMarcoPorWhatsapp: this.hayMarcoFrase() && this.marcoWhatsapp(),
     });
   }
 
   ngOnDestroy(): void {
+    clearTimeout(this.temporizadorVibrar);
     if (this.entradaHistorial && history.state?.hojaPersonalizador) history.back();
     this.liberarFotoMarco();
     this.liberarFotoTarjeta();
@@ -962,6 +977,31 @@ export class Personalizador implements OnDestroy {
         || this.limiteAlcanzado(accesorio));
   }
 
+  // true si el accesorio solo está bloqueado porque ya hay 2 elegidos (hay que quitar uno).
+  // Esa tarjeta se puede tocar: no agrega nada, solo avisa haciendo vibrar los elegidos.
+  soloPorLimite(accesorio: Accesorio): boolean {
+    return this.noDisponible(accesorio)
+      && this.limiteAlcanzado(accesorio)
+      && !this.choca(accesorio)
+      && this.destino(accesorio) !== null;
+  }
+
+  // Efecto de aviso: la caja de accesorios elegidos se pone roja y vibra
+  vibrando = signal(false);
+  private temporizadorVibrar: ReturnType<typeof setTimeout> | undefined;
+
+  avisarLimite(): void {
+    clearTimeout(this.temporizadorVibrar);
+    this.vibrando.set(false); // se apaga un instante para que la animación se repita
+
+    this.chips?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    this.temporizadorVibrar = setTimeout(() => {
+      this.vibrando.set(true);
+      this.temporizadorVibrar = setTimeout(() => this.vibrando.set(false), 700);
+    }, 30);
+  }
+
   // Clic en una tarjeta: reemplaza (si hay uno elegido para reemplazar), quita o agrega.
   async pulsarTarjeta(accesorio: Accesorio): Promise<void> {
     if (this.esFijo(accesorio.id)) return;
@@ -973,6 +1013,12 @@ export class Personalizador implements OnDestroy {
 
     if (this.estaSeleccionado(accesorio.id)) {
       this.quitarAccesorio(accesorio.id);
+      return;
+    }
+
+    // Ya hay 2 accesorios: NO se agrega un tercero, solo se avisa
+    if (this.soloPorLimite(accesorio)) {
+      this.avisarLimite();
       return;
     }
 

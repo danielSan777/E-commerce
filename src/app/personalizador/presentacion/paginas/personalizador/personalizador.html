@@ -197,6 +197,23 @@
 
                 <!-- ===== ACCESORIOS (clasificados por categoría) ===== -->
                 @case ('accesorios') {
+
+                <!-- Accesorios seleccionados: con su X para quitarlos -->
+                @if (accesoriosElegidos().length > 0) {
+                <div class="elegidos" #chips [class.vibrar]="vibrando()">
+                    @for (a of accesoriosElegidos(); track a.id) {
+                    <span class="chip-elegido">
+                        <img [src]="a.imagen" [alt]="a.nombre" />
+                        <span class="chip-nombre">{{ a.nombre }}</span>
+                        <button type="button" class="chip-quitar" (click)="quitarAccesorio(a.accesorioId)"
+                            [attr.aria-label]="'Quitar ' + a.nombre">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </span>
+                    }
+                </div>
+                }
+
                 <div class="subpestanas" role="tablist" #listaCategorias
                     (pointerdown)="iniciarArrastre($event, listaCategorias)"
                     (pointermove)="arrastrarCategorias($event, listaCategorias)" (pointerup)="terminarArrastre()"
@@ -311,7 +328,11 @@
                     <div class="bloque-cabecera">
                         <span class="num-paso">3</span>
                         <h3 class="bloque-titulo">Frase para tu marco</h3>
+                        @if (marcoWhatsapp()) {
+                        <span class="etiqueta-opcional">Opcional</span>
+                        } @else {
                         <span class="etiqueta-obligatorio">Obligatorio</span>
+                        }
                     </div>
                     <p class="bloque-ayuda">Seleccionaste un marco con frase. Escribe el texto que irá en tu marco.</p>
 
@@ -350,7 +371,13 @@
                         [attr.aria-checked]="marcoWhatsapp()" (click)="alternarMarcoWhatsapp()">
                         <span class="circulo">@if (marcoWhatsapp()) {<i class="bi bi-check-lg"></i>}</span>
                         <span>
-                            <strong>Prefiero enviar la foto de mi marco por WhatsApp.</strong>
+                            <strong>
+                                @if (hayMarcoFrase()) {
+                                Prefiero enviar la frase para mi marco por WhatsApp.
+                                } @else {
+                                Prefiero enviar la foto de mi marco por WhatsApp.
+                                }
+                            </strong>
                             <small>Te pediremos el número de contacto que nos proporciones luego.</small>
                         </span>
                     </button>
@@ -386,7 +413,8 @@
         @for (item of lista; track item.id) {
         <button type="button" class="tile" [class.elegida]="estaSeleccionado(item.id)"
             [class.reemplazable]="puedeReemplazarCon(item.id)" [class.apagada]="noDisponible(item)"
-            [disabled]="esFijo(item.id) || noDisponible(item)" [title]="etiquetaTarjeta(item)"
+            [disabled]="esFijo(item.id) || (noDisponible(item) && !soloPorLimite(item))"
+            [attr.aria-disabled]="noDisponible(item)" [title]="etiquetaTarjeta(item)"
             [attr.aria-label]="item.nombre + ' — ' + etiquetaTarjeta(item)"
             [attr.aria-pressed]="estaSeleccionado(item.id)" (click)="pulsarTarjeta(item)">
 

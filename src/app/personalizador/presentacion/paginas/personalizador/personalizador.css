@@ -332,6 +332,110 @@
     color: #55606e;
 }
 
+/* ================= ACCESORIOS SELECCIONADOS (arriba, con su X) ================= */
+.elegidos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px;
+    background: var(--verde-claro);
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    transition: background .2s, border-color .2s;
+}
+
+.chip-elegido {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    background: #fff;
+    border: 1.5px solid var(--borde-suave);
+    border-radius: 12px;
+    font-size: .78rem;
+    font-weight: 600;
+    transition: border-color .2s;
+}
+
+.chip-elegido img {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+}
+
+.chip-nombre {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chip-quitar {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: 1.5px solid #8a7662;
+    border-radius: 50%;
+    color: #4a2a1a;
+    font-size: .6rem;
+}
+
+/* Aviso: ya hay 2 y se intentó elegir otro -> se pone rojo y vibra */
+@keyframes vibrar-aviso {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    15% {
+        transform: translateX(-8px);
+    }
+
+    30% {
+        transform: translateX(8px);
+    }
+
+    45% {
+        transform: translateX(-6px);
+    }
+
+    60% {
+        transform: translateX(6px);
+    }
+
+    75% {
+        transform: translateX(-3px);
+    }
+
+    90% {
+        transform: translateX(3px);
+    }
+}
+
+.elegidos.vibrar {
+    background: #fde8e8;
+    border-color: #d33a3a;
+    animation: vibrar-aviso .6s ease-in-out;
+}
+
+.elegidos.vibrar .chip-elegido {
+    border-color: #d33a3a;
+}
+
+.elegidos.vibrar .chip-quitar {
+    border-color: #c0262d;
+    color: #c0262d;
+}
+
 /* ================= REJILLA DE ACCESORIOS ================= */
 .rejilla {
     display: grid;
@@ -357,7 +461,7 @@
     transition: transform .15s, border-color .15s, box-shadow .15s;
 }
 
-.tile:hover:not(:disabled) {
+.tile:hover:not(:disabled):not(.apagada) {
     transform: translateY(-2px);
     box-shadow: 0 6px 14px rgba(60, 40, 20, .12);
 }
@@ -963,6 +1067,11 @@
     .zona-foto,
     .error-foto,
     .caja-dedicatoria {
+        animation: none;
+    }
+
+    /* el aviso sigue poniéndose rojo, pero sin vibrar */
+    .elegidos.vibrar {
         animation: none;
     }
 }
