@@ -363,10 +363,11 @@
                         <span class="circulo">@if (tarjetaWhatsapp()) {<i class="bi bi-check-lg"></i>}</span>
                         <span>
                             <strong>Prefiero enviar mi tarjeta de dedicatoria por WhatsApp.</strong>
-                            <small>Te pediremos el número de contacto que nos proporciones luego.</small>
+                            <small>Te la pediremos a el número de contacto que nos proporciones luego.</small>
                         </span>
                     </button>
 
+                    @if (hayMarcoFoto() || hayMarcoFrase()) {
                     <button type="button" class="opcion-extra" [class.marcada]="marcoWhatsapp()" role="checkbox"
                         [attr.aria-checked]="marcoWhatsapp()" (click)="alternarMarcoWhatsapp()">
                         <span class="circulo">@if (marcoWhatsapp()) {<i class="bi bi-check-lg"></i>}</span>
@@ -378,9 +379,10 @@
                                 Prefiero enviar la foto de mi marco por WhatsApp.
                                 }
                             </strong>
-                            <small>Te pediremos el número de contacto que nos proporciones luego.</small>
+                            <small>Te la pediremos a el número de contacto que nos proporciones luego.</small>
                         </span>
                     </button>
+                    }
                 </div>
                 }
 
