@@ -287,10 +287,21 @@
                     </span>
                     }
 
-                    @if (cantidadAccesorios() >= maximoAccesorios) {
-                    <p class="elegidos-aviso">
+                    @if (cantidadAccesorios() >= maximoAccesorios && avisoLimite()) {
+                    <!-- Rojo: solo si intentó elegir más de los permitidos -->
+                    <p class="elegidos-aviso" role="alert">
                         <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
                         Quita uno de tus seleccionados para elegir otro.
+                    </p>
+                    } @else if (cantidadAccesorios() >= maximoAccesorios) {
+                    <p class="elegidos-aviso ok">
+                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                        ¡Excelente! Ya tienes tus {{ maximoAccesorios }} complementos.
+                    </p>
+                    } @else {
+                    <p class="elegidos-aviso ok">
+                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                        ¡Bien! Ya tienes {{ cantidadAccesorios() }}, escoge otro.
                     </p>
                     }
                 </div>
@@ -310,24 +321,6 @@
                 </div>
 
                 <ng-container *ngTemplateOutlet="rejillaTpl; context: { $implicit: accesoriosDeCategoria() }" />
-
-                <!-- Ya hay un marco (3 ↔ 4) y se tocó el otro: ¿reemplazar? -->
-                @if (marcoPendienteActivo()) {
-                <div class="aviso-marco" id="aviso-marco" role="alert">
-                    <div class="aviso-marco-texto">
-                        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
-                        <div>
-                            <strong>Ya tienes un marco seleccionado.</strong>
-                            <span>¿Quieres reemplazarlo por este?</span>
-                        </div>
-                    </div>
-                    <div class="aviso-marco-botones">
-                        <button type="button" class="btn-cancelar-marco" (click)="cancelarMarco()">Cancelar</button>
-                        <button type="button" class="btn-reemplazar-marco"
-                            (click)="reemplazarMarco()">Reemplazar</button>
-                    </div>
-                </div>
-                }
                 }
 
                 <!-- ===== DEDICATORIA / MARCOS ===== -->
@@ -536,6 +529,23 @@
 
             <span class="tile-nombre">{{ item.nombre }}</span>
         </button>
+
+        <!-- Ya hay un marco (3 ↔ 4) y se tocó el otro: ¿reemplazar? Sale debajo de los marcos -->
+        @if (marcoPendienteActivo() && item.id === ultimoMarcoId(lista)) {
+        <div class="aviso-marco" id="aviso-marco" role="alert">
+            <div class="aviso-marco-texto">
+                <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                <div>
+                    <strong>Ya tienes un marco seleccionado.</strong>
+                    <span>¿Quieres reemplazarlo por este?</span>
+                </div>
+            </div>
+            <div class="aviso-marco-botones">
+                <button type="button" class="btn-cancelar-marco" (click)="cancelarMarco()">Cancelar</button>
+                <button type="button" class="btn-reemplazar-marco" (click)="reemplazarMarco()">Reemplazar</button>
+            </div>
+        </div>
+        }
         } @empty {
         <p class="text-muted vacio">No hay accesorios en esta categoría.</p>
         }

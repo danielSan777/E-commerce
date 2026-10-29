@@ -440,6 +440,7 @@
 .rejilla {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
+    grid-auto-flow: row dense;
     gap: 10px;
 }
 
@@ -686,6 +687,16 @@
     color: #d33a3a;
 }
 
+/* Versión verde: "Bien! Ya tienes 1" / "Excelente! Ya tienes tus 2 complementos" */
+.elegidos-aviso.ok {
+    background: #d8ecdf;
+    color: var(--verde);
+}
+
+.elegidos-aviso.ok i {
+    color: #2f8f5b;
+}
+
 /* ================= REEMPLAZAR MARCO (3 <-> 4) ================= */
 .tile.pendiente,
 .tile.apagada.pendiente {
@@ -693,6 +704,12 @@
     border-color: #d33a3a;
     box-shadow: 0 0 0 1px #d33a3a inset;
     opacity: 1;
+}
+
+/* Dentro de la rejilla: ocupa todo el ancho, debajo de los marcos */
+.rejilla .aviso-marco {
+    grid-column: 1 / -1;
+    margin: 4px 0;
 }
 
 .aviso-marco {

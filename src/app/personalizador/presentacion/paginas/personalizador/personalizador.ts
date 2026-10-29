@@ -406,6 +406,7 @@ export class Personalizador implements OnDestroy {
     if (!this.hojaAbierta()) return;
 
     this.hojaAbierta.set(false);
+    this.avisoLimite.set(false);
     this.cancelarReemplazo();
     this.marcoPendiente.set(null);
 
@@ -434,6 +435,7 @@ export class Personalizador implements OnDestroy {
   }
 
   elegirPestana(id: IdPestana): void {
+    this.avisoLimite.set(false);
     this.cancelarReemplazo();
     this.marcoPendiente.set(null);
     this.errorPanel.set('');
@@ -499,10 +501,10 @@ export class Personalizador implements OnDestroy {
         return '';
 
       case 'accesorios':
-        return lista.some(a => {
-          const c = a.categoria ?? 'Otros';
-          return c !== this.CATEGORIA_MODA && c !== this.CATEGORIA_PERSONALIZACION && !this.esFijo(a.accesorioId);
-        }) ? '' : 'Elige al menos un accesorio para continuar.';
+        // Obligatorio: hay que elegir los 2 accesorios
+        return this.cantidadAccesorios() >= this.maximoAccesorios
+          ? ''
+          : `Debes elegir ${this.maximoAccesorios} accesorios para continuar.`;
 
       case 'dedicatoria':
         // 1) mensaje de la tarjeta
@@ -928,6 +930,13 @@ export class Personalizador implements OnDestroy {
   readonly guardar = output<ConfiguracionPersonalizada>();
 
   continuar(): void {
+    // Hay que tener los 2 accesorios elegidos: si no, abre Accesorios y avisa
+    if (this.cantidadAccesorios() < this.maximoAccesorios) {
+      this.elegirPestana('accesorios');
+      this.errorPanel.set(`Debes elegir ${this.maximoAccesorios} accesorios para continuar.`);
+      return;
+    }
+
     this.guardar.emit({
       accesorios: this.accesoriosSeleccionados(),
       nombre: this.nombreCliente(),
@@ -1035,6 +1044,12 @@ export class Personalizador implements OnDestroy {
     return pendiente && this.choca(pendiente) ? pendiente : null;
   });
 
+  // Id del último marco (3 o 4) de la lista: el aviso de reemplazo sale debajo de él
+  ultimoMarcoId(lista: Accesorio[] | null | undefined): number | null {
+    const marcos = (lista ?? []).filter(a => a.id === this.ID_MARCO_FOTO || a.id === this.ID_MARCO_FRASE);
+    return marcos.length ? marcos[marcos.length - 1].id : null;
+  }
+
   private preguntarReemplazoMarco(accesorio: Accesorio): void {
     this.marcoPendiente.set(accesorio);
 
@@ -1062,7 +1077,11 @@ export class Personalizador implements OnDestroy {
   vibrando = signal(false);
   private temporizadorVibrar: ReturnType<typeof setTimeout> | undefined;
 
+  // true desde que intentó elegir un tercer accesorio hasta que quita uno (muestra el mensaje rojo)
+  avisoLimite = signal(false);
+
   avisarLimite(): void {
+    this.avisoLimite.set(true);
     clearTimeout(this.temporizadorVibrar);
     this.vibrando.set(false); // se apaga un instante para que la animación se repita
 
@@ -1111,6 +1130,7 @@ export class Personalizador implements OnDestroy {
     // Los elementos fijos no se quitan
     if (this.esFijo(id)) return;
 
+    this.avisoLimite.set(false);
     if (this.reemplazoDe() === id) this.reemplazoDe.set(null);
     if (this.marcoPendiente() && this.companeroExcluyente(this.marcoPendiente()!.id) === id) {
       this.marcoPendiente.set(null);
