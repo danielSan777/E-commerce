@@ -710,6 +710,9 @@
 .rejilla .aviso-marco {
     grid-column: 1 / -1;
     margin: 4px 0;
+    /* Al hacer scroll hasta el aviso, deja espacio para el botón Aceptar fijo de abajo
+       y se vean los dos botones (Cancelar y Reemplazar) completos */
+    scroll-margin-bottom: 96px;
 }
 
 .aviso-marco {

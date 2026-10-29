@@ -138,10 +138,6 @@
                     <i class="bi" [class]="pestanaActual().icono"></i>
                     <h2 class="panel-titulo">{{ pestanaActual().titulo }}</h2>
 
-                    @if (pestana() === 'accesorios') {
-                    <span class="pildora">{{ cantidadAccesorios() }}/{{ maximoAccesorios }} elegidos</span>
-                    }
-
                     <button type="button" class="btn-cerrar-hoja" (click)="cerrarHoja()" aria-label="Cerrar">
                         <i class="bi bi-x-lg"></i>
                     </button>
