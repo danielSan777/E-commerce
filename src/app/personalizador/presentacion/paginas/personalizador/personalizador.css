@@ -12,7 +12,7 @@
     --azul-claro: #e8f0fd;
 
     /* ===== EDITABLES (celular) ===== */
-    --alto-visor: 65dvh;
+    --alto-visor: 60dvh;
     /* alto de la imagen del visor, en % de la pantalla */
     --alto-hoja: 70dvh;
     /* alto de lo que sale de abajo hacia arriba (Lentes, Accesorios...) */
@@ -567,7 +567,7 @@
 
 .vp-texto span {
     display: block;
-    font-size: .68rem;
+    font-size: .55rem;
     line-height: 1.3;
     color: #3f5f4c;
 }
