@@ -500,6 +500,12 @@
     object-fit: contain;
 }
 
+.tile-img>i {
+    font-size: 1.9rem;
+    line-height: 1;
+    color: #8a7662;
+}
+
 .tile-canvas {
     width: 100%;
     height: 40px;
@@ -526,6 +532,206 @@
     display: grid;
     place-items: center;
     font-size: .65rem;
+}
+
+/* ================= VISTA PREVIA REFERENCIAL ================= */
+.vista-previa {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: var(--verde-claro);
+    border: 1px solid #d3e6d9;
+    border-radius: 12px;
+    color: var(--verde);
+}
+
+.vp-hoja {
+    flex: none;
+    display: grid;
+    place-items: center;
+}
+
+.vp-texto strong {
+    display: block;
+    font-size: .88rem;
+}
+
+.vp-texto span {
+    display: block;
+    font-size: .74rem;
+    line-height: 1.3;
+    color: #3f5f4c;
+}
+
+.vp-info {
+    flex: none;
+    margin-left: auto;
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+/* ================= NOMBRE (contador + ejemplo) ================= */
+.nombre-cabecera {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.nombre-cabecera .form-label {
+    font-weight: 600;
+    color: #4a2a1a;
+}
+
+.contador-nombre {
+    font-size: .8rem;
+    color: #8a7662;
+}
+
+.campo-nombre .form-control {
+    padding: .65rem .8rem;
+    background: #fff;
+    border: 1.5px solid var(--borde);
+    border-radius: 10px;
+    color: var(--texto);
+}
+
+.campo-nombre .form-control:focus {
+    border-color: var(--verde);
+    box-shadow: none;
+}
+
+.ejemplo-nombre {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--verde-claro);
+    border-radius: 14px;
+    color: var(--verde);
+}
+
+.ejemplo-nombre>i {
+    flex: none;
+    margin-top: 2px;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.ejemplo-titulo {
+    display: block;
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+.ejemplo-chip {
+    display: inline-block;
+    margin: 6px 0 8px;
+    padding: 8px 12px;
+    background: #dcebe1;
+    border-radius: 8px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2a2a2a;
+}
+
+.ejemplo-nombre small {
+    display: block;
+    font-size: .76rem;
+    color: var(--verde);
+}
+
+/* ================= MENSAJE EN LA CAJA DE ELEGIDOS (ya hay 2) ================= */
+.elegidos-aviso {
+    flex: 0 0 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 10px;
+    background: #fde8e8;
+    border-radius: 8px;
+    color: #c0262d;
+    font-size: .8rem;
+    font-weight: 500;
+}
+
+.elegidos-aviso i {
+    flex: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: #d33a3a;
+}
+
+/* ================= REEMPLAZAR MARCO (3 <-> 4) ================= */
+.tile.pendiente,
+.tile.apagada.pendiente {
+    background: #fde8e8;
+    border-color: #d33a3a;
+    box-shadow: 0 0 0 1px #d33a3a inset;
+    opacity: 1;
+}
+
+.aviso-marco {
+    margin-top: 14px;
+    padding: 12px;
+    background: #fde8e8;
+    border: 1.5px solid #e08a8a;
+    border-radius: 14px;
+}
+
+.aviso-marco-texto {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.aviso-marco-texto>i {
+    flex: none;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: #d33a3a;
+}
+
+.aviso-marco-texto strong {
+    display: block;
+    font-size: .95rem;
+    color: #c0262d;
+}
+
+.aviso-marco-texto span {
+    display: block;
+    font-size: .82rem;
+    color: #7d4a4a;
+}
+
+.aviso-marco-botones {
+    display: flex;
+    gap: 10px;
+}
+
+.aviso-marco-botones button {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.btn-cancelar-marco {
+    background: #fff;
+    border: 1.5px solid #d33a3a;
+    color: var(--texto);
+}
+
+.btn-reemplazar-marco {
+    background: #c0262d;
+    border: 1.5px solid #c0262d;
+    color: #fff;
 }
 
 /* ================= MARCO DORADO (foto) ================= */
@@ -887,7 +1093,8 @@
 }
 
 .color-negro,
-.color-cafe {
+.color-cafe,
+.color-dorado {
     display: inline-block;
     width: 18px;
     height: 18px;
@@ -901,6 +1108,10 @@
 
 .color-cafe {
     background-color: #795548;
+}
+
+.color-dorado {
+    background-color: #d4af37;
 }
 
 /* ================= ANIMACIÓN: las opciones suben desde abajo ================= */

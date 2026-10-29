@@ -25,6 +25,7 @@ export interface ConfiguracionPersonalizada {
   accesorios: AccesorioColocado[];
   nombre: string;
   colorLentes: string;
+  colorGafas: string;           // color de las gafas (accesorio 5): negro, cafe o dorado
   dedicatoria: string;          // mensaje de la tarjeta de dedicatoria
   fotoDedicatoria: File | null; // foto de la tarjeta (opcional)
   textoMarco: string;           // frase del marco (solo si eligió el accesorio 4)
@@ -58,7 +59,18 @@ export class Personalizador implements OnDestroy {
   // Accesorios disponibles para el cliente (los marcados en el editor)
   catalogo = signal<Accesorio[]>([]);
 
-  colorSeleccionado = 'negro';
+  colorSeleccionado = 'negro';   // color de los lentes (accesorio 1)
+  colorGafas = 'negro';          // color de las gafas (accesorio 5)
+
+  private readonly ID_LENTES = 1;
+  private readonly ID_GAFAS = 5;
+
+  // Colores disponibles (los lentes usan negro y cafe; las gafas tambien dorado)
+  private readonly COLORES: Record<string, string> = {
+    negro: '#000000',
+    cafe: '#795548',
+    dorado: '#d4af37',
+  };
 
   @ViewChild('canvasLentes')
   canvasLentes!: ElementRef<HTMLCanvasElement>;
@@ -92,15 +104,18 @@ export class Personalizador implements OnDestroy {
   ) {
     if (referencia) {
 
+      // Lentes (id 1) o gafas (id 5): los dos se dibujan en un canvas para poder cambiarles el color
       const lentes = this.accesoriosSeleccionados()
-        .find(accesorio => accesorio.accesorioId === 1);
+        .find(accesorio => accesorio.accesorioId === this.ID_LENTES || accesorio.accesorioId === this.ID_GAFAS);
 
       if (lentes) {
 
         this.dibujarLentes(
           referencia.nativeElement,
           lentes.ancho,
-          lentes.alto
+          lentes.alto,
+          lentes.accesorioId,
+          lentes.imagen
         );
       }
 
@@ -123,7 +138,15 @@ export class Personalizador implements OnDestroy {
 
       this.ubicaciones.set((guardado.ubicaciones ?? []) as UbicacionGuardada[]);
       this.excepciones.set((guardado.excepciones ?? []) as ExcepcionGuardada[]);
-      this.catalogo.set((guardado.catalogo ?? []) as Accesorio[]);
+      // La categoria se normaliza (sin espacios y con la primera letra en mayuscula)
+      // para que "moda" cuente igual que "Moda"
+      const normalizar = (c?: string) => {
+        const t = c?.trim();
+        return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+      };
+      this.catalogo.set(
+        ((guardado.catalogo ?? []) as Accesorio[]).map(a => ({ ...a, categoria: normalizar(a.categoria) }))
+      );
 
       this.agregarPorDefecto();
 
@@ -384,6 +407,7 @@ export class Personalizador implements OnDestroy {
 
     this.hojaAbierta.set(false);
     this.cancelarReemplazo();
+    this.marcoPendiente.set(null);
 
     this.hojaCerrando.set(true);
     setTimeout(() => this.hojaCerrando.set(false), 260);
@@ -411,6 +435,7 @@ export class Personalizador implements OnDestroy {
 
   elegirPestana(id: IdPestana): void {
     this.cancelarReemplazo();
+    this.marcoPendiente.set(null);
     this.errorPanel.set('');
     this.pestana.set(id);
     this.abrirHoja();
@@ -555,7 +580,7 @@ export class Personalizador implements OnDestroy {
     if (this.esFijo(accesorio.id)) return 'Fijo';
     if (this.puedeReemplazarCon(accesorio.id)) return 'Reemplazar';
     if (this.noDisponible(accesorio)) {
-      if (this.choca(accesorio)) return 'No se puede elegir junto al otro accesorio';
+      if (this.choca(accesorio)) return 'Ya tienes un marco: toca para reemplazarlo por este';
       if (this.limiteAlcanzado(accesorio)) {
         return `Máximo ${this.maximoAccesorios} accesorios: quita uno para elegir este`;
       }
@@ -582,6 +607,7 @@ export class Personalizador implements OnDestroy {
   // 3) Solo aparece si eligió el accesorio 3 (foto para el marco) o el 4 (frase para el marco)
   // Al final: opciones adicionales (sin tarjeta / enviar por WhatsApp)
 
+  readonly maxNombre = 30;        // EDITABLE: caracteres del nombre del visor
   readonly maxDedicatoria = 250;  // EDITABLE: caracteres del mensaje de la tarjeta
   readonly maxTextoMarco = 60;    // EDITABLE: caracteres de la frase del marco
 
@@ -906,6 +932,7 @@ export class Personalizador implements OnDestroy {
       accesorios: this.accesoriosSeleccionados(),
       nombre: this.nombreCliente(),
       colorLentes: this.colorSeleccionado,
+      colorGafas: this.colorGafas,
       dedicatoria: this.dedicatoria(),
       fotoDedicatoria: this.fotoTarjetaArchivo,
       textoMarco: this.hayMarcoFrase() ? this.textoMarco() : '',
@@ -986,6 +1013,51 @@ export class Personalizador implements OnDestroy {
       && this.destino(accesorio) !== null;
   }
 
+  // true si el accesorio solo está bloqueado porque ya hay elegido su opuesto (marco 3 ↔ 4).
+  // Esa tarjeta se puede tocar: pregunta si se quiere reemplazar el marco.
+  soloPorChoque(accesorio: Accesorio): boolean {
+    return this.noDisponible(accesorio)
+      && this.choca(accesorio)
+      && this.destino(accesorio) !== null;
+  }
+
+  // Tarjeta bloqueada pero que se puede tocar (para avisar o preguntar)
+  tocable(accesorio: Accesorio): boolean {
+    return this.soloPorLimite(accesorio) || this.soloPorChoque(accesorio);
+  }
+
+  // Marco que el cliente quiere elegir teniendo ya el otro: espera "Reemplazar" o "Cancelar"
+  marcoPendiente = signal<Accesorio | null>(null);
+
+  // Solo se muestra mientras el otro marco siga elegido
+  marcoPendienteActivo = computed(() => {
+    const pendiente = this.marcoPendiente();
+    return pendiente && this.choca(pendiente) ? pendiente : null;
+  });
+
+  private preguntarReemplazoMarco(accesorio: Accesorio): void {
+    this.marcoPendiente.set(accesorio);
+
+    setTimeout(() =>
+      document.getElementById('aviso-marco')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+  }
+
+  cancelarMarco(): void {
+    this.marcoPendiente.set(null);
+  }
+
+  // "Reemplazar": quita el marco que había y pone el nuevo
+  reemplazarMarco(): void {
+    const nuevo = this.marcoPendiente();
+    this.marcoPendiente.set(null);
+    if (!nuevo) return;
+
+    const otro = this.companeroExcluyente(nuevo.id);
+    if (otro !== null) this.quitarAccesorio(otro);
+
+    void this.agregarAccesorio(nuevo);
+  }
+
   // Efecto de aviso: la caja de accesorios elegidos se pone roja y vibra
   vibrando = signal(false);
   private temporizadorVibrar: ReturnType<typeof setTimeout> | undefined;
@@ -1006,6 +1078,8 @@ export class Personalizador implements OnDestroy {
   async pulsarTarjeta(accesorio: Accesorio): Promise<void> {
     if (this.esFijo(accesorio.id)) return;
 
+    this.marcoPendiente.set(null);
+
     if (this.puedeReemplazarCon(accesorio.id)) {
       this.reemplazarPor(accesorio);
       return;
@@ -1013,6 +1087,12 @@ export class Personalizador implements OnDestroy {
 
     if (this.estaSeleccionado(accesorio.id)) {
       this.quitarAccesorio(accesorio.id);
+      return;
+    }
+
+    // Ya hay un marco (3 ↔ 4) y se toca el otro: se pregunta si se quiere reemplazar
+    if (this.soloPorChoque(accesorio)) {
+      this.preguntarReemplazoMarco(accesorio);
       return;
     }
 
@@ -1032,6 +1112,9 @@ export class Personalizador implements OnDestroy {
     if (this.esFijo(id)) return;
 
     if (this.reemplazoDe() === id) this.reemplazoDe.set(null);
+    if (this.marcoPendiente() && this.companeroExcluyente(this.marcoPendiente()!.id) === id) {
+      this.marcoPendiente.set(null);
+    }
 
     const quitado = this.accesoriosSeleccionados().find(a => a.accesorioId === id);
     if (quitado) this.invalidarPorAccesorio({ id, categoria: quitado.categoria });
@@ -1165,59 +1248,59 @@ export class Personalizador implements OnDestroy {
   }
 
 
+  // Dibuja lentes o gafas en su canvas y les aplica el color elegido
   dibujarLentes(canvas: HTMLCanvasElement, ancho: number,
-    alto: number): void {
+    alto: number, accesorioId: number = this.ID_LENTES,
+    imagen: string = 'accesorios/lentes.png'): void {
     const visor = canvas.closest('.visor') as HTMLElement;
     if (!visor) return;
     const anchoPx = visor.clientWidth * ancho / 100;
     const altoPx = visor.clientHeight * alto / 100;
 
-
     const contexto = canvas.getContext('2d');
-
-
 
     if (!contexto) return;
 
-    this.imagenLentes.onload = () => {
+    const imagenNueva = new Image();
+
+    imagenNueva.onload = () => {
+      this.imagenLentes = imagenNueva;
       canvas.width = anchoPx;
       canvas.height = altoPx;
 
-      contexto.clearRect(0, 0, canvas.width, canvas.height);
-
-      contexto.drawImage(
-        this.imagenLentes,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      // Aplicar el color sin pintar el fondo transparente
-      contexto.globalCompositeOperation = 'source-atop';
-      contexto.fillStyle = this.colorSeleccionado === 'negro' ? '#000000' : '#795548';
-      contexto.fillRect(0, 0, canvas.width, canvas.height);
-
-      contexto.globalCompositeOperation = 'source-over';
-
-
+      this.pintar(contexto, canvas, imagenNueva, this.colorDe(accesorioId));
     };
 
-    this.imagenLentes.onerror = () => {
-      console.error('No se pudo cargar la imagen de los lentes');
+    imagenNueva.onerror = () => {
+      console.error('No se pudo cargar la imagen de los lentes o las gafas');
     };
 
-    this.imagenLentes.src = '/accesorios/lentes.png';
+    imagenNueva.src = '/' + imagen.replace(/^\//, '');
   }
 
+  // Color (en hexadecimal) que le toca a lentes o gafas
+  private colorDe(accesorioId: number): string {
+    const nombre = accesorioId === this.ID_GAFAS ? this.colorGafas : this.colorSeleccionado;
+    return this.COLORES[nombre] ?? this.COLORES['negro'];
+  }
 
-  cambiarColorLentes(color: string): void {
+  // Dibuja la imagen original y le aplica el color sin pintar el fondo transparente
+  private pintar(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement,
+    imagen: HTMLImageElement, color: string): void {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(imagen, 0, 0, canvas.width, canvas.height);
 
-    this.colorSeleccionado = color;
-    this.invalidarGuardado('lentes');
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Si los lentes no están en el visor, solo se recuerda el color:
-    // se aplicará cuando se agreguen (dibujarLentes lo lee)
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // Redibuja lo que hay puesto (lentes o gafas) con otro color
+  private repintar(color: string): void {
+    // Si no hay lentes ni gafas en el visor, solo se recuerda el color:
+    // se aplicara cuando se agreguen (dibujarLentes lo lee)
     if (!this.canvasLentes) return;
 
     const canvas = this.canvasLentes.nativeElement as HTMLCanvasElement;
@@ -1225,23 +1308,46 @@ export class Personalizador implements OnDestroy {
 
     if (!ctx) return;
 
-    // Redibujar la imagen original
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(this.imagenLentes, 0, 0, canvas.width, canvas.height);
+    this.pintar(ctx, canvas, this.imagenLentes, color);
+  }
 
-    // Aplicar el color sin pintar el fondo transparente
-    ctx.globalCompositeOperation = 'source-atop';
-    ctx.fillStyle = color === 'negro' ? '#000000' : '#795548';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  cambiarColorLentes(color: string): void {
+    this.colorSeleccionado = color;
+    this.invalidarGuardado('lentes');
+    this.repintar(this.COLORES[color] ?? this.COLORES['negro']);
+  }
 
-    ctx.globalCompositeOperation = 'source-over';
+  cambiarColorGafas(color: string): void {
+    this.colorGafas = color;
+    this.invalidarGuardado('lentes');
+    this.repintar(this.COLORES[color] ?? this.COLORES['negro']);
   }
 
   hayLentes = computed(() =>
     this.accesoriosSeleccionados().some(
-      a => a.accesorioId === 1
+      a => a.accesorioId === this.ID_LENTES
     )
   );
+
+  hayGafas = computed(() =>
+    this.accesoriosSeleccionados().some(
+      a => a.accesorioId === this.ID_GAFAS
+    )
+  );
+
+  // true si hay algo de Moda puesto (lentes o gafas). Si no, la opcion "Nada" sale marcada.
+  hayModa = computed(() =>
+    this.accesoriosSeleccionados().some(
+      a => (a.categoria ?? 'Otros') === this.CATEGORIA_MODA && !this.esFijo(a.accesorioId)
+    )
+  );
+
+  // Opcion "Nada": quita los lentes o las gafas
+  quitarModa(): void {
+    this.accesoriosSeleccionados()
+      .filter(a => (a.categoria ?? 'Otros') === this.CATEGORIA_MODA && !this.esFijo(a.accesorioId))
+      .forEach(a => this.quitarAccesorio(a.accesorioId));
+  }
 
 
   // ==========================================

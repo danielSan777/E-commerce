@@ -140,36 +140,42 @@
         },
         {
             "id": 5,
+            "nombre": "gafas",
+            "imagen": "accesorios/gafas-sin-fondo.png",
+            "categoria": "moda"
+        },
+        {
+            "id": 6,
             "nombre": "herramienta",
             "imagen": "accesorios/caja_herramientas.png",
             "categoria": "Objetos"
         },
         {
-            "id": 6,
+            "id": 7,
             "nombre": "regalo",
             "imagen": "accesorios/regalo.png",
             "categoria": "Objetos"
         },
         {
-            "id": 7,
+            "id": 8,
             "nombre": "vaso de café",
             "imagen": "accesorios/vaso_cafe.png",
             "categoria": "Objetos"
         },
         {
-            "id": 8,
+            "id": 9,
             "nombre": "gato amarillo",
             "imagen": "accesorios/gatito.png",
             "categoria": "Animales"
         },
         {
-            "id": 9,
+            "id": 10,
             "nombre": "perro",
             "imagen": "accesorios/perro.png",
             "categoria": "Animales"
         },
         {
-            "id": 10,
+            "id": 11,
             "nombre": "flor",
             "imagen": "accesorios/flores.png",
             "categoria": "Flores "
