@@ -536,40 +536,60 @@
 
 /* ================= VISTA PREVIA REFERENCIAL ================= */
 .vista-previa {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 12px;
-    padding: 10px 12px;
+    padding: 9px 12px;
+    overflow: hidden;
     background: var(--verde-claro);
-    border: 1px solid #d3e6d9;
+    border: 1px solid #d6e8dc;
     border-radius: 12px;
     color: var(--verde);
 }
 
 .vp-hoja {
     flex: none;
-    display: grid;
-    place-items: center;
+}
+
+.vp-texto {
+    min-width: 0;
+    padding-right: 20px;
 }
 
 .vp-texto strong {
     display: block;
-    font-size: .88rem;
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--verde);
 }
 
 .vp-texto span {
     display: block;
-    font-size: .74rem;
+    font-size: .68rem;
     line-height: 1.3;
     color: #3f5f4c;
 }
 
+/* Icono de información: arriba a la derecha */
 .vp-info {
     flex: none;
+    align-self: flex-start;
     margin-left: auto;
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     line-height: 1;
+    color: var(--verde);
+}
+
+/* Ramita decorativa de fondo, abajo a la derecha */
+.vp-decor {
+    position: absolute;
+    right: 6px;
+    bottom: 0;
+    color: var(--verde);
+    opacity: .22;
+    pointer-events: none;
 }
 
 /* ================= NOMBRE (contador + ejemplo) ================= */

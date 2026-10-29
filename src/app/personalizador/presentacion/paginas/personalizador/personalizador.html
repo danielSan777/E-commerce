@@ -82,19 +82,28 @@
 
             <!-- Vista previa referencial -->
             <div class="vista-previa" role="note">
-                <span class="vp-hoja" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14" />
-                        <path d="M5 19c3-4 6-7 10-9" />
-                    </svg>
-                </span>
+                <!-- Hojitas verdes (icono de la izquierda) -->
+                <svg class="vp-hoja" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+                    <path d="M2.5 15.5c0-6 4-10 10.5-10 0 6.5-4 10.5-10.5 10z" fill="#2f8f5b" />
+                    <path d="M9.5 22c0-5 3-8.5 9-8.5 0 5.5-3.5 9-9 8.5z" fill="#1f6f48" />
+                </svg>
+
                 <div class="vp-texto">
                     <strong>Vista previa referencial</strong>
                     <span>La posición y tamaño de algunos accesorios pueden variar ligeramente para lograr el mejor
                         acabado final.</span>
                 </div>
+
+                <!-- Icono de información (arriba a la derecha) -->
                 <i class="bi bi-info-circle vp-info" aria-hidden="true"></i>
+
+                <!-- Ramita decorativa (abajo a la derecha) -->
+                <svg class="vp-decor" viewBox="0 0 40 40" width="38" height="38" aria-hidden="true">
+                    <path d="M20 39V15" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" />
+                    <path d="M20 28c-6.5 0-10-3.5-10-9 6.5 0 10 3.5 10 9z" fill="currentColor" />
+                    <path d="M20 23c6.5 0 10-3.5 10-9-6.5 0-10 3.5-10 9z" fill="currentColor" />
+                    <path d="M20 15c-3.5-2.5-3.5-7 0-11 3.5 4 3.5 8.5 0 11z" fill="currentColor" />
+                </svg>
             </div>
 
             <!-- Botones: Nombre · Lentes / Gafas · Accesorios · Dedicatoria / Marcos -->
