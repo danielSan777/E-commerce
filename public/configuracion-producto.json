@@ -12,10 +12,10 @@
             "capa": 1,
             "fijoId": null,
             "preset": {
-                "x": 35.288650973273064,
-                "y": 25.775788522909487,
-                "ancho": 27,
-                "alto": 10,
+                "x": 34.52267769435552,
+                "y": 25.16029800232201,
+                "ancho": 27.5,
+                "alto": 9.5,
                 "rotX": 0,
                 "rotY": 0,
                 "rotZ": 0,
@@ -29,15 +29,15 @@
                 "Moda",
                 "Personalización"
             ],
-            "estado": "libre",
+            "estado": "fija",
             "prioridad": 2,
             "capa": 1,
-            "fijoId": null,
+            "fijoId": 7,
             "preset": {
-                "x": 63.666861432876885,
-                "y": 77.49,
-                "ancho": 9.7,
-                "alto": 9.7,
+                "x": 31.300157017438913,
+                "y": 75.259403995356,
+                "ancho": 9.4,
+                "alto": 9.4,
                 "rotX": 0,
                 "rotY": 0,
                 "rotZ": 0,
@@ -56,10 +56,10 @@
             "capa": 1,
             "fijoId": null,
             "preset": {
-                "x": 30.37745743752091,
-                "y": 77.02,
-                "ancho": 9.79,
-                "alto": 9.79,
+                "x": 64.13239572458936,
+                "y": 75.1031385671231,
+                "ancho": 11.09,
+                "alto": 11.09,
                 "rotX": 0,
                 "rotY": 0,
                 "rotZ": 0,
@@ -78,10 +78,10 @@
             "capa": 1,
             "fijoId": null,
             "preset": {
-                "x": 47.411203715301326,
-                "y": 74.83,
-                "ancho": 8.9,
-                "alto": 12.13,
+                "x": 47.40583662057697,
+                "y": 78.4828186792386,
+                "ancho": 9.5,
+                "alto": 7.5,
                 "rotX": 0,
                 "rotY": 0,
                 "rotZ": 0,
@@ -94,14 +94,14 @@
             "categorias": [
                 "Personalización"
             ],
-            "estado": "fija",
+            "estado": "libre",
             "prioridad": 5,
             "capa": 1,
-            "fijoId": 2,
+            "fijoId": null,
             "preset": {
-                "x": 31.60624354267041,
-                "y": 88.9892630104729,
-                "ancho": 39,
+                "x": 32.680157017438916,
+                "y": 88.29433057641113,
+                "ancho": 37.5,
                 "alto": 5,
                 "rotX": 0,
                 "rotY": 0,
@@ -110,7 +110,20 @@
             }
         }
     ],
-    "excepciones": [],
+    "excepciones": [
+        {
+            "accesorioId": 5,
+            "ubicacionId": 1,
+            "x": 36.97493828706844,
+            "y": 26.540899859972672,
+            "ancho": 23,
+            "alto": 9.5,
+            "rotX": 0,
+            "rotY": 0,
+            "rotZ": 0,
+            "espejo": false
+        }
+    ],
     "catalogo": [
         {
             "id": 1,
@@ -142,7 +155,7 @@
             "id": 5,
             "nombre": "gafas",
             "imagen": "accesorios/gafas-sin-fondo.png",
-            "categoria": "moda"
+            "categoria": "Moda"
         },
         {
             "id": 6,
