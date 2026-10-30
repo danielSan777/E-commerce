@@ -1042,6 +1042,32 @@
     color: #8a7662;
 }
 
+/* Bloqueada: ya escribió o subió algo. Se puede tocar, pero solo muestra el aviso */
+.opcion-extra.bloqueada:not(.marcada) {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.aviso-extra {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0 0;
+    padding: 8px 10px;
+    background: #fde8e8;
+    border-radius: 8px;
+    color: #c0262d;
+    font-size: .78rem;
+    font-weight: 500;
+}
+
+.aviso-extra i {
+    flex: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: #d33a3a;
+}
+
 .opcion-extra.marcada {
     border-color: var(--verde);
     background: var(--verde-claro);

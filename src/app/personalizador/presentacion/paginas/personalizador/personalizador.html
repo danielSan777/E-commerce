@@ -438,27 +438,47 @@
                 <div class="opciones-extra">
                     <h3 class="opciones-extra-titulo">Opciones adicionales</h3>
 
-                    <button type="button" class="opcion-extra" [class.marcada]="sinTarjeta()" role="checkbox"
-                        [attr.aria-checked]="sinTarjeta()" (click)="alternarSinTarjeta()">
+                    <button type="button" class="opcion-extra" [class.marcada]="sinTarjeta()"
+                        [class.bloqueada]="tarjetaConContenido()" role="checkbox" [attr.aria-checked]="sinTarjeta()"
+                        [attr.aria-disabled]="tarjetaConContenido() && !sinTarjeta()" (click)="alternarSinTarjeta()">
                         <span class="circulo">@if (sinTarjeta()) {<i class="bi bi-check-lg"></i>}</span>
                         <span>
                             <strong>No deseo tarjeta de dedicatoria.</strong>
                             <small>No incluiremos la tarjeta de dedicatoria en tu pedido.</small>
                         </span>
                     </button>
+                    @if (avisoExtra() === 'sin' && tarjetaConContenido()) {
+                    <p class="aviso-extra" role="alert">
+                        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                        Borra tu dedicatoria o la imagen de tu dedicatoria primero y luego selecciona la opción
+                        «No deseo tarjeta de dedicatoria».
+                    </p>
+                    }
 
-                    <button type="button" class="opcion-extra" [class.marcada]="tarjetaWhatsapp()" role="checkbox"
-                        [attr.aria-checked]="tarjetaWhatsapp()" (click)="alternarTarjetaWhatsapp()">
+                    <button type="button" class="opcion-extra" [class.marcada]="tarjetaWhatsapp()"
+                        [class.bloqueada]="tarjetaConContenido()" role="checkbox"
+                        [attr.aria-checked]="tarjetaWhatsapp()"
+                        [attr.aria-disabled]="tarjetaConContenido() && !tarjetaWhatsapp()"
+                        (click)="alternarTarjetaWhatsapp()">
                         <span class="circulo">@if (tarjetaWhatsapp()) {<i class="bi bi-check-lg"></i>}</span>
                         <span>
                             <strong>Prefiero enviar mi tarjeta de dedicatoria por WhatsApp.</strong>
                             <small>Te la pediremos a el número de contacto que nos proporciones luego.</small>
                         </span>
                     </button>
+                    @if (avisoExtra() === 'tarjetaWa' && tarjetaConContenido()) {
+                    <p class="aviso-extra" role="alert">
+                        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                        Borra tu dedicatoria o la imagen de tu dedicatoria primero y luego selecciona la opción de
+                        enviarla por WhatsApp.
+                    </p>
+                    }
 
                     @if (hayMarcoFoto() || hayMarcoFrase()) {
-                    <button type="button" class="opcion-extra" [class.marcada]="marcoWhatsapp()" role="checkbox"
-                        [attr.aria-checked]="marcoWhatsapp()" (click)="alternarMarcoWhatsapp()">
+                    <button type="button" class="opcion-extra" [class.marcada]="marcoWhatsapp()"
+                        [class.bloqueada]="marcoConContenido()" role="checkbox" [attr.aria-checked]="marcoWhatsapp()"
+                        [attr.aria-disabled]="marcoConContenido() && !marcoWhatsapp()"
+                        (click)="alternarMarcoWhatsapp()">
                         <span class="circulo">@if (marcoWhatsapp()) {<i class="bi bi-check-lg"></i>}</span>
                         <span>
                             <strong>
@@ -471,6 +491,16 @@
                             <small>Te la pediremos a el número de contacto que nos proporciones luego.</small>
                         </span>
                     </button>
+                    @if (avisoExtra() === 'marcoWa' && marcoConContenido()) {
+                    <p class="aviso-extra" role="alert">
+                        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                        @if(hayMarcoFrase()){
+                        por favor Borra la frase de tu marco primero para seleccionar esta opción.
+                        }@else{
+                        por favor Borra la foto de tu marco primero para seleccionar esta opción.
+                        }
+                    </p>
+                    }
                     }
                 </div>
                 }

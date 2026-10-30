@@ -139,7 +139,7 @@ export class Catalogo implements OnInit, OnDestroy {
     {
       id: 1,
       pregunta: 'Los regalos mas bonitos del Ecuador',
-      titulo: 'Bienvenidos a El Jardín de Sele',
+      titulo: 'Bienvenidos a Jardín de Sele',
       descripcion: 'regalos llenos de vida que adornaran tu espacio o el de esa persona especial',
       boton: 'Ver Productos',
       imagen: 'imagenes/amor.png',

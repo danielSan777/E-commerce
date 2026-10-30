@@ -435,6 +435,7 @@ export class Personalizador implements OnDestroy {
   }
 
   elegirPestana(id: IdPestana): void {
+    this.avisoExtra.set('');
     this.avisoLimite.set(false);
     this.cancelarReemplazo();
     this.marcoPendiente.set(null);
@@ -727,7 +728,27 @@ export class Personalizador implements OnDestroy {
   // El mensaje de la tarjeta es obligatorio, salvo que no quiera tarjeta o la envíe por WhatsApp
   tarjetaObligatoria = computed(() => !this.sinTarjeta() && !this.tarjetaWhatsapp());
 
+  // true si ya escribió la dedicatoria o subió la foto de la tarjeta
+  tarjetaConContenido = computed(() =>
+    this.dedicatoria().trim().length > 0 || !!this.fotoTarjetaUrl()
+  );
+
+  // true si ya subió la foto del marco (accesorio 3) o escribió la frase (accesorio 4)
+  marcoConContenido = computed(() =>
+    this.hayMarcoFoto()
+      ? !!this.fotoMarcoUrl()
+      : this.hayMarcoFrase() && this.textoMarco().trim().length > 0
+  );
+
+  // Opción bloqueada que se tocó: muestra el aviso "borra primero..." debajo de ella
+  avisoExtra = signal<'' | 'sin' | 'tarjetaWa' | 'marcoWa'>('');
+
   alternarSinTarjeta(): void {
+    if (!this.sinTarjeta() && this.tarjetaConContenido()) {
+      this.avisoExtra.set('sin');
+      return;
+    }
+
     const marcada = !this.sinTarjeta();
     this.sinTarjeta.set(marcada);
     if (marcada) this.tarjetaWhatsapp.set(false); // no pueden ir las dos a la vez
@@ -735,6 +756,11 @@ export class Personalizador implements OnDestroy {
   }
 
   alternarTarjetaWhatsapp(): void {
+    if (!this.tarjetaWhatsapp() && this.tarjetaConContenido()) {
+      this.avisoExtra.set('tarjetaWa');
+      return;
+    }
+
     const marcada = !this.tarjetaWhatsapp();
     this.tarjetaWhatsapp.set(marcada);
     if (marcada) this.sinTarjeta.set(false);
@@ -742,12 +768,18 @@ export class Personalizador implements OnDestroy {
   }
 
   alternarMarcoWhatsapp(): void {
+    if (!this.marcoWhatsapp() && this.marcoConContenido()) {
+      this.avisoExtra.set('marcoWa');
+      return;
+    }
+
     this.marcoWhatsapp.update(v => !v);
     this.cambioDedicatoria();
   }
 
   // Cualquier cambio en esta pestaña: quita el error y deja de estar "guardada" (azul)
   private cambioDedicatoria(): void {
+    this.avisoExtra.set('');
     this.errorPanel.set('');
     this.invalidarGuardado('dedicatoria');
   }

@@ -19,14 +19,14 @@ export class SobreNosotros {
   textoLogo = 'Logo de la empresa';
 
   // Nombre de la empresa. Si ya tiene el nombre dentro de la imagen del logo, deje esto vacío ('')
-  nombreEmpresa = 'El Jardín de Sele';
+  nombreEmpresa = 'Jardín de Sele';
 
   // Título pequeño, en mayúsculas, debajo del nombre
   titulo = 'OBSEQUIOS LLENOS DE VIDA Y AMOR';
 
   // Descripción
   descripcion =
-    'Nuestra pasión por la naturaleza, hizo que emprendieramos El Jardín de Sele brindandote calidad en nuestros regalos ' +
+    'Nuestra pasión por la naturaleza, hizo que emprendieramos Jardín de Sele brindandote calidad en nuestros regalos ' +
     'ayudando un poquito a que te unas a este lindo mundo que te hará encontrar con lo ecosexual que llevas dentro.';
 
   // Botón

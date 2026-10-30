@@ -43,12 +43,12 @@ export class Footer {
 
   // --- Marca (lado izquierdo en computador, arriba en celular) ---
   logo = 'logo_sin_fondo.png';
-  textoLogo = 'El Jardín de Sele';
+  textoLogo = 'Jardín de Sele';
   descripcion =
-    'En El Jardín de Sel encontrarás los detalles más especiales para decorar tus espacios favoritos, ' +
+    'En Jardín de Sele encontrarás los detalles más especiales para decorar tus espacios favoritos, ' +
     'además de recuerdos para regalar en fiestas y ocasiones importantes.';
   telefono = '+593 999283765';
-  correo = 'info@El Jardín de Sel.com';
+  correo = 'info@Jardín de Sel.com';
 
   // --- Columnas de enlaces ---
   columnas: ColumnaEnlaces[] = [
@@ -82,7 +82,7 @@ export class Footer {
     titulo: 'Libro de Reclamaciones',
     texto:
       'De acuerdo a lo establecido en el Código de Protección y Defensa del Consumidor ' +
-      'El Jardín de Sele cuenta con un Libro de Reclamaciones a su disposición.',
+      'Jardín de Sele cuenta con un Libro de Reclamaciones a su disposición.',
     imagen: 'imagenes/footer/libro-reclamaciones.png',
     textoImagen: 'Libro de reclamaciones digital',
     enlace: '#'
@@ -107,7 +107,7 @@ export class Footer {
   ];
 
   // --- Parte de abajo ---
-  derechos = 'El Jardín de Sele ® Realizado por';
+  derechos = 'Jardín de Sele ® Realizado por';
   autor = 'LCD. Daniel Alvarado correo:';
   correoAutor = 'adanieledinson@gmail.com';
   enlaceCorreoAutor = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(this.correoAutor)}`;
