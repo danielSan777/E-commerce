@@ -108,6 +108,8 @@ export class Personalizador implements OnDestroy {
   // Producto que se está personalizando (nombre, precio...). Lo manda la pantalla del producto:
   // <app-personalizador [producto]="{ id: 1, nombre: 'Profesional personalizada', precio: 24 }" />
   readonly producto = input<ProductoCarrito | null>(null);
+  // uid del item del carrito que se quiere editar (cuando el personalizador se abre desde el propio carrito)
+  readonly editar = input<string | null>(null);
 
 
 
@@ -1148,7 +1150,7 @@ export class Personalizador implements OnDestroy {
 
   // ----- Editar desde el carrito: vuelve a poner lo que se había elegido -----
   private restaurarEdicion(): void {
-    const uid = this.rutaActiva?.snapshot.queryParamMap.get('editar');
+    const uid = this.editar() ?? this.rutaActiva?.snapshot.queryParamMap.get('editar');
     const item = uid ? this.carrito.buscar(uid) : undefined;
     const c = item?.configuracion;
 

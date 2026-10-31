@@ -2,7 +2,7 @@ import {
   AfterViewInit, Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, signal, untracked
 } from '@angular/core';
 import { CurrencyPipe, DOCUMENT, NgTemplateOutlet } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 // AJUSTA la ruta según donde dejes carrito.service.ts
 import { CarritoService, ProductoCarrito } from '../../../aplicacion/servicios/CarritoService';
 import { productos } from '../../../../all-productos/dominio/muestra_producto';
@@ -72,7 +72,6 @@ export class Carrito implements AfterViewInit, OnDestroy {
   ];
 
   private carrito = inject(CarritoService);
-  private router = inject(Router);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private document = inject(DOCUMENT);
 
@@ -112,7 +111,8 @@ export class Carrito implements AfterViewInit, OnDestroy {
   // ----- Hojas que suben de abajo hacia arriba -----
   hoja = signal<'macetas' | 'complementos' | null>(null);
   personalizando = signal<ProductoCarrito | null>(null);
-  private cantidadAlAbrir = 0;
+  editandoUid = signal<string | null>(null);   // uid del item que se está editando (null = maceta nueva)
+  private itemsAlAbrir: unknown = null;
 
   constructor() {
     // Bloquea el scroll de la página mientras hay una hoja abierta
@@ -121,11 +121,11 @@ export class Carrito implements AfterViewInit, OnDestroy {
       this.document.body.style.overflow = abierta ? 'hidden' : '';
     });
 
-    // Cuando el personalizador agrega el detalle al carrito, la hoja se cierra sola
+    // Cuando el personalizador guarda el detalle en el carrito (nuevo o editado), la hoja se cierra sola
     effect(() => {
-      const n = this.items().length;
+      const lista = this.items();
       untracked(() => {
-        if (this.personalizando() && n > this.cantidadAlAbrir) this.cerrarPersonalizador();
+        if (this.personalizando() && lista !== this.itemsAlAbrir) this.cerrarPersonalizador();
       });
     });
   }
@@ -141,12 +141,14 @@ export class Carrito implements AfterViewInit, OnDestroy {
   // "+" de una maceta: sube el personalizador (90% de la pantalla) con ese producto
   personalizar(s: Sugerencia): void {
     this.hoja.set(null);
-    this.cantidadAlAbrir = this.items().length;
+    this.itemsAlAbrir = this.items();
+    this.editandoUid.set(null);
     this.personalizando.set({ id: s.slug ?? s.id, nombre: s.nombre, precio: s.precio, imagen: s.imagen });
   }
 
   cerrarPersonalizador(): void {
     this.personalizando.set(null);
+    this.editandoUid.set(null);
   }
 
   // En celular, tocar el fondo oscuro cierra el personalizador (en pantallas grandes no, para no perder lo elegido)
@@ -186,13 +188,13 @@ export class Carrito implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Editar: vuelve a la pantalla donde se personalizó, con lo que ya había elegido
+    // Editar: el personalizador sube aquí mismo, en el carrito, con lo que ya había elegido
     const item = this.carrito.buscar(c.uid);
     if (!item) return;
 
-    // Vuelve a la pantalla del producto (donde sale el personalizador) con lo elegido
-    const ruta = item.ruta || `/catalogo/todos-productos/${item.producto.id}`;
-    void this.router.navigate([ruta], { queryParams: { editar: c.uid } });
+    this.itemsAlAbrir = this.items();
+    this.editandoUid.set(c.uid);
+    this.personalizando.set(item.producto);
   }
 
   // ----- Sugerencias (+) -----
@@ -276,4 +278,5 @@ export class Carrito implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.document.body.style.overflow = '';
   }
+
 }
