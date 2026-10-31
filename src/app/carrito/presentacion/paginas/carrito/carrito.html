@@ -75,15 +75,14 @@
             <i class="bi bi-gift franja-icono" aria-hidden="true"></i>
             <div class="franja-texto">
                 <h2>¡Agrega otra maceta personalizada y obtén envío GRATIS!</h2>
-                <p>Elige otra profesión, hobby o personaje.</p>
             </div>
         </div>
         <i class="bi bi-flower2 franja-hoja franja-hoja-1" aria-hidden="true"></i>
         <i class="bi bi-flower3 franja-hoja franja-hoja-2" aria-hidden="true"></i>
         <i class="bi bi-flower1 franja-hoja franja-hoja-izq" aria-hidden="true"></i>
         <ng-container *ngTemplateOutlet="carrusel; context: { lista: macetas, clave: 'macetas', tono: 'verde' }" />
-        <a class="ver-mas ver-mas-verde" [routerLink]="RUTA_MACETAS">Ver más macetas <i
-                class="bi bi-arrow-right"></i></a>
+        <button type="button" class="ver-mas ver-mas-verde" (click)="abrirHoja('macetas')">Ver más macetas <i
+                class="bi bi-arrow-right"></i></button>
     </section>
 
     <!-- Franja rosa: complementos -->
@@ -92,14 +91,13 @@
             <i class="bi bi-gift franja-icono" aria-hidden="true"></i>
             <div class="franja-texto">
                 <h2>Complementa tu regalo</h2>
-                <p>Pequeños detalles que lo hacen aún más especial.</p>
             </div>
         </div>
         <i class="bi bi-flower2 franja-hoja franja-hoja-1" aria-hidden="true"></i>
         <ng-container
             *ngTemplateOutlet="carrusel; context: { lista: complementos, clave: 'complementos', tono: 'rosa' }" />
-        <a class="ver-mas ver-mas-rosa" [routerLink]="RUTA_MACETAS">Ver más complementos <i
-                class="bi bi-arrow-right"></i></a>
+        <button type="button" class="ver-mas ver-mas-rosa" (click)="abrirHoja('complementos')">Ver más complementos
+            <i class="bi bi-arrow-right"></i></button>
     </section>
 
     <!-- Subtotal, envío y botones -->
@@ -183,7 +181,6 @@
             <i class="bi bi-stars franja-icono" aria-hidden="true"></i>
             <div class="franja-texto">
                 <h2>Empieza por una de estas</h2>
-                <p>Elige una profesión, hobby o personaje.</p>
             </div>
         </div>
         <i class="bi bi-flower2 franja-hoja franja-hoja-1" aria-hidden="true"></i>
@@ -195,7 +192,7 @@
 </section>
 
 <!-- Carrusel de tarjetas (macetas o complementos) -->
-<ng-template #carrusel let-lista let-clave="clave" let-tono="tono">
+<ng-template #carrusel let-lista="lista" let-clave="clave" let-tono="tono">
     <div class="carrusel" [class.carrusel-rosa]="tono === 'rosa'">
 
         @if (puntos(clave).length > 1) {
@@ -207,7 +204,7 @@
         <div class="pista" #pista [attr.data-clave]="clave" (scroll)="medir(pista)">
             @for (s of lista; track s.id) {
             <div class="sug">
-                <div class="sug-foto">
+                <div class="sug-foto" [class.sug-foto-contain]="clave === 'complementos'">
                     <i class="bi bi-flower1 sug-vacia" aria-hidden="true"></i>
                     <img [src]="s.imagen" [alt]="s.nombre" (error)="sinImagen($event)">
                 </div>
@@ -215,9 +212,9 @@
                     <span class="sug-nombre">{{ s.nombre }}</span>
                     <div class="sug-fila">
                         <span class="sug-precio">{{ s.precio | currency:'USD':'symbol':'1.2-2' }}</span>
-                        <button type="button" class="btn-mas" [attr.aria-label]="'Agregar ' + s.nombre"
-                            (click)="agregarSugerencia(s, clave)">
-                            <i class="bi bi-plus-lg"></i>
+                        <button type="button" class="btn-mas" [class.hecho]="marcado(clave, s.id)"
+                            [attr.aria-label]="'Agregar ' + s.nombre" (click)="agregarSugerencia(s, clave)">
+                            <i class="bi" [class]="marcado(clave, s.id) ? 'bi-check-lg' : 'bi-plus-lg'"></i>
                         </button>
                     </div>
                 </div>
@@ -241,6 +238,138 @@
     }
 </ng-template>
 
+<!-- ================= HOJA: ELIGE OTRA MACETA (sube de abajo hacia arriba) ================= -->
+@if (hoja() === 'macetas') {
+<div class="sheet-fondo" (click)="cerrarHoja()">
+    <section class="sheet sheet-macetas" role="dialog" aria-modal="true" aria-labelledby="sheet-macetas-titulo"
+        (click)="$event.stopPropagation()">
+        <span class="sheet-agarre"></span>
+        <button type="button" class="sheet-cerrar" (click)="cerrarHoja()" aria-label="Cerrar">
+            <i class="bi bi-x-lg"></i>
+        </button>
+
+        <div class="sheet-cab">
+            <h2 class="sheet-titulo" id="sheet-macetas-titulo">Elige otra maceta</h2>
+            <p class="sheet-sub">Llévate una segunda unidad y obtén envío gratis.</p>
+
+            <div class="sheet-banner">
+                <i class="bi bi-truck" aria-hidden="true"></i>
+                <span>Envío gratis desde la 2da unidad</span>
+                <i class="bi bi-flower2 sheet-banner-hoja" aria-hidden="true"></i>
+            </div>
+
+            <div class="cats" role="tablist">
+                @for (c of catsMacetas(); track c.clave) {
+                <button type="button" role="tab" class="cat"
+                    [class.activa]="(catMaceta() || catsMacetas()[0]?.clave) === c.clave"
+                    (click)="catMaceta.set(c.clave)">{{ c.etiqueta }}</button>
+                }
+            </div>
+        </div>
+
+        <div class="sheet-lista">
+            <div class="rejilla-m">
+                @for (s of macetasDeCategoria(); track s.id) {
+                <article class="tarjeta-m">
+                    <div class="sug-foto">
+                        <i class="bi bi-flower1 sug-vacia" aria-hidden="true"></i>
+                        <img [src]="s.imagen" [alt]="s.nombre" (error)="sinImagen($event)">
+                    </div>
+                    <h3 class="tm-nombre">{{ s.nombre }}</h3>
+                    <div class="tm-fila">
+                        <span class="tm-precio">{{ s.precio | currency:'USD':'symbol':'1.2-2' }}</span>
+                        <button type="button" class="btn-mas" [attr.aria-label]="'Personalizar ' + s.nombre"
+                            (click)="personalizar(s)">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                </article>
+                }
+            </div>
+        </div>
+    </section>
+</div>
+}
+
+<!-- ================= HOJA: COMPLEMENTA TU REGALO (sube de abajo hacia arriba) ================= -->
+@if (hoja() === 'complementos') {
+<div class="sheet-fondo" (click)="cerrarHoja()">
+    <section class="sheet sheet-complementos" role="dialog" aria-modal="true"
+        aria-labelledby="sheet-complementos-titulo" (click)="$event.stopPropagation()">
+        <span class="sheet-agarre"></span>
+        <button type="button" class="sheet-cerrar" (click)="cerrarHoja()" aria-label="Cerrar">
+            <i class="bi bi-x-lg"></i>
+        </button>
+
+        <div class="sheet-cab">
+            <h2 class="sheet-titulo" id="sheet-complementos-titulo">
+                <i class="bi bi-gift sheet-titulo-icono" aria-hidden="true"></i> Complementa tu regalo
+            </h2>
+            <p class="sheet-sub">Elige un adicional para tu pedido.</p>
+
+            <div class="cats" role="tablist">
+                @for (c of catsComplementos(); track c.clave) {
+                <button type="button" role="tab" class="cat"
+                    [class.activa]="(catComplemento() || catsComplementos()[0]?.clave) === c.clave"
+                    (click)="catComplemento.set(c.clave)">{{ c.etiqueta }}</button>
+                }
+            </div>
+
+            <div class="sheet-banner sheet-banner-centro">
+                <i class="bi bi-flower3" aria-hidden="true"></i>
+                <span>Perfectos para acompañar tu maceta.</span>
+                <i class="bi bi-flower3" aria-hidden="true"></i>
+            </div>
+        </div>
+
+        <div class="sheet-lista">
+            <div class="rejilla-c">
+                @for (s of complementosDeCategoria(); track s.id) {
+                <article class="tarjeta-c">
+                    <div class="sug-foto sug-foto-contain">
+                        <i class="bi bi-gift sug-vacia" aria-hidden="true"></i>
+                        <img [src]="s.imagen" [alt]="s.nombre" (error)="sinImagen($event)">
+                    </div>
+                    <div class="tc-info">
+                        <h3 class="tm-nombre">{{ s.nombre }}</h3>
+                        <div class="tm-fila">
+                            <span class="tm-precio">{{ s.precio | currency:'USD':'symbol':'1.2-2' }}</span>
+                            <button type="button" class="btn-mas" [class.hecho]="enCarrito(s.id)"
+                                [attr.aria-label]="enCarrito(s.id) ? s.nombre + ' ya agregado' : 'Agregar ' + s.nombre"
+                                (click)="agregarComplemento(s)">
+                                <i class="bi" [class]="enCarrito(s.id) ? 'bi-check-lg' : 'bi-plus-lg'"></i>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+                }
+            </div>
+        </div>
+    </section>
+</div>
+}
+
+<!-- ================= HOJA: PERSONALIZADOR (sube de abajo hacia arriba, 90% de la pantalla) ================= -->
+@if (personalizando(); as prod) {
+<div class="sheet-fondo" (click)="cerrarPorFondo()">
+    <section class="sheet sheet-personalizar" role="dialog" aria-modal="true" aria-label="Personaliza tu detalle"
+        (click)="$event.stopPropagation()">
+        <span class="sheet-agarre"></span>
+        <button type="button" class="sheet-cerrar" (click)="cerrarPersonalizador()" aria-label="Cerrar">
+            <i class="bi bi-x-lg"></i>
+        </button>
+
+        <div class="sheet-cab sheet-cab-personalizar">
+            <h2 class="sheet-titulo sheet-titulo-centro">Personaliza tu detalle</h2>
+        </div>
+
+        <div class="sheet-cuerpo">
+            <app-personalizador [producto]="prod"></app-personalizador>
+        </div>
+    </section>
+</div>
+}
+
 <!-- Confirmación (editar / eliminar) -->
 @if (confirmacion(); as c) {
 <div class="dialogo-fondo" (click)="cancelar()">
@@ -259,9 +388,9 @@
         </h2>
 
         <p class="dialogo-texto">
-            @if (c.accion === 'eliminar') {
+            @if(c.accion==='eliminar'){
             Se quitará de tu carrito y no podrás deshacerlo.
-            } @else {
+            }@else{
             Volverás al selector con tus opciones ya elegidas.
             }
         </p>

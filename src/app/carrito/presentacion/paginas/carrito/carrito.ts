@@ -1,63 +1,160 @@
 import {
-  AfterViewInit, Component, ElementRef, HostListener, computed, inject, signal
+  AfterViewInit, Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, signal, untracked
 } from '@angular/core';
-import { CurrencyPipe, NgTemplateOutlet } from '@angular/common';
+import { CurrencyPipe, DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 // AJUSTA la ruta según donde dejes carrito.service.ts
-import { CarritoService } from '../../../aplicacion/servicios/CarritoService';
+import { CarritoService, ProductoCarrito } from '../../../aplicacion/servicios/CarritoService';
 import { productos } from '../../../../all-productos/dominio/muestra_producto';
+import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
 
 interface Sugerencia {
   id: string;
   nombre: string;
   precio: number;
   imagen: string;
-  ruta?: string;   // a dónde lleva el "+" (solo macetas)
+  categoria?: string;  // para filtrar en las hojas "Elige otra maceta" / "Complementa tu regalo"
+  slug?: string;       // solo macetas: producto al que corresponde
+}
+
+interface Categoria {
+  clave: string;
+  etiqueta: string;
 }
 
 @Component({
   selector: 'app-carrito',
-  imports: [CurrencyPipe, NgTemplateOutlet, RouterLink],
+  imports: [CurrencyPipe, NgTemplateOutlet, RouterLink, Personalizador],
   templateUrl: './carrito.html',
   styleUrl: './carrito.css',
 })
-export class Carrito implements AfterViewInit {
+export class Carrito implements AfterViewInit, OnDestroy {
 
   // ===== EDITABLES: rutas de tu aplicación =====
-  readonly RUTA_MACETAS = '/catalogo/todos-productos';  // "Ver más macetas" y botón del carrito vacío
+  readonly RUTA_MACETAS = '/catalogo/todos-productos';  // botón del carrito vacío
   readonly RUTA_SEGUIR = '/catalogo/todos-productos';   // "Seguir comprando"
   readonly RUTA_CONTINUAR = '/checkout';  // "Continuar"
 
-  // ===== Otras macetas personalizadas: salen de tus productos reales (tipo "profesionales") =====
-  // Para mostrar otro tipo, cambia 'profesionales' (o quita el filtro para mostrar todas).
+  // ===== EDITABLE: categorías de la hoja "Elige otra maceta" =====
+  // "clave" es el campo `tipo` de tus productos. El orden de esta lista es el orden de las pestañas.
+  // Las categorías sin productos disponibles no se muestran.
+  readonly CATEGORIAS_MACETAS: Categoria[] = [
+    { clave: 'profesionales', etiqueta: 'Profesiones y hobbies' },
+    { clave: 'amor-amistad', etiqueta: 'Amor y amistad' },
+    { clave: 'personaje', etiqueta: 'Personajes' },
+    { clave: 'cuadro', etiqueta: 'Cuadros' },
+  ];
+
+  // ===== Otras macetas: salen de tus productos (muestra_producto.ts), solo los disponibles =====
   readonly macetas: Sugerencia[] = productos
-    .filter(p => p.tipo === 'profesionales' && p.disponible)
+    .filter(p => p.disponible)
     .map(p => ({
       id: String(p.id),
       nombre: p.nombre,
       precio: p.precio,
       imagen: p.imagen,
-      ruta: `/catalogo/todos-productos/${p.slug}`,
+      categoria: p.tipo,
+      slug: p.slug,
     }));
 
-  // ===== EDITABLE: complementos (cambia las imágenes por las tuyas) =====
-
+  // ===== EDITABLE: complementos (rutas de tus accesorios; el precio de cada uno es de ejemplo) =====
   readonly complementos: Sugerencia[] = [
-    { id: 'marco-con-foto', nombre: 'Marco con foto', precio: 3, imagen: 'imagenes/complementos/marco-con-foto.png' },
-    { id: 'tarjeta', nombre: 'Tarjeta de dedicatoria', precio: 1.5, imagen: 'imagenes/complementos/tarjeta.png' },
-    { id: 'mascota', nombre: 'Mascota personalizada', precio: 3, imagen: 'imagenes/complementos/mascota.png' },
-    { id: 'accesorio-extra', nombre: 'Accesorio extra', precio: 1.5, imagen: 'imagenes/complementos/accesorio-extra.png' },
+    { id: 'acc-1', nombre: 'Lentes', imagen: 'accesorios/lentes.png', categoria: 'Moda', precio: 2 },
+    { id: 'acc-5', nombre: 'Gafas', imagen: 'accesorios/gafas-sin-fondo.png', categoria: 'Moda', precio: 2 },
+    { id: 'acc-3', nombre: 'Marco con foto', imagen: 'accesorios/marco-foto.png', categoria: 'Objetos', precio: 3 },
+    { id: 'acc-4', nombre: 'Marco con frase', imagen: 'accesorios/marco-frase.png', categoria: 'Objetos', precio: 3 },
+    { id: 'acc-6', nombre: 'Herramienta', imagen: 'accesorios/caja_herramientas.png', categoria: 'Objetos', precio: 3 },
+    { id: 'acc-7', nombre: 'Regalo', imagen: 'accesorios/regalo.png', categoria: 'Objetos', precio: 2 },
+    { id: 'acc-8', nombre: 'Vaso de café', imagen: 'accesorios/vaso_cafe.png', categoria: 'Objetos', precio: 2 },
+    { id: 'acc-9', nombre: 'Gato amarillo', imagen: 'accesorios/gatito.png', categoria: 'Animales', precio: 3 },
+    { id: 'acc-10', nombre: 'Perro', imagen: 'accesorios/perro.png', categoria: 'Animales', precio: 3 },
+    { id: 'acc-11', nombre: 'Flor', imagen: 'accesorios/flores.png', categoria: 'Flores', precio: 2 },
   ];
 
   private carrito = inject(CarritoService);
   private router = inject(Router);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private document = inject(DOCUMENT);
 
   items = this.carrito.items;
   subtotal = this.carrito.subtotal;
   cantidad = this.carrito.cantidad;
 
   textoProductos = computed(() => `${this.cantidad()} ${this.cantidad() === 1 ? 'producto' : 'productos'}`);
+
+  // ----- Categorías de las hojas -----
+  catsMacetas = computed<Categoria[]>(() => {
+    const usadas = new Set(this.macetas.map(m => m.categoria));
+    const conocidas = this.CATEGORIAS_MACETAS.filter(c => usadas.has(c.clave));
+    const otras = [...usadas]
+      .filter(t => t && !this.CATEGORIAS_MACETAS.some(c => c.clave === t))
+      .map(t => ({ clave: t as string, etiqueta: t as string }));
+    return [...conocidas, ...otras];
+  });
+
+  catsComplementos = computed<Categoria[]>(() =>
+    [...new Set(this.complementos.map(c => c.categoria as string))].map(c => ({ clave: c, etiqueta: c }))
+  );
+
+  catMaceta = signal('');
+  catComplemento = signal('');
+
+  macetasDeCategoria = computed(() => {
+    const cat = this.catMaceta() || this.catsMacetas()[0]?.clave;
+    return this.macetas.filter(m => m.categoria === cat);
+  });
+
+  complementosDeCategoria = computed(() => {
+    const cat = this.catComplemento() || this.catsComplementos()[0]?.clave;
+    return this.complementos.filter(c => c.categoria === cat);
+  });
+
+  // ----- Hojas que suben de abajo hacia arriba -----
+  hoja = signal<'macetas' | 'complementos' | null>(null);
+  personalizando = signal<ProductoCarrito | null>(null);
+  private cantidadAlAbrir = 0;
+
+  constructor() {
+    // Bloquea el scroll de la página mientras hay una hoja abierta
+    effect(() => {
+      const abierta = this.hoja() !== null || this.personalizando() !== null;
+      this.document.body.style.overflow = abierta ? 'hidden' : '';
+    });
+
+    // Cuando el personalizador agrega el detalle al carrito, la hoja se cierra sola
+    effect(() => {
+      const n = this.items().length;
+      untracked(() => {
+        if (this.personalizando() && n > this.cantidadAlAbrir) this.cerrarPersonalizador();
+      });
+    });
+  }
+
+  abrirHoja(tipo: 'macetas' | 'complementos'): void {
+    this.hoja.set(tipo);
+  }
+
+  cerrarHoja(): void {
+    this.hoja.set(null);
+  }
+
+  // "+" de una maceta: sube el personalizador (90% de la pantalla) con ese producto
+  personalizar(s: Sugerencia): void {
+    this.hoja.set(null);
+    this.cantidadAlAbrir = this.items().length;
+    this.personalizando.set({ id: s.slug ?? s.id, nombre: s.nombre, precio: s.precio, imagen: s.imagen });
+  }
+
+  cerrarPersonalizador(): void {
+    this.personalizando.set(null);
+  }
+
+  // En celular, tocar el fondo oscuro cierra el personalizador (en pantallas grandes no, para no perder lo elegido)
+  cerrarPorFondo(): void {
+    if (this.document.defaultView?.matchMedia('(max-width: 767.98px)').matches) {
+      this.cerrarPersonalizador();
+    }
+  }
 
   // ----- Confirmaciones: ¿editar? / ¿eliminar? -----
   confirmacion = signal<{ accion: 'editar' | 'eliminar'; uid: string } | null>(null);
@@ -68,7 +165,13 @@ export class Carrito implements AfterViewInit {
 
   @HostListener('document:keydown.escape')
   cancelar(): void {
-    this.confirmacion.set(null);
+    if (this.confirmacion()) {
+      this.confirmacion.set(null);
+    } else if (this.personalizando()) {
+      this.cerrarPersonalizador();
+    } else if (this.hoja()) {
+      this.cerrarHoja();
+    }
   }
 
   confirmar(): void {
@@ -95,9 +198,15 @@ export class Carrito implements AfterViewInit {
   // ----- Sugerencias (+) -----
   agregarSugerencia(s: Sugerencia, clave: string): void {
     if (clave === 'macetas') {
-      void this.router.navigate([s.ruta ?? this.RUTA_MACETAS]);
+      this.personalizar(s);
       return;
     }
+
+    this.agregarComplemento(s);
+  }
+
+  agregarComplemento(s: Sugerencia): void {
+    if (this.enCarrito(s.id)) return;
 
     this.carrito.guardar({
       uid: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
@@ -107,6 +216,15 @@ export class Carrito implements AfterViewInit {
       ruta: '',
       resumen: [],
     });
+  }
+
+  // Un complemento ya agregado muestra ✓ en vez de "+"
+  enCarrito(id: string): boolean {
+    return this.items().some(i => i.tipo === 'complemento' && String(i.producto.id) === id);
+  }
+
+  marcado(clave: string, id: string): boolean {
+    return clave === 'complementos' && this.enCarrito(id);
   }
 
   // Si la imagen no existe (todavía), se oculta y queda el fondo de la tarjeta
@@ -153,5 +271,9 @@ export class Carrito implements AfterViewInit {
   @HostListener('window:resize')
   alCambiarTamano(): void {
     this.medirTodo();
+  }
+
+  ngOnDestroy(): void {
+    this.document.body.style.overflow = '';
   }
 }

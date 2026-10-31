@@ -11,6 +11,14 @@
     --rosa-fuerte: #a8324a;
     --rojo: #c0262d;
 
+    /* ===== EDITABLES: hasta dónde sube cada hoja (% de la altura de la pantalla) ===== */
+    --alto-hoja-macetas: 85dvh;
+    /* "Ver más macetas" */
+    --alto-hoja-complementos: 75dvh;
+    /* "Ver más complementos" */
+    --alto-hoja-personalizar: 97dvh;
+    /* personalizador al tocar "+" de una maceta */
+
     display: block;
     background: var(--crema);
     color: var(--texto);
@@ -349,6 +357,15 @@
     color: #7d7265;
 }
 
+.btn-mas.hecho {
+    background: #2f8f5b;
+}
+
+.sug-foto-contain img {
+    padding: 6px;
+    object-fit: contain;
+}
+
 .btn-mas {
     flex: none;
     width: 22px;
@@ -419,6 +436,10 @@
 .ver-mas {
     position: relative;
     z-index: 1;
+    width: 100%;
+    padding: 0;
+    background: none;
+    border: 0;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -721,8 +742,274 @@
     }
 }
 
+/* ================= HOJAS (suben de abajo hacia arriba) ================= */
+.sheet-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, .5);
+    animation: fondo .25s ease-out;
+}
+
+.sheet {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(100%, 720px);
+    overflow: hidden;
+    background: var(--crema);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, .2);
+    animation: subir-sheet .35s cubic-bezier(.22, .8, .3, 1);
+}
+
+.sheet-macetas {
+    height: var(--alto-hoja-macetas);
+}
+
+.sheet-complementos {
+    height: var(--alto-hoja-complementos);
+}
+
+.sheet-personalizar {
+    width: min(100%, 1100px);
+    height: var(--alto-hoja-personalizar);
+}
+
+.sheet-agarre {
+    flex: none;
+    width: 48px;
+    height: 5px;
+    margin: 8px auto 0;
+    background: #bdbdbd;
+    border-radius: 3px;
+}
+
+.sheet-cerrar {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 3;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    background: none;
+    border: 0;
+    color: var(--texto);
+    font-size: 1.15rem;
+}
+
+.sheet-cab {
+    flex: none;
+    padding: 10px 16px 0;
+}
+
+.sheet-cab-personalizar {
+    padding-bottom: 6px;
+}
+
+.sheet-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding-right: 36px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--vino);
+}
+
+.sheet-titulo-centro {
+    justify-content: center;
+    padding: 0 36px;
+    font-size: 1.4rem;
+    color: #4a2a1a;
+}
+
+.sheet-titulo-icono {
+    font-size: 1.6rem;
+    color: var(--rosa-fuerte);
+}
+
+.sheet-sub {
+    margin: 2px 0 10px;
+    font-size: .92rem;
+    color: #7d7265;
+}
+
+.sheet-banner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    overflow: hidden;
+    background: var(--verde-claro);
+    border: 1px solid #d6e8dc;
+    border-radius: 12px;
+    color: var(--verde);
+    font-size: .88rem;
+    font-weight: 600;
+}
+
+.sheet-banner>i {
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.sheet-banner-hoja {
+    margin-left: auto;
+    opacity: .5;
+}
+
+.sheet-banner-centro {
+    justify-content: space-between;
+    margin-top: 2px;
+}
+
+.cats {
+    display: flex;
+    gap: 8px;
+    padding: 12px 0 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.cats::-webkit-scrollbar {
+    display: none;
+}
+
+.cat {
+    flex: 1 0 auto;
+    padding: 8px 14px;
+    background: #fff;
+    border: 1.5px solid var(--borde-suave);
+    border-radius: 10px;
+    color: var(--texto);
+    font-size: .85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.cat.activa {
+    background: var(--verde);
+    border-color: var(--verde);
+    color: #fff;
+}
+
+.sheet-lista {
+    flex: 1;
+    min-height: 0;
+    padding: 10px 16px 20px;
+    overflow-y: auto;
+}
+
+.sheet-cuerpo {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+/* Macetas: 3 por fila */
+.rejilla-m {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.tarjeta-m,
+.tarjeta-c {
+    padding: 5px;
+    background: #fff;
+    border: 1px solid var(--borde-suave);
+    border-radius: 12px;
+}
+
+.tm-nombre {
+    margin: 6px 0 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: .76rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--texto);
+}
+
+.tarjeta-m .tm-nombre {
+    min-height: 2.4em;
+}
+
+.tm-fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.tm-precio {
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--texto);
+}
+
+.tarjeta-m .btn-mas,
+.tarjeta-c .btn-mas {
+    width: 28px;
+    height: 28px;
+    font-size: .9rem;
+}
+
+/* Complementos: 2 por fila, foto a la izquierda */
+.rejilla-c {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.tarjeta-c {
+    display: flex;
+    gap: 8px;
+}
+
+.tarjeta-c .sug-foto {
+    flex: none;
+    width: 38%;
+    align-self: flex-start;
+}
+
+.tc-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.tc-info .tm-nombre {
+    margin-top: 2px;
+}
+
+@keyframes subir-sheet {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
 
+    .sheet,
+    .sheet-fondo,
     .flota,
     .brote,
     .vacio,
@@ -752,6 +1039,14 @@
 
     .sug {
         flex-basis: calc(20% - 7px);
+    }
+
+    .rejilla-m {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .rejilla-c {
+        grid-template-columns: repeat(3, 1fr);
     }
 
     .sug-nombre,

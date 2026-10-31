@@ -1060,7 +1060,7 @@ export class Personalizador implements OnDestroy {
         tipo: 'personalizado',
         producto,
         vista,
-        ruta: this.editandoRuta ?? this.router.url.split(/[?#]/)[0],
+        ruta: this.editandoRuta ?? this.rutaDelProducto(),
         resumen: this.resumenPedido(),
         configuracion: this.configuracionGuardada(),
       },
@@ -1071,6 +1071,14 @@ export class Personalizador implements OnDestroy {
     );
 
     await this.router.navigate(['carrito']);
+  }
+
+  // Ruta a la que vuelve "Editar" desde el carrito. Si se personalizó desde el propio carrito,
+  // es la pantalla del producto (no /carrito).
+  private rutaDelProducto(): string {
+    const actual = this.router.url.split(/[?#]/)[0];
+    const p = this.producto();
+    return actual.startsWith('/carrito') && p ? `/catalogo/todos-productos/${p.id}` : actual;
   }
 
   private configuracionGuardada(): ConfigGuardada {
