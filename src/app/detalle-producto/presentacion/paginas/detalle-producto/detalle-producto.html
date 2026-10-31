@@ -150,7 +150,8 @@
         </div>
 
         <div class="modal-cuerpo">
-            <app-personalizador (guardar)="guardarPersonalizacion($event)"></app-personalizador>
+            <app-personalizador [producto]="productoCarrito()"
+                (guardar)="guardarPersonalizacion($event)"></app-personalizador>
         </div>
 
     </div>

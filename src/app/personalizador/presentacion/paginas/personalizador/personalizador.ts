@@ -2,13 +2,19 @@ import {
   Component, OnInit, OnDestroy, signal, ViewChild, ElementRef, HostListener,
   computed,
   inject,
+  input,
   output,
   PLATFORM_ID
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TextoCanvas } from '../../../../shared/directivas/texto-canvas';
 import { ExcepcionGuardada, Geometria, UbicacionGuardada } from '../../../dominio/ubicaciones';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+// AJUSTA la ruta según donde dejes carrito.service.ts
+import {
+  CarritoService, ConfigGuardada, LineaResumen, ProductoCarrito
+} from '../../../../carrito/aplicacion/servicios/CarritoService';
 
 export type IdPestana = 'nombre' | 'lentes' | 'accesorios' | 'dedicatoria';
 
@@ -95,6 +101,14 @@ export class Personalizador implements OnDestroy {
 
   private platformId = inject(PLATFORM_ID);
 
+  private router = inject(Router);
+  private rutaActiva = inject(ActivatedRoute, { optional: true });
+  private carrito = inject(CarritoService);
+
+  // Producto que se está personalizando (nombre, precio...). Lo manda la pantalla del producto:
+  // <app-personalizador [producto]="{ id: 1, nombre: 'Profesional personalizada', precio: 24 }" />
+  readonly producto = input<ProductoCarrito | null>(null);
+
 
 
 
@@ -152,6 +166,9 @@ export class Personalizador implements OnDestroy {
 
       // Abrir la primera categoría de la pestaña "Accesorios" (sin Moda ni Personalización).
       this.categoriaActual.set(this.categoriasAccesorios()[0] ?? this.categorias()[0] ?? '');
+
+      // Si viene del carrito con el botón "Editar", vuelve a poner lo que el cliente había elegido
+      this.restaurarEdicion();
 
     } catch (error) {
       console.error('Error al cargar la configuración:', error);
@@ -961,13 +978,18 @@ export class Personalizador implements OnDestroy {
   // Botón "Guardar y continuar": entrega todo lo elegido a quien use este componente
   readonly guardar = output<ConfiguracionPersonalizada>();
 
-  continuar(): void {
-    // Hay que tener los 2 accesorios elegidos: si no, abre Accesorios y avisa
-    if (this.cantidadAccesorios() < this.maximoAccesorios) {
-      this.elegirPestana('accesorios');
-      this.errorPanel.set(`Debes elegir ${this.maximoAccesorios} accesorios para continuar.`);
+  async continuar(): Promise<void> {
+    if (this.agregando()) return;
+
+    // Las 4 opciones deben estar en azul (llenadas con "Aceptar"). Las que no, se ponen en rojo y vibran.
+    if (this.hayPestanasPendientes()) {
+      this.intentoAgregar.set(true);
+      this.vibrarPestanas();
       return;
     }
+
+    this.intentoAgregar.set(false);
+    this.agregando.set(true);
 
     this.guardar.emit({
       accesorios: this.accesoriosSeleccionados(),
@@ -983,10 +1005,299 @@ export class Personalizador implements OnDestroy {
       fotoMarcoPorWhatsapp: this.hayMarcoFoto() && this.marcoWhatsapp(),
       fraseMarcoPorWhatsapp: this.hayMarcoFrase() && this.marcoWhatsapp(),
     });
+
+    try {
+      await this.agregarAlCarrito();
+    } finally {
+      this.agregando.set(false);
+    }
+  }
+
+  // ==========================================
+  // AGREGAR AL CARRITO
+  // ==========================================
+
+  // true después de pulsar "Agregar al carrito" con opciones sin llenar
+  intentoAgregar = signal(false);
+  vibrandoPestanas = signal(false);
+  agregando = signal(false);
+  private temporizadorTabs: ReturnType<typeof setTimeout> | undefined;
+
+  // true si alguna de las 4 opciones todavía no está en azul (guardada)
+  hayPestanasPendientes = computed(() =>
+    this.pestanas.some(p => !this.guardadas().has(p.id))
+  );
+
+  // La opción se pinta en rojo si se intentó agregar al carrito y todavía no se llenó
+  tieneError(id: IdPestana): boolean {
+    return this.intentoAgregar() && !this.estaGuardada(id);
+  }
+
+  private vibrarPestanas(): void {
+    clearTimeout(this.temporizadorTabs);
+    this.vibrandoPestanas.set(false); // se apaga un instante para que la animación se repita
+
+    this.temporizadorTabs = setTimeout(() => {
+      this.vibrandoPestanas.set(true);
+      this.temporizadorTabs = setTimeout(() => this.vibrandoPestanas.set(false), 700);
+    }, 30);
+  }
+
+  // Uid del item del carrito que se está editando (viene de ?editar=...)
+  private editandoUid: string | null = null;
+  private editandoRuta: string | null = null;
+
+  private async agregarAlCarrito(): Promise<void> {
+    const producto = this.producto() ?? { id: 'detalle', nombre: 'Detalle personalizado', precio: 0 };
+    const uid = this.editandoUid
+      ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+
+    const vista = await this.capturarVista();
+
+    this.carrito.guardar(
+      {
+        uid,
+        tipo: 'personalizado',
+        producto,
+        vista,
+        ruta: this.editandoRuta ?? this.router.url.split(/[?#]/)[0],
+        resumen: this.resumenPedido(),
+        configuracion: this.configuracionGuardada(),
+      },
+      {
+        fotoTarjeta: this.fotoTarjetaArchivo,
+        fotoMarco: this.hayMarcoFoto() ? this.fotoMarcoArchivo : null,
+      }
+    );
+
+    await this.router.navigate(['carrito']);
+  }
+
+  private configuracionGuardada(): ConfigGuardada {
+    return {
+      accesorios: this.accesoriosSeleccionados().map(a => ({ ...a })),
+      nombre: this.nombreCliente(),
+      colorLentes: this.colorSeleccionado,
+      colorGafas: this.colorGafas,
+      dedicatoria: this.dedicatoria(),
+      textoMarco: this.textoMarco(),
+      sinTarjeta: this.sinTarjeta(),
+      tarjetaPorWhatsapp: this.tarjetaWhatsapp(),
+      marcoPorWhatsapp: this.marcoWhatsapp(),
+      fotoTarjetaNombre: this.fotoTarjetaNombre(),
+      fotoMarcoNombre: this.fotoMarcoNombre(),
+    };
+  }
+
+  // Líneas que se muestran debajo del producto en el carrito
+  private resumenPedido(): LineaResumen[] {
+    const colores: Record<string, { m: string; f: string }> = {
+      negro: { m: 'negros', f: 'negras' },
+      cafe: { m: 'cafés', f: 'cafés' },
+      dorado: { m: 'dorados', f: 'doradas' },
+    };
+
+    const nombre = this.nombreCliente().trim();
+
+    let moda = 'ninguno';
+    if (this.hayLentes()) moda = `lentes ${colores[this.colorSeleccionado]?.m ?? this.colorSeleccionado}`;
+    else if (this.hayGafas()) moda = `gafas ${colores[this.colorGafas]?.f ?? this.colorGafas}`;
+
+    let tarjeta: string;
+    if (this.sinTarjeta()) tarjeta = 'sin tarjeta';
+    else if (this.tarjetaWhatsapp()) tarjeta = 'por WhatsApp';
+    else {
+      const mensaje = this.dedicatoria().trim();
+      const corto = mensaje.length > 28 ? mensaje.slice(0, 28) + '…' : mensaje;
+      tarjeta = (mensaje ? `«${corto}»` : 'pendiente') + (this.fotoTarjetaUrl() ? ' + foto' : '');
+    }
+
+    const lineas: LineaResumen[] = [
+      { icono: 'bi-person', etiqueta: 'Nombre', valor: nombre || 'pendiente' },
+      { icono: 'bi-eyeglasses', etiqueta: 'Lentes / Gafas', valor: moda },
+      {
+        icono: 'bi-gift', etiqueta: 'Accesorios',
+        valor: this.accesoriosElegidos().map(a => a.nombre).join(', ') || 'ninguno'
+      },
+      { icono: 'bi-card-text', etiqueta: 'Tarjeta de dedicatoria', valor: tarjeta },
+    ];
+
+    if (this.hayMarcoFoto()) {
+      lineas.push({
+        icono: 'bi-image', etiqueta: 'Marco',
+        valor: this.marcoWhatsapp() ? 'foto pendiente por WhatsApp' : 'foto subida'
+      });
+    } else if (this.hayMarcoFrase()) {
+      const frase = this.textoMarco().trim();
+      lineas.push({
+        icono: 'bi-image', etiqueta: 'Marco',
+        valor: this.marcoWhatsapp() ? 'frase pendiente por WhatsApp' : `frase «${frase.length > 28 ? frase.slice(0, 28) + '…' : frase}»`
+      });
+    }
+
+    return lineas;
+  }
+
+  // ----- Editar desde el carrito: vuelve a poner lo que se había elegido -----
+  private restaurarEdicion(): void {
+    const uid = this.rutaActiva?.snapshot.queryParamMap.get('editar');
+    const item = uid ? this.carrito.buscar(uid) : undefined;
+    const c = item?.configuracion;
+
+    if (!item || !c) return;
+
+    this.editandoUid = item.uid;
+    this.editandoRuta = item.ruta;
+
+    this.colorSeleccionado = c.colorLentes;
+    this.colorGafas = c.colorGafas;
+    this.nombreCliente.set(c.nombre);
+    this.dedicatoria.set(c.dedicatoria);
+    this.textoMarco.set(c.textoMarco);
+    this.sinTarjeta.set(c.sinTarjeta);
+    this.tarjetaWhatsapp.set(c.tarjetaPorWhatsapp);
+    this.marcoWhatsapp.set(c.marcoPorWhatsapp);
+
+    // Las fotos subidas solo se recuerdan mientras no se recargue la página
+    const fotos = this.carrito.archivosDe(item.uid);
+
+    if (fotos.fotoTarjeta) {
+      this.fotoTarjetaArchivo = fotos.fotoTarjeta;
+      this.fotoTarjetaUrl.set(URL.createObjectURL(fotos.fotoTarjeta));
+      this.fotoTarjetaNombre.set(fotos.fotoTarjeta.name);
+    }
+
+    if (fotos.fotoMarco) {
+      this.fotoMarcoArchivo = fotos.fotoMarco;
+      this.fotoMarcoUrl.set(URL.createObjectURL(fotos.fotoMarco));
+      this.fotoMarcoNombre.set(fotos.fotoMarco.name);
+    }
+
+    this.siguienteId = Math.max(0, ...c.accesorios.map(a => a.id)) + 1;
+    this.accesoriosSeleccionados.set(c.accesorios.map(a => ({ ...a })));
+    this.idsMarcados.set(c.accesorios.map(a => a.accesorioId));
+
+    // Todo estaba lleno: las 4 opciones salen en azul (salvo la foto del marco si se perdió al recargar)
+    const completas = new Set<IdPestana>(this.pestanas.map(p => p.id));
+    if (this.hayMarcoFoto() && !this.marcoWhatsapp() && !this.fotoMarcoArchivo) completas.delete('dedicatoria');
+    this.guardadas.set(completas);
+  }
+
+  // ----- Foto de la maceta ya personalizada (para el carrito) -----
+  private cargarImagen(src: string): Promise<HTMLImageElement | null> {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = /^(https?:|data:|blob:|\/)/.test(src) ? src : '/' + src;
+    });
+  }
+
+  // Dibuja un accesorio del tamaño que ocupa en la foto (texto, lentes/gafas con su color, o imagen)
+  private async dibujoDe(a: AccesorioColocado, w: number, h: number): Promise<CanvasImageSource | null> {
+    const ancho = Math.max(1, Math.round(w));
+    const alto = Math.max(1, Math.round(h));
+    const lienzo = document.createElement('canvas');
+    lienzo.width = ancho;
+    lienzo.height = alto;
+    const c = lienzo.getContext('2d');
+    if (!c) return null;
+
+    if (a.tipo === 'texto') {
+      const texto = (this.nombreCliente() || a.texto || '').trim();
+      if (!texto) return null;
+
+      try { await document.fonts.load('bold 40px Lobster'); } catch { /* sigue con la fuente de respaldo */ }
+
+      c.font = 'bold 100px Lobster, cursive';
+      c.textAlign = 'left';
+      c.textBaseline = 'alphabetic';
+      const m = c.measureText(texto);
+      const izq = m.actualBoundingBoxLeft;
+      const anchoTexto = izq + m.actualBoundingBoxRight;
+      const altoTexto = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+      if (!anchoTexto || !altoTexto) return null;
+
+      c.scale(ancho / anchoTexto, alto / altoTexto);
+      c.fillStyle = '#000';
+      c.fillText(texto, izq, m.actualBoundingBoxAscent);
+      return lienzo;
+    }
+
+    const img = await this.cargarImagen(a.imagen);
+    if (!img) return null;
+
+    c.drawImage(img, 0, 0, ancho, alto);
+
+    if (a.accesorioId === this.ID_LENTES || a.accesorioId === this.ID_GAFAS) {
+      c.globalCompositeOperation = 'source-atop';
+      c.fillStyle = this.colorDe(a.accesorioId);
+      c.fillRect(0, 0, ancho, alto);
+    }
+
+    return lienzo;
+  }
+
+  private async capturarVista(): Promise<string> {
+    if (typeof document === 'undefined') return '';
+
+    try {
+      const T = 480;
+      const lienzo = document.createElement('canvas');
+      lienzo.width = T;
+      lienzo.height = T;
+      const ctx = lienzo.getContext('2d');
+      if (!ctx) return '';
+
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, T, T);
+
+      const base = await this.cargarImagen('imagenes/maceta_vacia.png');
+      if (base) {
+        // Igual que el visor: la foto difuminada rellena los lados y la foto completa va encima
+        const cubrir = Math.max(T / base.width, T / base.height) * 1.15;
+        ctx.save();
+        ctx.filter = 'blur(10px)';
+        ctx.drawImage(base, (T - base.width * cubrir) / 2, (T - base.height * cubrir) / 2,
+          base.width * cubrir, base.height * cubrir);
+        ctx.restore();
+
+        const caber = Math.min(T / base.width, T / base.height);
+        ctx.drawImage(base, (T - base.width * caber) / 2, (T - base.height * caber) / 2,
+          base.width * caber, base.height * caber);
+      }
+
+      // De atrás hacia adelante, según la capa de cada ubicación
+      const orden = [...this.accesoriosSeleccionados()]
+        .sort((a, b) => this.capaDe(a.ubicacionId) - this.capaDe(b.ubicacionId));
+
+      for (const a of orden) {
+        const w = T * a.ancho / 100;
+        const h = T * a.alto / 100;
+        const origen = await this.dibujoDe(a, w, h);
+        if (!origen) continue;
+
+        const grados = Math.PI / 180;
+        ctx.save();
+        ctx.translate(T * a.x / 100 + w / 2, T * a.y / 100 + h / 2);
+        ctx.rotate((a.rotZ ?? 0) * grados);
+        ctx.scale(
+          (a.espejo ? -1 : 1) * Math.max(0.2, Math.cos((a.rotY ?? 0) * grados)),
+          Math.max(0.2, Math.cos((a.rotX ?? 0) * grados))
+        );
+        ctx.drawImage(origen, -w / 2, -h / 2, w, h);
+        ctx.restore();
+      }
+
+      return lienzo.toDataURL('image/jpeg', 0.85);
+    } catch {
+      return ''; // si el navegador no deja exportar la imagen, el carrito muestra un icono
+    }
   }
 
   ngOnDestroy(): void {
     clearTimeout(this.temporizadorVibrar);
+    clearTimeout(this.temporizadorTabs);
     if (this.entradaHistorial && history.state?.hojaPersonalizador) history.back();
     this.liberarFotoMarco();
     this.liberarFotoTarjeta();

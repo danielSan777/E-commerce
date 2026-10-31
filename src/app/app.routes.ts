@@ -30,6 +30,7 @@ export const routes: Routes = [
                     import('./personalizador/presentacion/paginas/personalizador/personalizador')
                         .then(m => m.Personalizador)
             },
+            { path: 'carrito', loadComponent: () => import('./carrito/presentacion/paginas/carrito/carrito').then(m => m.Carrito) },
             {
                 path: 'catalogo/:slug',
                 loadComponent: () =>

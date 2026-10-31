@@ -1,4 +1,4 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -7,6 +7,7 @@ import { productos } from '../../../../all-productos/dominio/muestra_producto';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
+import { ProductoCarrito } from '../../../../carrito/aplicacion/servicios/CarritoService';
 
 @Component({
   imports: [RouterLink, Personalizador],
@@ -15,7 +16,7 @@ import { Personalizador } from '../../../../personalizador/presentacion/paginas/
   templateUrl: './detalle-producto.html',
 })
 
-export class DetalleProducto implements OnDestroy {
+export class DetalleProducto implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private document = inject(DOCUMENT);
   private location = inject(Location);
@@ -35,6 +36,12 @@ export class DetalleProducto implements OnDestroy {
   producto = computed<Producto | undefined>(() =>
     productos.find(p => p.slug === this.nombre())
   );
+
+  // Datos del producto que se envían al carrito (nombre y precio salen del producto)
+  productoCarrito = computed<ProductoCarrito | null>(() => {
+    const p = this.producto();
+    return p ? { id: p.slug, nombre: p.nombre, precio: p.precio, imagen: p.imagen } : null;
+  });
 
   // Dedicatoria
   dedicatoria = signal('');
@@ -178,6 +185,23 @@ export class DetalleProducto implements OnDestroy {
   cerrarPersonalizador(): void {
     this.personalizadorAbierto.set(false);
     this.document.body.style.overflow = '';
+
+    // Si venía de "Editar" en el carrito, se quita ?editar de la dirección
+    if (this.route.snapshot.queryParamMap.has('editar')) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { editar: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
+  }
+
+  // "Editar" en el carrito llega aquí con ?editar=...: se abre el personalizador con lo elegido
+  ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.has('editar')) {
+      this.abrirPersonalizador();
+    }
   }
 
   // Tocar el fondo oscuro cierra la hoja, pero solo en celular

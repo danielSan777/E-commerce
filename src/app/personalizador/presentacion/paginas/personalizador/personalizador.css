@@ -204,6 +204,22 @@
     color: var(--azul);
 }
 
+/* Falta llenar esta opción al pulsar "Agregar al carrito": rojo (gana al verde y al azul) */
+.pestana.error {
+    background: #fde8e8;
+    border-color: #d33a3a;
+}
+
+.pestana.error i,
+.pestana.error small,
+.pestana.error .pestana-titulo {
+    color: #c0262d;
+}
+
+.pestana.error.vibrar {
+    animation: vibrar-aviso .6s ease-in-out;
+}
+
 /* ================= PANEL ================= */
 .panel {
     margin-top: 12px;
@@ -1149,6 +1165,37 @@
     filter: brightness(1.08);
 }
 
+.btn-guardar:disabled {
+    opacity: .7;
+    cursor: wait;
+}
+
+/* Mensaje rojo sobre el botón "Agregar al carrito" */
+.aviso-carrito {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    padding: 8px 12px;
+    background: #fde8e8;
+    border: 1px solid #e08a8a;
+    border-radius: 10px;
+    color: #c0262d;
+    font-size: .82rem;
+    font-weight: 500;
+}
+
+.aviso-carrito i {
+    flex: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: #d33a3a;
+}
+
+.aviso-carrito.vibrar {
+    animation: vibrar-aviso .6s ease-in-out;
+}
+
 /* ================= COLOR DE LENTES ================= */
 .color-lentes {
     margin-top: 20px;
@@ -1348,7 +1395,9 @@
     }
 
     /* el aviso sigue poniéndose rojo, pero sin vibrar */
-    .elegidos.vibrar {
+    .elegidos.vibrar,
+    .pestana.error.vibrar,
+    .aviso-carrito.vibrar {
         animation: none;
     }
 }

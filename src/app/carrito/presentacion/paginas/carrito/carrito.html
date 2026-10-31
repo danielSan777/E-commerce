@@ -1,0 +1,277 @@
+<section class="carrito">
+
+    @if (items().length > 0) {
+
+    <!-- ================= CARRITO CON PRODUCTOS ================= -->
+    <header class="cabecera">
+        <h1 class="titulo">Mi carrito ({{ cantidad() }})</h1>
+        <p class="subtitulo">Revisa tu pedido antes de continuar.</p>
+    </header>
+
+    @for (item of items(); track item.uid) {
+
+    @if (item.tipo === 'personalizado') {
+    <article class="item">
+        <div class="item-cuerpo">
+            <div class="item-foto">
+                @if (item.vista) {
+                <img [src]="item.vista" [alt]="item.producto.nombre">
+                } @else {
+                <i class="bi bi-flower1" aria-hidden="true"></i>
+                }
+            </div>
+
+            <div class="item-info">
+                <h2 class="item-nombre">{{ item.producto.nombre }}</h2>
+                <p class="item-precio">{{ item.producto.precio | currency:'USD':'symbol':'1.2-2' }}</p>
+
+                <ul class="item-resumen">
+                    @for (linea of item.resumen; track linea.etiqueta) {
+                    <li>
+                        <i class="bi" [class]="linea.icono" aria-hidden="true"></i>
+                        <span><span class="lbl">{{ linea.etiqueta }}:</span> <span class="val">{{ linea.valor
+                                }}</span></span>
+                    </li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <footer class="item-acciones">
+            <button type="button" class="btn-editar" (click)="pedir('editar', item.uid)">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+            </button>
+            <button type="button" class="btn-eliminar" (click)="pedir('eliminar', item.uid)">
+                <i class="bi bi-trash3" aria-hidden="true"></i> Eliminar
+            </button>
+        </footer>
+    </article>
+    } @else {
+    <!-- Complemento agregado con el "+" de la franja rosa -->
+    <article class="item item-complemento">
+        <div class="item-cuerpo">
+            <div class="item-foto item-foto-chica">
+                @if (item.producto.imagen) {
+                <img [src]="item.producto.imagen" [alt]="item.producto.nombre" (error)="sinImagen($event)">
+                } @else {
+                <i class="bi bi-gift" aria-hidden="true"></i>
+                }
+            </div>
+            <div class="item-info">
+                <h2 class="item-nombre">{{ item.producto.nombre }}</h2>
+                <p class="item-precio">{{ item.producto.precio | currency:'USD':'symbol':'1.2-2' }}</p>
+            </div>
+            <button type="button" class="btn-eliminar btn-eliminar-solo" (click)="pedir('eliminar', item.uid)">
+                <i class="bi bi-trash3" aria-hidden="true"></i> Eliminar
+            </button>
+        </div>
+    </article>
+    }
+    }
+
+    <!-- Franja verde: otra maceta -->
+    <section class="franja franja-verde">
+        <div class="franja-cab">
+            <i class="bi bi-gift franja-icono" aria-hidden="true"></i>
+            <div class="franja-texto">
+                <h2>¡Agrega otra maceta personalizada y obtén envío GRATIS!</h2>
+                <p>Elige otra profesión, hobby o personaje.</p>
+            </div>
+        </div>
+        <i class="bi bi-flower2 franja-hoja franja-hoja-1" aria-hidden="true"></i>
+        <i class="bi bi-flower3 franja-hoja franja-hoja-2" aria-hidden="true"></i>
+        <i class="bi bi-flower1 franja-hoja franja-hoja-izq" aria-hidden="true"></i>
+        <ng-container *ngTemplateOutlet="carrusel; context: { lista: macetas, clave: 'macetas', tono: 'verde' }" />
+        <a class="ver-mas ver-mas-verde" [routerLink]="RUTA_MACETAS">Ver más macetas <i
+                class="bi bi-arrow-right"></i></a>
+    </section>
+
+    <!-- Franja rosa: complementos -->
+    <section class="franja franja-rosa">
+        <div class="franja-cab">
+            <i class="bi bi-gift franja-icono" aria-hidden="true"></i>
+            <div class="franja-texto">
+                <h2>Complementa tu regalo</h2>
+                <p>Pequeños detalles que lo hacen aún más especial.</p>
+            </div>
+        </div>
+        <i class="bi bi-flower2 franja-hoja franja-hoja-1" aria-hidden="true"></i>
+        <ng-container
+            *ngTemplateOutlet="carrusel; context: { lista: complementos, clave: 'complementos', tono: 'rosa' }" />
+        <a class="ver-mas ver-mas-rosa" [routerLink]="RUTA_MACETAS">Ver más complementos <i
+                class="bi bi-arrow-right"></i></a>
+    </section>
+
+    <!-- Subtotal, envío y botones -->
+    <div class="pie">
+        <div class="pie-fila">
+            <span class="pie-etiqueta"><i class="bi bi-tag" aria-hidden="true"></i> Subtotal ({{ textoProductos()
+                }})</span>
+            <strong class="pie-subtotal">{{ subtotal() | currency:'USD':'symbol':'1.2-2' }}</strong>
+        </div>
+        <div class="pie-fila">
+            <span class="pie-etiqueta">
+                <i class="bi bi-truck" aria-hidden="true"></i> Envío
+                <i class="bi bi-question-circle pie-ayuda" title="El costo del envío depende de tu ubicación"></i>
+            </span>
+            <span class="pie-envio">Se calcula con tu ubicación</span>
+        </div>
+
+        <div class="pie-botones">
+            <a class="btn-seguir" [routerLink]="RUTA_SEGUIR">Seguir comprando</a>
+            <a class="btn-continuar" [routerLink]="RUTA_CONTINUAR">Continuar <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+
+    } @else {
+
+    <!-- ================= CARRITO VACÍO ================= -->
+    <div class="vacio">
+        <div class="vacio-ilustracion" aria-hidden="true">
+            <svg viewBox="0 0 220 190" width="220" height="190">
+                <!-- Círculo de fondo -->
+                <circle cx="110" cy="100" r="78" fill="#eaf3ed" />
+                <circle cx="110" cy="100" r="78" fill="none" stroke="#cfe3d6" stroke-width="2" stroke-dasharray="4 7" />
+
+                <!-- Hojitas que flotan -->
+                <g class="flota flota-1">
+                    <path d="M30 60c0-9 6-15 16-15 0 10-6 16-16 15z" fill="#2f8f5b" />
+                </g>
+                <g class="flota flota-2">
+                    <path d="M180 48c0-8 5-13 14-13 0 9-5 14-14 13z" fill="#1f6f48" />
+                </g>
+                <g class="flota flota-3">
+                    <circle cx="192" cy="118" r="4" fill="#f0c9d0" />
+                    <circle cx="26" cy="116" r="3" fill="#f0c9d0" />
+                </g>
+
+                <!-- Brote -->
+                <g class="brote">
+                    <path d="M110 92V66" stroke="#1f6f48" stroke-width="3" stroke-linecap="round" fill="none" />
+                    <path d="M110 76c-14 0-22-7-22-19 14 0 22 7 22 19z" fill="#2f8f5b" />
+                    <path d="M110 70c13 0 20-6 20-17-13 0-20 6-20 17z" fill="#1f6f48" />
+                </g>
+
+                <!-- Maceta vacía -->
+                <path d="M72 98h76l-9 58a10 10 0 0 1-10 8H91a10 10 0 0 1-10-8z" fill="#d98a5b" />
+                <rect x="66" y="88" width="88" height="16" rx="6" fill="#c4764a" />
+                <ellipse cx="110" cy="96" rx="40" ry="3.5" fill="#5b3a29" opacity=".85" />
+
+                <!-- Carita triste -->
+                <circle cx="97" cy="128" r="3" fill="#5b3a29" />
+                <circle cx="123" cy="128" r="3" fill="#5b3a29" />
+                <path d="M99 144c4-5 18-5 22 0" stroke="#5b3a29" stroke-width="3" stroke-linecap="round" fill="none" />
+
+                <!-- Sombra -->
+                <ellipse cx="110" cy="172" rx="42" ry="5" fill="#175437" opacity=".12" />
+            </svg>
+        </div>
+
+        <h1 class="vacio-titulo">Tu carrito está vacío</h1>
+        <p class="vacio-texto">
+            Todavía no has agregado ningún detalle.<br>
+            Personaliza una maceta y regala algo único e inolvidable.
+        </p>
+
+        <a class="btn-continuar vacio-boton" [routerLink]="RUTA_MACETAS">
+            <i class="bi bi-flower1" aria-hidden="true"></i> Descubrir macetas
+        </a>
+    </div>
+
+    <section class="franja franja-verde">
+        <div class="franja-cab">
+            <i class="bi bi-stars franja-icono" aria-hidden="true"></i>
+            <div class="franja-texto">
+                <h2>Empieza por una de estas</h2>
+                <p>Elige una profesión, hobby o personaje.</p>
+            </div>
+        </div>
+        <i class="bi bi-flower2 franja-hoja franja-hoja-1" aria-hidden="true"></i>
+        <ng-container *ngTemplateOutlet="carrusel; context: { lista: macetas, clave: 'macetas', tono: 'verde' }" />
+    </section>
+
+    }
+
+</section>
+
+<!-- Carrusel de tarjetas (macetas o complementos) -->
+<ng-template #carrusel let-lista let-clave="clave" let-tono="tono">
+    <div class="carrusel" [class.carrusel-rosa]="tono === 'rosa'">
+
+        @if (puntos(clave).length > 1) {
+        <button type="button" class="flecha flecha-izq" aria-label="Anterior" (click)="mover(pista, -1)">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        }
+
+        <div class="pista" #pista [attr.data-clave]="clave" (scroll)="medir(pista)">
+            @for (s of lista; track s.id) {
+            <div class="sug">
+                <div class="sug-foto">
+                    <i class="bi bi-flower1 sug-vacia" aria-hidden="true"></i>
+                    <img [src]="s.imagen" [alt]="s.nombre" (error)="sinImagen($event)">
+                </div>
+                <div class="sug-pie">
+                    <span class="sug-nombre">{{ s.nombre }}</span>
+                    <div class="sug-fila">
+                        <span class="sug-precio">{{ s.precio | currency:'USD':'symbol':'1.2-2' }}</span>
+                        <button type="button" class="btn-mas" [attr.aria-label]="'Agregar ' + s.nombre"
+                            (click)="agregarSugerencia(s, clave)">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+
+        @if (puntos(clave).length > 1) {
+        <button type="button" class="flecha flecha-der" aria-label="Siguiente" (click)="mover(pista, 1)">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+        }
+    </div>
+
+    @if (puntos(clave).length > 1) {
+    <div class="puntos" [class.puntos-rosa]="tono === 'rosa'">
+        @for (p of puntos(clave); track p) {
+        <span class="punto" [class.activo]="p === puntoActivo(clave)"></span>
+        }
+    </div>
+    }
+</ng-template>
+
+<!-- Confirmación (editar / eliminar) -->
+@if (confirmacion(); as c) {
+<div class="dialogo-fondo" (click)="cancelar()">
+    <div class="dialogo" role="alertdialog" aria-modal="true" aria-labelledby="dialogo-titulo"
+        (click)="$event.stopPropagation()">
+        <div class="dialogo-icono" [class.peligro]="c.accion === 'eliminar'">
+            <i class="bi" [class]="c.accion === 'eliminar' ? 'bi-trash3' : 'bi-pencil-square'"></i>
+        </div>
+
+        <h2 class="dialogo-titulo" id="dialogo-titulo">
+            @if (c.accion === 'eliminar') {
+            ¿Está seguro de eliminar este accesorio?
+            } @else {
+            ¿Está seguro de editar su accesorio?
+            }
+        </h2>
+
+        <p class="dialogo-texto">
+            @if (c.accion === 'eliminar') {
+            Se quitará de tu carrito y no podrás deshacerlo.
+            } @else {
+            Volverás al selector con tus opciones ya elegidas.
+            }
+        </p>
+
+        <div class="dialogo-botones">
+            <button type="button" class="dlg-cancelar" (click)="cancelar()">Cancelar</button>
+            <button type="button" class="dlg-aceptar" [class.peligro]="c.accion === 'eliminar'" (click)="confirmar()">
+                {{ c.accion === 'eliminar' ? 'Sí, eliminar' : 'Sí, editar' }}
+            </button>
+        </div>
+    </div>
+</div>
+}

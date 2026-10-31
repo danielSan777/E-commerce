@@ -109,7 +109,8 @@
             <div class="pestanas" role="tablist">
                 @for (p of pestanas; track p.id) {
                 <button type="button" role="tab" class="pestana" [class.activa]="pestana() === p.id"
-                    [class.guardada]="estaGuardada(p.id)" [attr.aria-selected]="pestana() === p.id"
+                    [class.guardada]="estaGuardada(p.id)" [class.error]="tieneError(p.id)"
+                    [class.vibrar]="vibrandoPestanas() && tieneError(p.id)" [attr.aria-selected]="pestana() === p.id"
                     (click)="elegirPestana(p.id)">
                     <i class="bi" [class]="p.icono"></i>
                     <span class="pestana-titulo">{{ p.titulo }}</span>
@@ -522,8 +523,14 @@
 
     <!-- ================= GUARDAR ================= -->
     <div class="barra-guardar">
-        <button type="button" class="btn-guardar" (click)="continuar()">
-            Guardar y continuar <i class="bi bi-arrow-right"></i>
+        @if (intentoAgregar() && hayPestanasPendientes()) {
+        <p class="aviso-carrito" [class.vibrar]="vibrandoPestanas()" role="alert">
+            <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+            Por favor termine de personalizar su detalle antes de agregar al carrito
+        </p>
+        }
+        <button type="button" class="btn-guardar" [disabled]="agregando()" (click)="continuar()">
+            Agregar al carrito<i class="bi bi-cart"></i>
         </button>
     </div>
 </div>
