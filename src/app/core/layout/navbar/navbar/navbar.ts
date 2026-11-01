@@ -1,6 +1,11 @@
-import { Component, HostListener, computed, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { CatalogoMenu } from '../../../../catalogo/dominio/entidades/catalogo';
+// AJUSTA la ruta si tu carpeta carrito está en otro lugar
+import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 
 @Component({
   imports: [RouterLink, RouterLinkActive],
@@ -8,7 +13,36 @@ import { CatalogoMenu } from '../../../../catalogo/dominio/entidades/catalogo';
   styleUrl: './navbar.css',
   templateUrl: './navbar.html',
 })
+
 export class Navbar {
+
+  // ===== Anuncio rojo de envío gratis (solo en la pantalla principal) =====
+  // EDITABLE: ruta de la pantalla principal (la ruta '' redirige a 'catalogo')
+  readonly RUTA_INICIO = '/catalogo';
+
+  private router = inject(Router);
+  envio = inject(EnvioGratisService);
+
+  private url = toSignal(
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      map(() => this.router.url)
+    ),
+    { initialValue: this.router.url }
+  );
+
+  // Solo en /catalogo exacto (sin contar ?parámetros ni #ancla); en /catalogo/macetas, /carrito, etc. no sale
+  esInicio = computed(() => {
+    const ruta = this.url().split(/[?#]/)[0].replace(/\/+$/, '');
+    return ruta === '' || ruta === this.RUTA_INICIO;
+  });
+
+  anuncioCerrado = signal(false);
+  mostrarAnuncio = computed(() => this.esInicio() && !this.anuncioCerrado());
+
+  cerrarAnuncio(): void {
+    this.anuncioCerrado.set(true);
+  }
 
   // Sidebar (pantallas menores a 992px)
   menuAbierto = signal(false);

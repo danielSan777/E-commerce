@@ -506,6 +506,12 @@
     text-align: right;
 }
 
+.pie-envio-gratis {
+    font-size: .88rem;
+    font-weight: 700;
+    color: var(--verde);
+}
+
 .pie-botones {
     display: grid;
     grid-template-columns: 1fr 1fr;

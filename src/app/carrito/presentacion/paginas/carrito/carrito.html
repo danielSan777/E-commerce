@@ -74,7 +74,13 @@
         <div class="franja-cab">
             <i class="bi bi-gift franja-icono" aria-hidden="true"></i>
             <div class="franja-texto">
-                <h2>¡Agrega otra maceta personalizada y obtén envío GRATIS!</h2>
+                <h2>
+                    @if (envioGratis()) {
+                    ¡Excelente! Ya tienes envío GRATIS
+                    } @else {
+                    ¡Agrega otra maceta personalizada y obtén envío GRATIS!
+                    }
+                </h2>
             </div>
         </div>
         <i class="bi bi-flower2 franja-hoja franja-hoja-1" aria-hidden="true"></i>
@@ -110,9 +116,12 @@
         <div class="pie-fila">
             <span class="pie-etiqueta">
                 <i class="bi bi-truck" aria-hidden="true"></i> Envío
+                @if (!envioGratis()) {
                 <i class="bi bi-question-circle pie-ayuda" title="El costo del envío depende de tu ubicación"></i>
+                }
             </span>
-            <span class="pie-envio">Se calcula con tu ubicación</span>
+            <span class="pie-envio" [class.pie-envio-gratis]="envioGratis()">{{ envioGratis() ? '¡Gratis!' : 'Se calcula
+                con tu ubicación' }}</span>
         </div>
 
         <div class="pie-botones">

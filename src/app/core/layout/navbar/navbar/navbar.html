@@ -1,3 +1,19 @@
+<!-- Anuncio de envío gratis: arriba de todo y solo en la pantalla principal (/catalogo) -->
+@if (mostrarAnuncio()) {
+<div class="anuncio-envio" role="status">
+    <p class="anuncio-texto">
+        @if (envio.envioGratis()) {
+        <strong>¡Excelente!</strong> Ya tienes envío gratis
+        } @else {
+        <strong>Envío gratis</strong> desde dos unidades
+        }
+    </p>
+    <button type="button" class="anuncio-cerrar" (click)="cerrarAnuncio()" aria-label="Cerrar anuncio">
+        <i class="bi bi-x-lg"></i>
+    </button>
+</div>
+}
+
 <!-- Barra superior: solo en pantallas grandes (>= 992px) -->
 <div class="barra-superior">
     <span>+593 999283765</span>

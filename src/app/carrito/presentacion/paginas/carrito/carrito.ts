@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 // AJUSTA la ruta según donde dejes carrito.service.ts
 import { CarritoService, ProductoCarrito } from '../../../aplicacion/servicios/CarritoService';
 import { productos } from '../../../../all-productos/dominio/muestra_producto';
+import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
 
 interface Sugerencia {
@@ -78,6 +79,9 @@ export class Carrito implements AfterViewInit, OnDestroy {
   items = this.carrito.items;
   subtotal = this.carrito.subtotal;
   cantidad = this.carrito.cantidad;
+
+  // Envío gratis desde 2 macetas (misma regla que el anuncio del navbar)
+  envioGratis = inject(EnvioGratisService).envioGratis;
 
   textoProductos = computed(() => `${this.cantidad()} ${this.cantidad() === 1 ? 'producto' : 'productos'}`);
 
