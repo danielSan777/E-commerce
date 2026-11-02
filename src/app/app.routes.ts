@@ -3,6 +3,15 @@ import { MainLayout } from './core/layout/main-layout/main-layout/main-layout';
 
 export const routes: Routes = [
 
+    // Checkout: pantalla completa con su propio encabezado (va antes del MainLayout para que no lleve el navbar de la tienda)
+    {
+        path: 'checkout',
+        pathMatch: 'full',
+        loadComponent: () =>
+            import('./checkout/presentacion/paginas/envio-facturacion/envio-facturacion')
+                .then(m => m.EnvioFacturacion)
+    },
+
     {
         path: '',
         component: MainLayout,
@@ -29,6 +38,18 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('./personalizador/presentacion/paginas/personalizador/personalizador')
                         .then(m => m.Personalizador)
+            },
+            {
+                path: 'checkout/confirmacion',
+                loadComponent: () =>
+                    import('./checkout/presentacion/paginas/confirmacion/confirmacion')
+                        .then(m => m.Confirmacion)
+            },
+            {
+                path: 'checkout/pago',
+                loadComponent: () =>
+                    import('./checkout/presentacion/paginas/pago/pago')
+                        .then(m => m.Pago)
             },
             { path: 'carrito', loadComponent: () => import('./carrito/presentacion/paginas/carrito/carrito').then(m => m.Carrito) },
             {

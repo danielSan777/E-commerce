@@ -1,0 +1,228 @@
+<div class="pagina">
+
+    @if (pedido(); as p) {
+
+    <!-- ===== Encabezado de gracias ===== -->
+    <div class="gracias">
+        <div class="gracias-icono">
+            <i class="bi bi-flower1 hoja hoja-izq" aria-hidden="true"></i>
+            <span class="check"><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+            <i class="bi bi-flower1 hoja hoja-der" aria-hidden="true"></i>
+        </div>
+        <h1>¡Gracias por tu compra!</h1>
+        <p class="sub">
+            @if (esTransferencia()) {
+            Tu pedido fue recibido. Ahora necesitamos confirmar tu pago.
+            } @else {
+            Tu pedido ha sido recibido correctamente.
+            }
+        </p>
+    </div>
+
+    <!-- ===== Número de pedido ===== -->
+    <section class="tarjeta verde fila-icono" aria-label="Pedido">
+        <span class="circulo"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span>
+        <div class="fila-texto">
+            <strong class="pedido-numero">Pedido {{ p.numero }}</strong>
+            <small>Realizado el {{ fecha() }}</small>
+            @if (p.pagoConfirmado) {
+            <span class="insignia ok"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Pago confirmado</span>
+            } @else {
+            <span class="insignia pendiente"><i class="bi bi-clock" aria-hidden="true"></i> Pago pendiente de
+                validación</span>
+            }
+        </div>
+    </section>
+
+    <!-- ===== Entrega estimada ===== -->
+    <section class="tarjeta verde fila-icono" aria-label="Entrega estimada">
+        <span class="circulo"><i class="bi bi-truck" aria-hidden="true"></i></span>
+        <div class="fila-texto">
+            <small class="entrega-etq">Entrega estimada:</small>
+            <strong class="entrega-dias">{{ ENTREGA }}</strong>
+            <small>
+                @if (esTransferencia()) {
+                Tu fecha final se mantiene una vez confirmado el pago.
+                } @else {
+                Te avisaremos cuando tu pedido esté en camino.
+                }
+            </small>
+        </div>
+    </section>
+
+    <!-- ===== Resumen del pedido ===== -->
+    <section class="tarjeta blanca" aria-labelledby="t-resumen">
+        <h2 id="t-resumen">Resumen de tu pedido</h2>
+
+        @for (item of p.items; track item.uid) {
+        <div class="producto">
+            <div class="foto">
+                @if (item.vista) {
+                <img [src]="item.vista" [alt]="item.producto.nombre" (error)="sinImagen($event)">
+                } @else if (item.producto.imagen) {
+                <img [src]="item.producto.imagen" [alt]="item.producto.nombre" (error)="sinImagen($event)">
+                }
+            </div>
+            <div class="producto-texto">
+                <strong>{{ item.producto.nombre }}</strong>
+                @for (linea of item.resumen; track linea.etiqueta) {
+                <span>{{ linea.etiqueta }}: {{ linea.valor }}</span>
+                }
+            </div>
+            <span class="producto-precio">{{ item.producto.precio | currency:'USD':'symbol':'1.2-2' }}</span>
+        </div>
+        }
+
+        <div class="totales">
+            <div><span>Subtotal</span><span>{{ p.subtotal | currency:'USD':'symbol':'1.2-2' }}</span></div>
+            <div>
+                <span>Envío</span>
+                @if (p.envioGratis) {
+                <span class="gratis">¡Gratis!</span>
+                } @else {
+                <span>{{ p.envio | currency:'USD':'symbol':'1.2-2' }}</span>
+                }
+            </div>
+            @if (p.recargo > 0) {
+            <div><span>Cargo PayPhone (+6%)</span><span>{{ p.recargo | currency:'USD':'symbol':'1.2-2' }}</span></div>
+            }
+            <div class="total"><span>Total</span><span>{{ p.total | currency:'USD':'symbol':'1.2-2' }}</span></div>
+        </div>
+    </section>
+
+    @if (esTransferencia()) {
+
+    <!-- ===== Datos para la transferencia ===== -->
+    <section class="tarjeta blanca" aria-labelledby="t-transf">
+        <h2 id="t-transf"><i class="bi bi-bank2 ico-titulo" aria-hidden="true"></i> Datos para tu transferencia</h2>
+
+        <div class="datos">
+            <div class="dato monto">
+                <i class="bi bi-cash-coin" aria-hidden="true"></i>
+                <span class="dato-etq">Monto a transferir:</span>
+                <strong>{{ p.total | currency:'USD':'symbol':'1.2-2' }}</strong>
+            </div>
+
+            <div class="dato">
+                <i class="bi bi-person" aria-hidden="true"></i>
+                <span class="dato-etq">Titular:</span>
+                <strong>{{ TITULAR.titular }}</strong>
+                <button type="button" class="copiar" aria-label="Copiar titular"
+                    (click)="copiar('titular', TITULAR.titular)">
+                    <i class="bi" [class.bi-copy]="copiado() !== 'titular'" [class.bi-check2]="copiado() === 'titular'"
+                        aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="dato">
+                <i class="bi bi-card-heading" aria-hidden="true"></i>
+                <span class="dato-etq">Cédula:</span>
+                <strong>{{ TITULAR.cedula }}</strong>
+                <button type="button" class="copiar" aria-label="Copiar cédula"
+                    (click)="copiar('cedula', TITULAR.cedula)">
+                    <i class="bi" [class.bi-copy]="copiado() !== 'cedula'" [class.bi-check2]="copiado() === 'cedula'"
+                        aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="dato">
+                <i class="bi bi-envelope" aria-hidden="true"></i>
+                <span class="dato-etq">Correo:</span>
+                <strong>{{ TITULAR.correo }}</strong>
+                <button type="button" class="copiar" aria-label="Copiar correo"
+                    (click)="copiar('correo', TITULAR.correo)">
+                    <i class="bi" [class.bi-copy]="copiado() !== 'correo'" [class.bi-check2]="copiado() === 'correo'"
+                        aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        @for (c of CUENTAS; track c.numero) {
+        <div class="cuenta">
+            <span class="sigla" [style.background]="c.fondo" [style.color]="c.texto" aria-hidden="true">{{ c.sigla
+                }}</span>
+            <strong class="banco">{{ c.banco }}</strong>
+            <span class="cuenta-datos">
+                <small>{{ c.tipo }}</small>
+                <b>{{ c.numero }}</b>
+            </span>
+            <button type="button" class="copiar" [attr.aria-label]="'Copiar cuenta de ' + c.banco"
+                (click)="copiar(c.numero, c.numero)">
+                <i class="bi" [class.bi-copy]="copiado() !== c.numero" [class.bi-check2]="copiado() === c.numero"
+                    aria-hidden="true"></i>
+            </button>
+        </div>
+        }
+    </section>
+
+    <!-- ===== Confirmar por WhatsApp ===== -->
+    <section class="tarjeta verde whatsapp" aria-labelledby="t-wa">
+        <div class="wa-cab">
+            <i class="bi bi-whatsapp wa-logo" aria-hidden="true"></i>
+            <div>
+                <h2 id="t-wa">Inicia la confirmación por WhatsApp</h2>
+                <p>Toca el botón para enviar el mensaje prellenado y luego comparte tu comprobante en ese mismo chat.
+                </p>
+            </div>
+        </div>
+
+        <div class="mensaje">
+            <span>{{ mensaje() }} <em>(Se enviará con el detalle completo de tu pedido.)</em></span>
+            <button type="button" class="copiar" aria-label="Copiar mensaje" (click)="copiarMensaje()">
+                <i class="bi" [class.bi-copy]="copiado() !== 'mensaje'" [class.bi-check2]="copiado() === 'mensaje'"
+                    aria-hidden="true"></i>
+            </button>
+        </div>
+    </section>
+
+    <a class="btn btn-primario" [href]="enlaceWhatsapp()" target="_blank" rel="noopener">
+        <i class="bi bi-whatsapp" aria-hidden="true"></i> Ir a WhatsApp <i class="bi bi-arrow-right"
+            aria-hidden="true"></i>
+    </a>
+    <a class="btn btn-borde" [routerLink]="RUTA_SEGUIR">Seguir comprando</a>
+
+    } @else {
+
+    <!-- ===== Pendiente por WhatsApp (solo si hay datos por enviar) ===== -->
+    @if (pendientes().length) {
+    <section class="tarjeta verde" aria-labelledby="t-pend">
+        <div class="wa-cab">
+            <i class="bi bi-whatsapp wa-logo" aria-hidden="true"></i>
+            <div>
+                <h2 id="t-pend">Pendiente por WhatsApp</h2>
+                <p>Una vez confirmado tu pago, te escribiremos por WhatsApp para completar algunos detalles de tu
+                    pedido:</p>
+            </div>
+        </div>
+        <ol class="pendientes">
+            @for (pendiente of pendientes(); track pendiente; let i = $index) {
+            <li><span class="num">{{ i + 1 }}</span> {{ pendiente }}</li>
+            }
+        </ol>
+        <p class="nota"><i class="bi bi-info-circle" aria-hidden="true"></i> Te escribiremos al número de contacto que
+            nos proporcionaste.</p>
+    </section>
+    }
+
+    <!-- ===== Método de pago ===== -->
+    <section class="tarjeta blanca metodo" aria-label="Método de pago">
+        <i class="bi bi-credit-card-2-front metodo-ico" aria-hidden="true"></i>
+        <div>
+            <h2>Método de pago</h2>
+            <strong>Tarjeta con PayPhone</strong>
+            <small>Tu pago fue procesado correctamente.</small>
+        </div>
+    </section>
+
+    <a class="btn btn-primario" [routerLink]="RUTA_SEGUIR">Seguir comprando <i class="bi bi-arrow-right"
+            aria-hidden="true"></i></a>
+    }
+
+    } @else if (cargado()) {
+
+    <section class="tarjeta blanca vacio">
+        <h1>No encontramos un pedido reciente</h1>
+        <p>Si acabas de comprar, revisa tu WhatsApp. Si no, puedes seguir viendo nuestras macetas.</p>
+        <a class="btn btn-primario" [routerLink]="RUTA_SEGUIR">Ver macetas</a>
+    </section>
+
+    }
+</div>

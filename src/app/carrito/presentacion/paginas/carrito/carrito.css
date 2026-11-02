@@ -1060,3 +1060,12 @@
         font-size: .76rem;
     }
 }
+
+/* Envío gratis alcanzado: la franja queda solo con el mensaje */
+.franja-solo {
+    padding-bottom: 14px;
+}
+
+.franja-solo .franja-cab {
+    margin-bottom: 2px;
+}

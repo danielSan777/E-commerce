@@ -1,0 +1,316 @@
+<div class="pagina">
+
+    <!-- Encabezado propio: esta pantalla no usa el navbar de la tienda -->
+    <header class="cab">
+        <a class="cab-btn" [routerLink]="RUTA_VOLVER" aria-label="Volver al carrito">
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </a>
+
+        <a class="marca" routerLink="/" aria-label="Jardín de Sele, ir al inicio">
+            <img [src]="LOGO" alt="" width="36" height="36">
+            <span class="marca-texto">
+                <strong>Jardín de Sele</strong>
+                <small>Un detalle inolvidable</small>
+            </span>
+        </a>
+
+        <a class="cab-btn" [routerLink]="RUTA_VOLVER" aria-label="Ver carrito">
+            <i class="bi bi-cart3" aria-hidden="true"></i>
+            @if (cantidadCarrito() > 0) {
+            <span class="cab-badge">{{ cantidadCarrito() }}</span>
+            }
+        </a>
+    </header>
+
+    <main class="contenido">
+
+        <!-- Pasos -->
+        <ol class="pasos" aria-label="Pasos de la compra">
+            <li class="paso paso-actual" aria-current="step"><span class="paso-n">1</span><span class="paso-t">Envío y
+                    facturación</span></li>
+            <li class="paso-flecha" aria-hidden="true"></li>
+            <li class="paso"><span class="paso-n">2</span><span class="paso-t">Pago</span></li>
+            <li class="paso-flecha" aria-hidden="true"></li>
+            <li class="paso"><span class="paso-n">3</span><span class="paso-t">Confirmación</span></li>
+        </ol>
+
+        <h1>Envío y facturación</h1>
+        <p class="sub">Completa tus datos para recibir tu pedido.</p>
+
+        <form (submit)="$event.preventDefault(); continuar()" novalidate>
+
+            <!-- ===== Información de envío ===== -->
+            <section class="tarjeta" aria-labelledby="t-envio">
+                <h2 id="t-envio"><i class="bi bi-truck" aria-hidden="true"></i> Información de envío</h2>
+
+                <div class="campo">
+                    <i class="bi bi-person ico" aria-hidden="true"></i>
+                    <input id="nombre" type="text" autocomplete="name" placeholder=" " aria-label="Nombre completo"
+                        [value]="datos().nombre" (input)="escribir('nombre', $any($event.target).value)"
+                        (blur)="tocar('nombre')" [attr.aria-invalid]="verError('nombre') ? 'true' : null">
+                    <span class="ph">Nombre completo <b>*</b></span>
+                </div>
+                @if (verError('nombre'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+
+                <!-- Tipo de documento + número -->
+                <div class="fila">
+                    <div class="col">
+                        <div class="campo combo">
+                            <i class="bi bi-card-checklist ico" aria-hidden="true"></i>
+                            <select id="tipoDoc" aria-label="Tipo de documento" [value]="datos().tipoDoc"
+                                (change)="cambiarTipoDoc($any($event.target).value)">
+                                <option value="cedula" [selected]="datos().tipoDoc === 'cedula'">Cédula</option>
+                                <option value="ruc" [selected]="datos().tipoDoc === 'ruc'">RUC</option>
+                            </select>
+                            <i class="bi bi-chevron-down flecha" aria-hidden="true"></i>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="campo">
+                            <i class="bi bi-person-vcard ico" aria-hidden="true"></i>
+                            <input id="cedula" type="text" inputmode="numeric" autocomplete="off" placeholder=" "
+                                [attr.maxlength]="datos().tipoDoc === 'ruc' ? 13 : 10"
+                                [attr.aria-label]="datos().tipoDoc === 'ruc' ? 'Número de RUC' : 'Número de cédula'"
+                                [value]="datos().cedula" (input)="escribirNumero('cedula', $any($event.target))"
+                                (blur)="tocar('cedula')" [attr.aria-invalid]="verError('cedula') ? 'true' : null">
+                            <span class="ph">Número de documento <b>*</b></span>
+                        </div>
+                    </div>
+                </div>
+                @if (verError('cedula'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+
+                <!-- Celular + correo -->
+                <div class="fila">
+                    <div class="col">
+                        <div class="campo">
+                            <i class="bi bi-phone ico" aria-hidden="true"></i>
+                            <input id="celular" type="tel" inputmode="tel" autocomplete="tel-national" placeholder=" "
+                                aria-label="Celular" [value]="datos().celular"
+                                (input)="escribirNumero('celular', $any($event.target))" (blur)="tocar('celular')"
+                                [attr.aria-invalid]="verError('celular') ? 'true' : null">
+                            <span class="ph">Celular <b>*</b></span>
+                        </div>
+                        @if (verError('celular'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+                    </div>
+
+                    <div class="col">
+                        <div class="campo">
+                            <i class="bi bi-envelope ico" aria-hidden="true"></i>
+                            <input id="correo" type="email" autocomplete="email" placeholder=" "
+                                aria-label="Correo electrónico" [value]="datos().correo"
+                                (input)="escribir('correo', $any($event.target).value)" (blur)="tocar('correo')"
+                                [attr.aria-invalid]="verError('correo') ? 'true' : null">
+                            <span class="ph">Correo electrónico <b>*</b></span>
+                        </div>
+                        @if (verError('correo'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+                    </div>
+                </div>
+
+                <div class="fila">
+                    <!-- Provincia (viene de la API) -->
+                    <div class="col">
+                        <div class="campo combo">
+                            <i class="bi bi-geo-alt ico" aria-hidden="true"></i>
+                            <input id="provincia" type="text" role="combobox" autocomplete="off" placeholder=" "
+                                aria-label="Provincia" aria-autocomplete="list" aria-controls="lista-provincia"
+                                [attr.aria-expanded]="abierta() === 'provincia'" [value]="textoCampo('provincia')"
+                                (focus)="abrir('provincia')" (click)="abrir('provincia')"
+                                (input)="escribirBusqueda('provincia', $any($event.target).value)"
+                                (keydown)="teclado($event, 'provincia')" (blur)="cerrar('provincia')"
+                                [attr.aria-invalid]="verError('provincia') ? 'true' : null">
+                            <span class="ph">Provincia <b>*</b></span>
+                            <i class="bi bi-chevron-down flecha" aria-hidden="true"></i>
+
+                            @if (abierta() === 'provincia') {
+                            <ul class="lista" id="lista-provincia" role="listbox">
+                                @if (cargandoProvincias()) {
+                                <li class="aviso">Cargando provincias…</li>
+                                } @else if (errorProvincias()) {
+                                <li class="aviso">
+                                    No se pudieron cargar las provincias.
+                                    <button type="button" class="reintentar"
+                                        (mousedown)="$event.preventDefault(); cargarProvincias()">Reintentar</button>
+                                </li>
+                                } @else {
+                                @for (p of opcionesProvincia(); track p; let i = $index) {
+                                <li class="opcion" role="option" [class.activa]="i === activo()"
+                                    [class.elegida]="p === datos().provincia"
+                                    [attr.aria-selected]="p === datos().provincia"
+                                    (mousedown)="$event.preventDefault(); elegirProvincia(p)">{{ p }}</li>
+                                } @empty {
+                                <li class="aviso">Sin resultados</li>
+                                }
+                                }
+                            </ul>
+                            }
+                        </div>
+                        @if (verError('provincia'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+                    </div>
+
+                    <!-- Ciudad (depende de la provincia; se puede buscar escribiendo) -->
+                    <div class="col">
+                        <div class="campo combo" [class.deshabilitado]="!datos().provincia">
+                            <i class="bi bi-buildings ico" aria-hidden="true"></i>
+                            <input id="ciudad" type="text" role="combobox" autocomplete="off" placeholder=" "
+                                aria-label="Ciudad" aria-autocomplete="list" aria-controls="lista-ciudad"
+                                [attr.aria-expanded]="abierta() === 'ciudad'" [disabled]="!datos().provincia"
+                                [value]="textoCampo('ciudad')" (focus)="abrir('ciudad')" (click)="abrir('ciudad')"
+                                (input)="escribirBusqueda('ciudad', $any($event.target).value)"
+                                (keydown)="teclado($event, 'ciudad')" (blur)="cerrar('ciudad')"
+                                [attr.aria-invalid]="verError('ciudad') ? 'true' : null">
+                            <span class="ph">Ciudad <b>*</b></span>
+                            <i class="bi bi-chevron-down flecha" aria-hidden="true"></i>
+
+                            @if (abierta() === 'ciudad') {
+                            <ul class="lista" id="lista-ciudad" role="listbox">
+                                @if (cargandoCiudades()) {
+                                <li class="aviso">Cargando ciudades…</li>
+                                } @else if (errorCiudades()) {
+                                <li class="aviso">
+                                    No se pudieron cargar las ciudades.
+                                    <button type="button" class="reintentar"
+                                        (mousedown)="$event.preventDefault(); reintentarCiudades()">Reintentar</button>
+                                </li>
+                                } @else {
+                                @for (c of opcionesCiudad(); track c; let i = $index) {
+                                <li class="opcion" role="option" [class.activa]="i === activo()"
+                                    [class.elegida]="c === datos().ciudad" [attr.aria-selected]="c === datos().ciudad"
+                                    (mousedown)="$event.preventDefault(); elegirCiudad(c)">{{ c }}</li>
+                                } @empty {
+                                <li class="aviso">Sin resultados</li>
+                                }
+                                }
+                            </ul>
+                            }
+                        </div>
+                        @if (verError('ciudad'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <i class="bi bi-house-door ico" aria-hidden="true"></i>
+                    <input id="direccion" type="text" autocomplete="street-address" placeholder=" "
+                        aria-label="Dirección" [value]="datos().direccion"
+                        (input)="escribir('direccion', $any($event.target).value)" (blur)="tocar('direccion')"
+                        [attr.aria-invalid]="verError('direccion') ? 'true' : null">
+                    <span class="ph">Dirección (calle, número, urbanización, etc.) <b>*</b></span>
+                </div>
+                @if (verError('direccion'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+
+                <div class="campo">
+                    <i class="bi bi-map ico" aria-hidden="true"></i>
+                    <input id="referencia" type="text" autocomplete="off" placeholder=" " aria-label="Referencia"
+                        [value]="datos().referencia" (input)="escribir('referencia', $any($event.target).value)">
+                    <span class="ph">Referencia (ej. frente al parque, casa color beige, etc.)</span>
+                </div>
+            </section>
+
+            <!-- ===== Datos de facturación ===== -->
+            <section class="tarjeta" aria-labelledby="t-fact">
+                <h2 id="t-fact"><i class="bi bi-file-earmark-text" aria-hidden="true"></i> Datos de facturación</h2>
+
+                <label class="opcion-radio" [class.marcada]="datos().facturacion === 'mismos'">
+                    <input type="radio" name="facturacion" value="mismos" [checked]="datos().facturacion === 'mismos'"
+                        (change)="escribir('facturacion', 'mismos')">
+                    <span class="punto" aria-hidden="true"></span>
+                    <span class="radio-texto">
+                        <strong>Usar los mismos datos de envío</strong>
+                        <small class="verde">(Por defecto)</small>
+                    </span>
+                </label>
+
+                <label class="opcion-radio" [class.marcada]="datos().facturacion === 'otros'">
+                    <input type="radio" name="facturacion" value="otros" [checked]="datos().facturacion === 'otros'"
+                        (change)="escribir('facturacion', 'otros')">
+                    <span class="punto" aria-hidden="true"></span>
+                    <span class="radio-texto">
+                        <strong>Usar otros datos de facturación</strong>
+                        <small>Podrás ingresar los datos de facturación si son diferentes a los de envío.</small>
+                    </span>
+                </label>
+            </section>
+
+            <!-- ===== Número de contacto ===== -->
+            <section class="tarjeta" aria-labelledby="t-contacto">
+                <h2 id="t-contacto"><i class="bi bi-whatsapp whatsapp" aria-hidden="true"></i> Número de contacto</h2>
+                <p class="nota">Lo usaremos para pedirte cualquier información que necesitemos sobre tu pedido
+                    (dedicatoria, marco, pago, etc.).</p>
+
+                <label class="opcion-radio plana" [class.marcada]="datos().contacto === 'mismo'">
+                    <input type="radio" name="contacto" value="mismo" [checked]="datos().contacto === 'mismo'"
+                        (change)="escribir('contacto', 'mismo')">
+                    <span class="punto" aria-hidden="true"></span>
+                    <span class="radio-texto">
+                        <strong>Usar el mismo número de la información de envío</strong>
+                        <small class="verde">Usaremos el número que ingresaste arriba.</small>
+                    </span>
+                </label>
+
+                <label class="opcion-radio plana" [class.marcada]="datos().contacto === 'otro'">
+                    <input type="radio" name="contacto" value="otro" [checked]="datos().contacto === 'otro'"
+                        (change)="escribir('contacto', 'otro')">
+                    <span class="punto" aria-hidden="true"></span>
+                    <span class="radio-texto"><strong>Usar otro número</strong></span>
+                </label>
+
+                @if (datos().contacto === 'otro') {
+                <div class="telefono">
+                    <div class="pais combo">
+                        <button type="button" class="pais-btn" aria-haspopup="listbox"
+                            [attr.aria-expanded]="abierta() === 'pais'" aria-label="País del número"
+                            (mousedown)="$event.preventDefault()" (click)="alternarPais()">
+                            @if (paisContacto().bandera) {
+                            <img class="bandera" [src]="paisContacto().bandera" alt="" width="22" height="16">
+                            } @else {
+                            <span class="bandera bandera-ec" aria-hidden="true"></span>
+                            }
+                            <span>{{ paisContacto().prefijo }}</span>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                        </button>
+
+                        @if (abierta() === 'pais') {
+                        <div class="lista lista-pais">
+                            <input class="buscar-pais" type="text" placeholder="Buscar país o código"
+                                aria-label="Buscar país" autocomplete="off" [value]="consulta()"
+                                (input)="escribirBusqueda('pais', $any($event.target).value)"
+                                (keydown)="teclado($event, 'pais')" (blur)="cerrar('pais')">
+                            <ul role="listbox">
+                                @for (p of opcionesPais(); track p.codigo; let i = $index) {
+                                <li class="opcion" role="option" [class.activa]="i === activo()"
+                                    [class.elegida]="p.codigo === datos().contactoPais"
+                                    (mousedown)="$event.preventDefault(); elegirPais(p)">
+                                    @if (p.bandera) {
+                                    <img class="bandera" [src]="p.bandera" alt="" width="22" height="16" loading="lazy">
+                                    } @else {
+                                    <span class="bandera bandera-ec" aria-hidden="true"></span>
+                                    }
+                                    <span class="pais-nombre">{{ p.nombre }}</span>
+                                    <span class="pais-prefijo">{{ p.prefijo }}</span>
+                                </li>
+                                } @empty {
+                                <li class="aviso">Sin resultados</li>
+                                }
+                            </ul>
+                        </div>
+                        }
+                    </div>
+
+                    <div class="campo tel">
+                        <input id="telefono" type="tel" inputmode="tel" autocomplete="tel-national"
+                            placeholder="Ej. 099 123 4567" aria-label="Número de contacto"
+                            [value]="datos().contactoNumero"
+                            (input)="escribirNumero('contactoNumero', $any($event.target))" (blur)="tocar('telefono')"
+                            [attr.aria-invalid]="verError('telefono') ? 'true' : null">
+                    </div>
+                </div>
+                @if (verError('telefono'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+                }
+            </section>
+
+            <button type="submit" class="btn-continuar">
+                Continuar a pago <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </button>
+        </form>
+    </main>
+</div>

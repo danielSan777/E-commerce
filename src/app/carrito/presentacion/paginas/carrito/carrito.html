@@ -70,7 +70,7 @@
     }
 
     <!-- Franja verde: otra maceta -->
-    <section class="franja franja-verde">
+    <section class="franja franja-verde" [class.franja-solo]="envioGratis()">
         <div class="franja-cab">
             <i class="bi bi-gift franja-icono" aria-hidden="true"></i>
             <div class="franja-texto">
@@ -86,9 +86,11 @@
         <i class="bi bi-flower2 franja-hoja franja-hoja-1" aria-hidden="true"></i>
         <i class="bi bi-flower3 franja-hoja franja-hoja-2" aria-hidden="true"></i>
         <i class="bi bi-flower1 franja-hoja franja-hoja-izq" aria-hidden="true"></i>
+        @if (!envioGratis()) {
         <ng-container *ngTemplateOutlet="carrusel; context: { lista: macetas, clave: 'macetas', tono: 'verde' }" />
         <button type="button" class="ver-mas ver-mas-verde" (click)="abrirHoja('macetas')">Ver más macetas <i
                 class="bi bi-arrow-right"></i></button>
+        }
     </section>
 
     <!-- Franja rosa: complementos -->
