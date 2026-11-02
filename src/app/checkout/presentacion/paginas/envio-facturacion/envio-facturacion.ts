@@ -9,7 +9,7 @@ import {
   correoValido, documentoValido, normalizar, soloDigitos, telefonoValido
 } from '../../../dominio/validaciones/validaciones';
 
-type Lista = 'provincia' | 'ciudad' | 'pais';
+type Lista = 'provincia' | 'ciudad' | 'pais' | 'fProvincia' | 'fCiudad';
 
 @Component({
   selector: 'app-envio-facturacion',
@@ -42,6 +42,12 @@ export class EnvioFacturacion {
   errorCiudades = signal(false);
   private pedidoCiudades = 0; // para ignorar respuestas viejas si el cliente cambia de provincia rápido
 
+  // Ciudades de la provincia de facturación (otros datos de facturación)
+  fCiudades = signal<string[]>([]);
+  cargandoFCiudades = signal(false);
+  errorFCiudades = signal(false);
+  private pedidoFCiudades = 0;
+
   // ----- Países del número de contacto (API) -----
   paises = signal<Pais[]>([ECUADOR]);
 
@@ -56,6 +62,8 @@ export class EnvioFacturacion {
 
   opcionesProvincia = computed(() => this.filtrar(this.provincias(), this.consulta()));
   opcionesCiudad = computed(() => this.filtrar(this.ciudades(), this.consulta()));
+  opcionesFProvincia = computed(() => this.filtrar(this.provincias(), this.consulta()));
+  opcionesFCiudad = computed(() => this.filtrar(this.fCiudades(), this.consulta()));
   opcionesPais = computed(() => {
     const q = normalizar(this.consulta().trim().replace(/^\+/, ''));
     const todos = this.paises();
@@ -83,6 +91,21 @@ export class EnvioFacturacion {
     if (!d.ciudad) e['ciudad'] = 'Elige una ciudad';
     if (d.direccion.trim().length < 5) e['direccion'] = 'Escribe tu dirección completa';
 
+    // Otros datos de facturación: los mismos campos del envío, menos la referencia
+    if (d.facturacion === 'otros') {
+      if (d.fNombre.trim().length < 3) e['fNombre'] = 'Escribe el nombre o razón social';
+      if (!documentoValido(d.fTipoDoc, d.fCedula)) {
+        e['fCedula'] = d.fTipoDoc === 'ruc'
+          ? 'Ingresa un RUC válido de 13 dígitos'
+          : 'Ingresa una cédula válida de 10 dígitos';
+      }
+      if (!telefonoValido(d.fCelular, '+593')) e['fCelular'] = 'Escribe un celular válido. Ej. 099 123 4567';
+      if (!correoValido(d.fCorreo)) e['fCorreo'] = 'Ingresa un correo válido';
+      if (!d.fProvincia) e['fProvincia'] = 'Elige una provincia';
+      if (!d.fCiudad) e['fCiudad'] = 'Elige una ciudad';
+      if (d.fDireccion.trim().length < 5) e['fDireccion'] = 'Escribe la dirección de facturación';
+    }
+
     if (d.contacto === 'otro' && !telefonoValido(d.contactoNumero, this.paisContacto().prefijo)) {
       e['telefono'] = this.paisContacto().prefijo === '+593'
         ? 'Escribe un celular válido. Ej. 099 123 4567'
@@ -99,6 +122,7 @@ export class EnvioFacturacion {
 
       this.cargarProvincias();
       if (this.datos().provincia) this.cargarCiudades(this.datos().provincia);
+      if (this.datos().fProvincia) this.cargarFCiudades(this.datos().fProvincia);
 
       this.paisesApi.paises()
         .then(lista => this.paises.set(lista))
@@ -123,6 +147,13 @@ export class EnvioFacturacion {
     const t: 'cedula' | 'ruc' = tipo === 'ruc' ? 'ruc' : 'cedula';
     const maximo = t === 'ruc' ? 13 : 10;
     this.checkout.actualizar({ tipoDoc: t, cedula: this.datos().cedula.slice(0, maximo) });
+  }
+
+  // Igual que cambiarTipoDoc, para el documento de facturación
+  cambiarFTipoDoc(tipo: string): void {
+    const t: 'cedula' | 'ruc' = tipo === 'ruc' ? 'ruc' : 'cedula';
+    const maximo = t === 'ruc' ? 13 : 10;
+    this.checkout.actualizar({ fTipoDoc: t, fCedula: this.datos().fCedula.slice(0, maximo) });
   }
 
   tocar(campo: string): void {
@@ -158,6 +189,23 @@ export class EnvioFacturacion {
       .finally(() => { if (pedido === this.pedidoCiudades) this.cargandoCiudades.set(false); });
   }
 
+  cargarFCiudades(provincia: string): void {
+    const pedido = ++this.pedidoFCiudades;
+    this.fCiudades.set([]);
+    this.cargandoFCiudades.set(true);
+    this.errorFCiudades.set(false);
+
+    this.ubicaciones.ciudades(provincia)
+      .then(lista => { if (pedido === this.pedidoFCiudades) this.fCiudades.set(lista); })
+      .catch(() => { if (pedido === this.pedidoFCiudades) this.errorFCiudades.set(true); })
+      .finally(() => { if (pedido === this.pedidoFCiudades) this.cargandoFCiudades.set(false); });
+  }
+
+  reintentarFCiudades(): void {
+    const provincia = this.datos().fProvincia;
+    if (provincia) this.cargarFCiudades(provincia);
+  }
+
   reintentarCiudades(): void {
     const provincia = this.datos().provincia;
     if (provincia) this.cargarCiudades(provincia);
@@ -166,6 +214,7 @@ export class EnvioFacturacion {
   // ===== Listas desplegables =====
   abrir(lista: Lista): void {
     if (lista === 'ciudad' && !this.datos().provincia) return;
+    if (lista === 'fCiudad' && !this.datos().fProvincia) return;
     this.abierta.set(lista);
     this.consulta.set('');
     this.activo.set(0);
@@ -193,14 +242,16 @@ export class EnvioFacturacion {
   }
 
   // Lo que se ve en el campo: lo que se está buscando o, si no se abrió, lo ya elegido
-  textoCampo(lista: 'provincia' | 'ciudad'): string {
+  textoCampo(lista: 'provincia' | 'ciudad' | 'fProvincia' | 'fCiudad'): string {
     return this.abierta() === lista ? this.consulta() : this.datos()[lista];
   }
 
   opciones(lista: Lista): readonly string[] | readonly Pais[] {
     return lista === 'provincia' ? this.opcionesProvincia()
       : lista === 'ciudad' ? this.opcionesCiudad()
-        : this.opcionesPais();
+        : lista === 'fProvincia' ? this.opcionesFProvincia()
+          : lista === 'fCiudad' ? this.opcionesFCiudad()
+            : this.opcionesPais();
   }
 
   elegirProvincia(nombre: string): void {
@@ -216,6 +267,21 @@ export class EnvioFacturacion {
     this.checkout.actualizar({ ciudad: nombre });
     this.abierta.set(null);
     this.tocar('ciudad');
+  }
+
+  elegirFProvincia(nombre: string): void {
+    if (nombre !== this.datos().fProvincia) {
+      this.checkout.actualizar({ fProvincia: nombre, fCiudad: '' });
+      this.cargarFCiudades(nombre);
+    }
+    this.abierta.set(null);
+    this.tocar('fProvincia');
+  }
+
+  elegirFCiudad(nombre: string): void {
+    this.checkout.actualizar({ fCiudad: nombre });
+    this.abierta.set(null);
+    this.tocar('fCiudad');
   }
 
   elegirPais(pais: Pais): void {
@@ -245,6 +311,8 @@ export class EnvioFacturacion {
         if (opcion === undefined) return;
         if (lista === 'provincia') this.elegirProvincia(opcion as string);
         else if (lista === 'ciudad') this.elegirCiudad(opcion as string);
+        else if (lista === 'fProvincia') this.elegirFProvincia(opcion as string);
+        else if (lista === 'fCiudad') this.elegirFCiudad(opcion as string);
         else this.elegirPais(opcion as Pais);
         break;
       }

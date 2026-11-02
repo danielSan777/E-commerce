@@ -76,6 +76,18 @@ export function mensajeCompleto(p: Pedido): string {
     if (d.referencia.trim()) L.push(`Referencia: ${d.referencia}`);
     L.push('');
 
+    if (d.facturacion === 'otros') {
+        L.push('*Facturación*');
+        L.push(`Nombre o razón social: ${d.fNombre}`);
+        L.push(`${d.fTipoDoc === 'ruc' ? 'RUC' : 'Cédula'}: ${d.fCedula}`);
+        L.push(`Celular: ${d.fCelular}`);
+        L.push(`Correo: ${d.fCorreo}`);
+        L.push(`Provincia: ${d.fProvincia}`);
+        L.push(`Ciudad: ${d.fCiudad}`);
+        L.push(`Dirección: ${d.fDireccion}`);
+        L.push('');
+    }
+
     L.push('*Productos*');
     p.items.forEach((item, i) => {
         L.push(`${i + 1}. ${item.producto.nombre} — ${dinero(item.producto.precio)}`);

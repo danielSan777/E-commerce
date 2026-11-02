@@ -14,8 +14,17 @@ export interface DatosCheckout {
     direccion: string;
     referencia: string;
 
-    // Datos de facturación (por ahora solo diseño: no cambia nada)
+    // Datos de facturación
     facturacion: 'mismos' | 'otros';
+    // Solo se piden (y validan) cuando facturacion === 'otros'
+    fNombre: string;
+    fTipoDoc: 'cedula' | 'ruc';
+    fCedula: string;
+    fCelular: string;
+    fCorreo: string;
+    fProvincia: string;
+    fCiudad: string;
+    fDireccion: string;
 
     // Número de contacto
     contacto: 'mismo' | 'otro';
@@ -29,6 +38,7 @@ export interface DatosCheckout {
 const VACIO: DatosCheckout = {
     nombre: '', tipoDoc: 'cedula', cedula: '', celular: '', correo: '', provincia: '', ciudad: '', direccion: '', referencia: '',
     facturacion: 'mismos',
+    fNombre: '', fTipoDoc: 'cedula', fCedula: '', fCelular: '', fCorreo: '', fProvincia: '', fCiudad: '', fDireccion: '',
     contacto: 'mismo', contactoPais: 'EC', contactoNumero: '',
     metodoPago: 'transferencia',
 };
