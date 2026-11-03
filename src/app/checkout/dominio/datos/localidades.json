@@ -1,0 +1,8 @@
+{
+  "nota": "Localidades opcionales por cantón con zona propia (Paso 10). Hoy se editan aquí; más adelante se editarán desde el panel. Villa Italia no está: falta confirmar su cantón con Josué.",
+  "localidades": [
+    { "canton": "0906", "nombre": "La Aurora", "zona": "local" },
+    { "canton": "0906", "nombre": "La Joya", "zona": "local" },
+    { "canton": "0906", "nombre": "Villa Club", "zona": "local" }
+  ]
+}

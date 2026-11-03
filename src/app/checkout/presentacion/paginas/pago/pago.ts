@@ -46,11 +46,11 @@ export class Pago {
   textoProductos = computed(() => `${this.cantidad()} ${this.cantidad() === 1 ? 'producto' : 'productos'}`);
 
   // Galápagos: no hay envío, no se puede pagar el pedido
-  sinEnvio = computed(() => !envioDisponible(this.datos().provincia, this.datos().canton));
+  sinEnvio = computed(() => !envioDisponible(this.datos().provincia, this.datos().canton, this.datos().localidad));
   readonly MENSAJE_GALAPAGOS = MENSAJE_GALAPAGOS;
 
   // Tarifa según el cantón y la provincia elegidos en "Envío y facturación"
-  tarifaEnvio = computed(() => costoEnvio(this.datos().provincia, this.datos().canton));
+  tarifaEnvio = computed(() => costoEnvio(this.datos().provincia, this.datos().canton, this.datos().localidad));
   envio = computed(() => (this.envioGratis() ? 0 : this.tarifaEnvio()));
 
   // Total por transferencia (sin cargo adicional)

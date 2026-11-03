@@ -33,4 +33,16 @@ describe('zona y costo de envío', () => {
         expect(envioDisponible('Galápagos', 'Santa Cruz')).toBe(false);
         expect(envioDisponible('Guayas', 'Guayaquil')).toBe(true);
     });
+
+    it('La Aurora, La Joya y Villa Club (Daule) son Zona A: $3.50', () => {
+        for (const localidad of ['La Aurora', 'La Joya', 'Villa Club']) {
+            expect(zonaEnvio('Guayas', 'Daule', localidad)).toBe('local');
+            expect(costoEnvio('Guayas', 'Daule', localidad)).toBe(3.5);
+        }
+    });
+
+    it('Daule sin localidad, o con otra, sigue en el resto del país: $5', () => {
+        expect(costoEnvio('Guayas', 'Daule')).toBe(5);
+        expect(costoEnvio('Guayas', 'Daule', 'Otro sector')).toBe(5);
+    });
 });

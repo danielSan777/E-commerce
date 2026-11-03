@@ -11,6 +11,7 @@ export interface DatosCheckout {
     correo: string;
     provincia: string;
     canton: string;
+    localidad: string;        // opcional (La Aurora, La Joya y Villa Club en Daule)
     direccion: string;
     referencia: string;
 
@@ -35,7 +36,7 @@ export interface DatosCheckout {
 }
 
 const VACIO: DatosCheckout = {
-    nombre: '', tipoDoc: 'cedula', cedula: '', celular: '', correo: '', provincia: '', canton: '', direccion: '', referencia: '',
+    nombre: '', tipoDoc: 'cedula', cedula: '', celular: '', correo: '', provincia: '', canton: '', localidad: '', direccion: '', referencia: '',
     facturacion: 'mismos',
     fNombre: '', fTipoDoc: 'cedula', fCedula: '', fCelular: '', fCorreo: '', fProvincia: '', fCanton: '', fDireccion: '',
     contacto: 'mismo', contactoNumero: '',
