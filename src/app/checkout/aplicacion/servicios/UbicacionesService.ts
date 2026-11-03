@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { localidadesDe, nombresDeCantones, nombresDeProvincias } from '../../dominio/ubicaciones';
+import { nombresDeCantones, nombresDeProvincias } from '../../dominio/ubicaciones';
 
 /*
  * Provincias y cantones que ve el comprador. Salen del archivo del INEC que vive dentro del proyecto
@@ -16,9 +16,5 @@ export class UbicacionesService {
 
     cantones(provincia: string): string[] {
         return nombresDeCantones(provincia);
-    }
-
-    localidades(provincia: string, canton: string): string[] {
-        return localidadesDe(provincia, canton).map(l => l.nombre);
     }
 }

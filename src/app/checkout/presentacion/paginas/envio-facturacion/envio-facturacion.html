@@ -167,32 +167,6 @@
                     </div>
                 </div>
 
-                @if (localidades().length) {
-                <div class="campo combo">
-                    <i class="bi bi-geo ico" aria-hidden="true"></i>
-                    <input id="localidad" type="text" role="combobox" autocomplete="off" placeholder=" "
-                        aria-label="Localidad (opcional)" aria-autocomplete="list" aria-controls="lista-localidad"
-                        [attr.aria-expanded]="abierta() === 'localidad'"
-                        [value]="textoCampo('localidad')" (focus)="abrir('localidad')" (click)="abrir('localidad')"
-                        (input)="escribirBusqueda('localidad', $any($event.target).value)"
-                        (keydown)="teclado($event, 'localidad')" (blur)="cerrar('localidad')">
-                    <span class="ph">Localidad (opcional)</span>
-                    <i class="bi bi-chevron-down flecha" aria-hidden="true"></i>
-
-                    @if (abierta() === 'localidad') {
-                    <ul class="lista" id="lista-localidad" role="listbox">
-                        @for (x of opcionesLocalidad(); track x; let i = $index) {
-                        <li class="opcion" role="option" [class.activa]="i === activo()"
-                            [class.elegida]="x === datos().localidad" [attr.aria-selected]="x === datos().localidad"
-                            (mousedown)="$event.preventDefault(); elegirLocalidad(x)">{{ x }}</li>
-                        } @empty {
-                        <li class="aviso">Sin resultados</li>
-                        }
-                    </ul>
-                    }
-                </div>
-                }
-
                 <div class="campo">
                     <i class="bi bi-house-door ico" aria-hidden="true"></i>
                     <input id="direccion" type="text" autocomplete="street-address" placeholder=" "

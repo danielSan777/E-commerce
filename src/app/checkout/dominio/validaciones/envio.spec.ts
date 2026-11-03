@@ -1,4 +1,5 @@
 import { costoEnvio, envioDisponible, zonaEnvio } from './envio';
+import { nombresDeCantones } from '../ubicaciones';
 
 // Pruebas del Paso 10: zona y tarifa por cantón y provincia (códigos del INEC)
 describe('zona y costo de envío', () => {
@@ -13,7 +14,7 @@ describe('zona y costo de envío', () => {
         expect(zonaEnvio('guayas', 'duran')).toBe('local');
     });
 
-    it('Daule (sin localidad), Quito y Cuenca son Zona C: $5.00', () => {
+    it('Daule, Quito y Cuenca son Zona C: $5.00', () => {
         expect(costoEnvio('Guayas', 'Daule')).toBe(5);
         expect(costoEnvio('Pichincha', 'Distrito Metropolitano de Quito')).toBe(5);
         expect(costoEnvio('Azuay', 'Cuenca')).toBe(5);
@@ -34,15 +35,11 @@ describe('zona y costo de envío', () => {
         expect(envioDisponible('Guayas', 'Guayaquil')).toBe(true);
     });
 
-    it('La Aurora, La Joya y Villa Club (Daule) son Zona A: $3.50', () => {
-        for (const localidad of ['La Aurora', 'La Joya', 'Villa Club']) {
-            expect(zonaEnvio('Guayas', 'Daule', localidad)).toBe('local');
-            expect(costoEnvio('Guayas', 'Daule', localidad)).toBe(3.5);
+    it('La Aurora, La Joya, Villa Club y Villa Italia (Daule) son Zona A: $3.50 sin elegir otra cosa', () => {
+        for (const sector of ['La Aurora - Daule', 'La Joya - Daule', 'Villa Club - Daule', 'Villa Italia - Daule']) {
+            expect(nombresDeCantones('Guayas')).toContain(sector);
+            expect(zonaEnvio('Guayas', sector)).toBe('local');
+            expect(costoEnvio('Guayas', sector)).toBe(3.5);
         }
-    });
-
-    it('Daule sin localidad, o con otra, sigue en el resto del país: $5', () => {
-        expect(costoEnvio('Guayas', 'Daule')).toBe(5);
-        expect(costoEnvio('Guayas', 'Daule', 'Otro sector')).toBe(5);
     });
 });

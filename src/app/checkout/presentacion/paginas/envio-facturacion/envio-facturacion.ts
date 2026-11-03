@@ -10,7 +10,7 @@ import {
 import { MENSAJE_GALAPAGOS } from '../../../dominio/validaciones/envio';
 import { buscarProvincia } from '../../../dominio/ubicaciones';
 
-type Lista = 'provincia' | 'canton' | 'localidad' | 'fProvincia' | 'fCanton';
+type Lista = 'provincia' | 'canton' | 'fProvincia' | 'fCanton';
 
 @Component({
   selector: 'app-envio-facturacion',
@@ -36,7 +36,6 @@ export class EnvioFacturacion {
   // ----- Provincias y cantones (archivo del INEC dentro del proyecto) -----
   provincias = this.ubicaciones.provincias();
   cantones = computed(() => this.ubicaciones.cantones(this.datos().provincia));
-  localidades = computed(() => this.ubicaciones.localidades(this.datos().provincia, this.datos().canton));
   fCantones = computed(() => this.ubicaciones.cantones(this.datos().fProvincia));
 
   // ----- Listas desplegables con buscador -----
@@ -46,7 +45,6 @@ export class EnvioFacturacion {
 
   opcionesProvincia = computed(() => this.filtrar(this.provincias, this.consulta()));
   opcionesCanton = computed(() => this.filtrar(this.cantones(), this.consulta()));
-  opcionesLocalidad = computed(() => this.filtrar(this.localidades(), this.consulta()));
   opcionesFProvincia = computed(() => this.filtrar(this.provincias, this.consulta()));
   opcionesFCanton = computed(() => this.filtrar(this.fCantones(), this.consulta()));
 
@@ -139,7 +137,6 @@ export class EnvioFacturacion {
   // ===== Listas desplegables =====
   abrir(lista: Lista): void {
     if (lista === 'canton' && !this.datos().provincia) return;
-    if (lista === 'localidad' && !this.localidades().length) return;
     if (lista === 'fCanton' && !this.datos().fProvincia) return;
     this.abierta.set(lista);
     this.consulta.set('');
@@ -165,27 +162,20 @@ export class EnvioFacturacion {
   opciones(lista: Lista): readonly string[] {
     return lista === 'provincia' ? this.opcionesProvincia()
       : lista === 'canton' ? this.opcionesCanton()
-        : lista === 'localidad' ? this.opcionesLocalidad()
         : lista === 'fProvincia' ? this.opcionesFProvincia()
           : this.opcionesFCanton();
   }
 
   elegirProvincia(nombre: string): void {
-    if (nombre !== this.datos().provincia) this.checkout.actualizar({ provincia: nombre, canton: '', localidad: '' });
+    if (nombre !== this.datos().provincia) this.checkout.actualizar({ provincia: nombre, canton: '' });
     this.abierta.set(null);
     this.tocar('provincia');
   }
 
   elegirCanton(nombre: string): void {
-    if (nombre !== this.datos().canton) this.checkout.actualizar({ canton: nombre, localidad: '' });
+    this.checkout.actualizar({ canton: nombre });
     this.abierta.set(null);
     this.tocar('canton');
-  }
-
-  elegirLocalidad(nombre: string): void {
-    this.checkout.actualizar({ localidad: nombre });
-    this.abierta.set(null);
-    this.tocar('localidad');
   }
 
   elegirFProvincia(nombre: string): void {
@@ -222,7 +212,6 @@ export class EnvioFacturacion {
         if (opcion === undefined) return;
         if (lista === 'provincia') this.elegirProvincia(opcion);
         else if (lista === 'canton') this.elegirCanton(opcion);
-        else if (lista === 'localidad') this.elegirLocalidad(opcion);
         else if (lista === 'fProvincia') this.elegirFProvincia(opcion);
         else this.elegirFCanton(opcion);
         break;

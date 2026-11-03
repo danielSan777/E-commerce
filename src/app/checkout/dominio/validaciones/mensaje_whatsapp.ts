@@ -52,7 +52,6 @@ export function mensajeCompleto(p: Pedido): string {
     L.push('*Entrega*');
     L.push(`Provincia: ${d.provincia}`);
     L.push(`Cantón: ${d.canton}`);
-    if (d.localidad.trim()) L.push(`Localidad: ${d.localidad}`);
     L.push(`Dirección: ${d.direccion}`);
     if (d.referencia.trim()) L.push(`Referencia: ${d.referencia}`);
     L.push('');

@@ -1,6 +1,6 @@
 import { normalizar } from './validaciones/validaciones';
 import inec from './datos/ubicaciones-inec.json';
-import sectores from './datos/localidades.json';
+import zonaA from './datos/sectores-zona-a.json';
 
 /*
  * Provincias y cantones de Ecuador: Clasificador Geográfico Estadístico 2026 del INEC
@@ -15,10 +15,16 @@ export interface Provincia { codigo: string; nombre: string; cantones: Canton[] 
 
 export const PROVINCIAS: readonly Provincia[] = inec.provincias;
 
-// Localidad opcional dentro de un cantón, con zona de envío propia (por ejemplo La Aurora, en Daule)
-export interface Localidad { canton: string; nombre: string; zona: 'local' | 'amazonia' | 'resto' }
+// Sectores que se muestran como un cantón más en la lista ("La Aurora - Daule") y se cobran como Zona A.
+export interface Sector { provincia: string; canton: string; nombre: string }
 
-export const LOCALIDADES: readonly Localidad[] = sectores.localidades as Localidad[];
+export const SECTORES_ZONA_A: readonly Sector[] = zonaA.sectores;
+
+export function buscarSector(provincia: string, nombre: string): Sector | undefined {
+    const prov = buscarProvincia(provincia);
+    const n = normalizar(nombre.trim());
+    return prov ? SECTORES_ZONA_A.find(s => s.provincia === prov.codigo && normalizar(s.nombre) === n) : undefined;
+}
 
 export function buscarProvincia(nombre: string): Provincia | undefined {
     const n = normalizar(nombre.trim());
@@ -30,20 +36,13 @@ export function buscarCanton(provincia: string, canton: string): Canton | undefi
     return buscarProvincia(provincia)?.cantones.find(c => normalizar(c.nombre) === n);
 }
 
-export function localidadesDe(provincia: string, canton: string): Localidad[] {
-    const codigo = buscarCanton(provincia, canton)?.codigo;
-    return codigo ? LOCALIDADES.filter(l => l.canton === codigo) : [];
-}
-
-export function buscarLocalidad(provincia: string, canton: string, localidad: string): Localidad | undefined {
-    const n = normalizar(localidad.trim());
-    return localidadesDe(provincia, canton).find(l => normalizar(l.nombre) === n);
-}
-
 export function nombresDeProvincias(): string[] {
     return PROVINCIAS.map(p => p.nombre);
 }
 
 export function nombresDeCantones(provincia: string): string[] {
-    return buscarProvincia(provincia)?.cantones.map(c => c.nombre) ?? [];
+    const prov = buscarProvincia(provincia);
+    if (!prov) return [];
+    const sectores = SECTORES_ZONA_A.filter(s => s.provincia === prov.codigo).map(s => s.nombre);
+    return [...prov.cantones.map(c => c.nombre), ...sectores];
 }
