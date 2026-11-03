@@ -9,7 +9,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Accesorio, AccesorioColocado } from '../../../dominio/Accesorios';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TextoCanvas } from '../../../../shared/directivas/texto-canvas';
+import { TextoPlaca } from '../../../../shared/componentes/texto-placa/texto-placa';
+import { PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE, tamanoLetra } from '../../../dominio/placa';
 import { ExcepcionGuardada, Geometria, UbicacionGuardada } from '../../../dominio/ubicaciones';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 // AJUSTA la ruta según donde dejes carrito.service.ts
@@ -41,7 +42,7 @@ export interface ConfiguracionPersonalizada {
 
 @Component({
   imports: [FormsModule,
-    TextoCanvas,
+    TextoPlaca,
     NgTemplateOutlet],
   selector: 'app-personalizador',
   styleUrl: './personalizador.css',
@@ -1119,20 +1120,18 @@ export class Personalizador implements OnDestroy {
       const texto = (this.nombreCliente() || a.texto || '').trim();
       if (!texto) return null;
 
-      try { await document.fonts.load('bold 40px Lobster'); } catch { /* sigue con la fuente de respaldo */ }
+      try { await document.fonts.load('40px Lobster'); } catch { /* sigue con la fuente de respaldo */ }
 
-      c.font = 'bold 100px Lobster, cursive';
-      c.textAlign = 'left';
+      // Mismo trazado que la vista previa SVG: caja lógica escalada de forma uniforme, centrada, sin estirar
+      c.font = '100px Lobster, cursive';
+      const letra = tamanoLetra(texto, c.measureText(texto).width);
+      const escala = Math.min(ancho / PLACA_CAJA_ANCHO, alto / PLACA_CAJA_ALTO);
+      c.setTransform(escala, 0, 0, escala, (ancho - PLACA_CAJA_ANCHO * escala) / 2, (alto - PLACA_CAJA_ALTO * escala) / 2);
+      c.font = `${letra}px Lobster, cursive`;
+      c.textAlign = 'center';
       c.textBaseline = 'alphabetic';
-      const m = c.measureText(texto);
-      const izq = m.actualBoundingBoxLeft;
-      const anchoTexto = izq + m.actualBoundingBoxRight;
-      const altoTexto = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
-      if (!anchoTexto || !altoTexto) return null;
-
-      c.scale(ancho / anchoTexto, alto / altoTexto);
       c.fillStyle = '#000';
-      c.fillText(texto, izq, m.actualBoundingBoxAscent);
+      c.fillText(texto, PLACA_CAJA_ANCHO / 2, PLACA_LINEA_BASE);
       return lienzo;
     }
 

@@ -28,7 +28,7 @@
                             [style.outline]="contorno(accesorio.accesorioId)"
                             (click)="seleccionarPuesto(accesorio.accesorioId)">
                             <div class="contenido-3d" [style.transform]="transformar(accesorio)">
-                                <canvas [appTextoCanvas]="nombreCliente() || (accesorio.texto ?? '')"></canvas>
+                                <app-texto-placa [texto]="nombreCliente() || (accesorio.texto ?? '')" />
                             </div>
                         </div>
 
@@ -463,7 +463,7 @@
 
             <span class="tile-img">
                 @if (item.tipo === 'texto') {
-                <canvas class="tile-canvas" [appTextoCanvas]="item.texto ?? ''"></canvas>
+                <app-texto-placa class="tile-canvas" [texto]="item.texto ?? ''" />
                 } @else {
                 <img [src]="item.imagen" [alt]="item.nombre">
                 }

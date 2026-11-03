@@ -38,38 +38,15 @@
             <p class="aviso-agotado"><i class="bi bi-exclamation-circle"></i> Producto agotado por el momento</p>
             }
 
-            <!-- Dedicatoria -->
-            <label class="campo-titulo" for="dedicatoria">Dedicatoria <i class="bi bi-question-circle-fill"
-                    title="Escribe el mensaje que irá en la dedicatoria"></i></label>
-            <div class="dedicatoria-caja">
-                <textarea id="dedicatoria" rows="3" [maxLength]="maxDedicatoria" [value]="dedicatoria()"
-                    (input)="escribirDedicatoria($event)"></textarea>
-                <span class="contador">{{ dedicatoria().length }}/{{ maxDedicatoria }}</span>
-            </div>
-
-            <!-- Foto -->
-            <label class="campo-titulo">Agrega tu foto a tu dedicatoria GRATIS <i class="bi bi-question-circle-fill"
-                    title="Sube una foto para imprimirla en tu dedicatoria"></i></label>
-            <input #archivo type="file" accept="image/*" hidden (change)="elegirFoto($event)" />
-            <div class="zona-foto" [class.con-foto]="fotoUrl()">
-                @if (fotoUrl(); as url) {
-                <img [src]="url" alt="Tu foto" class="foto-previa" />
-                <div class="foto-acciones">
-                    <span class="foto-nombre">{{ fotoNombre() }}</span>
-                    <button type="button" class="btn-gris" (click)="archivo.click()">Cambiar</button>
-                    <button type="button" class="btn-gris" (click)="quitarFoto(archivo)">Quitar</button>
+            <!-- Promesa de entrega (la calcula Laravel; hoy, un mock): Angular solo la muestra -->
+            <div class="promesa" role="note">
+                <i class="bi bi-truck" aria-hidden="true"></i>
+                <div>
+                    <strong>{{ promesa.label }}</strong>
+                    <small>{{ promesa.countdown_label }}</small>
+                    <small>{{ promesa.amazon_note }}</small>
                 </div>
-                } @else {
-                <button type="button" class="btn-gris" (click)="archivo.click()">Elegir Foto</button>
-                }
             </div>
-            @if (errorFoto()) { <p class="error">{{ errorFoto() }}</p> }
-
-            <!-- Fecha de entrega -->
-            <label class="campo-titulo" for="fecha">Fecha de entrega <span class="req">*</span></label>
-            <input id="fecha" type="date" class="campo-fecha" [class.invalido]="errorFecha()" [min]="hoy"
-                [value]="fechaEntrega()" (change)="cambiarFecha($event)" (blur)="fechaTocada.set(true)" required />
-            @if (errorFecha()) { <p class="error">{{ errorFecha() }}</p> }
 
             <!-- Acciones -->
             <div class="acciones">
@@ -81,8 +58,7 @@
                 </button>
             </div>
             @if (agregado()) {
-            <p class="exito"><i class="bi bi-check-circle-fill"></i> Producto agregado con entrega el {{ fechaEntrega()
-                }}</p>
+            <p class="exito"><i class="bi bi-check-circle-fill"></i> Producto agregado al carrito</p>
             }
         </div>
     </div>

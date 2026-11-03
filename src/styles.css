@@ -1,1 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Fuente del nombre en la placa (WOFF2). Se precarga en index.html. */
+@font-face {
+  font-family: 'Lobster';
+  src: url('/fonts/Lobster-Regular.woff2') format('woff2');
+  font-display: swap;
+}

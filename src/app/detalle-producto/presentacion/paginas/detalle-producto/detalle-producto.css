@@ -614,3 +614,20 @@ button {
     color: #4a2a1a;
     margin: 0 0 18px;
 }
+
+/* ===== Promesa de entrega ===== */
+.promesa {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 16px 0;
+    padding: 12px 14px;
+    background: #eaf3ed;
+    border: 1px solid #b9d8c4;
+    border-radius: 12px;
+    color: #175437;
+}
+
+.promesa > i { font-size: 1.4rem; }
+.promesa div { display: flex; flex-direction: column; gap: 2px; }
+.promesa small { color: #4a5f52; }

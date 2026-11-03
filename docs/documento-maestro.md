@@ -505,9 +505,9 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 - [x] Ocultar o crear los enlaces a rutas que no existen (`/checkout`, `/cuenta`, `/buscar`, `/favoritos`, `/productos` y los del pie). *(Hecho: se ocultaron buscar, cuenta, favoritos y los enlaces del pie que no tienen página; vuelven cuando existan.)*
 - [x] 404 real, con página propia, para productos y rutas inexistentes. *(Hecho: el servidor responde con estado 404.)*
 - [x] Quitar los restos de la plantilla anterior: libro de reclamaciones y logos de PayPal, Western Union, Amex y similares. Mostrar solo los medios reales: tarjeta vía PayPhone y transferencia. *(Hecho: el pie solo muestra tarjeta con PayPhone y transferencia.)*
-- [ ] Nombre de placa: pasar del canvas estirado a SVG (regla en "Implementación acordada").
-- [ ] Quitar de la ficha la fecha, la dedicatoria y la foto: van en el personalizador, y la fecha se reemplaza por el bloque de promesa.
-- [ ] Declarar la versión de Node (`engines` y `.nvmrc`) igual a la del servidor de Hostinger.
+- [x] Nombre de placa: pasar del canvas estirado a SVG (regla en "Implementación acordada"). *(Hecho: SVG incrustado con Lobster WOFF2 precargada, centrado, sin estirar, con tamaños 12,5 / 12 / 11. Falta: el HEX dorado oficial de Josué; hoy el texto es negro.)*
+- [x] Quitar de la ficha la fecha, la dedicatoria y la foto: van en el personalizador, y la fecha se reemplaza por el bloque de promesa. *(Hecho: la ficha muestra la promesa del mock.)*
+- [x] Declarar la versión de Node (`engines` y `.nvmrc`) igual a la del servidor de Hostinger. *(Hecho: Node 22.x.)*
 - [x] Quitar dependencias e imports sin uso (SweetAlert2 y el import de `Carrito` en `EnvioGratisService`).
 
 **1B — Correcciones de la revisión del 2 de noviembre** (el código actual contradice el documento; se hace antes de seguir)
