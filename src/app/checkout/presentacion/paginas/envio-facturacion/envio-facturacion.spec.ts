@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EnvioFacturacion } from './envio-facturacion';
 
@@ -8,6 +9,7 @@ describe('EnvioFacturacion', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [EnvioFacturacion],
+      providers: [provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(EnvioFacturacion);

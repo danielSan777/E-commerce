@@ -1,4 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { AccesorioColocado } from '../../../personalizador/dominio/Accesorios';
 
 // Producto que se está personalizando (lo manda la pantalla del producto al personalizador)
 export interface ProductoCarrito {

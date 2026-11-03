@@ -1,4 +1,4 @@
-interface Accesorio {
+export interface Accesorio {
 
   id: number;
 
@@ -16,7 +16,7 @@ interface Accesorio {
 
 
 
-interface AccesorioColocado {
+export interface AccesorioColocado {
 
   id: number;
 

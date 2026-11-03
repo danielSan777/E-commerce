@@ -1,6 +1,6 @@
 
 
-interface Producto {
+export interface Producto {
     id: number;
     nombre: string;
     imagen: string;          // ruta de la imagen

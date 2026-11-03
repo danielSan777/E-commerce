@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
+import { Coleccion } from '../../../dominio/entidades/coleccion';
 
 @Component({
   imports: [],

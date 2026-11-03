@@ -1,4 +1,5 @@
 import { Component, computed } from '@angular/core';
+import { Producto } from '../../../dominio/entidades/producto';
 
 @Component({
   imports: [],

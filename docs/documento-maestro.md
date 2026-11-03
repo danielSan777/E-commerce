@@ -501,7 +501,7 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 **1A — Arreglos inmediatos**
 
 - [ ] Proteger con `isPlatformBrowser` el código que usa APIs del navegador durante el SSR: `colecciones.ts`, `slider.ts` y `medirTodo()` de `carrito.ts`.
-- [ ] Hacer compilar `ng test`: exportar las interfaces de dominio y reemplazar las pruebas de plantilla por pruebas reales mínimas.
+- [x] Hacer compilar `ng test`: exportar las interfaces de dominio y reemplazar las pruebas de plantilla por pruebas reales mínimas.
 - [ ] Ocultar o crear los enlaces a rutas que no existen (`/checkout`, `/cuenta`, `/buscar`, `/favoritos`, `/productos` y los del pie).
 - [ ] 404 real, con página propia, para productos y rutas inexistentes.
 - [ ] Quitar los restos de la plantilla anterior: libro de reclamaciones y logos de PayPal, Western Union, Amex y similares. Mostrar solo los medios reales: tarjeta vía PayPhone y transferencia.
@@ -512,8 +512,8 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 
 **1B — Correcciones de la revisión del 2 de noviembre** (el código actual contradice el documento; se hace antes de seguir)
 
-- [ ] Quitar toda opción de enviar algo por WhatsApp después: "Prefiero enviar mi tarjeta de dedicatoria por WhatsApp", enviar la foto o la frase del marco por WhatsApp, el bloque "Pendiente por WhatsApp" de la confirmación y la frase "Te enviaré por aquí…" del mensaje. Todo se completa en la web antes de pagar.
-- [ ] Quitar la foto de la tarjeta de dedicatoria: la dedicatoria es solo texto, o "No quiero dedicatoria".
+- [x] Quitar toda opción de enviar algo por WhatsApp después: "Prefiero enviar mi tarjeta de dedicatoria por WhatsApp", enviar la foto o la frase del marco por WhatsApp, el bloque "Pendiente por WhatsApp" de la confirmación y la frase "Te enviaré por aquí…" del mensaje. Todo se completa en la web antes de pagar.
+- [x] Quitar la foto de la tarjeta de dedicatoria: la dedicatoria es solo texto, o "No quiero dedicatoria".
 - [ ] Provincias, cantones y localidades desde el JSON del INEC dentro del proyecto (Paso 10). Eliminar el uso de countriesnow.space en `UbicacionesService`: no trae cantones como Durán y, si falla, nadie puede comprar.
 - [ ] Zona y tarifa por localidad > cantón > provincia (Paso 10), no por nombre de ciudad. Amazonía $6,25.
 - [ ] Lista de países del número de contacto fija dentro del proyecto (sin restcountries.com), con Ecuador (+593) primero.

@@ -7,6 +7,7 @@ import {
   PLATFORM_ID
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Accesorio, AccesorioColocado } from '../../../dominio/Accesorios';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TextoCanvas } from '../../../../shared/directivas/texto-canvas';
 import { ExcepcionGuardada, Geometria, UbicacionGuardada } from '../../../dominio/ubicaciones';

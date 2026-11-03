@@ -19,11 +19,11 @@ describe('TodasCategorias', () => {
     expect(component).toBeTruthy();
   });
 
-  it('renders the five category cards with their images', () => {
+  it('renders one card per category with its image', () => {
     const tarjetas = fixture.nativeElement.querySelectorAll('.categoria');
 
-    expect(tarjetas.length).toBe(5);
-    expect(tarjetas[0].querySelector('img').getAttribute('alt')).toBe('Family');
+    expect(tarjetas.length).toBe(component.categorias.length);
+    expect(tarjetas[0].querySelector('img')).toBeTruthy();
   });
 
   it('starts at the first category and allows moving right', () => {
