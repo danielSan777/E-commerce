@@ -63,10 +63,15 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('./detalle-producto/presentacion/paginas/detalle-producto/detalle-producto')
                         .then(m => m.DetalleProducto)
+            },
+
+            // Cualquier otra dirección: 404 propio (con estado HTTP 404 en el servidor)
+            {
+                path: '**',
+                loadComponent: () =>
+                    import('./core/paginas/no-encontrada/no-encontrada')
+                        .then(m => m.NoEncontrada)
             }
-
-
-
         ]
     }
 

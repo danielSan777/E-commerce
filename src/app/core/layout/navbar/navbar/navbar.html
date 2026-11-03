@@ -47,9 +47,6 @@
 
             <!-- Iconos del lado derecho -->
             <div class="iconos-navbar d-flex align-items-center gap-3 ms-auto">
-                <a routerLink="/buscar" class="icono-nav" aria-label="Buscar"><i class="bi bi-search"></i></a>
-                <a routerLink="/cuenta" class="icono-nav" aria-label="Mi cuenta"><i class="bi bi-person"></i></a>
-                <a routerLink="/favoritos" class="icono-nav" aria-label="Favoritos"><i class="bi bi-heart"></i></a>
                 <a routerLink="/carrito" class="icono-nav" aria-label="Carrito de compras"><i
                         class="bi bi-cart3"></i></a>
             </div>
@@ -73,7 +70,6 @@
     </div>
 
     <div class="d-flex align-items-center gap-3">
-        <a routerLink="/buscar" class="icono-nav" aria-label="Buscar"><i class="bi bi-search"></i></a>
         <a routerLink="/carrito" class="icono-nav" aria-label="Carrito de compras"><i class="bi bi-cart3"></i></a>
     </div>
 </header>
@@ -108,18 +104,8 @@
             </li>
             }
             <li>
-                <a class="sidebar-enlace" routerLink="/favoritos" (click)="cerrar()">
-                    <i class="bi bi-heart" aria-hidden="true"></i><span>Favoritos</span>
-                </a>
-            </li>
-            <li>
                 <a class="sidebar-enlace" routerLink="/carrito" (click)="cerrar()">
                     <i class="bi bi-cart3" aria-hidden="true"></i><span>Carrito</span>
-                </a>
-            </li>
-            <li>
-                <a class="sidebar-enlace" routerLink="/cuenta" (click)="cerrar()">
-                    <i class="bi bi-person" aria-hidden="true"></i><span>Iniciar sesión / Registrarse</span>
                 </a>
             </li>
         </ul>

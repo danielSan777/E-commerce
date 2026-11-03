@@ -7,10 +7,11 @@ import { productos } from '../../../../all-productos/dominio/muestra_producto';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
+import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
 import { ProductoCarrito } from '../../../../carrito/aplicacion/servicios/CarritoService';
 
 @Component({
-  imports: [RouterLink, Personalizador],
+  imports: [RouterLink, Personalizador, NoEncontrada],
   selector: 'app-detalle-producto',
   styleUrl: './detalle-producto.css',
   templateUrl: './detalle-producto.html',

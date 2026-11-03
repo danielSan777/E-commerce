@@ -51,42 +51,16 @@ export class Footer {
   correo = 'info@Jardín de Sel.com';
 
   // --- Columnas de enlaces ---
+  // Solo van enlaces a páginas que EXISTEN. Cuando se creen las políticas, preguntas frecuentes, etc.
+  // (Paso de políticas), se agregan aquí; una columna sin enlaces no se muestra.
   columnas: ColumnaEnlaces[] = [
     {
       titulo: 'Sobre Nosotros',
       enlaces: [
         { texto: 'Inicio', ruta: '/' },
-        { texto: 'Conócenos', ruta: '/conocenos' },
-        { texto: 'Nuestras colecciones', ruta: '/colecciones' },
-        { texto: 'Contacto', ruta: '/contacto' },
-        { texto: 'Blogs de interes', ruta: '/blogs' },
-        { texto: 'Preguntas frecuentes', ruta: '/preguntas-frecuentes' },
       ]
     },
-    {
-      titulo: 'Atención al Cliente',
-      enlaces: [
-        { texto: 'Políticas de Privacidad', ruta: '/politicas-privacidad' },
-        { texto: 'Términos y Condiciones', ruta: '/terminos-condiciones' },
-        { texto: 'Política de Reembolso', ruta: '/politica-reembolso' },
-        { texto: 'Políticas de Envios', ruta: '/politicas-envios' },
-        { texto: 'Zonas y costo de envio', ruta: '/zonas-envio' },
-        { texto: 'Mi Cuenta', ruta: '/cuenta' },
-        { texto: 'Recuperar Contraseña', ruta: '/recuperar-contrasena' },
-      ]
-    }
   ];
-
-  // --- Libro de Reclamaciones ---
-  libro = {
-    titulo: 'Libro de Reclamaciones',
-    texto:
-      'De acuerdo a lo establecido en el Código de Protección y Defensa del Consumidor ' +
-      'Jardín de Sele cuenta con un Libro de Reclamaciones a su disposición.',
-    imagen: 'imagenes/footer/libro-reclamaciones.png',
-    textoImagen: 'Libro de reclamaciones digital',
-    enlace: '#'
-  };
 
   // --- Boletín ---
   boletin = {
@@ -111,14 +85,10 @@ export class Footer {
   autor = 'LCD. Daniel Alvarado correo:';
   correoAutor = 'adanieledinson@gmail.com';
   enlaceCorreoAutor = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(this.correoAutor)}`;
-  mediosPago: { nombre: string; imagen: string }[] = [
-    { nombre: 'Visa', imagen: 'imagenes/footer/pagos/visa.png' },
-    { nombre: 'Mastercard', imagen: 'imagenes/footer/pagos/mastercard.png' },
-    { nombre: 'Discover', imagen: 'imagenes/footer/pagos/discover.png' },
-    { nombre: 'Western Union', imagen: 'imagenes/footer/pagos/western-union.png' },
-    { nombre: 'American Express', imagen: 'imagenes/footer/pagos/amex.png' },
-    { nombre: 'Express', imagen: 'imagenes/footer/pagos/express.png' },
-    { nombre: 'PayPal', imagen: 'imagenes/footer/pagos/paypal.png' },
+  // Solo los medios de pago reales de la tienda
+  mediosPago: { nombre: string; icono: string }[] = [
+    { nombre: 'Tarjeta con PayPhone', icono: 'bi-credit-card-2-front' },
+    { nombre: 'Transferencia bancaria', icono: 'bi-bank2' },
   ];
 
   // ===== Lógica (no hace falta editar) =====

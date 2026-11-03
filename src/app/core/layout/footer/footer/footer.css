@@ -125,11 +125,6 @@
     margin: 24px 0 24px;
 }
 
-.footer-libro {
-    max-width: 220px;
-    width: 100%;
-    display: block;
-}
 
 /* ====== Boletín ====== */
 .footer-formulario {
@@ -221,11 +216,15 @@
     gap: 8px;
 }
 
-.footer-pagos img {
-    height: 26px;
-    width: auto;
-    border-radius: 4px;
-    background-color: #fff;
+.footer-pago {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: #fff;
 }
 
 /* ================================================= */

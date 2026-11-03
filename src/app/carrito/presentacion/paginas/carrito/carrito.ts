@@ -1,7 +1,7 @@
 import {
-  AfterViewInit, Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, signal, untracked
+  AfterViewInit, Component, ElementRef, HostListener, OnDestroy, PLATFORM_ID, computed, effect, inject, signal, untracked
 } from '@angular/core';
-import { CurrencyPipe, DOCUMENT, NgTemplateOutlet } from '@angular/common';
+import { CurrencyPipe, DOCUMENT, NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 // AJUSTA la ruta según donde dejes carrito.service.ts
 import { CarritoService, ProductoCarrito } from '../../../aplicacion/servicios/CarritoService';
@@ -75,6 +75,7 @@ export class Carrito implements AfterViewInit, OnDestroy {
   private carrito = inject(CarritoService);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private document = inject(DOCUMENT);
+  private esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
 
   items = this.carrito.items;
   subtotal = this.carrito.subtotal;
@@ -267,6 +268,8 @@ export class Carrito implements AfterViewInit, OnDestroy {
   }
 
   private medirTodo(): void {
+    // En el servidor no hay medidas reales (clientWidth es 0): solo se mide en el navegador
+    if (!this.esNavegador) return;
     this.host.nativeElement.querySelectorAll<HTMLElement>('.pista').forEach(p => this.medir(p));
   }
 

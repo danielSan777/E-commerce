@@ -1,0 +1,44 @@
+:host {
+    display: block;
+    background: #fff9ef;
+    color: #3b2a1e;
+}
+
+.no-encontrada {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 56px 16px 72px;
+    text-align: center;
+}
+
+.flor { font-size: 2rem; color: #175437; }
+
+.codigo {
+    margin: 4px 0 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 4rem;
+    font-weight: 700;
+    color: #5a1717;
+    line-height: 1;
+}
+
+h1 {
+    margin: 8px 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.5rem;
+    color: #5a1717;
+}
+
+.acciones { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
+
+.boton {
+    padding: 11px 20px;
+    border-radius: 999px;
+    border: 1.5px solid #175437;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.primario { background: #175437; color: #fff; }
+.borde { color: #175437; background: #fff; }
+.boton:focus-visible { outline: 2px solid #175437; outline-offset: 2px; }

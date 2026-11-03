@@ -58,8 +58,7 @@ export class MainLayout {
   // Opciones de la barra (cambie textos, iconos de Bootstrap Icons y rutas)
   opcionesMovil = [
     { texto: 'Inicio', icono: 'bi-house-door', ruta: '/' },
-    { texto: 'Cuenta', icono: 'bi-person', ruta: '/cuenta' },
-    { texto: 'Tienda', icono: 'bi-shop', ruta: '/productos' },
+    { texto: 'Tienda', icono: 'bi-shop', ruta: '/catalogo/todos-productos' },
     { texto: 'Carrito', icono: 'bi-cart3', ruta: '/carrito' },
   ];
 

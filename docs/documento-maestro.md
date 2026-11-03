@@ -500,15 +500,15 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 
 **1A — Arreglos inmediatos**
 
-- [ ] Proteger con `isPlatformBrowser` el código que usa APIs del navegador durante el SSR: `colecciones.ts`, `slider.ts` y `medirTodo()` de `carrito.ts`.
+- [x] Proteger con `isPlatformBrowser` el código que usa APIs del navegador durante el SSR: `colecciones.ts`, `slider.ts` y `medirTodo()` de `carrito.ts`. *(Hecho en `colecciones.ts`, `slider.ts` y `medirTodo()` del carrito; el servidor renderiza sin errores.)*
 - [x] Hacer compilar `ng test`: exportar las interfaces de dominio y reemplazar las pruebas de plantilla por pruebas reales mínimas.
-- [ ] Ocultar o crear los enlaces a rutas que no existen (`/checkout`, `/cuenta`, `/buscar`, `/favoritos`, `/productos` y los del pie).
-- [ ] 404 real, con página propia, para productos y rutas inexistentes.
-- [ ] Quitar los restos de la plantilla anterior: libro de reclamaciones y logos de PayPal, Western Union, Amex y similares. Mostrar solo los medios reales: tarjeta vía PayPhone y transferencia.
+- [x] Ocultar o crear los enlaces a rutas que no existen (`/checkout`, `/cuenta`, `/buscar`, `/favoritos`, `/productos` y los del pie). *(Hecho: se ocultaron buscar, cuenta, favoritos y los enlaces del pie que no tienen página; vuelven cuando existan.)*
+- [x] 404 real, con página propia, para productos y rutas inexistentes. *(Hecho: el servidor responde con estado 404.)*
+- [x] Quitar los restos de la plantilla anterior: libro de reclamaciones y logos de PayPal, Western Union, Amex y similares. Mostrar solo los medios reales: tarjeta vía PayPhone y transferencia. *(Hecho: el pie solo muestra tarjeta con PayPhone y transferencia.)*
 - [ ] Nombre de placa: pasar del canvas estirado a SVG (regla en "Implementación acordada").
 - [ ] Quitar de la ficha la fecha, la dedicatoria y la foto: van en el personalizador, y la fecha se reemplaza por el bloque de promesa.
 - [ ] Declarar la versión de Node (`engines` y `.nvmrc`) igual a la del servidor de Hostinger.
-- [ ] Quitar dependencias e imports sin uso (SweetAlert2 y el import de `Carrito` en `EnvioGratisService`).
+- [x] Quitar dependencias e imports sin uso (SweetAlert2 y el import de `Carrito` en `EnvioGratisService`).
 
 **1B — Correcciones de la revisión del 2 de noviembre** (el código actual contradice el documento; se hace antes de seguir)
 

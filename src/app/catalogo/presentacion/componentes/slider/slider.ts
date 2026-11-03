@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, inject, signal, viewChild } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 interface ProductoSlider {
   nombre: string;
@@ -123,7 +124,11 @@ export class Slider implements OnInit, OnDestroy {
     return `$. ${valor.toFixed(2)}`;
   }
 
+  private esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
+
   ngOnInit(): void {
+    // En el servidor (SSR) no existen window, performance ni requestAnimationFrame: la animación empieza en el navegador
+    if (!this.esNavegador) return;
     this.reducirMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.ultimoTiempo = performance.now();
     this.idAnimacion = requestAnimationFrame(this.animar);
@@ -131,7 +136,7 @@ export class Slider implements OnInit, OnDestroy {
 
 
   ngOnDestroy(): void {
-    cancelAnimationFrame(this.idAnimacion);
+    if (this.esNavegador) cancelAnimationFrame(this.idAnimacion);
   }
 
 

@@ -1,4 +1,3 @@
-import { Carrito } from './../../../carrito/presentacion/paginas/carrito/carrito';
 import { Injectable, computed, inject } from '@angular/core';
 // AJUSTA la ruta si tu CarritoService está en otra carpeta (este archivo va en la misma carpeta que CarritoService.ts)
 import { CarritoService } from '../../../carrito/aplicacion/servicios/CarritoService';

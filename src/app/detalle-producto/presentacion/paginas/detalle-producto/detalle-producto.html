@@ -127,11 +127,7 @@
     </div>
     }
     } @else {
-    <div class="no-encontrado">
-        <h1>Producto no encontrado</h1>
-        <p>No encontramos «{{ nombre() }}».</p>
-        <a [routerLink]="rutaListado" class="btn-comprar">Ver todos los productos</a>
-    </div>
+    <app-no-encontrada />
     }
 </section>
 <!-- Personalizador a pantalla completa -->

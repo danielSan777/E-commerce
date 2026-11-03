@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, inject, signal, viewChild } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Coleccion } from '../../../dominio/entidades/coleccion';
 
 @Component({
@@ -107,13 +108,17 @@ export class Colecciones implements OnInit, OnDestroy {
     this.idAnimacion = requestAnimationFrame(this.animar);
   };
 
+  private esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
+
   ngOnInit(): void {
+    // En el servidor (SSR) no existen window, performance ni requestAnimationFrame: la animación empieza en el navegador
+    if (!this.esNavegador) return;
     this.ultimoTiempo = performance.now();
     this.idAnimacion = requestAnimationFrame(this.animar);
   }
 
   ngOnDestroy(): void {
-    cancelAnimationFrame(this.idAnimacion);
+    if (this.esNavegador) cancelAnimationFrame(this.idAnimacion);
   }
 
 
