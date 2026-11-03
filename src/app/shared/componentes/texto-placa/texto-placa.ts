@@ -10,7 +10,7 @@ import {
   selector: 'app-texto-placa',
   templateUrl: './texto-placa.html',
   styles: `
-    :host { display: block; }
+    :host { display: block; width: 100%; height: 100%; }
     svg { display: block; width: 100%; height: 100%; }
     text { font-family: 'Lobster', cursive; }
   `,

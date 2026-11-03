@@ -8,8 +8,8 @@
  */
 
 export const PLACA_CAJA_ANCHO = 400;     // caja lógica del SVG (viewBox)
-export const PLACA_CAJA_ALTO = 100;
-export const PLACA_LINEA_BASE = 62;      // línea base fija
+export const PLACA_CAJA_ALTO = 55;
+export const PLACA_LINEA_BASE = 38;      // línea base fija
 const MARGEN = 10;
 
 // ===== EDITABLES =====
