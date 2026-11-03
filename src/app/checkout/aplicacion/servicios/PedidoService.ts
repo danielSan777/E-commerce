@@ -1,6 +1,10 @@
 import { Injectable, signal } from '@angular/core';
 import { ItemCarrito } from '../../../carrito/aplicacion/servicios/CarritoService';
 import { DatosCheckout } from './CheckoutService';
+import { EntregaPedido } from '../../dominio/interfaces/promesa';
+
+// Plazo para pagar por transferencia (Paso 14). Hoy se calcula aquí; con backend lo fija Laravel.
+export const HORAS_PLAZO_TRANSFERENCIA = 12;
 
 export type MetodoPago = DatosCheckout['metodoPago'];
 
@@ -11,6 +15,10 @@ export interface Pedido {
     fecha: string;            // ISO
     metodo: MetodoPago;
     pagoConfirmado: boolean;  // transferencia: false hasta validar el comprobante · PayPhone: ver nota en crear()
+    pagoSimulado: boolean;    // true = PayPhone sin cobro real (solo pruebas); nunca debe llegar así a producción
+    limitePago: string | null; // ISO; solo transferencia: creación + 12 h
+    entrega: EntregaPedido;
+    marketing: boolean;       // aceptó recibir novedades (casilla desmarcada por defecto)
     items: ItemCarrito[];
     datos: DatosCheckout;
     subtotal: number;
@@ -29,6 +37,8 @@ export interface NuevoPedido {
     envioGratis: boolean;
     recargo: number;
     total: number;
+    entrega: EntregaPedido;
+    marketing: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -40,15 +50,22 @@ export class PedidoService {
     readonly pedido = signal<Pedido | null>(null);
 
     crear(nuevo: NuevoPedido): Pedido {
+        const ahora = new Date();
+        const transferencia = nuevo.metodo === 'transferencia';
+
         const pedido: Pedido = {
             ...nuevo,
             numero: this.generarNumero(),
-            fecha: new Date().toISOString(),
+            fecha: ahora.toISOString(),
+            limitePago: transferencia
+                ? new Date(ahora.getTime() + HORAS_PLAZO_TRANSFERENCIA * 3600_000).toISOString()
+                : null,
 
             // IMPORTANTE: todavía no hay cobro real con PayPhone (necesita backend). Por ahora la pantalla de
             // PayPhone se muestra como "Pago confirmado". Cuando conectes PayPhone de verdad, esto debe ser
             // false aquí y pasar a true solo cuando PayPhone confirme el pago.
             pagoConfirmado: nuevo.metodo === 'payphone',
+            pagoSimulado: nuevo.metodo === 'payphone',
         };
 
         this.pedido.set(pedido);

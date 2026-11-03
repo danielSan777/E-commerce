@@ -85,23 +85,12 @@ h1 {
     margin-bottom: 18px;
 }
 
+
 .resumen-cab {
-    width: 100%;
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 4px 0 10px;
-    border: 0;
-    background: none;
-    color: inherit;
-    font: inherit;
-    cursor: pointer;
-    text-align: left;
-}
-
-.resumen-cab:focus-visible {
-    outline: 2px solid var(--verde);
-    outline-offset: 2px;
 }
 
 .resumen-ico {
@@ -123,29 +112,60 @@ h1 {
     color: var(--gris);
 }
 
-.flecha {
-    font-size: 0.85rem;
-    transition: transform 0.2s;
-}
-
-.flecha.girada {
-    transform: rotate(180deg);
-}
-
-.lineas {
+/* Productos del resumen, con su personalización */
+.productos {
     list-style: none;
     margin: 0 0 8px;
     padding: 0 0 8px;
     border-bottom: 1px dashed var(--borde);
 }
 
-.lineas li {
+.producto {
     display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 3px 0;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+}
+
+.producto + .producto {
+    border-top: 1px solid var(--borde);
+}
+
+.foto {
+    flex: none;
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    background: var(--verde-claro);
+    overflow: hidden;
+}
+
+.foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.producto-texto {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     font-size: 0.85rem;
     color: var(--gris);
+    overflow-wrap: anywhere;
+}
+
+.producto-texto strong {
+    color: var(--texto);
+    font-size: 0.95rem;
+}
+
+.producto-precio {
+    flex: none;
+    font-weight: 700;
+    font-size: 0.92rem;
 }
 
 .fila-monto {
@@ -406,3 +426,77 @@ h1 {
     color: var(--verde);
     font-weight: 700;
 }
+
+/* ===== Fecha de entrega ===== */
+.entrega .titulo-metodos { display: flex; align-items: center; gap: 8px; }
+
+.opciones-entrega { display: grid; gap: 8px; }
+
+.opcion-entrega {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--borde);
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.opcion-entrega.marcado { border-color: var(--verde); background: var(--verde-claro); }
+.opcion-entrega input { position: absolute; opacity: 0; }
+.opcion-entrega input:focus-visible + .punto { outline: 2px solid var(--verde); outline-offset: 2px; }
+
+.opcion-entrega .punto {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--gris);
+}
+
+.opcion-entrega.marcado .punto { border-color: var(--verde); background: radial-gradient(var(--verde) 45%, transparent 50%); }
+.opcion-texto { display: flex; flex-direction: column; line-height: 1.25; }
+.opcion-texto small { color: var(--gris); }
+
+.ventanas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+.ventana {
+    padding: 8px 12px;
+    border: 1.5px solid var(--borde);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--texto);
+    font: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.ventana.marcada { border-color: var(--verde); background: var(--verde-claro); color: var(--verde); font-weight: 700; }
+.ventana:disabled { opacity: 0.55; cursor: not-allowed; text-decoration: line-through; }
+.ventana em { margin-left: 6px; font-style: normal; font-size: 0.75rem; text-decoration: none; display: inline-block; }
+.ventana:focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
+
+.nota-amazonia { margin: 10px 0 0; font-size: 0.85rem; color: var(--vino); }
+
+/* ===== Casillas, aviso y simulación ===== */
+.casillas { margin: 6px 0 12px; display: grid; gap: 8px; }
+
+.casilla { display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; cursor: pointer; }
+.casilla input { flex: none; width: 20px; height: 20px; margin-top: 1px; accent-color: var(--verde); }
+
+.error { margin: 0; font-size: 0.82rem; color: #b3261e; }
+
+.aviso-revisar,
+.aviso-simulacion {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+}
+
+.aviso-revisar { background: #fff4d6; border: 1px solid #ecd28a; color: #5a4300; }
+.aviso-simulacion { background: #eef2fb; border: 1px solid #c4cff0; color: #2a3a6b; }

@@ -32,6 +32,11 @@ export interface DatosCheckout {
 
     // Pantalla de pago
     metodoPago: 'transferencia' | 'payphone';
+
+    // Entrega: lo antes posible (la promesa vigente) o una ventana elegida del calendario
+    entrega: 'inmediata' | 'programada';
+    ventanaInicio: string;
+    ventanaFin: string;
 }
 
 const VACIO: DatosCheckout = {
@@ -40,6 +45,7 @@ const VACIO: DatosCheckout = {
     fNombre: '', fTipoDoc: 'cedula', fCedula: '', fCelular: '', fCorreo: '', fProvincia: '', fCanton: '', fDireccion: '',
     contacto: 'mismo', contactoNumero: '',
     metodoPago: 'transferencia',
+    entrega: 'inmediata', ventanaInicio: '', ventanaFin: '',
 };
 
 @Injectable({ providedIn: 'root' })

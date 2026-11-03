@@ -517,14 +517,14 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 - [ ] Provincias, cantones y localidades desde el JSON del INEC dentro del proyecto (Paso 10). *(Hecho: provincias y cantones del INEC 2026 y sin countriesnow.space. Hecho también: La Aurora, La Joya, Villa Club y Villa Italia salen en la lista de cantones como "La Aurora - Daule" etc., desde `sectores-zona-a.json`, sin selector aparte. Falta: el panel que las edite.)* Eliminar el uso de countriesnow.space en `UbicacionesService`: no trae cantones como Durán y, si falla, nadie puede comprar.
 - [ ] Zona y tarifa por localidad > cantón > provincia (Paso 10), no por nombre de ciudad. Amazonía $6,25. *(Hecho por cantón y provincia con códigos del INEC; Galápagos bloqueado; esos cuatro sectores de Daule son Zona A $3,50.)*
 - [x] Lista de países del número de contacto fija dentro del proyecto (sin restcountries.com), con Ecuador (+593) primero. *(Decisión del 3 nov: solo se envía a Ecuador, así que se quita el selector y el número queda fijo en +593.)*
-- [ ] Casilla obligatoria de términos y casilla de marketing, ambas desmarcadas (Paso 12).
-- [ ] Resumen final con la personalización completa de cada maceta y el aviso "Revisa bien: después de confirmar no se puede editar".
-- [ ] Fecha de entrega desde la promesa del mock (Paso 0), no el texto fijo "jueves a viernes"; elección de ventana inmediata o programada en el checkout.
-- [ ] Transferencia: después de confirmar, mostrar la hora límite de 12 horas y el botón "Subir comprobante" (pedido pendiente, Paso 14). El mensaje de WhatsApp es corto: "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." con el total y hasta 3 productos, sin datos personales ni dirección.
-- [ ] "Usar otros datos de facturación": agregar los campos (nombre, cédula o RUC, correo y dirección).
-- [ ] Logos de tarjetas: mostrar solo las marcas que PayPhone acepte en la cuenta de Josué.
-- [ ] PayPhone simulado: hoy el pedido con tarjeta se marca pagado sin cobro. Debe quedar marcado como simulación y nunca llegar así a producción (Paso 13).
-- [ ] Titular y cuentas bancarias de ejemplo: reemplazarlos por los datos reales que entregue Josué.
+- [x] Casilla obligatoria de términos y casilla de marketing, ambas desmarcadas (Paso 12). *(Hecho en `/checkout/pago`; los enlaces a las políticas se agregan cuando existan esas páginas.)*
+- [x] Resumen final con la personalización completa de cada maceta y el aviso "Revisa bien: después de confirmar no se puede editar".
+- [x] Fecha de entrega desde la promesa del mock (Paso 0), no el texto fijo "jueves a viernes"; elección de ventana inmediata o programada en el checkout. *(Hecho en pago y confirmación con `PromesaService`, un mock con la forma exacta del Paso 0. Falta mostrarla en la ficha y la página principal.)*
+- [x] Transferencia: después de confirmar, mostrar la hora límite de 12 horas y el botón "Subir comprobante" (pedido pendiente, Paso 14). El mensaje de WhatsApp es corto: "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." con el total y hasta 3 productos, sin datos personales ni dirección. *(El botón abre WhatsApp con el mensaje corto; la subida del comprobante en la web llega con el Paso 14.)*
+- [x] "Usar otros datos de facturación": agregar los campos (nombre, cédula o RUC, correo y dirección).
+- [x] Logos de tarjetas: mostrar solo las marcas que PayPhone acepte en la cuenta de Josué. *(Visa, Mastercard, Diners Club y Discover, confirmadas por Josué.)*
+- [x] PayPhone simulado: hoy el pedido con tarjeta se marca pagado sin cobro. Debe quedar marcado como simulación y nunca llegar así a producción (Paso 13). *(Hecho: el pedido queda con `pagoSimulado` y se avisa en pago y confirmación.)*
+- [x] Titular y cuentas bancarias de ejemplo: reemplazarlos por los datos reales que entregue Josué.
 
 **Rutas definitivas** (con SSR; todas se pueden recargar y compartir)
 

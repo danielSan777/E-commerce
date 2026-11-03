@@ -485,3 +485,19 @@ h1 {
     margin: 6px 0 14px;
     color: var(--gris);
 }
+
+/* Hora límite de la transferencia y mensaje del comprobante */
+.limite {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    background: #fff4d6;
+    border: 1px solid #ecd28a;
+    border-radius: 10px;
+    color: #5a4300;
+    font-size: 0.9rem;
+}
+
+.mensaje-texto { white-space: pre-line; }

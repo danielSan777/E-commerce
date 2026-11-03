@@ -25,7 +25,9 @@
         <div class="fila-texto">
             <strong class="pedido-numero">Pedido {{ p.numero }}</strong>
             <small>Realizado el {{ fecha() }}</small>
-            @if (p.pagoConfirmado) {
+            @if (p.pagoSimulado) {
+            <span class="insignia pendiente"><i class="bi bi-flask" aria-hidden="true"></i> Pago simulado (pruebas)</span>
+            } @else if (p.pagoConfirmado) {
             <span class="insignia ok"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Pago confirmado</span>
             } @else {
             <span class="insignia pendiente"><i class="bi bi-clock" aria-hidden="true"></i> Pago pendiente de
@@ -38,8 +40,8 @@
     <section class="tarjeta verde fila-icono" aria-label="Entrega estimada">
         <span class="circulo"><i class="bi bi-truck" aria-hidden="true"></i></span>
         <div class="fila-texto">
-            <small class="entrega-etq">Entrega estimada:</small>
-            <strong class="entrega-dias">{{ ENTREGA }}</strong>
+            <small class="entrega-etq">{{ p.entrega.tipo === 'programada' ? 'Entrega programada:' : 'Entrega estimada:' }}</small>
+            <strong class="entrega-dias">{{ p.entrega.label }}</strong>
             <small>
                 @if (esTransferencia()) {
                 Tu fecha final se mantiene una vez confirmado el pago.
@@ -96,6 +98,11 @@
     <section class="tarjeta blanca" aria-labelledby="t-transf">
         <h2 id="t-transf"><i class="bi bi-bank2 ico-titulo" aria-hidden="true"></i> Datos para tu transferencia</h2>
 
+        <p class="limite" role="note">
+            <i class="bi bi-clock-history" aria-hidden="true"></i>
+            <span>Paga antes del <b>{{ limite() }}</b> para mantener tu fecha de entrega.</span>
+        </p>
+
         <div class="datos">
             <div class="dato monto">
                 <i class="bi bi-cash-coin" aria-hidden="true"></i>
@@ -120,16 +127,6 @@
                 <button type="button" class="copiar" aria-label="Copiar cédula"
                     (click)="copiar('cedula', TITULAR.cedula)">
                     <i class="bi" [class.bi-copy]="copiado() !== 'cedula'" [class.bi-check2]="copiado() === 'cedula'"
-                        aria-hidden="true"></i>
-                </button>
-            </div>
-            <div class="dato">
-                <i class="bi bi-envelope" aria-hidden="true"></i>
-                <span class="dato-etq">Correo:</span>
-                <strong>{{ TITULAR.correo }}</strong>
-                <button type="button" class="copiar" aria-label="Copiar correo"
-                    (click)="copiar('correo', TITULAR.correo)">
-                    <i class="bi" [class.bi-copy]="copiado() !== 'correo'" [class.bi-check2]="copiado() === 'correo'"
                         aria-hidden="true"></i>
                 </button>
             </div>
@@ -158,14 +155,13 @@
         <div class="wa-cab">
             <i class="bi bi-whatsapp wa-logo" aria-hidden="true"></i>
             <div>
-                <h2 id="t-wa">Inicia la confirmación por WhatsApp</h2>
-                <p>Toca el botón para enviar el mensaje prellenado y luego comparte tu comprobante en ese mismo chat.
-                </p>
+                <h2 id="t-wa">Envía tu comprobante por WhatsApp</h2>
+                <p>Toca el botón para abrir el chat con el mensaje listo y adjunta ahí la foto o el PDF de tu comprobante.</p>
             </div>
         </div>
 
         <div class="mensaje">
-            <span>{{ mensaje() }} <em>(Se enviará con el detalle completo de tu pedido.)</em></span>
+            <span class="mensaje-texto">{{ mensaje() }}</span>
             <button type="button" class="copiar" aria-label="Copiar mensaje" (click)="copiarMensaje()">
                 <i class="bi" [class.bi-copy]="copiado() !== 'mensaje'" [class.bi-check2]="copiado() === 'mensaje'"
                     aria-hidden="true"></i>
@@ -174,7 +170,7 @@
     </section>
 
     <a class="btn btn-primario" [href]="enlaceWhatsapp()" target="_blank" rel="noopener">
-        <i class="bi bi-whatsapp" aria-hidden="true"></i> Ir a WhatsApp <i class="bi bi-arrow-right"
+        <i class="bi bi-whatsapp" aria-hidden="true"></i> Subir comprobante por WhatsApp <i class="bi bi-arrow-right"
             aria-hidden="true"></i>
     </a>
     <a class="btn btn-borde" [routerLink]="RUTA_SEGUIR">Seguir comprando</a>
@@ -187,7 +183,7 @@
         <div>
             <h2>Método de pago</h2>
             <strong>Tarjeta con PayPhone</strong>
-            <small>Tu pago fue procesado correctamente.</small>
+            <small>Pago simulado: todavía no se cobró nada. El cobro real con PayPhone llegará con el servidor.</small>
         </div>
     </section>
 

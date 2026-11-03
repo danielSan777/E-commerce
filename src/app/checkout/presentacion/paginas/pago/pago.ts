@@ -5,7 +5,10 @@ import { CarritoService } from '../../../../carrito/aplicacion/servicios/Carrito
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { CheckoutService, DatosCheckout } from '../../../aplicacion/servicios/CheckoutService';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
-import { costoEnvio, envioDisponible, MENSAJE_GALAPAGOS } from '../../../dominio/validaciones/envio';
+import { PromesaService } from '../../../aplicacion/servicios/PromesaService';
+import { EntregaPedido, VentanaDisponible } from '../../../dominio/interfaces/promesa';
+import { textoVentana } from '../../../dominio/validaciones/fechas';
+import { costoEnvio, envioDisponible, MENSAJE_GALAPAGOS, zonaEnvio } from '../../../dominio/validaciones/envio';
 
 type Metodo = DatosCheckout['metodoPago'];
 
@@ -29,6 +32,7 @@ export class Pago {
   private checkout = inject(CheckoutService);
   private pedidos = inject(PedidoService);
   private router = inject(Router);
+  private promesas = inject(PromesaService);
 
   items = this.carrito.items;
   cantidad = this.carrito.cantidad;
@@ -37,7 +41,32 @@ export class Pago {
 
   datos = this.checkout.datos;
   metodo = computed<Metodo>(() => this.datos().metodoPago);
-  resumenAbierto = signal(false);
+
+  // ===== Fecha de entrega: la promesa y las ventanas las entrega Laravel (hoy, un mock) =====
+  promesa = this.promesas.promesa();
+  ventanas = this.promesas.ventanas().windows;
+  textoVentana = textoVentana;
+  entrega = computed(() => this.datos().entrega);
+  ventanaElegida = computed(() =>
+    this.ventanas.find(v => v.start === this.datos().ventanaInicio && v.end === this.datos().ventanaFin && v.available));
+  esAmazonia = computed(() => zonaEnvio(this.datos().provincia, this.datos().canton) === 'amazonia');
+
+  entregaPedido = computed<EntregaPedido | null>(() => {
+    if (this.entrega() === 'inmediata') {
+      return { tipo: 'inmediata', window: this.promesa.window, label: this.promesa.label, promise_token: this.promesa.promise_token };
+    }
+    const v = this.ventanaElegida();
+    return v
+      ? { tipo: 'programada', window: { start: v.start, end: v.end }, label: textoVentana(v.start, v.end), promise_token: this.promesa.promise_token }
+      : null;
+  });
+
+  // ===== Casillas (siempre empiezan desmarcadas) =====
+  aceptaTerminos = signal(false);
+  aceptaMarketing = signal(false);
+  intentoConfirmar = signal(false);
+  errorTerminos = computed(() => this.intentoConfirmar() && !this.aceptaTerminos());
+  errorEntrega = computed(() => this.intentoConfirmar() && !this.entregaPedido());
 
   // Hasta que se lean los datos guardados no se sabe si falta algo
   datosListos = signal(false);
@@ -74,12 +103,35 @@ export class Pago {
     });
   }
 
+  // Si la foto del producto no existe, se oculta y queda el fondo
+  sinImagen(evento: Event): void {
+    (evento.target as HTMLImageElement).style.visibility = 'hidden';
+  }
+
+  elegirEntrega(tipo: 'inmediata' | 'programada'): void {
+    if (tipo === 'inmediata') {
+      this.checkout.actualizar({ entrega: 'inmediata', ventanaInicio: '', ventanaFin: '' });
+      return;
+    }
+    const primera = this.ventanaElegida() ?? this.ventanas.find(v => v.available);
+    this.checkout.actualizar({ entrega: 'programada', ventanaInicio: primera?.start ?? '', ventanaFin: primera?.end ?? '' });
+  }
+
+  elegirVentana(v: VentanaDisponible): void {
+    if (!v.available) return;
+    this.checkout.actualizar({ entrega: 'programada', ventanaInicio: v.start, ventanaFin: v.end });
+  }
+
   elegir(metodo: Metodo): void {
     this.checkout.actualizar({ metodoPago: metodo });
   }
 
   confirmar(): void {
     if (this.faltanDatos() || this.sinEnvio() || this.cantidad() === 0) return;
+
+    this.intentoConfirmar.set(true);
+    const entrega = this.entregaPedido();
+    if (!this.aceptaTerminos() || !entrega) return;
 
     const payphone = this.metodo() === 'payphone';
 
@@ -92,6 +144,8 @@ export class Pago {
       envioGratis: this.envioGratis(),
       recargo: payphone ? this.recargoPayphone() : 0,
       total: this.totalFinal(),
+      entrega,
+      marketing: this.aceptaMarketing(),
     });
 
     // El carrito se vacía cuando ya se llegó a la confirmación (el pedido quedó guardado aparte)

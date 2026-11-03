@@ -1,6 +1,6 @@
 import { Pedido } from '../../aplicacion/servicios/PedidoService';
 import { ItemCarrito } from '../../../carrito/aplicacion/servicios/CarritoService';
-import { mensajeCompleto, mensajeCorto, urlWhatsapp } from './mensaje_whatsapp';
+import { mensajeComprobante, urlWhatsapp } from './mensaje_whatsapp';
 
 function pedidoDePrueba(): Pedido {
     const item: ItemCarrito = {
@@ -20,6 +20,10 @@ function pedidoDePrueba(): Pedido {
         fecha: '2026-11-03T16:00:00.000Z',
         metodo: 'transferencia',
         pagoConfirmado: false,
+        pagoSimulado: false,
+        limitePago: '2026-11-04T04:00:00.000Z',
+        entrega: { tipo: 'inmediata', window: { start: '2026-11-12', end: '2026-11-13' }, label: 'Recíbelo entre jueves 12 y viernes 13 de noviembre', promise_token: 'firmado-por-laravel' },
+        marketing: false,
         items: [item],
         datos: {
             nombre: 'María Pérez', tipoDoc: 'cedula', cedula: '0954091989', celular: '0991234567',
@@ -28,32 +32,44 @@ function pedidoDePrueba(): Pedido {
             fNombre: '', fTipoDoc: 'cedula', fCedula: '', fCelular: '', fCorreo: '', fProvincia: '', fCanton: '', fDireccion: '',
             contacto: 'mismo', contactoNumero: '',
             metodoPago: 'transferencia',
+            entrega: 'inmediata', ventanaInicio: '', ventanaFin: '',
         },
         subtotal: 25, envio: 3.5, envioGratis: false, recargo: 0, total: 28.5,
     };
 }
 
-describe('mensaje de WhatsApp del pedido', () => {
-    it('no promete enviar nada después por WhatsApp (todo se completa antes de pagar)', () => {
-        const texto = mensajeCompleto(pedidoDePrueba());
+describe('mensaje de WhatsApp del comprobante', () => {
+    it('empieza con el saludo, el número de pedido y el total', () => {
+        const texto = mensajeComprobante(pedidoDePrueba());
 
-        expect(texto).not.toContain('Te enviaré por aquí');
-        expect(texto.toLowerCase()).not.toContain('pendiente');
-    });
-
-    it('incluye el número de pedido, los productos con su personalización y el total', () => {
-        const texto = mensajeCompleto(pedidoDePrueba());
-
-        expect(texto).toContain('JDS-48213');
-        expect(texto).toContain('Maceta Doctor');
-        expect(texto).toContain('Tarjeta de dedicatoria: «Gracias por todo»');
+        expect(texto).toContain('Hola 🌿 Te envío el comprobante de mi pedido JDS-48213.');
         expect(texto).toContain('$28.50');
+        expect(texto).toContain('Maceta Doctor');
     });
 
-    it('el mensaje corto menciona el pedido y la urlWhatsapp lo lleva codificado', () => {
+    it('no lleva datos personales, dirección ni promesas de enviar algo después', () => {
+        const texto = mensajeComprobante(pedidoDePrueba());
+
+        for (const privado of ['María', '0954091989', '0991234567', 'maria@correo.com', 'Av. Principal', 'Durán']) {
+            expect(texto).not.toContain(privado);
+        }
+        expect(texto).not.toContain('Te enviaré por aquí');
+    });
+
+    it('con más de 3 productos lista solo 3 y avisa cuántos faltan', () => {
+        const p = pedidoDePrueba();
+        p.items = [1, 2, 3, 4, 5].map(n => ({ ...p.items[0], uid: `u${n}`, producto: { ...p.items[0].producto, nombre: `Maceta ${n}` } }));
+
+        const texto = mensajeComprobante(p);
+
+        expect(texto).toContain('Maceta 3');
+        expect(texto).not.toContain('Maceta 4');
+        expect(texto).toContain('y 2 más');
+    });
+
+    it('la urlWhatsapp lleva el mensaje codificado', () => {
         const p = pedidoDePrueba();
 
-        expect(mensajeCorto(p)).toContain('JDS-48213');
-        expect(urlWhatsapp(p)).toContain('https://wa.me/593999283765?text=');
+        expect(urlWhatsapp(p)).toBe(`https://wa.me/593999283765?text=${encodeURIComponent(mensajeComprobante(p))}`);
     });
 });

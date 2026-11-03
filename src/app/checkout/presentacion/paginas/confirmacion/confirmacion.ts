@@ -2,9 +2,9 @@ import { Component, afterNextRender, computed, inject, signal } from '@angular/c
 import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
-import { CUENTAS, ENTREGA_ESTIMADA, TITULAR_TRANSFERENCIA } from '../../../dominio/interfaces/datos_transferencia';
+import { CUENTAS, TITULAR_TRANSFERENCIA } from '../../../dominio/interfaces/datos_transferencia';
 import {
-  fechaLarga, mensajeCompleto, mensajeCorto, urlWhatsapp
+  fechaLarga, mensajeComprobante, urlWhatsapp
 } from '../../../dominio/validaciones/mensaje_whatsapp';
 
 @Component({
@@ -17,7 +17,6 @@ export class Confirmacion {
 
   // ===== EDITABLES =====
   readonly RUTA_SEGUIR = '/catalogo/todos-productos';   // "Seguir comprando"
-  readonly ENTREGA = ENTREGA_ESTIMADA;                  // el texto se cambia en dominio/datos-transferencia.ts
   readonly TITULAR = TITULAR_TRANSFERENCIA;
   readonly CUENTAS = CUENTAS;
 
@@ -30,7 +29,8 @@ export class Confirmacion {
 
   esTransferencia = computed(() => this.pedido()?.metodo === 'transferencia');
   fecha = computed(() => (this.pedido() ? fechaLarga(this.pedido()!.fecha) : ''));
-  mensaje = computed(() => (this.pedido() ? mensajeCorto(this.pedido()!) : ''));
+  limite = computed(() => (this.pedido()?.limitePago ? fechaLarga(this.pedido()!.limitePago!) : ''));
+  mensaje = computed(() => (this.pedido() ? mensajeComprobante(this.pedido()!) : ''));
   enlaceWhatsapp = computed(() => (this.pedido() ? urlWhatsapp(this.pedido()!) : ''));
 
   // Qué se acaba de copiar (para mostrar ✓ un momento)
@@ -43,7 +43,7 @@ export class Confirmacion {
     });
   }
 
-  // El botón de copiar del mensaje copia el mensaje completo, el mismo que se manda por WhatsApp
+  // El botón de copiar del mensaje copia el mismo mensaje que se manda por WhatsApp
   async copiar(clave: string, texto: string): Promise<void> {
     try {
       await navigator.clipboard.writeText(texto);
@@ -65,7 +65,7 @@ export class Confirmacion {
 
   copiarMensaje(): void {
     const p = this.pedido();
-    if (p) this.copiar('mensaje', mensajeCompleto(p));
+    if (p) this.copiar('mensaje', mensajeComprobante(p));
   }
 
   // Si la foto del producto no existe, se oculta y queda el fondo

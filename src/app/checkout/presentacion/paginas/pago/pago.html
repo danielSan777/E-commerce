@@ -12,22 +12,33 @@
 
     <!-- ===== Resumen ===== -->
     <section class="tarjeta resumen" aria-labelledby="t-resumen">
-        <button type="button" class="resumen-cab" [attr.aria-expanded]="resumenAbierto()"
-            (click)="resumenAbierto.set(!resumenAbierto())">
+        <div class="resumen-cab">
             <i class="bi bi-cart3 resumen-ico" aria-hidden="true"></i>
             <h2 id="t-resumen">Resumen de tu pedido</h2>
             <span class="resumen-n">{{ textoProductos() }}</span>
-            <i class="bi bi-chevron-down flecha" [class.girada]="resumenAbierto()" aria-hidden="true"></i>
-        </button>
+        </div>
 
-        @if (resumenAbierto()) {
-        <ul class="lineas">
+        <!-- Cada maceta con su personalización completa -->
+        <ul class="productos">
             @for (item of items(); track item.uid) {
-            <li><span>{{ item.producto.nombre }}</span><span>{{ item.producto.precio | currency:'USD':'symbol':'1.2-2'
-                    }}</span></li>
+            <li class="producto">
+                <div class="foto">
+                    @if (item.vista) {
+                    <img [src]="item.vista" [alt]="item.producto.nombre" (error)="sinImagen($event)">
+                    } @else if (item.producto.imagen) {
+                    <img [src]="item.producto.imagen" [alt]="item.producto.nombre" (error)="sinImagen($event)">
+                    }
+                </div>
+                <div class="producto-texto">
+                    <strong>{{ item.producto.nombre }}</strong>
+                    @for (linea of item.resumen; track linea.etiqueta) {
+                    <span>{{ linea.etiqueta }}: {{ linea.valor }}</span>
+                    }
+                </div>
+                <span class="producto-precio">{{ item.producto.precio | currency:'USD':'symbol':'1.2-2' }}</span>
+            </li>
             }
         </ul>
-        }
 
         <div class="fila-monto"><span>Subtotal</span><span>{{ subtotal() | currency:'USD':'symbol':'1.2-2' }}</span>
         </div>
@@ -47,6 +58,51 @@
             </div>
             <strong class="tu-pedido-monto">{{ totalFinal() | currency:'USD':'symbol':'1.2-2' }}</strong>
         </div>
+    </section>
+
+    <!-- ===== Fecha de entrega (la promesa y las ventanas las entrega Laravel; hoy, un mock) ===== -->
+    <section class="tarjeta entrega" aria-labelledby="t-entrega">
+        <h2 id="t-entrega" class="titulo-metodos"><i class="bi bi-truck" aria-hidden="true"></i> Fecha de entrega</h2>
+
+        <div class="opciones-entrega" role="radiogroup" aria-label="Fecha de entrega">
+            <label class="opcion-entrega" [class.marcado]="entrega() === 'inmediata'">
+                <input type="radio" name="entrega" value="inmediata" [checked]="entrega() === 'inmediata'"
+                    (change)="elegirEntrega('inmediata')">
+                <span class="punto" aria-hidden="true"></span>
+                <span class="opcion-texto">
+                    <strong>{{ promesa.label }}</strong>
+                    <small>{{ promesa.countdown_label }}</small>
+                </span>
+            </label>
+
+            <label class="opcion-entrega" [class.marcado]="entrega() === 'programada'">
+                <input type="radio" name="entrega" value="programada" [checked]="entrega() === 'programada'"
+                    (change)="elegirEntrega('programada')">
+                <span class="punto" aria-hidden="true"></span>
+                <span class="opcion-texto">
+                    <strong>Programar para otra fecha</strong>
+                    <small>Elige la ventana en la que quieres recibirlo.</small>
+                </span>
+            </label>
+        </div>
+
+        @if (entrega() === 'programada') {
+        <div class="ventanas" role="radiogroup" aria-label="Ventanas disponibles">
+            @for (v of ventanas; track v.start) {
+            <button type="button" class="ventana" role="radio" [attr.aria-checked]="ventanaElegida() === v"
+                [class.marcada]="ventanaElegida() === v" [disabled]="!v.available" (click)="elegirVentana(v)">
+                {{ textoVentana(v.start, v.end) }}
+                @if (!v.available) { <em>No disponible</em> }
+            </button>
+            }
+        </div>
+        }
+
+        @if (esAmazonia()) { <p class="nota-amazonia">{{ promesa.amazon_note }}</p> }
+
+        @if (errorEntrega()) {
+        <p class="error" role="alert">Elige una fecha de entrega disponible.</p>
+        }
     </section>
 
     <!-- ===== Métodos de pago ===== -->
@@ -131,6 +187,35 @@
         <a [routerLink]="RUTA_VOLVER">Cambiar mi dirección</a>
     </p>
     }
+
+    @if (metodo() === 'payphone') {
+    <p class="aviso-simulacion" role="note">
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
+        Modo de prueba: el pago con tarjeta todavía no cobra. El pedido se marca como simulado.
+    </p>
+    }
+
+    <!-- ===== Casillas ===== -->
+    <div class="casillas">
+        <label class="casilla">
+            <input type="checkbox" [checked]="aceptaTerminos()" (change)="aceptaTerminos.set($any($event.target).checked)"
+                [attr.aria-invalid]="errorTerminos() ? 'true' : null" aria-describedby="error-terminos">
+            <span>Acepto los términos y condiciones y la política de privacidad <b>*</b></span>
+        </label>
+        @if (errorTerminos()) {
+        <p class="error" id="error-terminos" role="alert">Para confirmar tu pedido debes aceptar los términos y condiciones.</p>
+        }
+
+        <label class="casilla">
+            <input type="checkbox" [checked]="aceptaMarketing()" (change)="aceptaMarketing.set($any($event.target).checked)">
+            <span>Quiero recibir novedades y ofertas de El Jardín de Sele (opcional)</span>
+        </label>
+    </div>
+
+    <p class="aviso-revisar" role="note">
+        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+        <span><b>Revisa bien:</b> después de confirmar no se puede editar tu pedido.</span>
+    </p>
 
     <button type="button" class="btn-confirmar" [disabled]="faltanDatos() || sinEnvio()" (click)="confirmar()">
         Confirmar pedido <i class="bi bi-arrow-right" aria-hidden="true"></i>
