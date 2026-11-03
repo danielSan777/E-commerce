@@ -1,0 +1,111 @@
+<div class="pagina">
+
+    @if (vista(); as v) {
+
+    <div class="cabecera">
+        <h1>Pedido {{ v.order_number }}</h1>
+        @if (vencido()) {
+        <span class="insignia vencido"><i class="bi bi-x-circle" aria-hidden="true"></i> Pedido vencido</span>
+        } @else if (comprobante()) {
+        <span class="insignia revision"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Comprobante en revisión</span>
+        } @else {
+        <span class="insignia pendiente"><i class="bi bi-clock" aria-hidden="true"></i> Pendiente de pago</span>
+        }
+    </div>
+
+    @if (vencido()) {
+
+    <section class="tarjeta">
+        <h2>Este pedido venció</h2>
+        <p>El plazo para pagar terminó y liberamos tu fecha de entrega. Si ya pagaste, escríbenos por WhatsApp con tu
+            comprobante; de lo contrario, puedes volver a comprar.</p>
+        <a class="btn btn-primario" [routerLink]="RUTA_COMPRAR">Volver a comprar</a>
+    </section>
+
+    } @else {
+
+    <!-- Monto y plazo -->
+    <section class="tarjeta destacada">
+        <div class="fila"><span>Monto a transferir</span><strong class="monto">{{ v.total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</strong></div>
+        <p class="limite"><i class="bi bi-clock-history" aria-hidden="true"></i>
+            <span><b>{{ v.deadline_label }}</b> para mantener tu fecha de entrega.</span></p>
+    </section>
+
+    <!-- Cuentas -->
+    <section class="tarjeta" aria-labelledby="t-cuentas">
+        <h2 id="t-cuentas"><i class="bi bi-bank2" aria-hidden="true"></i> Datos para tu transferencia</h2>
+
+        <div class="dato">
+            <span class="etq">Titular:</span><strong>{{ v.bank_accounts[0].holder }}</strong>
+            <button type="button" class="copiar" aria-label="Copiar titular"
+                (click)="copiar('titular', v.bank_accounts[0].holder)">
+                <i class="bi" [class.bi-copy]="copiado() !== 'titular'" [class.bi-check2]="copiado() === 'titular'" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="dato">
+            <span class="etq">Cédula:</span><strong>{{ v.bank_accounts[0].id_number }}</strong>
+            <button type="button" class="copiar" aria-label="Copiar cédula"
+                (click)="copiar('cedula', v.bank_accounts[0].id_number)">
+                <i class="bi" [class.bi-copy]="copiado() !== 'cedula'" [class.bi-check2]="copiado() === 'cedula'" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        @for (c of v.bank_accounts; track c.number) {
+        <div class="cuenta">
+            <div class="cuenta-texto">
+                <strong>{{ c.bank }}</strong>
+                <small>{{ c.type }}</small>
+                <b>{{ c.number }}</b>
+            </div>
+            <button type="button" class="copiar" [attr.aria-label]="'Copiar cuenta de ' + c.bank"
+                (click)="copiar(c.number, c.number)">
+                <i class="bi" [class.bi-copy]="copiado() !== c.number" [class.bi-check2]="copiado() === c.number" aria-hidden="true"></i>
+            </button>
+        </div>
+        }
+    </section>
+
+    <!-- Comprobante -->
+    <section class="tarjeta" aria-labelledby="t-comprobante">
+        <h2 id="t-comprobante"><i class="bi bi-receipt" aria-hidden="true"></i> Tu comprobante</h2>
+
+        @if (v.receipt.uploaded) {
+        <p class="recibido"><i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+            Recibimos tu comprobante<b> {{ comprobante()?.nombre }}</b>. Lo revisaremos y te avisaremos cuando confirmemos el pago.</p>
+        }
+
+        <input #archivo type="file" hidden accept="image/jpeg,image/png,application/pdf" (change)="elegirComprobante($event)">
+        <button type="button" class="btn btn-primario" (click)="archivo.click()">
+            <i class="bi bi-upload" aria-hidden="true"></i>
+            {{ v.receipt.uploaded ? 'Cambiar comprobante' : 'Subir comprobante' }}
+        </button>
+        <small class="ayuda-archivo">JPG, PNG o PDF.</small>
+        @if (errorArchivo()) { <p class="error" role="alert">{{ errorArchivo() }}</p> }
+
+        <p class="simulado" role="note"><i class="bi bi-info-circle" aria-hidden="true"></i>
+            Modo de prueba: el archivo todavía no se envía; la subida real llega con el servidor.</p>
+
+        <a class="btn btn-whatsapp" [href]="v.whatsapp_url" target="_blank" rel="noopener">
+            <i class="bi bi-whatsapp" aria-hidden="true"></i> Enviar comprobante por WhatsApp
+        </a>
+    </section>
+
+    <p class="aviso-edicion" role="note"><i class="bi bi-lock" aria-hidden="true"></i>
+        Tu pedido ya no se puede editar.</p>
+
+    }
+
+    <!-- Ayuda -->
+    <section class="ayuda">
+        <p>¿Tienes alguna duda o novedad con tu pedido? Escríbenos por WhatsApp.</p>
+        <a class="btn btn-borde" [href]="enlaceAyuda()" target="_blank" rel="noopener">
+            <i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir por WhatsApp
+        </a>
+    </section>
+
+    } @else if (cargado()) {
+
+    <app-no-encontrada />
+
+    }
+</div>

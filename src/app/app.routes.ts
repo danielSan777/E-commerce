@@ -65,6 +65,14 @@ export const routes: Routes = [
                         .then(m => m.DetalleProducto)
             },
 
+            // Pedido pendiente de pago por transferencia (enlace privado con token)
+            {
+                path: 'pedido/:token',
+                loadComponent: () =>
+                    import('./checkout/presentacion/paginas/pedido-pendiente/pedido-pendiente')
+                        .then(m => m.PedidoPendiente)
+            },
+
             // Cualquier otra dirección: 404 propio (con estado HTTP 404 en el servidor)
             {
                 path: '**',

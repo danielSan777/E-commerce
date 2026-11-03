@@ -620,9 +620,9 @@ Redirecciones 301: `/catalogo/todos-productos` → `/categorias`; `/catalogo/tod
 **Después de pagar**
 
 - [ ] `/checkout/confirmacion`, sin token: variante tarjeta pagada y variante transferencia (pedido creado, con las mismas instrucciones del pedido pendiente).
-- [ ] **Pedido pendiente** en `/pedido/{token}`: número, total, cuentas bancarias con botón copiar por dato, hora límite exacta ("Paga antes del martes 10, 07:50 para mantener tu fecha"), botón "Subir comprobante", botón de WhatsApp y aviso de que el pedido no se puede editar. Sin seguimiento.
+- [x] **Pedido pendiente** en `/pedido/{token}`: número, total, cuentas bancarias con botón copiar por dato, hora límite exacta ("Paga antes del martes 10, 07:50 para mantener tu fecha"), botón "Subir comprobante", botón de WhatsApp y aviso de que el pedido no se puede editar. Sin seguimiento. *(Hecho en Angular con un mock del contrato del Paso 0 (`PedidoPendienteService`): token largo, plazo en hora de Guayaquil, cuentas con copiar, subir comprobante simulado (JPG, PNG o PDF), WhatsApp, vencido y 404 si el token no coincide. Falta con backend: subida real, límite de intentos y límite de tamaño del archivo (no definido).)*
 - [ ] **Seguimiento** en `/pedido/{token}` cuando el pedido está pagado, con los estados visibles del Paso 0.
-- [ ] Ayuda en pedido pendiente y seguimiento: "¿Tienes alguna duda o novedad con tu pedido? Escríbenos por WhatsApp.", con el mensaje prellenado "Hola 🌿 Te escribo por mi pedido JDS-2048. Tengo la siguiente consulta:".
+- [x] Ayuda en pedido pendiente y seguimiento: "¿Tienes alguna duda o novedad con tu pedido? Escríbenos por WhatsApp.", con el mensaje prellenado "Hola 🌿 Te escribo por mi pedido JDS-2048. Tengo la siguiente consulta:". *(Hecha en el pedido pendiente; falta el seguimiento.)*
 
 **Plantilla de temporada** (la usa `/san-valentin`; las demás se crean desde el panel)
 

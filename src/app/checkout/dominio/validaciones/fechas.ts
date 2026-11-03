@@ -13,3 +13,17 @@ export function textoVentana(inicio: string, fin: string): string {
     if (a.m === b.m) return `Del ${a.d} al ${b.d} de ${MESES[b.m - 1]}`;
     return `Del ${a.d} de ${MESES[a.m - 1]} al ${b.d} de ${MESES[b.m - 1]}`;
 }
+
+/**
+ * "Paga antes del martes 10 de noviembre, 07:50" (hora de Guayaquil).
+ * SOLO la usa el mock: con backend, `deadline_label` llega ya escrito desde Laravel y Angular no formatea el plazo.
+ */
+export function etiquetaLimite(iso: string): string {
+    const partes = new Intl.DateTimeFormat('es-EC', {
+        timeZone: 'America/Guayaquil', weekday: 'long', day: 'numeric', month: 'long',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+    }).formatToParts(new Date(iso));
+
+    const dato = (tipo: string) => partes.find(p => p.type === tipo)?.value ?? '';
+    return `Paga antes del ${dato('weekday')} ${dato('day')} de ${dato('month')}, ${dato('hour')}:${dato('minute')}`;
+}

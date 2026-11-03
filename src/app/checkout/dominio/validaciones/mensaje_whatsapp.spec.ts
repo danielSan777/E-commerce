@@ -17,6 +17,8 @@ function pedidoDePrueba(): Pedido {
 
     return {
         numero: 'JDS-48213',
+        token: 't',
+        comprobante: null,
         fecha: '2026-11-03T16:00:00.000Z',
         metodo: 'transferencia',
         pagoConfirmado: false,

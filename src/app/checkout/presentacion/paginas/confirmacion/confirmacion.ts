@@ -2,6 +2,7 @@ import { Component, afterNextRender, computed, inject, signal } from '@angular/c
 import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
+import { PedidoPendienteService } from '../../../aplicacion/servicios/PedidoPendienteService';
 import { CUENTAS, TITULAR_TRANSFERENCIA } from '../../../dominio/interfaces/datos_transferencia';
 import {
   fechaLarga, mensajeComprobante, urlWhatsapp
@@ -21,6 +22,7 @@ export class Confirmacion {
   readonly CUENTAS = CUENTAS;
 
   private pedidos = inject(PedidoService);
+  private pendientes = inject(PedidoPendienteService);
 
   pedido = this.pedidos.pedido;
 
@@ -29,7 +31,8 @@ export class Confirmacion {
 
   esTransferencia = computed(() => this.pedido()?.metodo === 'transferencia');
   fecha = computed(() => (this.pedido() ? fechaLarga(this.pedido()!.fecha) : ''));
-  limite = computed(() => (this.pedido()?.limitePago ? fechaLarga(this.pedido()!.limitePago!) : ''));
+  // Las mismas instrucciones del pedido pendiente: la etiqueta del plazo viene del contrato (hoy, un mock)
+  limite = computed(() => (this.esTransferencia() ? this.pendientes.desdePedido(this.pedido()!).deadline_label : ''));
   mensaje = computed(() => (this.pedido() ? mensajeComprobante(this.pedido()!) : ''));
   enlaceWhatsapp = computed(() => (this.pedido() ? urlWhatsapp(this.pedido()!) : ''));
 

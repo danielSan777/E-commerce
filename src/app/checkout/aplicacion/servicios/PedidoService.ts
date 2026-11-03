@@ -12,6 +12,7 @@ export type MetodoPago = DatosCheckout['metodoPago'];
 // (y el mensaje de WhatsApp) no dependan del carrito, que se vacía al terminar.
 export interface Pedido {
     numero: string;           // JDS-48213
+    token: string;            // privado y largo: es el enlace /pedido/{token} (con backend lo crea Laravel)
     fecha: string;            // ISO
     metodo: MetodoPago;
     pagoConfirmado: boolean;  // transferencia: false hasta validar el comprobante · PayPhone: ver nota en crear()
@@ -19,6 +20,7 @@ export interface Pedido {
     limitePago: string | null; // ISO; solo transferencia: creación + 12 h
     entrega: EntregaPedido;
     marketing: boolean;       // aceptó recibir novedades (casilla desmarcada por defecto)
+    comprobante: { nombre: string; subidoEn: string } | null;   // transferencia: comprobante subido (hoy simulado)
     items: ItemCarrito[];
     datos: DatosCheckout;
     subtotal: number;
@@ -56,6 +58,8 @@ export class PedidoService {
         const pedido: Pedido = {
             ...nuevo,
             numero: this.generarNumero(),
+            token: this.generarToken(),
+            comprobante: null,
             fecha: ahora.toISOString(),
             limitePago: transferencia
                 ? new Date(ahora.getTime() + HORAS_PLAZO_TRANSFERENCIA * 3600_000).toISOString()
@@ -71,6 +75,17 @@ export class PedidoService {
         this.pedido.set(pedido);
         this.guardar(pedido);
         return pedido;
+    }
+
+    // Pedido pendiente: guarda el nombre del comprobante y la hora. HOY ES SIMULADO: el archivo no sale del navegador;
+    // con backend se sube al disco privado (Paso 14) y Laravel guarda receipt_uploaded_at.
+    adjuntarComprobante(nombre: string): void {
+        const actual = this.pedido();
+        if (!actual) return;
+
+        const pedido: Pedido = { ...actual, comprobante: { nombre, subidoEn: new Date().toISOString() } };
+        this.pedido.set(pedido);
+        this.guardar(pedido);
     }
 
     // Se llama ya en el navegador (después del primer render) para que servidor y cliente pinten lo mismo
@@ -95,6 +110,11 @@ export class PedidoService {
         } catch {
             // sin espacio o bloqueado: el pedido sigue en memoria mientras la página esté abierta
         }
+    }
+
+    // Token largo y no adivinable (64 caracteres)
+    private generarToken(): string {
+        return `${crypto.randomUUID()}${crypto.randomUUID()}`.replaceAll('-', '');
     }
 
     // Número de pedido de ejemplo (JDS-48213). Sin backend no hay un contador real:
