@@ -198,16 +198,19 @@
     <!-- ===== Casillas ===== -->
     <div class="casillas">
         <label class="casilla">
-            <input type="checkbox" [checked]="aceptaTerminos()" (change)="aceptaTerminos.set($any($event.target).checked)"
+            <input type="checkbox" [checked]="aceptaTerminos()"
+                (change)="aceptaTerminos.set($any($event.target).checked)"
                 [attr.aria-invalid]="errorTerminos() ? 'true' : null" aria-describedby="error-terminos">
             <span>Acepto los términos y condiciones y la política de privacidad <b>*</b></span>
         </label>
         @if (errorTerminos()) {
-        <p class="error" id="error-terminos" role="alert">Para confirmar tu pedido debes aceptar los términos y condiciones.</p>
+        <p class="error" id="error-terminos" role="alert">Para confirmar tu pedido debes aceptar los términos y
+            condiciones.</p>
         }
 
         <label class="casilla">
-            <input type="checkbox" [checked]="aceptaMarketing()" (change)="aceptaMarketing.set($any($event.target).checked)">
+            <input type="checkbox" [checked]="aceptaMarketing()"
+                (change)="aceptaMarketing.set($any($event.target).checked)">
             <span>Quiero recibir novedades y ofertas de El Jardín de Sele (opcional)</span>
         </label>
     </div>
