@@ -1,7 +1,7 @@
 import { Component, PLATFORM_ID, computed, effect, inject, input, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import {
-  PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE, anchoEstimadoA100, tamanoLetra
+  COLOR_DORADO_PLACA, PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE, anchoEstimadoA100, tamanoLetra
 } from '../../../personalizador/dominio/placa';
 
 // Vista previa del nombre en la placa: SVG incrustado (no <img> ni canvas), Lobster, centrado con
@@ -18,7 +18,7 @@ import {
 export class TextoPlaca {
 
   texto = input<string>('');
-  color = input<string>('#000000');
+  color = input<string>(COLOR_DORADO_PLACA);
 
   readonly ancho = PLACA_CAJA_ANCHO;
   readonly alto = PLACA_CAJA_ALTO;

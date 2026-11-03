@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { Accesorio, AccesorioColocado } from '../../../dominio/Accesorios';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TextoPlaca } from '../../../../shared/componentes/texto-placa/texto-placa';
-import { PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE, tamanoLetra } from '../../../dominio/placa';
+import { COLOR_DORADO_PLACA, PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE, tamanoLetra } from '../../../dominio/placa';
 import { ExcepcionGuardada, Geometria, UbicacionGuardada } from '../../../dominio/ubicaciones';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 // AJUSTA la ruta según donde dejes carrito.service.ts
@@ -1130,7 +1130,7 @@ export class Personalizador implements OnDestroy {
       c.font = `${letra}px Lobster, cursive`;
       c.textAlign = 'center';
       c.textBaseline = 'alphabetic';
-      c.fillStyle = '#000';
+      c.fillStyle = COLOR_DORADO_PLACA;
       c.fillText(texto, PLACA_CAJA_ANCHO / 2, PLACA_LINEA_BASE);
       return lienzo;
     }

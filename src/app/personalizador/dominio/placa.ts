@@ -13,6 +13,8 @@ export const PLACA_LINEA_BASE = 38;      // línea base fija
 const MARGEN = 10;
 
 // ===== EDITABLES =====
+// Dorado de la placa: tomado de la foto de referencia que envió Josué (color sólido). Si entrega un HEX oficial, se cambia aquí.
+export const COLOR_DORADO_PLACA = '#C7B084';
 const PX_REFERENCIA_12 = 28;             // píxeles del SVG que equivalen a "12" de impresión
 const MAX_NOMBRE = 30;
 
