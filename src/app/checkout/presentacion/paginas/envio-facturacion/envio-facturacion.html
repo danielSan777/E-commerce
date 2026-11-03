@@ -108,7 +108,7 @@
                 </div>
 
                 <div class="fila">
-                    <!-- Provincia (viene de la API) -->
+                    <!-- Provincia (lista del INEC) -->
                     <div class="col">
                         <div class="campo combo">
                             <i class="bi bi-geo-alt ico" aria-hidden="true"></i>
@@ -124,23 +124,12 @@
 
                             @if (abierta() === 'provincia') {
                             <ul class="lista" id="lista-provincia" role="listbox">
-                                @if (cargandoProvincias()) {
-                                <li class="aviso">Cargando provincias…</li>
-                                } @else if (errorProvincias()) {
-                                <li class="aviso">
-                                    No se pudieron cargar las provincias.
-                                    <button type="button" class="reintentar"
-                                        (mousedown)="$event.preventDefault(); cargarProvincias()">Reintentar</button>
-                                </li>
-                                } @else {
-                                @for (p of opcionesProvincia(); track p; let i = $index) {
+                                @for (x of opcionesProvincia(); track x; let i = $index) {
                                 <li class="opcion" role="option" [class.activa]="i === activo()"
-                                    [class.elegida]="p === datos().provincia"
-                                    [attr.aria-selected]="p === datos().provincia"
-                                    (mousedown)="$event.preventDefault(); elegirProvincia(p)">{{ p }}</li>
+                                    [class.elegida]="x === datos().provincia" [attr.aria-selected]="x === datos().provincia"
+                                    (mousedown)="$event.preventDefault(); elegirProvincia(x)">{{ x }}</li>
                                 } @empty {
                                 <li class="aviso">Sin resultados</li>
-                                }
                                 }
                             </ul>
                             }
@@ -148,43 +137,33 @@
                         @if (verError('provincia'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
                     </div>
 
-                    <!-- Ciudad (depende de la provincia; se puede buscar escribiendo) -->
+                    <!-- Cantón (depende de la provincia; se puede buscar escribiendo) -->
                     <div class="col">
                         <div class="campo combo" [class.deshabilitado]="!datos().provincia">
                             <i class="bi bi-buildings ico" aria-hidden="true"></i>
-                            <input id="ciudad" type="text" role="combobox" autocomplete="off" placeholder=" "
-                                aria-label="Ciudad" aria-autocomplete="list" aria-controls="lista-ciudad"
-                                [attr.aria-expanded]="abierta() === 'ciudad'" [disabled]="!datos().provincia"
-                                [value]="textoCampo('ciudad')" (focus)="abrir('ciudad')" (click)="abrir('ciudad')"
-                                (input)="escribirBusqueda('ciudad', $any($event.target).value)"
-                                (keydown)="teclado($event, 'ciudad')" (blur)="cerrar('ciudad')"
-                                [attr.aria-invalid]="verError('ciudad') ? 'true' : null">
-                            <span class="ph">Ciudad <b>*</b></span>
+                            <input id="canton" type="text" role="combobox" autocomplete="off" placeholder=" "
+                                aria-label="Cantón" aria-autocomplete="list" aria-controls="lista-canton"
+                                [attr.aria-expanded]="abierta() === 'canton'" [disabled]="!datos().provincia"
+                                [value]="textoCampo('canton')" (focus)="abrir('canton')" (click)="abrir('canton')"
+                                (input)="escribirBusqueda('canton', $any($event.target).value)"
+                                (keydown)="teclado($event, 'canton')" (blur)="cerrar('canton')"
+                                [attr.aria-invalid]="verError('canton') ? 'true' : null">
+                            <span class="ph">Cantón <b>*</b></span>
                             <i class="bi bi-chevron-down flecha" aria-hidden="true"></i>
 
-                            @if (abierta() === 'ciudad') {
-                            <ul class="lista" id="lista-ciudad" role="listbox">
-                                @if (cargandoCiudades()) {
-                                <li class="aviso">Cargando ciudades…</li>
-                                } @else if (errorCiudades()) {
-                                <li class="aviso">
-                                    No se pudieron cargar las ciudades.
-                                    <button type="button" class="reintentar"
-                                        (mousedown)="$event.preventDefault(); reintentarCiudades()">Reintentar</button>
-                                </li>
-                                } @else {
-                                @for (c of opcionesCiudad(); track c; let i = $index) {
+                            @if (abierta() === 'canton') {
+                            <ul class="lista" id="lista-canton" role="listbox">
+                                @for (x of opcionesCanton(); track x; let i = $index) {
                                 <li class="opcion" role="option" [class.activa]="i === activo()"
-                                    [class.elegida]="c === datos().ciudad" [attr.aria-selected]="c === datos().ciudad"
-                                    (mousedown)="$event.preventDefault(); elegirCiudad(c)">{{ c }}</li>
+                                    [class.elegida]="x === datos().canton" [attr.aria-selected]="x === datos().canton"
+                                    (mousedown)="$event.preventDefault(); elegirCanton(x)">{{ x }}</li>
                                 } @empty {
                                 <li class="aviso">Sin resultados</li>
-                                }
                                 }
                             </ul>
                             }
                         </div>
-                        @if (verError('ciudad'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+                        @if (verError('canton'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
                     </div>
                 </div>
 
@@ -297,7 +276,7 @@
                     </div>
 
                     <div class="fila">
-                        <!-- Provincia (viene de la API) -->
+                        <!-- Provincia (lista del INEC) -->
                         <div class="col">
                             <div class="campo combo">
                                 <i class="bi bi-geo-alt ico" aria-hidden="true"></i>
@@ -313,157 +292,100 @@
 
                                 @if (abierta() === 'fProvincia') {
                                 <ul class="lista" id="lista-fProvincia" role="listbox">
-                                    @if (cargandoProvincias()) {
-                                    <li class="aviso">Cargando provincias…</li>
-                                    } @else if (errorProvincias()) {
-                                    <li class="aviso">
-                                        No se pudieron cargar las provincias.
-                                        <button type="button" class="reintentar"
-                                            (mousedown)="$event.preventDefault(); cargarProvincias()">Reintentar</button>
-                                    </li>
-                                    } @else {
-                                    @for (p of opcionesFProvincia(); track p; let i = $index) {
+                                    @for (x of opcionesFProvincia(); track x; let i = $index) {
                                     <li class="opcion" role="option" [class.activa]="i === activo()"
-                                        [class.elegida]="p === datos().fProvincia"
-                                        [attr.aria-selected]="p === datos().fProvincia"
-                                        (mousedown)="$event.preventDefault(); elegirFProvincia(p)">{{ p }}</li>
+                                        [class.elegida]="x === datos().fProvincia" [attr.aria-selected]="x === datos().fProvincia"
+                                        (mousedown)="$event.preventDefault(); elegirFProvincia(x)">{{ x }}</li>
                                     } @empty {
                                     <li class="aviso">Sin resultados</li>
                                     }
-                                    }
                                 </ul>
-                                }
-                            </div>
-                            @if (verError('fProvincia'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
-                        </div>
-
-                        <!-- Ciudad (depende de la provincia; se puede buscar escribiendo) -->
-                        <div class="col">
-                            <div class="campo combo" [class.deshabilitado]="!datos().fProvincia">
-                                <i class="bi bi-buildings ico" aria-hidden="true"></i>
-                                <input id="fCiudad" type="text" role="combobox" autocomplete="off" placeholder=" "
-                                    aria-label="Ciudad" aria-autocomplete="list" aria-controls="lista-fCiudad"
-                                    [attr.aria-expanded]="abierta() === 'fCiudad'" [disabled]="!datos().fProvincia"
-                                    [value]="textoCampo('fCiudad')" (focus)="abrir('fCiudad')"
-                                    (click)="abrir('fCiudad')"
-                                    (input)="escribirBusqueda('fCiudad', $any($event.target).value)"
-                                    (keydown)="teclado($event, 'fCiudad')" (blur)="cerrar('fCiudad')"
-                                    [attr.aria-invalid]="verError('fCiudad') ? 'true' : null">
-                                <span class="ph">Ciudad <b>*</b></span>
-                                <i class="bi bi-chevron-down flecha" aria-hidden="true"></i>
-
-                                @if (abierta() === 'fCiudad') {
-                                <ul class="lista" id="lista-fCiudad" role="listbox">
-                                    @if (cargandoFCiudades()) {
-                                    <li class="aviso">Cargando ciudades…</li>
-                                    } @else if (errorFCiudades()) {
-                                    <li class="aviso">
-                                        No se pudieron cargar las ciudades.
-                                        <button type="button" class="reintentar"
-                                            (mousedown)="$event.preventDefault(); reintentarFCiudades()">Reintentar</button>
-                                    </li>
-                                    } @else {
-                                    @for (c of opcionesFCiudad(); track c; let i = $index) {
-                                    <li class="opcion" role="option" [class.activa]="i === activo()"
-                                        [class.elegida]="c === datos().fCiudad"
-                                        [attr.aria-selected]="c === datos().fCiudad"
-                                        (mousedown)="$event.preventDefault(); elegirFCiudad(c)">{{ c }}</li>
-                                    } @empty {
-                                    <li class="aviso">Sin resultados</li>
-                                    }
-                                    }
-                                </ul>
-                                }
-                            </div>
-                            @if (verError('fCiudad'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
-                        </div>
-                    </div>
-
-                    <div class="campo">
-                        <i class="bi bi-house-door ico" aria-hidden="true"></i>
-                        <input id="fDireccion" type="text" autocomplete="off" placeholder=" " aria-label="Dirección"
-                            [value]="datos().fDireccion" (input)="escribir('fDireccion', $any($event.target).value)"
-                            (blur)="tocar('fDireccion')" [attr.aria-invalid]="verError('fDireccion') ? 'true' : null">
-                        <span class="ph">Dirección (calle, número, urbanización, etc.) <b>*</b></span>
-                    </div>
-                    @if (verError('fDireccion'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
-                </div>
-                }
-            </section>
-
-            <!-- ===== Número de contacto ===== -->
-            <section class="tarjeta" aria-labelledby="t-contacto">
-                <h2 id="t-contacto"><i class="bi bi-whatsapp whatsapp" aria-hidden="true"></i> Número de contacto</h2>
-                <p class="nota">Lo usaremos para pedirte cualquier información que necesitemos sobre tu pedido
-                    (dedicatoria, marco, pago, etc.).</p>
-
-                <label class="opcion-radio plana" [class.marcada]="datos().contacto === 'mismo'">
-                    <input type="radio" name="contacto" value="mismo" [checked]="datos().contacto === 'mismo'"
-                        (change)="escribir('contacto', 'mismo')">
-                    <span class="punto" aria-hidden="true"></span>
-                    <span class="radio-texto">
-                        <strong>Usar el mismo número de la información de envío</strong>
-                        <small class="verde">Usaremos el número que ingresaste arriba.</small>
-                    </span>
-                </label>
-
-                <label class="opcion-radio plana" [class.marcada]="datos().contacto === 'otro'">
-                    <input type="radio" name="contacto" value="otro" [checked]="datos().contacto === 'otro'"
-                        (change)="escribir('contacto', 'otro')">
-                    <span class="punto" aria-hidden="true"></span>
-                    <span class="radio-texto"><strong>Usar otro número</strong></span>
-                </label>
-
-                @if (datos().contacto === 'otro') {
-                <div class="telefono">
-                    <div class="pais combo">
-                        <button type="button" class="pais-btn" aria-haspopup="listbox"
-                            [attr.aria-expanded]="abierta() === 'pais'" aria-label="País del número"
-                            (mousedown)="$event.preventDefault()" (click)="alternarPais()">
-                            @if (paisContacto().bandera) {
-                            <img class="bandera" [src]="paisContacto().bandera" alt="" width="22" height="16">
-                            } @else {
-                            <span class="bandera bandera-ec" aria-hidden="true"></span>
                             }
-                            <span>{{ paisContacto().prefijo }}</span>
-                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
-                        </button>
+                        </div>
+                        @if (verError('fProvincia'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+                    </div>
 
-                        @if (abierta() === 'pais') {
-                        <div class="lista lista-pais">
-                            <input class="buscar-pais" type="text" placeholder="Buscar país o código"
-                                aria-label="Buscar país" autocomplete="off" [value]="consulta()"
-                                (input)="escribirBusqueda('pais', $any($event.target).value)"
-                                (keydown)="teclado($event, 'pais')" (blur)="cerrar('pais')">
-                            <ul role="listbox">
-                                @for (p of opcionesPais(); track p.codigo; let i = $index) {
+                    <!-- Cantón (depende de la provincia; se puede buscar escribiendo) -->
+                    <div class="col">
+                        <div class="campo combo" [class.deshabilitado]="!datos().fProvincia">
+                            <i class="bi bi-buildings ico" aria-hidden="true"></i>
+                            <input id="fCanton" type="text" role="combobox" autocomplete="off" placeholder=" "
+                                aria-label="Cantón" aria-autocomplete="list" aria-controls="lista-fCanton"
+                                [attr.aria-expanded]="abierta() === 'fCanton'" [disabled]="!datos().fProvincia"
+                                [value]="textoCampo('fCanton')" (focus)="abrir('fCanton')"
+                                (click)="abrir('fCanton')"
+                                (input)="escribirBusqueda('fCanton', $any($event.target).value)"
+                                (keydown)="teclado($event, 'fCanton')" (blur)="cerrar('fCanton')"
+                                [attr.aria-invalid]="verError('fCanton') ? 'true' : null">
+                            <span class="ph">Cantón <b>*</b></span>
+                            <i class="bi bi-chevron-down flecha" aria-hidden="true"></i>
+
+                            @if (abierta() === 'fCanton') {
+                            <ul class="lista" id="lista-fCanton" role="listbox">
+                                @for (x of opcionesFCanton(); track x; let i = $index) {
                                 <li class="opcion" role="option" [class.activa]="i === activo()"
-                                    [class.elegida]="p.codigo === datos().contactoPais"
-                                    (mousedown)="$event.preventDefault(); elegirPais(p)">
-                                    @if (p.bandera) {
-                                    <img class="bandera" [src]="p.bandera" alt="" width="22" height="16" loading="lazy">
-                                    } @else {
-                                    <span class="bandera bandera-ec" aria-hidden="true"></span>
-                                    }
-                                    <span class="pais-nombre">{{ p.nombre }}</span>
-                                    <span class="pais-prefijo">{{ p.prefijo }}</span>
-                                </li>
+                                    [class.elegida]="x === datos().fCanton" [attr.aria-selected]="x === datos().fCanton"
+                                    (mousedown)="$event.preventDefault(); elegirFCanton(x)">{{ x }}</li>
                                 } @empty {
                                 <li class="aviso">Sin resultados</li>
                                 }
                             </ul>
+                            }
                         </div>
-                        }
-                    </div>
-
-                    <div class="campo tel">
-                        <input id="telefono" type="tel" inputmode="tel" autocomplete="tel-national"
-                            placeholder="Ej. 099 123 4567" aria-label="Número de contacto"
-                            [value]="datos().contactoNumero"
-                            (input)="escribirNumero('contactoNumero', $any($event.target))" (blur)="tocar('telefono')"
-                            [attr.aria-invalid]="verError('telefono') ? 'true' : null">
+                        @if (verError('fCanton'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
                     </div>
                 </div>
+
+                <div class="campo">
+                    <i class="bi bi-house-door ico" aria-hidden="true"></i>
+                    <input id="fDireccion" type="text" autocomplete="off" placeholder=" " aria-label="Dirección"
+                        [value]="datos().fDireccion" (input)="escribir('fDireccion', $any($event.target).value)"
+                        (blur)="tocar('fDireccion')" [attr.aria-invalid]="verError('fDireccion') ? 'true' : null">
+                    <span class="ph">Dirección (calle, número, urbanización, etc.) <b>*</b></span>
+                </div>
+                @if (verError('fDireccion'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
+            </div>
+            }
+        </section>
+
+        <!-- ===== Número de contacto ===== -->
+        <section class="tarjeta" aria-labelledby="t-contacto">
+            <h2 id="t-contacto"><i class="bi bi-whatsapp whatsapp" aria-hidden="true"></i> Número de contacto</h2>
+            <p class="nota">Lo usaremos para pedirte cualquier información que necesitemos sobre tu pedido
+                (dedicatoria, marco, pago, etc.).</p>
+
+            <label class="opcion-radio plana" [class.marcada]="datos().contacto === 'mismo'">
+                <input type="radio" name="contacto" value="mismo" [checked]="datos().contacto === 'mismo'"
+                    (change)="escribir('contacto', 'mismo')">
+                <span class="punto" aria-hidden="true"></span>
+                <span class="radio-texto">
+                    <strong>Usar el mismo número de la información de envío</strong>
+                    <small class="verde">Usaremos el número que ingresaste arriba.</small>
+                </span>
+            </label>
+
+            <label class="opcion-radio plana" [class.marcada]="datos().contacto === 'otro'">
+                <input type="radio" name="contacto" value="otro" [checked]="datos().contacto === 'otro'"
+                    (change)="escribir('contacto', 'otro')">
+                <span class="punto" aria-hidden="true"></span>
+                <span class="radio-texto"><strong>Usar otro número</strong></span>
+            </label>
+
+            @if (datos().contacto === 'otro') {
+            <div class="telefono">
+                <!-- Solo se envía a Ecuador: el código es fijo -->
+                <span class="pais-btn prefijo" aria-label="Código de país +593">
+                    <span class="bandera bandera-ec" aria-hidden="true"></span>
+                    <span>+593</span>
+                </span>
+
+                <div class="campo tel">
+                    <input id="telefono" type="tel" inputmode="tel" autocomplete="tel-national"
+                        placeholder="Ej. 099 123 4567" aria-label="Número de contacto" [value]="datos().contactoNumero"
+                        (input)="escribirNumero('contactoNumero', $any($event.target))" (blur)="tocar('telefono')"
+                        [attr.aria-invalid]="verError('telefono') ? 'true' : null">
+                </div>
+            </div>
                 @if (verError('telefono'); as msg) { <p class="error" role="alert">{{ msg }}</p> }
                 }
             </section>

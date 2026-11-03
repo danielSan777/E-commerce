@@ -4,12 +4,13 @@ import { Router, RouterLink } from '@angular/router';
 import { CarritoService } from '../../../../carrito/aplicacion/servicios/CarritoService';
 import { CheckoutService, DatosCheckout } from '../../../aplicacion/servicios/CheckoutService';
 import { UbicacionesService } from '../../../aplicacion/servicios/UbicacionesService';
-import { ECUADOR, Pais, PaisesService } from '../../../aplicacion/servicios/PaisesService';
 import {
   correoValido, documentoValido, normalizar, soloDigitos, telefonoValido
 } from '../../../dominio/validaciones/validaciones';
+import { MENSAJE_GALAPAGOS } from '../../../dominio/validaciones/envio';
+import { buscarProvincia } from '../../../dominio/ubicaciones';
 
-type Lista = 'provincia' | 'ciudad' | 'pais' | 'fProvincia' | 'fCiudad';
+type Lista = 'provincia' | 'canton' | 'fProvincia' | 'fCanton';
 
 @Component({
   selector: 'app-envio-facturacion',
@@ -26,50 +27,26 @@ export class EnvioFacturacion {
 
   private checkout = inject(CheckoutService);
   private ubicaciones = inject(UbicacionesService);
-  private paisesApi = inject(PaisesService);
   private router = inject(Router);
   private document = inject(DOCUMENT);
 
   datos = this.checkout.datos;
   cantidadCarrito = inject(CarritoService).cantidad;
 
-  // ----- Provincias y ciudades (API) -----
-  provincias = signal<string[]>([]);
-  ciudades = signal<string[]>([]);
-  cargandoProvincias = signal(false);
-  cargandoCiudades = signal(false);
-  errorProvincias = signal(false);
-  errorCiudades = signal(false);
-  private pedidoCiudades = 0; // para ignorar respuestas viejas si el cliente cambia de provincia rápido
-
-  // Ciudades de la provincia de facturación (otros datos de facturación)
-  fCiudades = signal<string[]>([]);
-  cargandoFCiudades = signal(false);
-  errorFCiudades = signal(false);
-  private pedidoFCiudades = 0;
-
-  // ----- Países del número de contacto (API) -----
-  paises = signal<Pais[]>([ECUADOR]);
-
-  paisContacto = computed(() =>
-    this.paises().find(p => p.codigo === this.datos().contactoPais) ?? ECUADOR
-  );
+  // ----- Provincias y cantones (archivo del INEC dentro del proyecto) -----
+  provincias = this.ubicaciones.provincias();
+  cantones = computed(() => this.ubicaciones.cantones(this.datos().provincia));
+  fCantones = computed(() => this.ubicaciones.cantones(this.datos().fProvincia));
 
   // ----- Listas desplegables con buscador -----
   abierta = signal<Lista | null>(null);
   consulta = signal('');
   activo = signal(0);
 
-  opcionesProvincia = computed(() => this.filtrar(this.provincias(), this.consulta()));
-  opcionesCiudad = computed(() => this.filtrar(this.ciudades(), this.consulta()));
-  opcionesFProvincia = computed(() => this.filtrar(this.provincias(), this.consulta()));
-  opcionesFCiudad = computed(() => this.filtrar(this.fCiudades(), this.consulta()));
-  opcionesPais = computed(() => {
-    const q = normalizar(this.consulta().trim().replace(/^\+/, ''));
-    const todos = this.paises();
-    if (!q) return todos;
-    return todos.filter(p => normalizar(p.nombre).includes(q) || p.prefijo.replace('+', '').startsWith(q));
-  });
+  opcionesProvincia = computed(() => this.filtrar(this.provincias, this.consulta()));
+  opcionesCanton = computed(() => this.filtrar(this.cantones(), this.consulta()));
+  opcionesFProvincia = computed(() => this.filtrar(this.provincias, this.consulta()));
+  opcionesFCanton = computed(() => this.filtrar(this.fCantones(), this.consulta()));
 
   // ----- Validación -----
   intento = signal(false);
@@ -88,7 +65,8 @@ export class EnvioFacturacion {
     if (!telefonoValido(d.celular, '+593')) e['celular'] = 'Escribe un celular válido. Ej. 099 123 4567';
     if (!correoValido(d.correo)) e['correo'] = 'Ingresa un correo válido';
     if (!d.provincia) e['provincia'] = 'Elige una provincia';
-    if (!d.ciudad) e['ciudad'] = 'Elige una ciudad';
+    else if (buscarProvincia(d.provincia)?.codigo === '20') e['provincia'] = MENSAJE_GALAPAGOS;
+    if (!d.canton) e['canton'] = 'Elige un cantón';
     if (d.direccion.trim().length < 5) e['direccion'] = 'Escribe tu dirección completa';
 
     // Otros datos de facturación: los mismos campos del envío, menos la referencia
@@ -102,14 +80,12 @@ export class EnvioFacturacion {
       if (!telefonoValido(d.fCelular, '+593')) e['fCelular'] = 'Escribe un celular válido. Ej. 099 123 4567';
       if (!correoValido(d.fCorreo)) e['fCorreo'] = 'Ingresa un correo válido';
       if (!d.fProvincia) e['fProvincia'] = 'Elige una provincia';
-      if (!d.fCiudad) e['fCiudad'] = 'Elige una ciudad';
+      if (!d.fCanton) e['fCanton'] = 'Elige un cantón';
       if (d.fDireccion.trim().length < 5) e['fDireccion'] = 'Escribe la dirección de facturación';
     }
 
-    if (d.contacto === 'otro' && !telefonoValido(d.contactoNumero, this.paisContacto().prefijo)) {
-      e['telefono'] = this.paisContacto().prefijo === '+593'
-        ? 'Escribe un celular válido. Ej. 099 123 4567'
-        : 'Escribe un número válido';
+    if (d.contacto === 'otro' && !telefonoValido(d.contactoNumero, '+593')) {
+      e['telefono'] = 'Escribe un celular válido. Ej. 099 123 4567';
     }
 
     return e;
@@ -119,14 +95,6 @@ export class EnvioFacturacion {
     // Solo en el navegador: así el servidor y el cliente pintan lo mismo en el primer render
     afterNextRender(() => {
       this.checkout.restaurar();
-
-      this.cargarProvincias();
-      if (this.datos().provincia) this.cargarCiudades(this.datos().provincia);
-      if (this.datos().fProvincia) this.cargarFCiudades(this.datos().fProvincia);
-
-      this.paisesApi.paises()
-        .then(lista => this.paises.set(lista))
-        .catch(() => this.paises.set([ECUADOR])); // sin internet: queda solo Ecuador (+593)
     });
   }
 
@@ -166,55 +134,10 @@ export class EnvioFacturacion {
     return this.intento() || this.tocados().has(campo) ? (this.errores()[campo] ?? '') : '';
   }
 
-  // ===== API: provincias y ciudades =====
-  cargarProvincias(): void {
-    this.cargandoProvincias.set(true);
-    this.errorProvincias.set(false);
-
-    this.ubicaciones.provincias()
-      .then(lista => this.provincias.set(lista))
-      .catch(() => this.errorProvincias.set(true))
-      .finally(() => this.cargandoProvincias.set(false));
-  }
-
-  cargarCiudades(provincia: string): void {
-    const pedido = ++this.pedidoCiudades;
-    this.ciudades.set([]);
-    this.cargandoCiudades.set(true);
-    this.errorCiudades.set(false);
-
-    this.ubicaciones.ciudades(provincia)
-      .then(lista => { if (pedido === this.pedidoCiudades) this.ciudades.set(lista); })
-      .catch(() => { if (pedido === this.pedidoCiudades) this.errorCiudades.set(true); })
-      .finally(() => { if (pedido === this.pedidoCiudades) this.cargandoCiudades.set(false); });
-  }
-
-  cargarFCiudades(provincia: string): void {
-    const pedido = ++this.pedidoFCiudades;
-    this.fCiudades.set([]);
-    this.cargandoFCiudades.set(true);
-    this.errorFCiudades.set(false);
-
-    this.ubicaciones.ciudades(provincia)
-      .then(lista => { if (pedido === this.pedidoFCiudades) this.fCiudades.set(lista); })
-      .catch(() => { if (pedido === this.pedidoFCiudades) this.errorFCiudades.set(true); })
-      .finally(() => { if (pedido === this.pedidoFCiudades) this.cargandoFCiudades.set(false); });
-  }
-
-  reintentarFCiudades(): void {
-    const provincia = this.datos().fProvincia;
-    if (provincia) this.cargarFCiudades(provincia);
-  }
-
-  reintentarCiudades(): void {
-    const provincia = this.datos().provincia;
-    if (provincia) this.cargarCiudades(provincia);
-  }
-
   // ===== Listas desplegables =====
   abrir(lista: Lista): void {
-    if (lista === 'ciudad' && !this.datos().provincia) return;
-    if (lista === 'fCiudad' && !this.datos().fProvincia) return;
+    if (lista === 'canton' && !this.datos().provincia) return;
+    if (lista === 'fCanton' && !this.datos().fProvincia) return;
     this.abierta.set(lista);
     this.consulta.set('');
     this.activo.set(0);
@@ -222,17 +145,7 @@ export class EnvioFacturacion {
 
   cerrar(lista: Lista): void {
     if (this.abierta() === lista) this.abierta.set(null);
-    this.tocar(lista === 'pais' ? 'telefono' : lista);
-  }
-
-  // Botón del código telefónico: abre la lista y deja el cursor en el buscador
-  alternarPais(): void {
-    if (this.abierta() === 'pais') {
-      this.cerrar('pais');
-      return;
-    }
-    this.abrir('pais');
-    setTimeout(() => this.document.querySelector<HTMLInputElement>('.buscar-pais')?.focus());
+    this.tocar(lista);
   }
 
   escribirBusqueda(lista: Lista, texto: string): void {
@@ -242,51 +155,39 @@ export class EnvioFacturacion {
   }
 
   // Lo que se ve en el campo: lo que se está buscando o, si no se abrió, lo ya elegido
-  textoCampo(lista: 'provincia' | 'ciudad' | 'fProvincia' | 'fCiudad'): string {
+  textoCampo(lista: Lista): string {
     return this.abierta() === lista ? this.consulta() : this.datos()[lista];
   }
 
-  opciones(lista: Lista): readonly string[] | readonly Pais[] {
+  opciones(lista: Lista): readonly string[] {
     return lista === 'provincia' ? this.opcionesProvincia()
-      : lista === 'ciudad' ? this.opcionesCiudad()
+      : lista === 'canton' ? this.opcionesCanton()
         : lista === 'fProvincia' ? this.opcionesFProvincia()
-          : lista === 'fCiudad' ? this.opcionesFCiudad()
-            : this.opcionesPais();
+          : this.opcionesFCanton();
   }
 
   elegirProvincia(nombre: string): void {
-    if (nombre !== this.datos().provincia) {
-      this.checkout.actualizar({ provincia: nombre, ciudad: '' });
-      this.cargarCiudades(nombre);
-    }
+    if (nombre !== this.datos().provincia) this.checkout.actualizar({ provincia: nombre, canton: '' });
     this.abierta.set(null);
     this.tocar('provincia');
   }
 
-  elegirCiudad(nombre: string): void {
-    this.checkout.actualizar({ ciudad: nombre });
+  elegirCanton(nombre: string): void {
+    this.checkout.actualizar({ canton: nombre });
     this.abierta.set(null);
-    this.tocar('ciudad');
+    this.tocar('canton');
   }
 
   elegirFProvincia(nombre: string): void {
-    if (nombre !== this.datos().fProvincia) {
-      this.checkout.actualizar({ fProvincia: nombre, fCiudad: '' });
-      this.cargarFCiudades(nombre);
-    }
+    if (nombre !== this.datos().fProvincia) this.checkout.actualizar({ fProvincia: nombre, fCanton: '' });
     this.abierta.set(null);
     this.tocar('fProvincia');
   }
 
-  elegirFCiudad(nombre: string): void {
-    this.checkout.actualizar({ fCiudad: nombre });
+  elegirFCanton(nombre: string): void {
+    this.checkout.actualizar({ fCanton: nombre });
     this.abierta.set(null);
-    this.tocar('fCiudad');
-  }
-
-  elegirPais(pais: Pais): void {
-    this.checkout.actualizar({ contactoPais: pais.codigo });
-    this.abierta.set(null);
+    this.tocar('fCanton');
   }
 
   teclado(evento: KeyboardEvent, lista: Lista): void {
@@ -309,11 +210,10 @@ export class EnvioFacturacion {
         evento.preventDefault();
         const opcion = this.opciones(lista)[this.activo()];
         if (opcion === undefined) return;
-        if (lista === 'provincia') this.elegirProvincia(opcion as string);
-        else if (lista === 'ciudad') this.elegirCiudad(opcion as string);
-        else if (lista === 'fProvincia') this.elegirFProvincia(opcion as string);
-        else if (lista === 'fCiudad') this.elegirFCiudad(opcion as string);
-        else this.elegirPais(opcion as Pais);
+        if (lista === 'provincia') this.elegirProvincia(opcion);
+        else if (lista === 'canton') this.elegirCanton(opcion);
+        else if (lista === 'fProvincia') this.elegirFProvincia(opcion);
+        else this.elegirFCanton(opcion);
         break;
       }
       case 'Escape':

@@ -23,10 +23,10 @@ function pedidoDePrueba(): Pedido {
         items: [item],
         datos: {
             nombre: 'María Pérez', tipoDoc: 'cedula', cedula: '0954091989', celular: '0991234567',
-            correo: 'maria@correo.com', provincia: 'Guayas', ciudad: 'Durán', direccion: 'Av. Principal 123', referencia: '',
+            correo: 'maria@correo.com', provincia: 'Guayas', canton: 'Durán', direccion: 'Av. Principal 123', referencia: '',
             facturacion: 'mismos',
-            fNombre: '', fTipoDoc: 'cedula', fCedula: '', fCelular: '', fCorreo: '', fProvincia: '', fCiudad: '', fDireccion: '',
-            contacto: 'mismo', contactoPais: 'EC', contactoNumero: '',
+            fNombre: '', fTipoDoc: 'cedula', fCedula: '', fCelular: '', fCorreo: '', fProvincia: '', fCanton: '', fDireccion: '',
+            contacto: 'mismo', contactoNumero: '',
             metodoPago: 'transferencia',
         },
         subtotal: 25, envio: 3.5, envioGratis: false, recargo: 0, total: 28.5,

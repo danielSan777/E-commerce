@@ -10,7 +10,7 @@ export interface DatosCheckout {
     celular: string;
     correo: string;
     provincia: string;
-    ciudad: string;
+    canton: string;
     direccion: string;
     referencia: string;
 
@@ -23,12 +23,11 @@ export interface DatosCheckout {
     fCelular: string;
     fCorreo: string;
     fProvincia: string;
-    fCiudad: string;
+    fCanton: string;
     fDireccion: string;
 
     // Número de contacto
     contacto: 'mismo' | 'otro';
-    contactoPais: string;    // código ISO del país (EC, CO, US...)
     contactoNumero: string;
 
     // Pantalla de pago
@@ -36,10 +35,10 @@ export interface DatosCheckout {
 }
 
 const VACIO: DatosCheckout = {
-    nombre: '', tipoDoc: 'cedula', cedula: '', celular: '', correo: '', provincia: '', ciudad: '', direccion: '', referencia: '',
+    nombre: '', tipoDoc: 'cedula', cedula: '', celular: '', correo: '', provincia: '', canton: '', direccion: '', referencia: '',
     facturacion: 'mismos',
-    fNombre: '', fTipoDoc: 'cedula', fCedula: '', fCelular: '', fCorreo: '', fProvincia: '', fCiudad: '', fDireccion: '',
-    contacto: 'mismo', contactoPais: 'EC', contactoNumero: '',
+    fNombre: '', fTipoDoc: 'cedula', fCedula: '', fCelular: '', fCorreo: '', fProvincia: '', fCanton: '', fDireccion: '',
+    contacto: 'mismo', contactoNumero: '',
     metodoPago: 'transferencia',
 };
 

@@ -505,45 +505,13 @@ h1 {
     cursor: pointer;
 }
 
+.pais-btn.prefijo {
+    cursor: default;
+}
+
 .pais-btn:focus-visible {
     outline: 2px solid var(--verde);
     outline-offset: 2px;
-}
-
-.lista-pais {
-    left: 0;
-    right: auto;
-    width: 280px;
-    padding: 0;
-}
-
-.lista-pais ul {
-    margin: 0;
-    padding: 4px;
-    list-style: none;
-    max-height: 190px;
-    overflow-y: auto;
-}
-
-.buscar-pais {
-    width: 100%;
-    height: 40px;
-    padding: 0 12px;
-    border: 0;
-    border-bottom: 1px solid var(--borde);
-    border-radius: 10px 10px 0 0;
-    font: inherit;
-    font-size: 0.88rem;
-    outline: none;
-}
-
-.pais-nombre {
-    flex: 1;
-}
-
-.pais-prefijo {
-    color: var(--gris);
-    font-size: 0.82rem;
 }
 
 .bandera {

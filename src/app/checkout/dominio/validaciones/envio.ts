@@ -1,11 +1,15 @@
-import { normalizar } from './validaciones';
+import { buscarCanton, buscarProvincia } from '../ubicaciones';
 
 /*
- * Costo de envío según la ciudad y la provincia que el cliente eligió.
+ * Zona y costo de envío según la provincia y el cantón que el comprador eligió (códigos del INEC).
  *
- *   Guayaquil, Durán y Samborondón ........ $3.50
- *   Ciudades de la Amazonía ............... $6.25
- *   Todo lo demás ......................... $5.00
+ *   Zona A: Guayaquil, Durán y Samborondón ........ $3.50
+ *   Zona B: provincias de la Amazonía ............. $6.25
+ *   Zona C: el resto del país continental ......... $5.00
+ *   Galápagos ..................................... no hay envío
+ *
+ * Prioridad de asignación: localidad > cantón > provincia > Zona C. Las localidades todavía no existen
+ * (Paso 10): hoy se resuelve por cantón y provincia.
  *
  * (El envío gratis por 2 macetas lo decide EnvioGratisService; aquí solo está la tarifa.)
  */
@@ -15,27 +19,37 @@ export const ENVIO_LOCAL = 3.5;
 export const ENVIO_AMAZONIA = 6.25;
 export const ENVIO_RESTO = 5;
 
-// Ciudades con tarifa local (se comparan sin tildes ni mayúsculas)
-const CIUDADES_LOCALES = ['guayaquil', 'duran', 'samborondon'];
+// Códigos del INEC
+const CANTONES_ZONA_A = ['0901', '0907', '0916'];                         // Guayaquil, Durán, Samborondón
+const PROVINCIAS_AMAZONIA = ['14', '15', '16', '19', '21', '22'];        // Morona Santiago, Napo, Pastaza, Zamora Chinchipe, Sucumbíos, Orellana
+const PROVINCIA_GALAPAGOS = '20';
 
-// Provincias de la Amazonía (se comparan por el comienzo del nombre, así "Morona-Santiago" y "Morona Santiago" valen igual)
-const PROVINCIAS_AMAZONIA = ['sucumbios', 'orellana', 'napo', 'pastaza', 'morona', 'zamora'];
+export const MENSAJE_GALAPAGOS = 'Actualmente no realizamos envíos a Galápagos.';
 
-export type ZonaEnvio = 'local' | 'amazonia' | 'resto';
+export type ZonaEnvio = 'local' | 'amazonia' | 'resto' | 'no_disponible';
 
-export function zonaEnvio(provincia: string, ciudad: string): ZonaEnvio {
-    if (CIUDADES_LOCALES.includes(normalizar(ciudad.trim()))) return 'local';
+export function zonaEnvio(provincia: string, canton: string): ZonaEnvio {
+    const prov = buscarProvincia(provincia);
+    if (prov?.codigo === PROVINCIA_GALAPAGOS) return 'no_disponible';
 
-    const prov = normalizar(provincia.trim());
-    if (PROVINCIAS_AMAZONIA.some(p => prov.startsWith(p))) return 'amazonia';
+    const cant = buscarCanton(provincia, canton);
+    if (cant && CANTONES_ZONA_A.includes(cant.codigo)) return 'local';
+
+    if (prov && PROVINCIAS_AMAZONIA.includes(prov.codigo)) return 'amazonia';
 
     return 'resto';
 }
 
-export function costoEnvio(provincia: string, ciudad: string): number {
-    switch (zonaEnvio(provincia, ciudad)) {
+export function envioDisponible(provincia: string, canton: string): boolean {
+    return zonaEnvio(provincia, canton) !== 'no_disponible';
+}
+
+// En Galápagos no hay tarifa: devuelve 0 y la pantalla bloquea el pedido con envioDisponible().
+export function costoEnvio(provincia: string, canton: string): number {
+    switch (zonaEnvio(provincia, canton)) {
         case 'local': return ENVIO_LOCAL;
         case 'amazonia': return ENVIO_AMAZONIA;
+        case 'no_disponible': return 0;
         default: return ENVIO_RESTO;
     }
 }

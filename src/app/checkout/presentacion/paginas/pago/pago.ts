@@ -5,7 +5,7 @@ import { CarritoService } from '../../../../carrito/aplicacion/servicios/Carrito
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { CheckoutService, DatosCheckout } from '../../../aplicacion/servicios/CheckoutService';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
-import { costoEnvio } from '../../../dominio/validaciones/envio';
+import { costoEnvio, envioDisponible, MENSAJE_GALAPAGOS } from '../../../dominio/validaciones/envio';
 
 type Metodo = DatosCheckout['metodoPago'];
 
@@ -22,7 +22,7 @@ export class Pago {
   readonly RUTA_CONFIRMAR = '/checkout/confirmacion';  // "Confirmar pedido"
   readonly RUTA_CATALOGO = '/catalogo/todos-productos';
 
-  // Las tarifas de envío por ciudad están en dominio/envio.ts
+  // Las tarifas de envío por cantón están en dominio/validaciones/envio.ts
   readonly RECARGO_PAYPHONE = 0.06;  // 6 % sobre (subtotal + envío) cuando se paga con tarjeta
 
   private carrito = inject(CarritoService);
@@ -41,12 +41,16 @@ export class Pago {
 
   // Hasta que se lean los datos guardados no se sabe si falta algo
   datosListos = signal(false);
-  faltanDatos = computed(() => this.datosListos() && (!this.datos().provincia || !this.datos().ciudad));
+  faltanDatos = computed(() => this.datosListos() && (!this.datos().provincia || !this.datos().canton));
 
   textoProductos = computed(() => `${this.cantidad()} ${this.cantidad() === 1 ? 'producto' : 'productos'}`);
 
-  // Tarifa según la ciudad y la provincia elegidas en "Envío y facturación"
-  tarifaEnvio = computed(() => costoEnvio(this.datos().provincia, this.datos().ciudad));
+  // Galápagos: no hay envío, no se puede pagar el pedido
+  sinEnvio = computed(() => !envioDisponible(this.datos().provincia, this.datos().canton));
+  readonly MENSAJE_GALAPAGOS = MENSAJE_GALAPAGOS;
+
+  // Tarifa según el cantón y la provincia elegidos en "Envío y facturación"
+  tarifaEnvio = computed(() => costoEnvio(this.datos().provincia, this.datos().canton));
   envio = computed(() => (this.envioGratis() ? 0 : this.tarifaEnvio()));
 
   // Total por transferencia (sin cargo adicional)
@@ -75,7 +79,7 @@ export class Pago {
   }
 
   confirmar(): void {
-    if (this.faltanDatos() || this.cantidad() === 0) return;
+    if (this.faltanDatos() || this.sinEnvio() || this.cantidad() === 0) return;
 
     const payphone = this.metodo() === 'payphone';
 

@@ -51,7 +51,7 @@ export function mensajeCompleto(p: Pedido): string {
 
     L.push('*Entrega*');
     L.push(`Provincia: ${d.provincia}`);
-    L.push(`Ciudad: ${d.ciudad}`);
+    L.push(`Cantón: ${d.canton}`);
     L.push(`Dirección: ${d.direccion}`);
     if (d.referencia.trim()) L.push(`Referencia: ${d.referencia}`);
     L.push('');
@@ -63,7 +63,7 @@ export function mensajeCompleto(p: Pedido): string {
         L.push(`Celular: ${d.fCelular}`);
         L.push(`Correo: ${d.fCorreo}`);
         L.push(`Provincia: ${d.fProvincia}`);
-        L.push(`Ciudad: ${d.fCiudad}`);
+        L.push(`Cantón: ${d.fCanton}`);
         L.push(`Dirección: ${d.fDireccion}`);
         L.push('');
     }

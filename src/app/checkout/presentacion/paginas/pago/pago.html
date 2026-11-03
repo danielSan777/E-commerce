@@ -119,12 +119,20 @@
     @if (faltanDatos()) {
     <p class="aviso-datos" role="alert">
         <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
-        Falta tu provincia y ciudad para calcular el envío.
+        Falta tu provincia y cantón para calcular el envío.
         <a [routerLink]="RUTA_VOLVER">Completar mis datos</a>
     </p>
     }
 
-    <button type="button" class="btn-confirmar" [disabled]="faltanDatos()" (click)="confirmar()">
+    @if (sinEnvio()) {
+    <p class="aviso-datos" role="alert">
+        <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+        {{ MENSAJE_GALAPAGOS }}
+        <a [routerLink]="RUTA_VOLVER">Cambiar mi dirección</a>
+    </p>
+    }
+
+    <button type="button" class="btn-confirmar" [disabled]="faltanDatos() || sinEnvio()" (click)="confirmar()">
         Confirmar pedido <i class="bi bi-arrow-right" aria-hidden="true"></i>
     </button>
 

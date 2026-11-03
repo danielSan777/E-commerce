@@ -514,9 +514,9 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 
 - [x] Quitar toda opción de enviar algo por WhatsApp después: "Prefiero enviar mi tarjeta de dedicatoria por WhatsApp", enviar la foto o la frase del marco por WhatsApp, el bloque "Pendiente por WhatsApp" de la confirmación y la frase "Te enviaré por aquí…" del mensaje. Todo se completa en la web antes de pagar.
 - [x] Quitar la foto de la tarjeta de dedicatoria: la dedicatoria es solo texto, o "No quiero dedicatoria".
-- [ ] Provincias, cantones y localidades desde el JSON del INEC dentro del proyecto (Paso 10). Eliminar el uso de countriesnow.space en `UbicacionesService`: no trae cantones como Durán y, si falla, nadie puede comprar.
-- [ ] Zona y tarifa por localidad > cantón > provincia (Paso 10), no por nombre de ciudad. Amazonía $6,25.
-- [ ] Lista de países del número de contacto fija dentro del proyecto (sin restcountries.com), con Ecuador (+593) primero.
+- [ ] Provincias, cantones y localidades desde el JSON del INEC dentro del proyecto (Paso 10). *(Hecho: provincias y cantones del INEC 2026 y sin countriesnow.space. Falta: localidades opcionales.)* Eliminar el uso de countriesnow.space en `UbicacionesService`: no trae cantones como Durán y, si falla, nadie puede comprar.
+- [ ] Zona y tarifa por localidad > cantón > provincia (Paso 10), no por nombre de ciudad. Amazonía $6,25. *(Hecho por cantón y provincia con códigos del INEC; Galápagos bloqueado. Falta: localidades.)*
+- [x] Lista de países del número de contacto fija dentro del proyecto (sin restcountries.com), con Ecuador (+593) primero. *(Decisión del 3 nov: solo se envía a Ecuador, así que se quita el selector y el número queda fijo en +593.)*
 - [ ] Casilla obligatoria de términos y casilla de marketing, ambas desmarcadas (Paso 12).
 - [ ] Resumen final con la personalización completa de cada maceta y el aviso "Revisa bien: después de confirmar no se puede editar".
 - [ ] Fecha de entrega desde la promesa del mock (Paso 0), no el texto fijo "jueves a viernes"; elección de ventana inmediata o programada en el checkout.
