@@ -24,9 +24,6 @@ export interface ConfigGuardada {
     dedicatoria: string;
     textoMarco: string;
     sinTarjeta: boolean;
-    tarjetaPorWhatsapp: boolean;
-    marcoPorWhatsapp: boolean;
-    fotoTarjetaNombre: string;
     fotoMarcoNombre: string;
 }
 
@@ -42,7 +39,6 @@ export interface ItemCarrito {
 
 // Las fotos que subió el cliente no caben en localStorage: viven en memoria mientras no se recargue la página
 export interface ArchivosItem {
-    fotoTarjeta: File | null;
     fotoMarco: File | null;
 }
 
@@ -84,7 +80,7 @@ export class CarritoService {
     }
 
     archivosDe(uid: string): ArchivosItem {
-        return this.archivos.get(uid) ?? { fotoTarjeta: null, fotoMarco: null };
+        return this.archivos.get(uid) ?? { fotoMarco: null };
     }
 
     vaciar(): void {

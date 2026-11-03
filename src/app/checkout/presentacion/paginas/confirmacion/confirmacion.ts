@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { CUENTAS, ENTREGA_ESTIMADA, TITULAR_TRANSFERENCIA } from '../../../dominio/interfaces/datos_transferencia';
 import {
-  fechaLarga, mensajeCompleto, mensajeCorto, pendientesPorWhatsapp, urlWhatsapp
+  fechaLarga, mensajeCompleto, mensajeCorto, urlWhatsapp
 } from '../../../dominio/validaciones/mensaje_whatsapp';
 
 @Component({
@@ -30,7 +30,6 @@ export class Confirmacion {
 
   esTransferencia = computed(() => this.pedido()?.metodo === 'transferencia');
   fecha = computed(() => (this.pedido() ? fechaLarga(this.pedido()!.fecha) : ''));
-  pendientes = computed(() => (this.pedido() ? pendientesPorWhatsapp(this.pedido()!) : []));
   mensaje = computed(() => (this.pedido() ? mensajeCorto(this.pedido()!) : ''));
   enlaceWhatsapp = computed(() => (this.pedido() ? urlWhatsapp(this.pedido()!) : ''));
 

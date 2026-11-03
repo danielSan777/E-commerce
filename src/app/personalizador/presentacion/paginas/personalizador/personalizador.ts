@@ -33,13 +33,9 @@ export interface ConfiguracionPersonalizada {
   colorLentes: string;
   colorGafas: string;           // color de las gafas (accesorio 5): negro, cafe o dorado
   dedicatoria: string;          // mensaje de la tarjeta de dedicatoria
-  fotoDedicatoria: File | null; // foto de la tarjeta (opcional)
   textoMarco: string;           // frase del marco (solo si eligió el accesorio 4)
   fotoMarco: File | null;       // foto del marco (solo si eligió el accesorio 3)
-  sinTarjeta: boolean;          // "No deseo tarjeta de dedicatoria"
-  tarjetaPorWhatsapp: boolean;  // "Prefiero enviar mi tarjeta por WhatsApp"
-  fotoMarcoPorWhatsapp: boolean; // marco con foto (accesorio 3): "enviar la foto de mi marco por WhatsApp"
-  fraseMarcoPorWhatsapp: boolean; // marco con frase (accesorio 4): "enviar mi frase por WhatsApp"
+  sinTarjeta: boolean;          // "No quiero dedicatoria"
 }
 
 @Component({
@@ -502,7 +498,6 @@ export class Personalizador implements OnDestroy {
   private invalidarPorAccesorio(accesorio: { id: number; categoria?: string }): void {
     this.invalidarPorCategoria(accesorio.categoria);
     if (accesorio.id === this.ID_MARCO_FOTO || accesorio.id === this.ID_MARCO_FRASE) {
-      this.marcoWhatsapp.set(false);
       this.invalidarGuardado('dedicatoria');
     }
   }
@@ -532,10 +527,10 @@ export class Personalizador implements OnDestroy {
           return 'Escribe el mensaje para la tarjeta de dedicatoria.';
         }
         // 3) marco con foto (accesorio 3) o con frase (accesorio 4)
-        if (this.hayMarcoFoto() && !this.marcoWhatsapp() && !this.fotoMarcoArchivo) {
+        if (this.hayMarcoFoto() && !this.fotoMarcoArchivo) {
           return 'Sube la foto para tu marco.';
         }
-        if (this.hayMarcoFrase() && !this.marcoWhatsapp() && !this.textoMarco().trim()) {
+        if (this.hayMarcoFrase() && !this.textoMarco().trim()) {
           return 'Escribe la frase para tu marco.';
         }
         return '';
@@ -624,10 +619,9 @@ export class Personalizador implements OnDestroy {
   // ==========================================
   // DEDICATORIA / MARCOS
   // ==========================================
-  // 1) Mensaje de la tarjeta (obligatorio)
-  // 2) Foto de la tarjeta (opcional)
-  // 3) Solo aparece si eligió el accesorio 3 (foto para el marco) o el 4 (frase para el marco)
-  // Al final: opciones adicionales (sin tarjeta / enviar por WhatsApp)
+  // 1) Mensaje de la tarjeta (obligatorio, o la opción "No quiero dedicatoria"; la dedicatoria es solo texto)
+  // 2) Solo aparece si eligió el accesorio 3 (foto para el marco) o el 4 (frase para el marco)
+  // Todo se completa aquí, antes de pagar: no hay nada que se envíe después por WhatsApp
 
   readonly maxNombre = 30;        // EDITABLE: caracteres del nombre del visor
   readonly maxDedicatoria = 250;  // EDITABLE: caracteres del mensaje de la tarjeta
@@ -649,48 +643,7 @@ export class Personalizador implements OnDestroy {
     this.cambioDedicatoria();
   }
 
-  // ----- 2) Foto de la tarjeta (opcional) -----
-  fotoTarjetaUrl = signal<string | null>(null);
-  fotoTarjetaNombre = signal('');
-  errorFotoTarjeta = signal('');
-  private fotoTarjetaArchivo: File | null = null;
-
-  elegirFotoTarjeta(evento: Event): void {
-    const input = evento.target as HTMLInputElement;
-    const archivo = input.files?.[0];
-    if (!archivo) return;
-
-    const error = this.errorDeImagen(archivo);
-    if (error) {
-      this.errorFotoTarjeta.set(error);
-      input.value = '';
-      return;
-    }
-
-    this.errorFotoTarjeta.set('');
-    this.liberarFotoTarjeta();
-    this.fotoTarjetaArchivo = archivo;
-    this.fotoTarjetaUrl.set(URL.createObjectURL(archivo));
-    this.fotoTarjetaNombre.set(archivo.name);
-    this.cambioDedicatoria();
-  }
-
-  quitarFotoTarjeta(input: HTMLInputElement): void {
-    this.liberarFotoTarjeta();
-    this.fotoTarjetaArchivo = null;
-    this.fotoTarjetaUrl.set(null);
-    this.fotoTarjetaNombre.set('');
-    this.errorFotoTarjeta.set('');
-    input.value = '';
-    this.cambioDedicatoria();
-  }
-
-  private liberarFotoTarjeta(): void {
-    const actual = this.fotoTarjetaUrl();
-    if (actual) URL.revokeObjectURL(actual);
-  }
-
-  // ----- 3a) Marco con foto (accesorio 3) -----
+  // ----- 2a) Marco con foto (accesorio 3) -----
   fotoMarcoUrl = signal<string | null>(null);
   fotoMarcoNombre = signal('');
   errorFotoMarco = signal('');
@@ -731,7 +684,7 @@ export class Personalizador implements OnDestroy {
     if (actual) URL.revokeObjectURL(actual);
   }
 
-  // ----- 3b) Marco con frase (accesorio 4) -----
+  // ----- 2b) Marco con frase (accesorio 4) -----
   textoMarco = signal('');
 
   escribirTextoMarco(evento: Event): void {
@@ -739,28 +692,17 @@ export class Personalizador implements OnDestroy {
     this.cambioDedicatoria();
   }
 
-  // ----- Opciones adicionales -----
-  sinTarjeta = signal(false);       // No deseo tarjeta de dedicatoria
-  tarjetaWhatsapp = signal(false);  // Enviaré mi tarjeta por WhatsApp
-  marcoWhatsapp = signal(false);    // Enviaré la foto (accesorio 3) o la frase (accesorio 4) de mi marco por WhatsApp
+  // ----- Opción adicional -----
+  sinTarjeta = signal(false);       // No quiero dedicatoria
 
-  // El mensaje de la tarjeta es obligatorio, salvo que no quiera tarjeta o la envíe por WhatsApp
-  tarjetaObligatoria = computed(() => !this.sinTarjeta() && !this.tarjetaWhatsapp());
+  // El mensaje de la tarjeta es obligatorio, salvo que elija "No quiero dedicatoria"
+  tarjetaObligatoria = computed(() => !this.sinTarjeta());
 
-  // true si ya escribió la dedicatoria o subió la foto de la tarjeta
-  tarjetaConContenido = computed(() =>
-    this.dedicatoria().trim().length > 0 || !!this.fotoTarjetaUrl()
-  );
-
-  // true si ya subió la foto del marco (accesorio 3) o escribió la frase (accesorio 4)
-  marcoConContenido = computed(() =>
-    this.hayMarcoFoto()
-      ? !!this.fotoMarcoUrl()
-      : this.hayMarcoFrase() && this.textoMarco().trim().length > 0
-  );
+  // true si ya escribió la dedicatoria
+  tarjetaConContenido = computed(() => this.dedicatoria().trim().length > 0);
 
   // Opción bloqueada que se tocó: muestra el aviso "borra primero..." debajo de ella
-  avisoExtra = signal<'' | 'sin' | 'tarjetaWa' | 'marcoWa'>('');
+  avisoExtra = signal<'' | 'sin'>('');
 
   alternarSinTarjeta(): void {
     if (!this.sinTarjeta() && this.tarjetaConContenido()) {
@@ -768,31 +710,7 @@ export class Personalizador implements OnDestroy {
       return;
     }
 
-    const marcada = !this.sinTarjeta();
-    this.sinTarjeta.set(marcada);
-    if (marcada) this.tarjetaWhatsapp.set(false); // no pueden ir las dos a la vez
-    this.cambioDedicatoria();
-  }
-
-  alternarTarjetaWhatsapp(): void {
-    if (!this.tarjetaWhatsapp() && this.tarjetaConContenido()) {
-      this.avisoExtra.set('tarjetaWa');
-      return;
-    }
-
-    const marcada = !this.tarjetaWhatsapp();
-    this.tarjetaWhatsapp.set(marcada);
-    if (marcada) this.sinTarjeta.set(false);
-    this.cambioDedicatoria();
-  }
-
-  alternarMarcoWhatsapp(): void {
-    if (!this.marcoWhatsapp() && this.marcoConContenido()) {
-      this.avisoExtra.set('marcoWa');
-      return;
-    }
-
-    this.marcoWhatsapp.update(v => !v);
+    this.sinTarjeta.update(v => !v);
     this.cambioDedicatoria();
   }
 
@@ -999,13 +917,9 @@ export class Personalizador implements OnDestroy {
       colorLentes: this.colorSeleccionado,
       colorGafas: this.colorGafas,
       dedicatoria: this.dedicatoria(),
-      fotoDedicatoria: this.fotoTarjetaArchivo,
       textoMarco: this.hayMarcoFrase() ? this.textoMarco() : '',
       fotoMarco: this.hayMarcoFoto() ? this.fotoMarcoArchivo : null,
       sinTarjeta: this.sinTarjeta(),
-      tarjetaPorWhatsapp: this.tarjetaWhatsapp(),
-      fotoMarcoPorWhatsapp: this.hayMarcoFoto() && this.marcoWhatsapp(),
-      fraseMarcoPorWhatsapp: this.hayMarcoFrase() && this.marcoWhatsapp(),
     });
 
     try {
@@ -1067,7 +981,6 @@ export class Personalizador implements OnDestroy {
         configuracion: this.configuracionGuardada(),
       },
       {
-        fotoTarjeta: this.fotoTarjetaArchivo,
         fotoMarco: this.hayMarcoFoto() ? this.fotoMarcoArchivo : null,
       }
     );
@@ -1092,9 +1005,6 @@ export class Personalizador implements OnDestroy {
       dedicatoria: this.dedicatoria(),
       textoMarco: this.textoMarco(),
       sinTarjeta: this.sinTarjeta(),
-      tarjetaPorWhatsapp: this.tarjetaWhatsapp(),
-      marcoPorWhatsapp: this.marcoWhatsapp(),
-      fotoTarjetaNombre: this.fotoTarjetaNombre(),
       fotoMarcoNombre: this.fotoMarcoNombre(),
     };
   }
@@ -1115,11 +1025,10 @@ export class Personalizador implements OnDestroy {
 
     let tarjeta: string;
     if (this.sinTarjeta()) tarjeta = 'sin tarjeta';
-    else if (this.tarjetaWhatsapp()) tarjeta = 'por WhatsApp';
     else {
       const mensaje = this.dedicatoria().trim();
       const corto = mensaje.length > 28 ? mensaje.slice(0, 28) + '…' : mensaje;
-      tarjeta = (mensaje ? `«${corto}»` : 'pendiente') + (this.fotoTarjetaUrl() ? ' + foto' : '');
+      tarjeta = mensaje ? `«${corto}»` : 'pendiente';
     }
 
     const lineas: LineaResumen[] = [
@@ -1135,13 +1044,13 @@ export class Personalizador implements OnDestroy {
     if (this.hayMarcoFoto()) {
       lineas.push({
         icono: 'bi-image', etiqueta: 'Marco',
-        valor: this.marcoWhatsapp() ? 'foto pendiente por WhatsApp' : 'foto subida'
+        valor: 'foto subida'
       });
     } else if (this.hayMarcoFrase()) {
       const frase = this.textoMarco().trim();
       lineas.push({
         icono: 'bi-image', etiqueta: 'Marco',
-        valor: this.marcoWhatsapp() ? 'frase pendiente por WhatsApp' : `frase «${frase.length > 28 ? frase.slice(0, 28) + '…' : frase}»`
+        valor: `frase «${frase.length > 28 ? frase.slice(0, 28) + '…' : frase}»`
       });
     }
 
@@ -1165,17 +1074,9 @@ export class Personalizador implements OnDestroy {
     this.dedicatoria.set(c.dedicatoria);
     this.textoMarco.set(c.textoMarco);
     this.sinTarjeta.set(c.sinTarjeta);
-    this.tarjetaWhatsapp.set(c.tarjetaPorWhatsapp);
-    this.marcoWhatsapp.set(c.marcoPorWhatsapp);
 
     // Las fotos subidas solo se recuerdan mientras no se recargue la página
     const fotos = this.carrito.archivosDe(item.uid);
-
-    if (fotos.fotoTarjeta) {
-      this.fotoTarjetaArchivo = fotos.fotoTarjeta;
-      this.fotoTarjetaUrl.set(URL.createObjectURL(fotos.fotoTarjeta));
-      this.fotoTarjetaNombre.set(fotos.fotoTarjeta.name);
-    }
 
     if (fotos.fotoMarco) {
       this.fotoMarcoArchivo = fotos.fotoMarco;
@@ -1189,7 +1090,7 @@ export class Personalizador implements OnDestroy {
 
     // Todo estaba lleno: las 4 opciones salen en azul (salvo la foto del marco si se perdió al recargar)
     const completas = new Set<IdPestana>(this.pestanas.map(p => p.id));
-    if (this.hayMarcoFoto() && !this.marcoWhatsapp() && !this.fotoMarcoArchivo) completas.delete('dedicatoria');
+    if (this.hayMarcoFoto() && !this.fotoMarcoArchivo) completas.delete('dedicatoria');
     this.guardadas.set(completas);
   }
 
@@ -1310,7 +1211,6 @@ export class Personalizador implements OnDestroy {
     clearTimeout(this.temporizadorTabs);
     if (this.entradaHistorial && history.state?.hojaPersonalizador) history.back();
     this.liberarFotoMarco();
-    this.liberarFotoTarjeta();
   }
 
   cantidadEnCategoria(categoria: string): number {

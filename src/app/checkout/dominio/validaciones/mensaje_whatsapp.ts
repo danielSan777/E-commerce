@@ -25,26 +25,6 @@ export function telefonoContacto(p: Pedido): string {
     return d.celular;
 }
 
-/** Datos que el cliente tendrá que enviar después por WhatsApp (tarjeta, foto o frase del marco). */
-export function pendientesPorWhatsapp(p: Pedido): string[] {
-    const lista: string[] = [];
-
-    for (const item of p.items) {
-        const c = item.configuracion;
-        if (!c) continue;
-
-        if (c.tarjetaPorWhatsapp && !lista.includes('Tarjeta de dedicatoria')) lista.push('Tarjeta de dedicatoria');
-
-        if (c.marcoPorWhatsapp) {
-            const ids = (c.accesorios ?? []).map(a => a.accesorioId);
-            const texto = ids.includes(3) ? 'Foto del marco' : ids.includes(4) ? 'Frase del marco' : 'Foto o frase del marco';
-            if (!lista.includes(texto)) lista.push(texto);
-        }
-    }
-
-    return lista;
-}
-
 /** Mensaje corto que se muestra en pantalla. */
 export function mensajeCorto(p: Pedido): string {
     return `Hola, quiero confirmar el pago de mi pedido ${p.numero}. Haré mi pago por transferencia y enviaré mi comprobante aquí mismo.`;
@@ -102,12 +82,6 @@ export function mensajeCompleto(p: Pedido): string {
     if (p.recargo > 0) L.push(`Recargo PayPhone: ${dinero(p.recargo)}`);
     L.push(`*Total a pagar: ${dinero(p.total)}*`);
     L.push(`Método de pago: ${p.metodo === 'payphone' ? 'Tarjeta con PayPhone' : 'Transferencia bancaria'}`);
-
-    const pendientes = pendientesPorWhatsapp(p);
-    if (pendientes.length) {
-        L.push('');
-        L.push(`Te enviaré por aquí: ${pendientes.join(', ')}.`);
-    }
 
     return L.join('\n');
 }

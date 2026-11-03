@@ -407,40 +407,6 @@ h1 {
     color: var(--gris);
 }
 
-.pendientes {
-    list-style: none;
-    margin: 10px 0 8px;
-    padding: 0;
-}
-
-.pendientes li {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 4px 0;
-    font-size: 0.9rem;
-}
-
-.num {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: #dcebe1;
-    color: var(--verde);
-    font-weight: 700;
-    font-size: 0.8rem;
-}
-
-.nota {
-    margin: 8px 0 0;
-    padding-top: 8px;
-    border-top: 1px solid var(--verde-borde);
-    font-size: 0.76rem;
-    color: var(--gris);
-}
-
 /* ===== Método de pago ===== */
 .metodo {
     display: flex;

@@ -181,27 +181,6 @@
 
     } @else {
 
-    <!-- ===== Pendiente por WhatsApp (solo si hay datos por enviar) ===== -->
-    @if (pendientes().length) {
-    <section class="tarjeta verde" aria-labelledby="t-pend">
-        <div class="wa-cab">
-            <i class="bi bi-whatsapp wa-logo" aria-hidden="true"></i>
-            <div>
-                <h2 id="t-pend">Pendiente por WhatsApp</h2>
-                <p>Una vez confirmado tu pago, te escribiremos por WhatsApp para completar algunos detalles de tu
-                    pedido:</p>
-            </div>
-        </div>
-        <ol class="pendientes">
-            @for (pendiente of pendientes(); track pendiente; let i = $index) {
-            <li><span class="num">{{ i + 1 }}</span> {{ pendiente }}</li>
-            }
-        </ol>
-        <p class="nota"><i class="bi bi-info-circle" aria-hidden="true"></i> Te escribiremos al número de contacto que
-            nos proporcionaste.</p>
-    </section>
-    }
-
     <!-- ===== Método de pago ===== -->
     <section class="tarjeta blanca metodo" aria-label="Método de pago">
         <i class="bi bi-credit-card-2-front metodo-ico" aria-hidden="true"></i>
