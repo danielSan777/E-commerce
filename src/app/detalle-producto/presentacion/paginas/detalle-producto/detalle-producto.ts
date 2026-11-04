@@ -88,6 +88,7 @@ export class DetalleProducto implements OnDestroy {
 
   elegirVentana(v: VentanaDisponible): void {
     if (!v.available) return;
+    this.analytics.track('select_delivery_window', { start: v.start, end: v.end });
     // Tocar otra vez la ventana elegida vuelve a "lo antes posible"
     if (this.ventanaElegida() === v) this.checkout.actualizar({ entrega: 'inmediata', ventanaInicio: '', ventanaFin: '' });
     else this.checkout.actualizar({ entrega: 'programada', ventanaInicio: v.start, ventanaFin: v.end });

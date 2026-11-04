@@ -123,6 +123,7 @@ export class Pago {
 
   elegirVentana(v: VentanaDisponible): void {
     if (!v.available) return;
+    this.analytics.track('select_delivery_window', { start: v.start, end: v.end });
     this.checkout.actualizar({ entrega: 'programada', ventanaInicio: v.start, ventanaFin: v.end });
   }
 
