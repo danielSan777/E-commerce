@@ -1,8 +1,8 @@
-import { Component, DOCUMENT, computed, effect, inject } from '@angular/core';
+import { Component, DOCUMENT, computed, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
-import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CategoriaService } from '../../../aplicacion/servicios/CategoriaService';
 import { PromesaService } from '../../../../checkout/aplicacion/servicios/PromesaService';
 import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
@@ -11,7 +11,7 @@ import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontra
 // cada estado tiene su URL, y cambiar de categoría o de pestaña solo cambia la URL (no recarga la página).
 @Component({
   selector: 'app-categorias',
-  imports: [CurrencyPipe, RouterLink, RouterLinkActive, NoEncontrada],
+  imports: [CurrencyPipe, RouterLink, NoEncontrada],
   templateUrl: './categorias.html',
   styleUrl: './categorias.css',
 })
@@ -34,7 +34,20 @@ export class Categorias {
 
   // Ruta del botón "Todos" de las pestañas
   rutaTodos = computed(() => `/${this.categoria()?.slug}`);
-  enCategorias = computed(() => this.categoria()?.slug === 'categorias');
+
+  // Pestaña activa (nombre, ícono y texto bajo el título) y otras categorías para seguir explorando
+  subcategoria = computed(() => {
+    const c = this.categoria();
+    return c?.subcategories.find(s => s.slug === c.active_subcategory);
+  });
+  otras = computed(() => this.tarjetas.filter(t => t.slug !== this.categoria()?.slug));
+
+  // "Ver más de Salud": al inicio se ven los primeros productos; todos están en el HTML (los demás, ocultos)
+  readonly PRODUCTOS_INICIALES = 4;
+  verTodos = signal(false);
+  visible(indice: number): boolean {
+    return this.verTodos() || indice < this.PRODUCTOS_INICIALES;
+  }
 
   constructor() {
     // SEO por estado: título, descripción, imagen para compartir y canonical (sin UTMs)

@@ -31,6 +31,8 @@ export interface SubcategoriaContrato {
     slug: string;
     name: string;
     url: string;
+    icon?: string;          // clase de Bootstrap Icons para la pestaña
+    description?: string;   // texto bajo el nombre cuando la pestaña está activa
 }
 
 export interface CategoriaContrato {
@@ -39,6 +41,7 @@ export interface CategoriaContrato {
     headline: string;
     intro_html: string;
     hero?: { type: 'image' | 'video'; url: string; poster?: string };
+    short_description: string;   // una línea para las tarjetas de /categorias
     price_from_cents: number;
     subcategories: SubcategoriaContrato[];
     active_subcategory: string | null;
@@ -52,4 +55,5 @@ export interface CategoriaResumen {
     name: string;
     url: string;
     image: string;
+    description: string;
 }

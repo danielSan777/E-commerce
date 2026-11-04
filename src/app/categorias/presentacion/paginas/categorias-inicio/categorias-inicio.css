@@ -1,0 +1,34 @@
+:host { display: block; background: var(--jds-crema); color: var(--jds-texto); }
+.pagina { max-width: 1000px; margin: 0 auto; padding: 8px 14px 40px; }
+.migas { font-size: .85rem; margin: 4px 0 10px; color: #8a7d70; }
+.migas a { color: inherit; }
+
+.banner { display: flex; align-items: center; justify-content: space-between; gap: 8px; overflow: hidden;
+  background: linear-gradient(100deg, #f3e7d3, #e9efe0); border-radius: 18px; padding: 16px; margin-bottom: 16px; }
+.banner h1 { font-family: Lobster, cursive; font-weight: 400; color: var(--jds-vino); font-size: 1.9rem; line-height: 1.1; margin: 0 0 6px; }
+.banner p { margin: 0; font-size: .9rem; }
+.banner-imagenes { display: flex; flex: none; }
+.banner-imagenes img { width: 72px; height: 72px; object-fit: contain; margin-left: -14px; }
+@media (min-width: 768px) { .banner-imagenes img { width: 120px; height: 120px; } .banner h1 { font-size: 2.6rem; } }
+
+.titulo { font-family: Georgia, 'Times New Roman', serif; color: var(--jds-vino); text-align: center; font-size: 1.6rem; margin: 8px 0 0; }
+.titulo .bi { color: var(--jds-hoja); margin-right: 6px; }
+.subtitulo { text-align: center; margin: 4px 0 14px; }
+
+.tarjetas { list-style: none; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (min-width: 768px) { .tarjetas { grid-template-columns: repeat(4, 1fr); } }
+.tarjeta { display: flex; flex-direction: column; gap: 4px; height: 100%; text-decoration: none; color: inherit;
+  background: #fff; border: 1px solid var(--jds-borde); border-radius: 16px; padding: 8px 8px 12px; }
+.foto { display: block; aspect-ratio: 4 / 3; background: var(--jds-hoja-claro); border-radius: 12px; overflow: hidden; }
+.foto img { width: 100%; height: 100%; object-fit: contain; }
+.tarjeta strong { font-family: Georgia, 'Times New Roman', serif; color: var(--jds-vino); font-size: 1.05rem; margin-top: 4px; }
+.tarjeta small { color: #6d5f52; flex: 1; }
+.boton { display: flex; align-items: center; justify-content: center; gap: 6px; background: #f1e9db; color: var(--jds-vino);
+  font-weight: 700; font-size: .85rem; border-radius: 999px; padding: 8px; margin-top: 6px; }
+
+.migas span { margin: 0 4px; }
+.banner-texto { flex: 1; min-width: 0; }
+@media (max-width: 767.98px) {
+  .banner h1 { font-size: 1.6rem; }
+  .banner-imagenes img:nth-child(3) { display: none; }
+}

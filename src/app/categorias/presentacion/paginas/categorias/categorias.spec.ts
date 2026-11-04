@@ -45,18 +45,25 @@ describe('CategoriaService (mock del contrato)', () => {
     });
 });
 
-describe('Categorias (pantalla)', () => {
-    it('/categorias muestra todas las tarjetas y productos', async () => {
-        const html = await montar(null);
-        expect(html.querySelectorAll('.tarjeta-cat').length).toBe(4);
-        expect(html.querySelectorAll('.producto').length).toBeGreaterThan(5);
-        expect(html.querySelector('.pestanas')).toBeNull();
-    });
-
-    it('/profesiones-y-hobbies/salud abre esa pestaña activa', async () => {
+describe('Categorias (pantalla de una categoría)', () => {
+    it('/profesiones-y-hobbies/salud abre esa pestaña con su texto y sus 2 productos', async () => {
         const html = await montar('profesiones-y-hobbies', 'salud');
         expect(html.querySelector('.pestanas a.activa')?.textContent).toContain('Salud');
+        expect(html.querySelector('.sub-cabecera')?.textContent).toContain('Detalles únicos para quienes cuidan y dan bienestar.');
         expect(html.querySelectorAll('.producto').length).toBe(2);
+    });
+
+    it('cada producto tiene el botón "Personalizar" hacia la ficha abierta en el personalizador', async () => {
+        const html = await montar('profesiones-y-hobbies', 'salud');
+        const enlaces = Array.from(html.querySelectorAll<HTMLAnchorElement>('.personalizar')).map(a => a.getAttribute('href'));
+        expect(enlaces.sort()).toEqual(['/producto/doctor/personalizar', '/producto/enfermera/personalizar']);
+    });
+
+    it('muestra la ruta Inicio / Categorías / nombre y las otras 3 categorías', async () => {
+        const html = await montar('profesiones-y-hobbies');
+        expect(html.querySelector('.migas')?.textContent).toContain('Categorías');
+        expect(html.querySelectorAll('.otras li').length).toBe(3);
+        expect(html.querySelector('.otras')?.textContent).not.toContain('Profesiones y Hobbies');
     });
 
     it('/amor no tiene pestañas', async () => {

@@ -38,7 +38,7 @@ export const routes: Routes = [
             { path: 'buscar', loadComponent: () => import('./busqueda/presentacion/paginas/buscar/buscar').then(m => m.Buscar) },
 
             // Pantalla de categorías: reemplaza a "Todos los productos"
-            { path: 'categorias', loadComponent: pantallaCategorias },
+            { path: 'categorias', loadComponent: () => import('./categorias/presentacion/paginas/categorias-inicio/categorias-inicio').then(m => m.CategoriasInicio) },
             ...CATEGORIAS.flatMap(slug => [
                 { path: slug, loadComponent: pantallaCategorias, data: { categoria: slug } },
                 { path: `${slug}/:subcategoria`, loadComponent: pantallaCategorias, data: { categoria: slug } },

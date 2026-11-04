@@ -1,0 +1,34 @@
+<div class="pagina">
+    <nav class="migas" aria-label="Ruta de navegación">
+        <a routerLink="/">Inicio</a> <span aria-hidden="true">/</span> <span aria-current="page">Categorías</span>
+    </nav>
+
+    <!-- Banner -->
+    <section class="banner">
+        <div class="banner-texto">
+            <h1>Explora nuestros regalos</h1>
+            <p>Encuentra la categoría ideal para sorprender.</p>
+        </div>
+        <div class="banner-imagenes" aria-hidden="true">
+            @for (t of tarjetas.slice(0, 3); track t.slug) { <img [src]="t.image" alt="" width="120" height="120"> }
+        </div>
+    </section>
+
+    <h2 class="titulo"><i class="bi bi-flower1" aria-hidden="true"></i> Categorías</h2>
+    <p class="subtitulo">Elige cómo quieres empezar a explorar.</p>
+
+    <ul class="tarjetas">
+        @for (t of tarjetas; track t.slug) {
+        <li>
+            <a class="tarjeta" [routerLink]="t.url">
+                <span class="foto"><img [src]="t.image" [alt]="t.name" loading="lazy" width="320" height="240"></span>
+                <strong>{{ t.name }}</strong>
+                <small>{{ t.description }}</small>
+                <span class="boton"><i class="bi bi-cart3" aria-hidden="true"></i> Ver categoría <i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+            </a>
+        </li>
+        }
+    </ul>
+
+    <app-como-funciona />
+</div>
