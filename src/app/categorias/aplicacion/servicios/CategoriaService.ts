@@ -11,8 +11,9 @@ interface DatosCategoria {
     name: string;
     headline: string;
     intro: string;
+    corta: string;
     image: string;
-    subcategorias: { slug: string; name: string }[];
+    subcategorias: { slug: string; name: string; icono: string; descripcion: string }[];
 }
 
 // Subcategorías iniciales de Profesiones y Hobbies (Paso 6). Las de Amor, Amistad y Familia las define Josué:
@@ -21,31 +22,35 @@ const CATEGORIAS: DatosCategoria[] = [
     {
         slug: 'profesiones-y-hobbies', name: 'Profesiones y Hobbies',
         headline: 'Un detalle para quien ama lo que hace',
-        intro: 'Macetas personalizadas para celebrar una profesión, una graduación o un hobby, con su nombre y su plantita natural.',
+        intro: 'Regalos personalizados para cada profesión, pasión u oficio.',
+        corta: 'Profesiones, oficios y pasiones.',
         image: 'imagenes/profesionales/doctor.png',
         subcategorias: [
-            { slug: 'salud', name: 'Salud' },
-            { slug: 'administrativos', name: 'Administrativos' },
-            { slug: 'fuerza-publica', name: 'Fuerza Pública' },
-            { slug: 'cocina-y-hobbies', name: 'Cocina y Hobbies' },
+            { slug: 'salud', name: 'Salud', icono: 'bi-heart-pulse', descripcion: 'Detalles únicos para quienes cuidan y dan bienestar.' },
+            { slug: 'administrativos', name: 'Administrativos', icono: 'bi-briefcase', descripcion: 'Para quienes organizan, asesoran y sacan el trabajo adelante.' },
+            { slug: 'fuerza-publica', name: 'Fuerza Pública', icono: 'bi-shield-check', descripcion: 'Un reconocimiento para quienes nos cuidan y protegen.' },
+            { slug: 'cocina-y-hobbies', name: 'Cocina y Hobbies', icono: 'bi-cup-hot', descripcion: 'Para quienes disfrutan lo que más les gusta hacer.' },
         ],
     },
     {
         slug: 'amor', name: 'Amor',
         headline: 'Dile lo que sientes con un detalle que crece',
         intro: 'Regalos para parejas y enamorados, personalizados con su nombre y una dedicatoria.',
+        corta: 'Regalos con emoción y romance.',
         image: 'imagenes/amor-amistad/Bob corazón Hombre.png', subcategorias: [],
     },
     {
         slug: 'amistad', name: 'Amistad',
         headline: 'Para ese amigo que siempre está',
         intro: 'Macetas con personajes y detalles para sorprender a tus amigos en su cumpleaños o sin motivo.',
+        corta: 'Detalles para amistades especiales.',
         image: 'imagenes/amor-amistad/Amigo-guitarrista.png', subcategorias: [],
     },
     {
         slug: 'familia', name: 'Familia',
         headline: 'Un regalo para los tuyos',
         intro: 'Detalles para mamá, papá, hermanos y abuelos, hechos a su medida.',
+        corta: 'Regalos con cariño para los tuyos.',
         image: 'imagenes/colecciones/personajes/homero.png', subcategorias: [],
     },
 ];
@@ -87,7 +92,7 @@ export interface EntradaIndice {
 export class CategoriaService {
 
     categorias(): CategoriaResumen[] {
-        return CATEGORIAS.map(c => ({ slug: c.slug, name: c.name, url: `/${c.slug}`, image: c.image }));
+        return CATEGORIAS.map(c => ({ slug: c.slug, name: c.name, url: `/${c.slug}`, image: c.image, description: c.corta }));
     }
 
     // Sin categoría (`/categorias`): todos los productos. Con categoría inexistente o subcategoría inexistente: null (404).
@@ -105,7 +110,7 @@ export class CategoriaService {
         const items = lista.map(p => this.aProducto(p));
 
         const subcategories: SubcategoriaContrato[] = (datos?.subcategorias ?? []).map(s => ({
-            slug: s.slug, name: s.name, url: `/${datos!.slug}/${s.slug}`,
+            slug: s.slug, name: s.name, url: `/${datos!.slug}/${s.slug}`, icon: s.icono, description: s.descripcion,
         }));
 
         const activa = datos?.subcategorias.find(s => s.slug === subcategoria);
@@ -118,6 +123,7 @@ export class CategoriaService {
             headline: datos?.headline ?? 'Encuentra tu detalle perfecto',
             intro_html: `<p>${datos?.intro ?? 'Elige una categoría y personaliza tu maceta con su nombre y una plantita natural.'}</p>`,
             hero: datos ? { type: 'image', url: datos.image } : undefined,
+            short_description: datos?.corta ?? 'Elige una categoría y encuentra tu detalle perfecto.',
             price_from_cents: items.length ? Math.min(...items.map(i => i.price.final_cents)) : 0,
             subcategories,
             active_subcategory: subcategoria,
@@ -145,6 +151,14 @@ export class CategoriaService {
                 textos: [p.nombre, ...(SINONIMOS[p.slug] ?? []), cat?.name ?? '', sub?.name ?? ''].filter(Boolean),
             }];
         });
+    }
+
+    // Productos por slug, en ese orden (campañas y selecciones manuales de Josué)
+    productosPorSlug(slugs: string[]): ProductoCategoria[] {
+        return slugs
+            .map(s => productos.find(p => p.slug === s))
+            .filter((p): p is Producto => !!p)
+            .map(p => this.aProducto(p));
     }
 
     // MOCK: los favoritos que elige y ordena Josué en el panel (Paso 19)

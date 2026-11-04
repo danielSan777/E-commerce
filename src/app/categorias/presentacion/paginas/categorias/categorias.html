@@ -1,64 +1,95 @@
 @if (categoria(); as c) {
-<section class="categorias">
-
-    <!-- Las 4 categorías -->
-    <nav class="tarjetas" aria-label="Categorías">
-        @for (t of tarjetas; track t.slug) {
-        <a class="tarjeta-cat" [routerLink]="t.url" routerLinkActive="activa" ariaCurrentWhenActive="page">
-            <img [src]="t.image" [alt]="''" loading="lazy" width="96" height="96">
-            <span>{{ t.name }}</span>
-        </a>
-        }
+<div class="pagina">
+    <nav class="migas" aria-label="Ruta de navegación">
+        <a routerLink="/">Inicio</a> <span aria-hidden="true">/</span>
+        <a routerLink="/categorias">Categorías</a> <span aria-hidden="true">/</span>
+        <span aria-current="page">{{ c.name }}</span>
     </nav>
 
-    <!-- Encabezado de la categoría -->
-    <header class="encabezado">
-        <h1>{{ enCategorias() ? c.headline : c.name }}</h1>
-        @if (!enCategorias()) { <p class="lema">{{ c.headline }}</p> }
-        <div class="intro" [innerHTML]="c.intro_html"></div>
-        <ul class="datos">
-            <li><i class="bi bi-truck" aria-hidden="true"></i> {{ promesa.label }}</li>
-            @if (c.price_from_cents) {
-            <li><i class="bi bi-tag" aria-hidden="true"></i> Desde {{ c.price_from_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</li>
-            }
-        </ul>
-    </header>
+    <!-- Banner de la categoría -->
+    <section class="banner">
+        <div class="banner-texto">
+            <h2>{{ c.name }}</h2>
+            <p>{{ c.headline }}</p>
+        </div>
+        @if (c.hero) { <img class="banner-imagen" [src]="c.hero.url" alt="" width="160" height="160"> }
+    </section>
+
+    <h1 class="titulo"><i class="bi bi-flower1" aria-hidden="true"></i> {{ c.name }}</h1>
+    <div class="intro" [innerHTML]="c.intro_html"></div>
+    <ul class="datos">
+        <li><i class="bi bi-truck" aria-hidden="true"></i> {{ promesa.label }}</li>
+        @if (c.price_from_cents) {
+        <li><i class="bi bi-tag" aria-hidden="true"></i> Desde {{ c.price_from_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</li>
+        }
+    </ul>
 
     <!-- Pestañas de subcategorías (solo si la categoría las tiene) -->
     @if (c.subcategories.length) {
     <nav class="pestanas" aria-label="Subcategorías">
-        <a [routerLink]="rutaTodos()" [class.activa]="!c.active_subcategory">Todos</a>
+        <a [routerLink]="rutaTodos()" [class.activa]="!c.active_subcategory"><i class="bi bi-grid" aria-hidden="true"></i> Todos</a>
         @for (s of c.subcategories; track s.slug) {
-        <a [routerLink]="s.url" [class.activa]="c.active_subcategory === s.slug">{{ s.name }}</a>
+        <a [routerLink]="s.url" [class.activa]="c.active_subcategory === s.slug">
+            <i class="bi" [class]="s.icon ?? 'bi-stars'" aria-hidden="true"></i> {{ s.name }}
+        </a>
         }
     </nav>
     }
 
-    <!-- Grilla: todos los productos de la pestaña activa -->
+    @if (subcategoria(); as s) {
+    <header class="sub-cabecera">
+        <h2><i class="bi" [class]="s.icon ?? 'bi-stars'" aria-hidden="true"></i> {{ s.name }}</h2>
+        @if (s.description) { <p>{{ s.description }}</p> }
+    </header>
+    }
+
+    <!-- Grilla -->
     @if (c.products.length) {
     <ul class="grilla">
-        @for (p of c.products; track p.sku) {
-        <li>
-            <a class="producto" [routerLink]="['/producto', p.slug]">
-                <span class="foto">
-                    <img [src]="p.image" [alt]="p.name" loading="lazy" width="320" height="320">
-                    @if (p.price.badge) { <span class="badge">{{ p.price.badge }}</span> }
-                </span>
-                <span class="nombre">{{ p.name }}</span>
-                <span class="precios">
-                    <b>{{ p.price.final_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b>
-                    @if (p.price.discount_cents) {
-                    <s>{{ p.price.base_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</s>
-                    }
-                </span>
-            </a>
+        @for (p of c.products; track p.sku; let i = $index) {
+        <li [hidden]="!visible(i)">
+            <article class="producto">
+                <a class="enlace" [routerLink]="['/producto', p.slug]">
+                    <span class="foto">
+                        <img [src]="p.image" [alt]="p.name" loading="lazy" width="320" height="320">
+                        @if (p.price.badge) { <span class="badge">{{ p.price.badge }}</span> }
+                    </span>
+                    <span class="nombre">{{ p.name }}</span>
+                    <span class="precios">
+                        <b>{{ p.price.final_cents / 100 | currency:'USD':'symbol':'1.2-2' }} USD</b>
+                        @if (p.price.discount_cents) { <s>{{ p.price.base_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</s> }
+                    </span>
+                </a>
+                <a class="personalizar" [routerLink]="['/producto', p.slug, 'personalizar']">
+                    <i class="bi bi-cart3" aria-hidden="true"></i> Personalizar
+                </a>
+            </article>
         </li>
         }
     </ul>
+    @if (c.products.length > PRODUCTOS_INICIALES && !verTodos()) {
+    <button type="button" class="ver-mas" (click)="verTodos.set(true)">
+        Ver más{{ subcategoria() ? ' de ' + subcategoria()!.name : '' }} <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </button>
+    }
     } @else {
     <p class="vacio">Pronto tendremos más detalles en esta sección.</p>
     }
-</section>
+
+    <!-- Seguir explorando -->
+    <section class="otras" aria-labelledby="t-otras">
+        <h2 id="t-otras"><i class="bi bi-flower1" aria-hidden="true"></i> Explora otras categorías</h2>
+        <p>Descubre más opciones de regalos personalizados.</p>
+        <ul>
+            @for (t of otras(); track t.slug) {
+            <li>
+                <a [routerLink]="t.url"><img [src]="t.image" alt="" loading="lazy" width="96" height="96">
+                    <span>{{ t.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></span></a>
+            </li>
+            }
+        </ul>
+    </section>
+</div>
 } @else {
 <app-no-encontrada />
 }

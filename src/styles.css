@@ -11,3 +11,15 @@
 body.con-barra-ficha .barra-movil { display: none !important; }
 body.con-barra-ficha .whatsapp-flotante { bottom: 84px !important; }
 body.con-barra-ficha .subir-flotante { bottom: 150px !important; }
+
+/* Colores de las pantallas de categorías y temporadas */
+:root {
+  --jds-vino: #7a1f43;
+  --jds-vino-oscuro: #5c1632;
+  --jds-crema: #fbf6ee;
+  --jds-hoja: #4b7f3a;
+  --jds-hoja-claro: #eaf2e3;
+  --jds-rosa: #fde8ec;
+  --jds-borde: #eadcc6;
+  --jds-texto: #3b2a1e;
+}

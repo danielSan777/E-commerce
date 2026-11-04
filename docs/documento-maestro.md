@@ -563,10 +563,10 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 
 **Pantalla de categorías**
 
-- [x] Una sola plantilla, según el mockup de Josué: arriba las 4 categorías (Profesiones y Hobbies, Amor, Amistad, Familia); debajo, las pestañas de subcategorías de la categoría activa; abajo, la grilla de productos. *(Hecho con datos de prueba (`CategoriaService`, mock del contrato). El mockup de Josué todavía no está en el repositorio: el diseño es provisional hasta recibirlo.)*
+- [x] Una sola plantilla, según el mockup de Josué: arriba las 4 categorías (Profesiones y Hobbies, Amor, Amistad, Familia); debajo, las pestañas de subcategorías de la categoría activa; abajo, la grilla de productos. *(Hecho con datos de prueba (`CategoriaService`, mock del contrato). El mockup de Josué todavía no está en el repositorio: el diseño es provisional hasta recibirlo.)* *(Actualización del 4 nov: `/categorias` pasó a ser la puerta de entrada (banner, 4 tarjetas con "Ver categoría", "¿Cómo funciona?" y confianza) y cada categoría tiene su propia página con banner, pestañas con ícono, texto de la pestaña, "Personalizar" en cada tarjeta y "Explora otras categorías", según las imágenes de Josué. La pestaña "Todos" se conserva para ver toda la categoría. Sin el corazón de favoritos.)*
 - [x] Cada estado tiene su URL. Cambiar de categoría o de pestaña actualiza la URL sin recargar; entrar directo a cualquiera de esas URL (por ejemplo, desde un anuncio) abre la pantalla en ese estado. *(Hecho: `/categorias`, `/{categoria}` y `/{categoria}/{subcategoria}`; una subcategoría inexistente da 404. Falta conservar el scroll al volver desde un producto.)*
 - [x] Encabezado por categoría: título, texto, video horizontal o imagen opcional, promesa de entrega vigente y precio "desde". *(Hecho con imagen opcional; el video llega con los medios reales.)*
-- [x] Grilla: foto, nombre, precio con descuento y badge; sin video en las tarjetas; todos los productos de la pestaña activa, sin "Ver más" ni virtualización, con imágenes diferidas. *(Hecho con imágenes diferidas y todos los productos de la pestaña.)*
+- [x] Grilla: foto, nombre, precio con descuento y badge; sin video en las tarjetas; todos los productos de la pestaña activa, sin "Ver más" ni virtualización, con imágenes diferidas. *(Hecho con imágenes diferidas y todos los productos de la pestaña.)* *(El mockup agrega "Ver más de {pestaña}": se ven los primeros 4 y el resto se abre con el botón (todos están en el HTML).)*
 - [x] Cada categoría y subcategoría tiene su propio título, descripción e imagen para compartir; funciona con UTMs y carga rápido en el celular. *(Hecho: título, descripción, imagen para compartir y canonical por estado; la imagen social definitiva la entrega Josué.)*
 - [x] Subcategorías iniciales de Profesiones y Hobbies: Salud, Administrativos, Fuerza Pública, Cocina y Hobbies. Las de Amor, Amistad y Familia las define Josué; mientras no existan, la categoría se muestra sin pestañas. *(Hecho; Amor, Amistad y Familia salen sin pestañas.)*
 
@@ -582,7 +582,7 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 - [ ] Galería: imagen principal grande y miniaturas debajo; al tocar una miniatura se muestra arriba. 3–4 fotos + 1 video de 6–8 s (frontal → video → 3/4 → detalle → escala). El video, silenciado, `playsinline` y en bucle, se descarga y reproduce solo cuando su lámina está activa. *(Parcial: Hecho con miniaturas; faltan fotos extra y el video.)*
 - [x] Línea de envío bajo el precio y en el carrito: "Envío desde $3,50 según destino · Lleva 2 macetas y el envío es gratis (excepto Galápagos)". Valores desde la configuración. *(Hecho en la ficha; falta en el carrito.)*
 - [x] Bloque de promesa compacto: "Envío por Servientrega", "Recíbelo entre …", contador y la nota discreta de Amazonía. *(Hecho con el mock de `PromesaService`.)*
-- [x] Calendario de ventanas: dibuja solo lo que llega en `windows`; tocar un día resalta su ventana completa (por ejemplo, sábado + lunes); los días no disponibles aparecen deshabilitados. *(Hecho: cada ventana es un botón y la elección pasa al checkout.)*
+- [x] Calendario de ventanas: dibuja solo lo que llega en `windows`; tocar un día resalta su ventana completa (por ejemplo, sábado + lunes); los días no disponibles aparecen deshabilitados. *(Hecho: calendario mensual compartido por la ficha y el pago (`app-calendario-ventanas`). Tocar un día elige su ventana de 2 días válidos, sin domingos (sábado + lunes); los días sin ventana o no disponibles salen deshabilitados. La elección pasa al checkout.)*
 - [x] Barra inferior fija con precio y "Personalizar". *(Hecho.)*
 - [ ] Sin afirmaciones ecológicas que no estén verificadas.
 
@@ -627,8 +627,8 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 
 **Plantilla de temporada** (la usa `/san-valentin`; las demás se crean desde el panel)
 
-- [ ] En temporada: productos elegidos por Josué en su orden, imagen o video, texto, promoción opcional y el mensaje de fecha límite del Paso 9.
-- [ ] Fuera de temporada: la URL sigue respondiendo (200, sin redirección) con "San Valentín {año} llegará muy pronto", botón a su categoría relacionada (Amor) y productos relacionados. No aparece en la página principal ni en el menú. El año lo entrega Laravel (Paso 5).
+- [x] En temporada: productos elegidos por Josué en su orden, imagen o video, texto, promoción opcional y el mensaje de fecha límite del Paso 9. (mock con datos de prueba; imagen o video y promoción llegan con el panel)
+- [x] Fuera de temporada: la URL sigue respondiendo (200, sin redirección) con "San Valentín {año} llegará muy pronto", botón a su categoría relacionada (Amor) y productos relacionados. No aparece en la página principal ni en el menú. El año lo entrega Laravel (Paso 5). (mock `CampanaService`, estado `upcoming` probado)
 
 **WhatsApp en la web**
 

@@ -1,0 +1,17 @@
+<section class="como" aria-labelledby="t-como-funciona">
+    <h2 id="t-como-funciona"><i class="bi bi-flower1" aria-hidden="true"></i> ¿Cómo funciona?</h2>
+    <ol class="pasos">
+        @for (p of PASOS; track p.texto; let ultimo = $last) {
+        <li>
+            <i class="bi icono" [class]="p.icono" aria-hidden="true"></i>
+            <span>{{ p.texto }}</span>
+        </li>
+        @if (!ultimo) { <li class="flecha" aria-hidden="true"><i class="bi bi-chevron-right"></i></li> }
+        }
+    </ol>
+    <ul class="confianza">
+        @for (c of CONFIANZA; track c.texto) {
+        <li><i class="bi" [class]="c.icono" aria-hidden="true"></i> {{ c.texto }}</li>
+        }
+    </ul>
+</section>

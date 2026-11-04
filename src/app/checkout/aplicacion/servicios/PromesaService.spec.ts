@@ -13,11 +13,32 @@ describe('PromesaService (mock del Paso 0)', () => {
         expect(servicio.promesa().label).toBe('Recíbelo entre jueves 12 y viernes 13 de noviembre');
     });
 
-    it('las ventanas traen start, end y available; la última no está disponible', () => {
+    it('las ventanas traen start, end y available; la del 17 de noviembre no está disponible', () => {
         const { windows } = servicio.ventanas();
 
-        expect(windows).toHaveLength(3);
         for (const v of windows) expect(Object.keys(v).sort()).toEqual(['available', 'end', 'start']);
-        expect(windows.map(v => v.available)).toEqual([true, true, false]);
+        expect(windows.slice(0, 3)).toEqual([
+            { start: '2026-11-12', end: '2026-11-13', available: true },
+            { start: '2026-11-14', end: '2026-11-16', available: true },
+            { start: '2026-11-17', end: '2026-11-18', available: false },
+        ]);
+    });
+
+    it('cada ventana son 2 días válidos: sin domingos, y el sábado se une con el lunes', () => {
+        const { windows } = servicio.ventanas();
+
+        for (const v of windows) {
+            expect(new Date(v.start + 'T00:00:00Z').getUTCDay()).not.toBe(0);
+            expect(new Date(v.end + 'T00:00:00Z').getUTCDay()).not.toBe(0);
+        }
+        expect(windows.find(v => v.start === '2026-11-21')?.end).toBe('2026-11-23');   // sábado + lunes
+    });
+
+    it('las ventanas no se cruzan y el 25 de diciembre no entra', () => {
+        const { windows } = servicio.ventanas();
+        const dias = windows.flatMap(v => [v.start, v.end]);
+
+        expect(new Set(dias).size).toBe(dias.length);
+        expect(dias).not.toContain('2026-12-25');
     });
 });

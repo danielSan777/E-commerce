@@ -38,11 +38,13 @@ export const routes: Routes = [
             { path: 'buscar', loadComponent: () => import('./busqueda/presentacion/paginas/buscar/buscar').then(m => m.Buscar) },
 
             // Pantalla de categorías: reemplaza a "Todos los productos"
-            { path: 'categorias', loadComponent: pantallaCategorias },
+            { path: 'categorias', loadComponent: () => import('./categorias/presentacion/paginas/categorias-inicio/categorias-inicio').then(m => m.CategoriasInicio) },
             ...CATEGORIAS.flatMap(slug => [
                 { path: slug, loadComponent: pantallaCategorias, data: { categoria: slug } },
                 { path: `${slug}/:subcategoria`, loadComponent: pantallaCategorias, data: { categoria: slug } },
             ]),
+            // Campaña de temporada (la URL no lleva año; fuera de temporada sigue respondiendo)
+            { path: 'san-valentin', data: { campana: 'san-valentin' }, loadComponent: () => import('./campanas/presentacion/paginas/campana/campana').then(m => m.Campana) },
             { path: 'catalogo/todos-productos', redirectTo: '/categorias', pathMatch: 'full' },
             // Direcciones anteriores de la pantalla principal y de sus catálogos
             { path: 'catalogo', redirectTo: '/', pathMatch: 'full' },

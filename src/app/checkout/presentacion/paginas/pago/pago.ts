@@ -1,6 +1,7 @@
 import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { CalendarioVentanas } from '../../../../shared/componentes/calendario-ventanas/calendario-ventanas';
 import { CarritoService } from '../../../../carrito/aplicacion/servicios/CarritoService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { CheckoutService, DatosCheckout } from '../../../aplicacion/servicios/CheckoutService';
@@ -14,7 +15,7 @@ type Metodo = DatosCheckout['metodoPago'];
 
 @Component({
   selector: 'app-pago',
-  imports: [CurrencyPipe, RouterLink],
+  imports: [CurrencyPipe, RouterLink, CalendarioVentanas],
   templateUrl: './pago.html',
   styleUrl: './pago.css',
 })

@@ -1,0 +1,18 @@
+:host { display: block; }
+.calendario { background: #fff; border: 1px solid #e3d9c8; border-radius: 14px; padding: 12px; max-width: 360px; }
+.cabecera { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.mes { text-transform: capitalize; }
+.mes .bi { margin-right: 6px; }
+.flecha { border: 0; background: transparent; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
+.flecha:disabled { opacity: .3; cursor: default; }
+.semana, .dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+.semana { font-size: .75rem; color: #8a7d70; margin-bottom: 4px; }
+.dia, .vacio { aspect-ratio: 1; }
+.dia { border: 1px solid transparent; border-radius: 10px; background: transparent; font-size: .95rem; color: #bdb3a6; }
+.dia.libre { color: #3b2a1e; background: #f4efe6; cursor: pointer; font-weight: 600; }
+.dia.lleno { text-decoration: line-through; color: #b8a99a; }
+.dia.resaltado { background: #d9ebdf; border-color: #175437; }
+.dia.marcado { background: #175437; color: #fff; border-color: #175437; }
+.dia:focus-visible { outline: 2px solid #175437; outline-offset: 2px; }
+.resumen { margin: 10px 0 0; font-size: .9rem; }
+.resumen .bi { color: #175437; margin-right: 4px; }
