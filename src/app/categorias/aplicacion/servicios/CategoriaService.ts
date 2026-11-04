@@ -64,6 +64,23 @@ const UBICACION: Record<string, [string, string | null]> = {
     'lucas-con-pantalon-personalizado': ['amistad', null],
 };
 
+// MOCK: sinónimos para la búsqueda (con backend los edita Josué en el panel, Paso 19)
+const SINONIMOS: Record<string, string[]> = {
+    'doctor': ['medico', 'doctora', 'salud'],
+    'enfermera': ['enfermero', 'salud'],
+    'abogada': ['licenciada', 'leyes'],
+    'abogado': ['licenciado', 'leyes'],
+    'homero': ['simpson', 'papa'],
+    'bob-corazon-hombre': ['novio', 'esposo', 'pareja'],
+    'amigo-guitarrista': ['musico', 'musica'],
+};
+
+// Un producto del índice de búsqueda: lo que se puede buscar de él
+export interface EntradaIndice {
+    producto: ProductoCategoria;
+    textos: string[];   // nombre, sinónimos, categoría y subcategoría
+}
+
 // MOCK (Paso 0): devuelve la forma exacta que entregará Laravel para categoría con subcategorías. Con backend solo
 // cambia el cuerpo de estos métodos por la llamada a la API; la pantalla no se toca.
 @Injectable({ providedIn: 'root' })
@@ -114,6 +131,28 @@ export class CategoriaService {
                 og_image: `${SITIO}/${datos?.image ?? 'imagenes/amor.png'}`,
             },
         };
+    }
+
+    // Índice pequeño para la búsqueda: nombre, sinónimos, categoría y subcategoría de cada producto
+    indice(): EntradaIndice[] {
+        return productos.flatMap(p => {
+            const u = this.ubicacion(p);
+            if (!u) return [];
+            const cat = CATEGORIAS.find(c => c.slug === u[0]);
+            const sub = cat?.subcategorias.find(s => s.slug === u[1]);
+            return [{
+                producto: this.aProducto(p),
+                textos: [p.nombre, ...(SINONIMOS[p.slug] ?? []), cat?.name ?? '', sub?.name ?? ''].filter(Boolean),
+            }];
+        });
+    }
+
+    // MOCK: los favoritos que elige y ordena Josué en el panel (Paso 19)
+    favoritos(): ProductoCategoria[] {
+        return ['doctor', 'bob-corazon-hombre', 'abogada', 'amigo-guitarrista']
+            .map(s => productos.find(p => p.slug === s))
+            .filter((p): p is Producto => !!p)
+            .map(p => this.aProducto(p));
     }
 
     private ubicacion(p: Producto): [string, string | null] | undefined {

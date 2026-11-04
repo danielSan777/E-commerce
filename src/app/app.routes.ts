@@ -26,6 +26,8 @@ export const routes: Routes = [
                 redirectTo: 'catalogo',
                 pathMatch: 'full'
             },
+            { path: 'buscar', loadComponent: () => import('./busqueda/presentacion/paginas/buscar/buscar').then(m => m.Buscar) },
+
             // Pantalla de categorías: reemplaza a "Todos los productos"
             { path: 'categorias', loadComponent: pantallaCategorias },
             ...CATEGORIAS.flatMap(slug => [

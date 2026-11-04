@@ -571,8 +571,8 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 
 **Búsqueda**
 
-- [ ] Lupa en la barra superior de todas las páginas. Búsqueda instantánea sobre un índice pequeño (nombre, sinónimos, categoría y subcategoría), sin tildes ni mayúsculas, con coincidencia por inicio de palabra ("fisio" encuentra Fisioterapeuta; "medico" encuentra Médico).
-- [ ] Sin resultados: productos sugeridos (los favoritos) y debajo "¿No encuentras lo que necesitas?" con dos botones: "Explora nuestras categorías" (`/categorias`) y "Escríbenos por WhatsApp" (prellenado con lo buscado).
+- [x] Lupa en la barra superior de todas las páginas. Búsqueda instantánea sobre un índice pequeño (nombre, sinónimos, categoría y subcategoría), sin tildes ni mayúsculas, con coincidencia por inicio de palabra ("fisio" encuentra Fisioterapeuta; "medico" encuentra Médico). *(Hecho en `/buscar?q=`, con la lupa en la barra del escritorio y del celular; índice y sinónimos de prueba en `CategoriaService`, que con backend salen del panel.)*
+- [x] Sin resultados: productos sugeridos (los favoritos) y debajo "¿No encuentras lo que necesitas?" con dos botones: "Explora nuestras categorías" (`/categorias`) y "Escríbenos por WhatsApp" (prellenado con lo buscado). *(Hecho: favoritos de prueba, "Explora nuestras categorías" y WhatsApp con lo buscado.)*
 - [ ] Cada búsqueda se registra con su término y cantidad de resultados (Paso 20); el panel lista las búsquedas sin resultados de los últimos 30 días (Paso 19).
 
 **Ficha de producto** (plantilla de todos los productos; no necesita caber en una sola pantalla)

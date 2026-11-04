@@ -1,0 +1,44 @@
+<section class="buscar">
+    <form class="caja" role="search" (submit)="$event.preventDefault()">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input #campo type="search" name="q" autocomplete="off" autofocus
+            placeholder="Busca por profesión, personaje o persona…" aria-label="Buscar productos"
+            [value]="termino()" (input)="escribir(campo.value)">
+    </form>
+
+    @if (!buscando()) {
+    <h2>Nuestros favoritos</h2>
+    <ng-container *ngTemplateOutlet="lista; context: { productos: favoritos }" />
+    } @else if (sinResultados()) {
+    <div class="sin-resultados" role="status">
+        <h1>No encontramos «{{ termino().trim() }}»</h1>
+        <p>Mira estos favoritos mientras tanto.</p>
+    </div>
+    <ng-container *ngTemplateOutlet="lista; context: { productos: favoritos }" />
+
+    <section class="ayuda">
+        <h2>¿No encuentras lo que necesitas?</h2>
+        <a class="btn btn-primario" [routerLink]="RUTA_CATEGORIAS">Explora nuestras categorías</a>
+        <a class="btn btn-whatsapp" [href]="enlaceWhatsapp()" target="_blank" rel="noopener">
+            <i class="bi bi-whatsapp" aria-hidden="true"></i> Escríbenos por WhatsApp
+        </a>
+    </section>
+    } @else {
+    <h1 class="conteo" role="status">{{ resultados().length }} {{ resultados().length === 1 ? 'resultado' : 'resultados' }}</h1>
+    <ng-container *ngTemplateOutlet="lista; context: { productos: resultados() }" />
+    }
+</section>
+
+<ng-template #lista let-productos="productos">
+    <ul class="grilla">
+        @for (p of productos; track p.sku) {
+        <li>
+            <a class="producto" [routerLink]="['/producto', p.slug]">
+                <span class="foto"><img [src]="p.image" [alt]="p.name" loading="lazy" width="320" height="320"></span>
+                <span class="nombre">{{ p.name }}</span>
+                <b>{{ p.price.final_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b>
+            </a>
+        </li>
+        }
+    </ul>
+</ng-template>
