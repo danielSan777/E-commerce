@@ -631,3 +631,70 @@ button {
 .promesa > i { font-size: 1.4rem; }
 .promesa div { display: flex; flex-direction: column; gap: 2px; }
 .promesa small { color: #4a5f52; }
+
+/* ===== Galería con miniaturas ===== */
+.galeria-bloque { display: flex; flex-direction: column; gap: 10px; }
+.miniaturas { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.miniatura { flex: none; width: 64px; height: 64px; border: 2px solid transparent; border-radius: 8px; overflow: hidden; padding: 0; background: #f2f2f2; }
+.miniatura.activa { border-color: #3a4696; }
+.miniatura img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ===== Ficha: qué incluye, envío, promesa y calendario ===== */
+.sub-titulo { margin: 18px 0 8px; font-size: 1.05rem; font-weight: 700; }
+.incluye { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 4px; }
+.incluye .bi { color: #175437; margin-right: 4px; }
+.dato-producto { margin: 2px 0; color: #555; }
+.dato-producto .bi { margin-right: 6px; }
+.linea-envio { margin: 14px 0 0; font-size: 0.95rem; color: #175437; }
+.linea-envio .bi { margin-right: 6px; }
+
+.promesa {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 14px 0 6px;
+    padding: 12px 14px;
+    background: #eaf3ed;
+    border: 1px solid #b9d8c4;
+    border-radius: 12px;
+    color: #175437;
+}
+
+.ventanas { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.ventana {
+    padding: 8px 14px;
+    border: 1.5px solid #d9d2c6;
+    border-radius: 999px;
+    background: #fff;
+    font-size: 0.9rem;
+}
+
+.ventana.marcada { border-color: #175437; background: #eaf3ed; color: #175437; font-weight: 700; }
+.ventana:disabled { opacity: 0.55; cursor: not-allowed; text-decoration: line-through; }
+.ventana em { margin-left: 6px; font-style: normal; font-size: 0.75rem; display: inline-block; text-decoration: none; }
+.ventana:focus-visible { outline: 2px solid #175437; outline-offset: 2px; }
+
+/* ===== Barra inferior fija ===== */
+.barra-fija {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 990;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #fff;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+}
+
+.barra-precio { display: flex; flex-direction: column; line-height: 1.15; }
+.barra-precio small { color: #777; }
+.barra-precio strong { font-size: 1.2rem; }
+.barra-fija .btn-comprar { padding: 12px 22px; }
+
+/* deja espacio al final para que la barra fija no tape la descripción */
+.detalle { padding-bottom: 84px; }

@@ -5,6 +5,7 @@ export interface Producto {
     precio: number;
     precioAnterior?: number;
     imagen: string;
+    imagenes?: string[];   // fotos extra de la galería (miniaturas); si no hay, solo `imagen`
     tipo: string;
     coleccion: string;
     disponible: boolean;

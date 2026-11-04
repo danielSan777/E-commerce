@@ -16,7 +16,7 @@
 
 <!-- Barra superior: solo en pantallas grandes (>= 992px) -->
 <div class="barra-superior">
-    <span>+593 999283765</span>
+    <span>{{ telefono }}</span>
     <div><span>Sorprende a tu persona favorita con </span>
         <span class="texto-destacado">nuestros colecciones inspiradas en ti</span>
     </div>
@@ -36,8 +36,8 @@
             <ul class="navbar-nav categorias-navbar mb-2 mb-lg-0">
                 @for (catalogo of catalogos(); track catalogo.id){
                 <li class="nav-item">
-                    <a class="nav-link" [routerLink]="catalogo.slug ? ['/catalogo', catalogo.slug] : ['/']"
-                        routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                    <a class="nav-link" [routerLink]="catalogo.ruta ?? '/'"
+                        routerLinkActive="active" [routerLinkActiveOptions]="{ exact: catalogo.ruta === '/' }">
                         <i [class]="['bi', catalogo.icono].join(' ')" aria-hidden="true"></i>
                         {{ catalogo.nombre }}
                     </a>
@@ -47,6 +47,7 @@
 
             <!-- Iconos del lado derecho -->
             <div class="iconos-navbar d-flex align-items-center gap-3 ms-auto">
+                <a routerLink="/buscar" class="icono-nav" aria-label="Buscar productos"><i class="bi bi-search"></i></a>
                 <a routerLink="/carrito" class="icono-nav" aria-label="Carrito de compras"><i
                         class="bi bi-cart3"></i></a>
             </div>
@@ -70,6 +71,7 @@
     </div>
 
     <div class="d-flex align-items-center gap-3">
+        <a routerLink="/buscar" class="icono-nav" aria-label="Buscar productos"><i class="bi bi-search"></i></a>
         <a routerLink="/carrito" class="icono-nav" aria-label="Carrito de compras"><i class="bi bi-cart3"></i></a>
     </div>
 </header>
@@ -96,7 +98,7 @@
         <ul class="sidebar-lista">
             @for (catalogo of catalogos(); track catalogo.id) {
             <li>
-                <a class="sidebar-enlace" [routerLink]="catalogo.slug ? ['/catalogo', catalogo.slug] : ['/']"
+                <a class="sidebar-enlace" [routerLink]="catalogo.ruta ?? '/'"
                     (click)="cerrar()">
                     <i [class]="['bi', catalogo.icono].join(' ')" aria-hidden="true"></i>
                     <span>{{ catalogo.nombre }}</span>
@@ -113,7 +115,7 @@
         <ul class="sidebar-lista">
             @for (catalogo of categorias(); track catalogo.id) {
             <li>
-                <a class="sidebar-enlace" [routerLink]="['/catalogo', catalogo.slug]" (click)="cerrar()">
+                <a class="sidebar-enlace" [routerLink]="catalogo.ruta ?? '/'" (click)="cerrar()">
                     <i [class]="['bi', catalogo.icono].join(' ')" aria-hidden="true"></i>
                     <span>{{ catalogo.nombre }}</span>
                 </a>

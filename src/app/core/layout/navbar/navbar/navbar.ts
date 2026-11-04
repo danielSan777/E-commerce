@@ -3,6 +3,8 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { TIENDA } from '../../../configuracion/tienda';
+import { CategoriaService } from '../../../../categorias/aplicacion/servicios/CategoriaService';
 import { CatalogoMenu } from '../../../../catalogo/dominio/entidades/catalogo';
 // AJUSTA la ruta si tu carpeta carrito está en otro lugar
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
@@ -16,9 +18,11 @@ import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/En
 
 export class Navbar {
 
+  readonly telefono = TIENDA.telefono;   // se cambia en core/configuracion/tienda.ts
+
   // ===== Anuncio rojo de envío gratis (solo en la pantalla principal) =====
-  // EDITABLE: ruta de la pantalla principal (la ruta '' redirige a 'catalogo')
-  readonly RUTA_INICIO = '/catalogo';
+  // EDITABLE: ruta de la pantalla principal
+  readonly RUTA_INICIO = '/';
 
   private router = inject(Router);
   envio = inject(EnvioGratisService);
@@ -48,31 +52,19 @@ export class Navbar {
   menuAbierto = signal(false);
   pestana = signal<'menu' | 'categorias'>('menu');
 
+  // Menú: Inicio y las 4 categorías (la dirección de cada una sale de las categorías de la tienda)
+  private readonly ICONOS: Record<string, string> = {
+    'profesiones-y-hobbies': 'bi-briefcase',
+    'amor': 'bi-heart',
+    'amistad': 'bi-emoji-smile',
+    'familia': 'bi-people',
+  };
+
   catalogos = signal<CatalogoMenu[]>([
-    {
-      id: 1,
-      nombre: 'Inicio',
-      slug: '',
-      icono: 'bi-house-door'
-    },
-    {
-      id: 2,
-      nombre: 'Amor & Amistad',
-      slug: 'macetas',
-      icono: 'bi-heart'
-    },
-    {
-      id: 3,
-      nombre: 'Profesiones',
-      slug: 'profesionales',
-      icono: 'bi-briefcase'
-    },
-    {
-      id: 4,
-      nombre: 'Personajes',
-      slug: 'personajes',
-      icono: 'bi-stars'
-    }
+    { id: 0, nombre: 'Inicio', slug: '', icono: 'bi-house-door', ruta: '/' },
+    ...inject(CategoriaService).categorias().map((c, i) => ({
+      id: i + 1, nombre: c.name, slug: c.slug, icono: this.ICONOS[c.slug] ?? 'bi-stars', ruta: c.url,
+    })),
   ]);
 
   // Pestaña CATEGORÍAS: los catálogos sin "Inicio"

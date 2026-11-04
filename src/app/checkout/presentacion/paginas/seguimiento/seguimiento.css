@@ -1,0 +1,13 @@
+.insignia.confirmado { background: var(--verde-claro); color: var(--verde); }
+
+.pasos { list-style: none; margin: 0; padding: 0; display: flex; justify-content: space-between; gap: 8px; }
+.pasos li { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
+  color: var(--gris); font-size: 0.85rem; }
+.pasos li .bi { font-size: 1.5rem; }
+.pasos li.hecho { color: var(--verde); }
+.pasos li.actual { color: var(--verde); font-weight: 700; }
+
+.productos { list-style: none; margin: 0; padding: 0; }
+.productos li { display: flex; flex-direction: column; padding: 8px 0; border-top: 1px solid var(--borde); }
+.productos li:first-child { border-top: 0; }
+.productos small, .sin-guia { color: var(--gris); }

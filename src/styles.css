@@ -6,3 +6,8 @@
   src: url('/fonts/Lobster-Regular.woff2') format('woff2');
   font-display: swap;
 }
+
+/* Ficha de producto: su barra fija inferior ocupa el lugar de la barra del celular y sube los botones flotantes */
+body.con-barra-ficha .barra-movil { display: none !important; }
+body.con-barra-ficha .whatsapp-flotante { bottom: 84px !important; }
+body.con-barra-ficha .subir-flotante { bottom: 150px !important; }

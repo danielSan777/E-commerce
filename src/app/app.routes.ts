@@ -1,6 +1,18 @@
 import { Routes } from '@angular/router';
 import { MainLayout } from './core/layout/main-layout/main-layout/main-layout';
 
+// Categorías con URL propia (cada una abre la pantalla de categorías en ese estado)
+const CATEGORIAS = ['profesiones-y-hobbies', 'amor', 'amistad', 'familia'];
+const pantallaCategorias = () =>
+    import('./categorias/presentacion/paginas/categorias/categorias').then(m => m.Categorias);
+
+// Catálogos del menú anterior → su categoría
+const CATALOGO_A_CATEGORIA: Record<string, string> = {
+    macetas: '/amor',
+    profesionales: '/profesiones-y-hobbies',
+    personajes: '/amistad',
+};
+
 export const routes: Routes = [
 
     // Checkout: pantalla completa con su propio encabezado (va antes del MainLayout para que no lleve el navbar de la tienda)
@@ -16,29 +28,24 @@ export const routes: Routes = [
         path: '',
         component: MainLayout,
         children: [
+            // Página principal
             {
                 path: '',
-                redirectTo: 'catalogo',
-                pathMatch: 'full'
-            },
-            {
-                path: 'catalogo/todos-productos',
+                pathMatch: 'full',
                 loadComponent: () =>
-                    import('./all-productos/presentacion/paginas/all-productos/all-productos')
-                        .then(m => m.AllProductos)
+                    import('./inicio/presentacion/paginas/inicio/inicio').then(m => m.Inicio)
             },
-            {
-                path: 'catalogo',
-                loadComponent: () =>
-                    import('./catalogo/presentacion/paginas/catalogo/catalogo')
-                        .then(m => m.Catalogo)
-            },
-            {
-                path: 'catalogo/todos-productos/personalizador',
-                loadComponent: () =>
-                    import('./personalizador/presentacion/paginas/personalizador/personalizador')
-                        .then(m => m.Personalizador)
-            },
+            { path: 'buscar', loadComponent: () => import('./busqueda/presentacion/paginas/buscar/buscar').then(m => m.Buscar) },
+
+            // Pantalla de categorías: reemplaza a "Todos los productos"
+            { path: 'categorias', loadComponent: pantallaCategorias },
+            ...CATEGORIAS.flatMap(slug => [
+                { path: slug, loadComponent: pantallaCategorias, data: { categoria: slug } },
+                { path: `${slug}/:subcategoria`, loadComponent: pantallaCategorias, data: { categoria: slug } },
+            ]),
+            { path: 'catalogo/todos-productos', redirectTo: '/categorias', pathMatch: 'full' },
+            // Direcciones anteriores de la pantalla principal y de sus catálogos
+            { path: 'catalogo', redirectTo: '/', pathMatch: 'full' },
             {
                 path: 'checkout/confirmacion',
                 loadComponent: () =>
@@ -52,25 +59,26 @@ export const routes: Routes = [
                         .then(m => m.Pago)
             },
             { path: 'carrito', loadComponent: () => import('./carrito/presentacion/paginas/carrito/carrito').then(m => m.Carrito) },
+            { path: 'catalogo/:slug', redirectTo: ({ params }) => CATALOGO_A_CATEGORIA[params['slug']] ?? '/categorias' },
+            // Ficha de producto. El personalizador es su ruta hija: /producto/{slug}/personalizar
+            // (la ficha sigue en pantalla; el personalizador sube encima).
             {
-                path: 'catalogo/:slug',
-                loadComponent: () =>
-                    import('./catalogo/presentacion/paginas/catalogo/catalogo')
-                        .then(m => m.Catalogo)
-            },
-            {
-                path: 'catalogo/todos-productos/:producto',
+                path: 'producto/:producto',
                 loadComponent: () =>
                     import('./detalle-producto/presentacion/paginas/detalle-producto/detalle-producto')
-                        .then(m => m.DetalleProducto)
+                        .then(m => m.DetalleProducto),
+                children: [{ path: 'personalizar', children: [] }]
             },
 
-            // Pedido pendiente de pago por transferencia (enlace privado con token)
+            // Dirección anterior de la ficha
+            { path: 'catalogo/todos-productos/:producto', redirectTo: ({ params }) => `/producto/${params['producto']}` },
+
+            // Enlace privado con token: seguimiento si está pagado, pedido pendiente si es una transferencia sin pagar
             {
                 path: 'pedido/:token',
                 loadComponent: () =>
-                    import('./checkout/presentacion/paginas/pedido-pendiente/pedido-pendiente')
-                        .then(m => m.PedidoPendiente)
+                    import('./checkout/presentacion/paginas/pedido-token/pedido-token')
+                        .then(m => m.PedidoToken)
             },
 
             // Cualquier otra dirección: 404 propio (con estado HTTP 404 en el servidor)

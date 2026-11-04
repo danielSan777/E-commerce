@@ -1,13 +1,19 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { Component, OnDestroy, PLATFORM_ID, afterNextRender, computed, effect, inject, signal } from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, RouterLink } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { Producto } from '../../../../all-productos/dominio/muestra_producto';
 import { productos } from '../../../../all-productos/dominio/muestra_producto';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
 import { PromesaService } from '../../../../checkout/aplicacion/servicios/PromesaService';
+import { CheckoutService } from '../../../../checkout/aplicacion/servicios/CheckoutService';
+import { VentanaDisponible } from '../../../../checkout/dominio/interfaces/promesa';
+import { textoVentana } from '../../../../checkout/dominio/validaciones/fechas';
+import { ENVIO_DESDE } from '../../../../checkout/dominio/validaciones/envio';
+import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
 import { ProductoCarrito } from '../../../../carrito/aplicacion/servicios/CarritoService';
 
@@ -18,16 +24,24 @@ import { ProductoCarrito } from '../../../../carrito/aplicacion/servicios/Carrit
   templateUrl: './detalle-producto.html',
 })
 
-export class DetalleProducto implements OnInit, OnDestroy {
+export class DetalleProducto implements OnDestroy {
   private route = inject(ActivatedRoute);
   private document = inject(DOCUMENT);
   private location = inject(Location);
   private promesas = inject(PromesaService);
+  private checkout = inject(CheckoutService);
+  private envioGratis = inject(EnvioGratisService);
+  private esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
   // ====== EDITABLE ======
   moneda = '$.';
   codigoMoneda = 'USD';
   rutaListado = 'todos-productos';
   textoListado = 'Productos';
+
+  // Textos de la ficha. Son los valores de ejemplo del contrato del Paso 0; con backend llegan en cada producto.
+  readonly INCLUYE = ['Plantita natural', 'Dedicatoria personalizada', 'Funda kraft'];
+  readonly TAMANO_TEXTO = 'Base 14 × 7 cm';
+  readonly MATERIAL_TEXTO = 'Impresa en 3D con PLA Plus';
   // =======================
   private router = inject(Router);
   // Nombre del producto que viene en la ruta (ej: /productos/Abogada)
@@ -38,6 +52,14 @@ export class DetalleProducto implements OnInit, OnDestroy {
     productos.find(p => p.slug === this.nombre())
   );
 
+  // Galería: imagen principal y miniaturas (si el producto trae varias fotos)
+  imagenes = computed(() => {
+    const p = this.producto();
+    return p ? (p.imagenes?.length ? p.imagenes : [p.imagen]) : [];
+  });
+  imagenElegida = signal('');
+  imagenActiva = computed(() => this.imagenElegida() || this.imagenes()[0] || '');
+
   // Datos del producto que se envían al carrito (nombre y precio salen del producto)
   productoCarrito = computed<ProductoCarrito | null>(() => {
     const p = this.producto();
@@ -46,6 +68,30 @@ export class DetalleProducto implements OnInit, OnDestroy {
 
   // Promesa de entrega: la calcula Laravel (hoy, un mock del Paso 0); Angular solo muestra label y countdown_label
   promesa = this.promesas.promesa();
+
+  // Calendario "O prográmalo para una fecha futura": dibuja solo lo que llega en `windows`.
+  // La elección queda en el checkout (entrega programada) y se muestra después en el pago.
+  ventanas = this.promesas.ventanas().windows;
+  textoVentana = textoVentana;
+  ventanaElegida = computed(() => {
+    const d = this.checkout.datos();
+    return d.entrega === 'programada'
+      ? this.ventanas.find(v => v.available && v.start === d.ventanaInicio && v.end === d.ventanaFin)
+      : undefined;
+  });
+
+  elegirVentana(v: VentanaDisponible): void {
+    if (!v.available) return;
+    // Tocar otra vez la ventana elegida vuelve a "lo antes posible"
+    if (this.ventanaElegida() === v) this.checkout.actualizar({ entrega: 'inmediata', ventanaInicio: '', ventanaFin: '' });
+    else this.checkout.actualizar({ entrega: 'programada', ventanaInicio: v.start, ventanaFin: v.end });
+  }
+
+  // "Envío desde $3,50 según destino · Lleva 2 macetas y el envío es gratis (excepto Galápagos)". Valores desde la configuración.
+  lineaEnvio = computed(() => {
+    const desde = `$${ENVIO_DESDE.toFixed(2).replace('.', ',')}`;
+    return `Envío desde ${desde} según destino · Lleva ${this.envioGratis.MACETAS_PARA_ENVIO_GRATIS} macetas y el envío es gratis (excepto Galápagos)`;
+  });
 
   agregado = signal(false);
 
@@ -69,7 +115,25 @@ export class DetalleProducto implements OnInit, OnDestroy {
   });
 
 
-  personalizadorAbierto = signal(false);
+  // El personalizador es la ruta hija /producto/{slug}/personalizar: la dirección dice si está abierto
+  private urlActual = toSignal(
+    this.router.events.pipe(filter(e => e instanceof NavigationEnd), map(() => this.router.url)),
+    { initialValue: this.router.url },
+  );
+  personalizadorAbierto = computed(() => this.urlActual().split(/[?#]/)[0].endsWith('/personalizar'));
+  private abiertoDesdeLaFicha = false;
+
+  constructor() {
+    // Con el personalizador abierto no se desplaza la página de atrás
+    effect(() => {
+      if (this.esNavegador) this.document.body.style.overflow = this.personalizadorAbierto() ? 'hidden' : '';
+    });
+
+    afterNextRender(() => {
+      this.checkout.restaurar();                                   // la ventana elegida en una visita anterior
+      this.document.body.classList.add('con-barra-ficha');         // la barra fija de la ficha ocupa el lugar de la barra del celular
+    });
+  }
 
   formato(valor: number) {
     return `${this.moneda} ${valor.toFixed(2)}`;
@@ -105,36 +169,24 @@ export class DetalleProducto implements OnInit, OnDestroy {
       this.location.back();
     } else {
       // Si entró directamente, ir al listado de productos.
-      this.router.navigate(['/catalogo/todos-productos']);
+      void this.router.navigate(['/categorias']);
     }
   }
 
   // En celular el personalizador sube desde abajo (hoja); en pantalla media y grande es un modal.
   // El cambio de aspecto lo hace el CSS; aquí solo se bloquea el scroll de la página de atrás.
   abrirPersonalizador(): void {
-    this.personalizadorAbierto.set(true);
-    this.document.body.style.overflow = 'hidden';
+    this.abiertoDesdeLaFicha = true;
+    void this.router.navigate(['/producto', this.nombre(), 'personalizar']);
   }
 
   cerrarPersonalizador(): void {
-    this.personalizadorAbierto.set(false);
-    this.document.body.style.overflow = '';
-
-    // Si venía de "Editar" en el carrito, se quita ?editar de la dirección
-    if (this.route.snapshot.queryParamMap.has('editar')) {
-      void this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { editar: null },
-        queryParamsHandling: 'merge',
-        replaceUrl: true,
-      });
-    }
-  }
-
-  // "Editar" en el carrito llega aquí con ?editar=...: se abre el personalizador con lo elegido
-  ngOnInit(): void {
-    if (this.route.snapshot.queryParamMap.has('editar')) {
-      this.abrirPersonalizador();
+    // Si se abrió desde la ficha, "cerrar" es volver atrás; si se entró directo a la dirección, va a la ficha
+    if (this.abiertoDesdeLaFicha) {
+      this.abiertoDesdeLaFicha = false;
+      this.location.back();
+    } else {
+      void this.router.navigate(['/producto', this.nombre()], { replaceUrl: true });
     }
   }
 
@@ -150,13 +202,15 @@ export class DetalleProducto implements OnInit, OnDestroy {
   guardarPersonalizacion(config: any): void {
     // Aquí puedes procesar la configuración (nombre, accesorios, dedicatoria, foto, color lentes)
     // Por ahora solo cerramos
+    // El personalizador ya llevó al carrito: la dirección cambia sola y el personalizador se cierra
     console.log('Configuración guardada:', config);
-    this.cerrarPersonalizador();
+    this.abiertoDesdeLaFicha = false;
     this.agregado.set(true);
   }
 
   ngOnDestroy(): void {
     this.document.body.style.overflow = '';
+    this.document.body.classList.remove('con-barra-ficha');
   }
 
 

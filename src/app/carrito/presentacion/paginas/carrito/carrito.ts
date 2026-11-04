@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
 import { CarritoService, ProductoCarrito } from '../../../aplicacion/servicios/CarritoService';
 import { productos } from '../../../../all-productos/dominio/muestra_producto';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
+import { macetaIgualSinConfirmar } from '../../../dominio/iguales';
 import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
 
 interface Sugerencia {
@@ -32,8 +33,8 @@ interface Categoria {
 export class Carrito implements AfterViewInit, OnDestroy {
 
   // ===== EDITABLES: rutas de tu aplicación =====
-  readonly RUTA_MACETAS = '/catalogo/todos-productos';  // botón del carrito vacío
-  readonly RUTA_SEGUIR = '/catalogo/todos-productos';   // "Seguir comprando"
+  readonly RUTA_MACETAS = '/categorias';  // botón del carrito vacío
+  readonly RUTA_SEGUIR = '/categorias';   // "Seguir comprando"
   readonly RUTA_CONTINUAR = '/checkout';  // "Continuar"
 
   // ===== EDITABLE: categorías de la hoja "Elige otra maceta" =====
@@ -83,6 +84,27 @@ export class Carrito implements AfterViewInit, OnDestroy {
 
   // Envío gratis desde 2 macetas (misma regla que el anuncio del navbar)
   envioGratis = inject(EnvioGratisService).envioGratis;
+
+  // Complementos sin maceta: no se compran solos, así que se bloquea el checkout
+  hayMacetas = computed(() => this.items().some(i => i.tipo === 'personalizado'));
+  sinMaceta = computed(() => this.items().length > 0 && !this.hayMacetas());
+  readonly MENSAJE_SIN_MACETA = 'Los complementos acompañan a una maceta. Agrega una maceta para continuar.';
+
+  // Maceta idéntica a otra: se pregunta antes de seguir
+  macetaIgual = computed(() => macetaIgualSinConfirmar(this.items()));
+
+  confirmarIguales(): void {
+    const item = this.macetaIgual();
+    if (item) this.carrito.guardar({ ...item, igualConfirmada: true });
+  }
+
+  revisarIguales(): void {
+    const item = this.macetaIgual();
+    if (!item) return;
+    this.itemsAlAbrir = this.items();
+    this.editandoUid.set(item.uid);
+    this.personalizando.set(item.producto);
+  }
 
   textoProductos = computed(() => `${this.cantidad()} ${this.cantidad() === 1 ? 'producto' : 'productos'}`);
 

@@ -1,8 +1,6 @@
 import { Pedido } from '../../aplicacion/servicios/PedidoService';
 
-// ===== EDITABLE =====
-// Número de WhatsApp de la tienda, con código de país y sin "+" ni espacios (el del pie de página: +593 999283765)
-export const WHATSAPP_TIENDA = '593999283765';
+import { enlaceWhatsapp } from '../../../core/configuracion/tienda';   // el número se cambia allí (un solo lugar)
 
 const MESES = ['ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.', 'jul.', 'ago.', 'sep.', 'oct.', 'nov.', 'dic.'];
 
@@ -37,5 +35,5 @@ export function mensajeComprobante(p: Pedido): string {
 }
 
 export function urlWhatsapp(p: Pedido): string {
-    return `https://wa.me/${WHATSAPP_TIENDA}?text=${encodeURIComponent(mensajeComprobante(p))}`;
+    return enlaceWhatsapp(mensajeComprobante(p));
 }

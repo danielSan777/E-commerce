@@ -206,8 +206,9 @@ Todos se editan desde el panel; ninguno va fijo en el código.
 | Precio de referencia de una maceta | $25 (cada producto tiene su precio en el panel) |
 | Envío gratis | Desde 2 macetas, en todas las zonas habilitadas; los complementos no cuentan |
 | Zona A (Gran Guayaquil y localidades configuradas) | $3,50 |
-| Zona B (Amazonía) | $6,25 y +1 día de tránsito |
+| Zona B (Amazonía y destinos que Servientrega cobra igual) | $6,25 y +1 día de tránsito |
 | Zona C (resto continental habilitado) | $5,00 |
+| Origen de las zonas | Cotizador público de Servientrega (4 nov 2026), por cantón del INEC, en `zonas-envio.json` |
 | Galápagos | No disponible |
 | Nombre en placa | Máximo 30 caracteres contando espacios |
 | Frase del marco | Máximo 60 caracteres (validar con una impresión real) |
@@ -545,66 +546,66 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 | `/san-valentin` | Campaña de temporada (y las que se creen después) |
 | Políticas y 404 propio | — |
 
-Redirecciones 301: `/catalogo/todos-productos` → `/categorias`; `/catalogo/todos-productos/:producto` → `/producto/{slug}`; `/catalogo/:slug` → su categoría.
+Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega con el servidor)*: `/catalogo/todos-productos` → `/categorias`; `/catalogo/todos-productos/:producto` → `/producto/{slug}`; `/catalogo/:slug` → su categoría; `/catalogo` → `/`.
 
 **Página principal** (de arriba hacia abajo en el celular)
 
-- [ ] Barra superior: logo, lupa, carrito y menú.
-- [ ] Video principal (la esposa de Josué mostrando las macetas) con el botón "Encuentra tu detalle perfecto", que abre `/categorias`.
-- [ ] Franja de promesa: "Pide hoy y recíbelo entre … y …" (desde la promesa vigente) y "Envío gratis llevando 2 macetas".
+- [x] Barra superior: logo, lupa, carrito y menú. *(Hecho en la barra existente, con la lupa hacia `/buscar`.)*
+- [ ] Video principal (la esposa de Josué mostrando las macetas) con el botón "Encuentra tu detalle perfecto", que abre `/categorias`. *(Parcial: botón y espacio listos, con la portada como imagen; falta el video de Josué (`VIDEO.url` en `inicio.ts`).)*
+- [x] Franja de promesa: "Pide hoy y recíbelo entre … y …" (desde la promesa vigente) y "Envío gratis llevando 2 macetas". *(Hecho con el mock de `PromesaService` y el número de macetas de `EnvioGratisService`.)*
 - [ ] Campaña activa (por ejemplo, San Valentín), solo en temporada.
-- [ ] Las 4 categorías en tarjetas con foto.
-- [ ] Favoritos: 6–8 productos elegidos y ordenados por Josué en el panel.
-- [ ] "Cómo funciona" en 3 pasos: elige, personaliza y recíbelo con su plantita.
+- [x] Las 4 categorías en tarjetas con foto. *(Hecho.)*
+- [x] Favoritos: 6–8 productos elegidos y ordenados por Josué en el panel. *(Hecho con 6 favoritos de prueba; con backend los ordena Josué.)*
+- [x] "Cómo funciona" en 3 pasos: elige, personaliza y recíbelo con su plantita. *(Hecho.)*
 - [ ] Testimonios elegidos por Josué (Paso 24).
-- [ ] Confianza: pago seguro con tarjeta o transferencia, envíos a todo Ecuador por Servientrega (excepto Galápagos), hecho en Guayaquil.
-- [ ] Pie: WhatsApp, "Consultar mi pedido", políticas y redes.
+- [x] Confianza: pago seguro con tarjeta o transferencia, envíos a todo Ecuador por Servientrega (excepto Galápagos), hecho en Guayaquil. *(Hecho.)*
+- [ ] Pie: WhatsApp, "Consultar mi pedido", políticas y redes. *(Parcial: el pie actual ya tiene WhatsApp; faltan "Consultar mi pedido", políticas y redes porque esas páginas no existen.)*
 
 **Pantalla de categorías**
 
-- [ ] Una sola plantilla, según el mockup de Josué: arriba las 4 categorías (Profesiones y Hobbies, Amor, Amistad, Familia); debajo, las pestañas de subcategorías de la categoría activa; abajo, la grilla de productos.
-- [ ] Cada estado tiene su URL. Cambiar de categoría o de pestaña actualiza la URL sin recargar; entrar directo a cualquiera de esas URL (por ejemplo, desde un anuncio) abre la pantalla en ese estado.
-- [ ] Encabezado por categoría: título, texto, video horizontal o imagen opcional, promesa de entrega vigente y precio "desde".
-- [ ] Grilla: foto, nombre, precio con descuento y badge; sin video en las tarjetas; todos los productos de la pestaña activa, sin "Ver más" ni virtualización, con imágenes diferidas.
-- [ ] Cada categoría y subcategoría tiene su propio título, descripción e imagen para compartir; funciona con UTMs y carga rápido en el celular.
-- [ ] Subcategorías iniciales de Profesiones y Hobbies: Salud, Administrativos, Fuerza Pública, Cocina y Hobbies. Las de Amor, Amistad y Familia las define Josué; mientras no existan, la categoría se muestra sin pestañas.
+- [x] Una sola plantilla, según el mockup de Josué: arriba las 4 categorías (Profesiones y Hobbies, Amor, Amistad, Familia); debajo, las pestañas de subcategorías de la categoría activa; abajo, la grilla de productos. *(Hecho con datos de prueba (`CategoriaService`, mock del contrato). El mockup de Josué todavía no está en el repositorio: el diseño es provisional hasta recibirlo.)*
+- [x] Cada estado tiene su URL. Cambiar de categoría o de pestaña actualiza la URL sin recargar; entrar directo a cualquiera de esas URL (por ejemplo, desde un anuncio) abre la pantalla en ese estado. *(Hecho: `/categorias`, `/{categoria}` y `/{categoria}/{subcategoria}`; una subcategoría inexistente da 404. Falta conservar el scroll al volver desde un producto.)*
+- [x] Encabezado por categoría: título, texto, video horizontal o imagen opcional, promesa de entrega vigente y precio "desde". *(Hecho con imagen opcional; el video llega con los medios reales.)*
+- [x] Grilla: foto, nombre, precio con descuento y badge; sin video en las tarjetas; todos los productos de la pestaña activa, sin "Ver más" ni virtualización, con imágenes diferidas. *(Hecho con imágenes diferidas y todos los productos de la pestaña.)*
+- [x] Cada categoría y subcategoría tiene su propio título, descripción e imagen para compartir; funciona con UTMs y carga rápido en el celular. *(Hecho: título, descripción, imagen para compartir y canonical por estado; la imagen social definitiva la entrega Josué.)*
+- [x] Subcategorías iniciales de Profesiones y Hobbies: Salud, Administrativos, Fuerza Pública, Cocina y Hobbies. Las de Amor, Amistad y Familia las define Josué; mientras no existan, la categoría se muestra sin pestañas. *(Hecho; Amor, Amistad y Familia salen sin pestañas.)*
 
 **Búsqueda**
 
-- [ ] Lupa en la barra superior de todas las páginas. Búsqueda instantánea sobre un índice pequeño (nombre, sinónimos, categoría y subcategoría), sin tildes ni mayúsculas, con coincidencia por inicio de palabra ("fisio" encuentra Fisioterapeuta; "medico" encuentra Médico).
-- [ ] Sin resultados: productos sugeridos (los favoritos) y debajo "¿No encuentras lo que necesitas?" con dos botones: "Explora nuestras categorías" (`/categorias`) y "Escríbenos por WhatsApp" (prellenado con lo buscado).
+- [x] Lupa en la barra superior de todas las páginas. Búsqueda instantánea sobre un índice pequeño (nombre, sinónimos, categoría y subcategoría), sin tildes ni mayúsculas, con coincidencia por inicio de palabra ("fisio" encuentra Fisioterapeuta; "medico" encuentra Médico). *(Hecho en `/buscar?q=`, con la lupa en la barra del escritorio y del celular; índice y sinónimos de prueba en `CategoriaService`, que con backend salen del panel.)*
+- [x] Sin resultados: productos sugeridos (los favoritos) y debajo "¿No encuentras lo que necesitas?" con dos botones: "Explora nuestras categorías" (`/categorias`) y "Escríbenos por WhatsApp" (prellenado con lo buscado). *(Hecho: favoritos de prueba, "Explora nuestras categorías" y WhatsApp con lo buscado.)*
 - [ ] Cada búsqueda se registra con su término y cantidad de resultados (Paso 20); el panel lista las búsquedas sin resultados de los últimos 30 días (Paso 19).
 
 **Ficha de producto** (plantilla de todos los productos; no necesita caber en una sola pantalla)
 
-- [ ] Orden: galería → título → precio (anterior tachado, final destacado, badge) → qué incluye (plantita natural, dedicatoria personalizada, funda kraft) → tamaño → "Impresa en 3D con PLA Plus" → línea de envío → bloque de promesa → "O prográmalo para una fecha futura" → botón "Personalizar esta maceta" → descripción, testimonios y relacionados.
-- [ ] Galería: imagen principal grande y miniaturas debajo; al tocar una miniatura se muestra arriba. 3–4 fotos + 1 video de 6–8 s (frontal → video → 3/4 → detalle → escala). El video, silenciado, `playsinline` y en bucle, se descarga y reproduce solo cuando su lámina está activa.
-- [ ] Línea de envío bajo el precio y en el carrito: "Envío desde $3,50 según destino · Lleva 2 macetas y el envío es gratis (excepto Galápagos)". Valores desde la configuración.
-- [ ] Bloque de promesa compacto: "Envío por Servientrega", "Recíbelo entre …", contador y la nota discreta de Amazonía.
-- [ ] Calendario de ventanas: dibuja solo lo que llega en `windows`; tocar un día resalta su ventana completa (por ejemplo, sábado + lunes); los días no disponibles aparecen deshabilitados.
-- [ ] Barra inferior fija con precio y "Personalizar".
+- [ ] Orden: galería → título → precio (anterior tachado, final destacado, badge) → qué incluye (plantita natural, dedicatoria personalizada, funda kraft) → tamaño → "Impresa en 3D con PLA Plus" → línea de envío → bloque de promesa → "O prográmalo para una fecha futura" → botón "Personalizar esta maceta" → descripción, testimonios y relacionados. *(Parcial: Hecho el orden hasta el botón; faltan testimonios y relacionados.)*
+- [ ] Galería: imagen principal grande y miniaturas debajo; al tocar una miniatura se muestra arriba. 3–4 fotos + 1 video de 6–8 s (frontal → video → 3/4 → detalle → escala). El video, silenciado, `playsinline` y en bucle, se descarga y reproduce solo cuando su lámina está activa. *(Parcial: Hecho con miniaturas; faltan fotos extra y el video.)*
+- [x] Línea de envío bajo el precio y en el carrito: "Envío desde $3,50 según destino · Lleva 2 macetas y el envío es gratis (excepto Galápagos)". Valores desde la configuración. *(Hecho en la ficha; falta en el carrito.)*
+- [x] Bloque de promesa compacto: "Envío por Servientrega", "Recíbelo entre …", contador y la nota discreta de Amazonía. *(Hecho con el mock de `PromesaService`.)*
+- [x] Calendario de ventanas: dibuja solo lo que llega en `windows`; tocar un día resalta su ventana completa (por ejemplo, sábado + lunes); los días no disponibles aparecen deshabilitados. *(Hecho: cada ventana es un botón y la elección pasa al checkout.)*
+- [x] Barra inferior fija con precio y "Personalizar". *(Hecho.)*
 - [ ] Sin afirmaciones ecológicas que no estén verificadas.
 
 **Personalizador** (`/producto/{slug}/personalizar`)
 
 - [ ] Foto base del modelo con su elemento fijo ya integrado; el slot izquierdo queda reservado para ese elemento.
 - [ ] Pestañas en hoja inferior: Hobbies, Amor, Mascotas y Marcos. Lentes y gafas aparte, con una imagen real por color.
-- [ ] **Accesorios:** el comprador elige **exactamente 2** (contador "1 de 2", "2 de 2"). Cuentan hobbies, amor, mascotas, marco con foto y marco con frase. No cuentan el elemento fijo, el nombre, las gafas o lentes ni la dedicatoria. Con 2 elegidos, para agregar otro debe quitar uno; con menos de 2 no puede continuar.
-- [ ] **Marco con foto:** sube la foto en ese momento; aviso si es muy pequeña para imprimirse bien.
-- [ ] **Marco con frase:** campo con el ejemplo "Avanza en fe hacia tus propósitos. Dios te bendiga." y contador "0/60".
-- [ ] **Dedicatoria:** texto de hasta 250 caracteres con contador (emojis, tildes y ñ) **u** opción visible "No quiero dedicatoria". Debe elegir una de las dos para continuar.
+- [x] **Accesorios:** el comprador elige **exactamente 2** (contador "1 de 2", "2 de 2"). Cuentan hobbies, amor, mascotas, marco con foto y marco con frase. No cuentan el elemento fijo, el nombre, las gafas o lentes ni la dedicatoria. Con 2 elegidos, para agregar otro debe quitar uno; con menos de 2 no puede continuar. *(Hecho: contador "n de 2" y exactamente 2.)*
+- [x] **Marco con foto:** sube la foto en ese momento; aviso si es muy pequeña para imprimirse bien. *(Hecho; el aviso salta con el lado menor bajo 600 px, valor provisional en `minPxFoto` hasta que el negocio defina el mínimo.)*
+- [x] **Marco con frase:** campo con el ejemplo "Avanza en fe hacia tus propósitos. Dios te bendiga." y contador "0/60". *(Hecho; el contador cuenta emojis como 1.)*
+- [x] **Dedicatoria:** texto de hasta 250 caracteres con contador (emojis, tildes y ñ) **u** opción visible "No quiero dedicatoria". Debe elegir una de las dos para continuar. *(Hecho; el contador cuenta emojis como 1.)*
 - [ ] Nombre en placa según la regla de abajo.
-- [ ] Borrador automático: la personalización se guarda en el navegador antes de agregarla al carrito y se ofrece "Continuar personalización" al volver.
+- [x] Borrador automático: la personalización se guarda en el navegador antes de agregarla al carrito y se ofrece "Continuar personalización" al volver. *(Hecho en `localStorage` por producto; la foto del marco no se guarda y hay que subirla otra vez.)*
 - [ ] Al guardar, la maceta entra al carrito como un ítem nuevo.
 
 **Carrito**
 
 - [ ] Ítems con resumen de personalización, editar (vuelve al personalizador), eliminar, cantidad solo en complementos, complementos y "Ver más" en modal sin salir del carrito.
-- [ ] **Regla de la segunda maceta:** con 1 maceta se ofrece "Agrega otra maceta y obtén envío gratis" y, debajo, los complementos. Con 2 o más macetas esa oferta desaparece, se muestra "¡Excelente! Ya tienes envío gratis" y se siguen ofreciendo complementos. Si vuelve a 1 maceta, la oferta reaparece. Solo cuentan macetas. Angular muestra u oculta según `incentives`; no lo calcula.
+- [ ] **Regla de la segunda maceta:** con 1 maceta se ofrece "Agrega otra maceta y obtén envío gratis" y, debajo, los complementos. Con 2 o más macetas esa oferta desaparece, se muestra "¡Excelente! Ya tienes envío gratis" y se siguen ofreciendo complementos. Si vuelve a 1 maceta, la oferta reaparece. Solo cuentan macetas. Angular muestra u oculta según `incentives`; no lo calcula. *(Parcial: la oferta y "¡Excelente!" ya funcionan con el mock de `EnvioGratisService`; falta leer `incentives` de Laravel.)*
 - [ ] **Segunda maceta desde el carrito:** abre la elección de producto y el personalizador; al guardar, vuelve al carrito actualizado.
 - [ ] **Una maceta no se duplica con "+":** cada maceta se agrega desde el personalizador con su propia personalización.
-- [ ] **Macetas idénticas:** si el comprador agrega una maceta con exactamente la misma personalización que otra del carrito (mismo modelo, nombre, gafas, accesorios, frase o foto y dedicatoria), se le pregunta "Tienes dos macetas exactamente iguales. ¿Es correcto?". "Sí" las conserva; "Revisar" lo lleva a editar la nueva. Ambas cuentan para el envío gratis.
-- [ ] **Complementos sin maceta:** un complemento nunca se compra solo. Si el carrito queda sin macetas, los complementos se conservan, se ocultan las sugerencias y se bloquea el checkout con "Los complementos acompañan a una maceta. Agrega una maceta para continuar."
+- [x] **Macetas idénticas:** si el comprador agrega una maceta con exactamente la misma personalización que otra del carrito (mismo modelo, nombre, gafas, accesorios, frase o foto y dedicatoria), se le pregunta "Tienes dos macetas exactamente iguales. ¿Es correcto?". "Sí" las conserva; "Revisar" lo lleva a editar la nueva. Ambas cuentan para el envío gratis. *(Hecho en Angular con la huella de la personalización; "Sí" guarda `igualConfirmada` en el ítem.)*
+- [x] **Complementos sin maceta:** un complemento nunca se compra solo. Si el carrito queda sin macetas, los complementos se conservan, se ocultan las sugerencias y se bloquea el checkout con "Los complementos acompañan a una maceta. Agrega una maceta para continuar." *(Hecho: se oculta la oferta de macetas y complementos, y "Continuar" queda bloqueado.)*
 
 **Checkout** (tres pantallas con indicador de avance: `/checkout` envío y facturación → `/checkout/pago` → `/checkout/confirmacion`)
 
@@ -621,8 +622,8 @@ Redirecciones 301: `/catalogo/todos-productos` → `/categorias`; `/catalogo/tod
 
 - [ ] `/checkout/confirmacion`, sin token: variante tarjeta pagada y variante transferencia (pedido creado, con las mismas instrucciones del pedido pendiente).
 - [x] **Pedido pendiente** en `/pedido/{token}`: número, total, cuentas bancarias con botón copiar por dato, hora límite exacta ("Paga antes del martes 10, 07:50 para mantener tu fecha"), botón "Subir comprobante", botón de WhatsApp y aviso de que el pedido no se puede editar. Sin seguimiento. *(Hecho en Angular con un mock del contrato del Paso 0 (`PedidoPendienteService`): token largo, plazo en hora de Guayaquil, cuentas con copiar, subir comprobante simulado (JPG, PNG o PDF), WhatsApp, vencido y 404 si el token no coincide. Falta con backend: subida real, límite de intentos y límite de tamaño del archivo (no definido).)*
-- [ ] **Seguimiento** en `/pedido/{token}` cuando el pedido está pagado, con los estados visibles del Paso 0.
-- [x] Ayuda en pedido pendiente y seguimiento: "¿Tienes alguna duda o novedad con tu pedido? Escríbenos por WhatsApp.", con el mensaje prellenado "Hola 🌿 Te escribo por mi pedido JDS-2048. Tengo la siguiente consulta:". *(Hecha en el pedido pendiente; falta el seguimiento.)*
+- [x] **Seguimiento** en `/pedido/{token}` cuando el pedido está pagado, con los estados visibles del Paso 0. *(Hecho en Angular con un mock del contrato "Pedido" (`SeguimientoService`): número, estado visible, ventana, productos con nombre, total y guía de Servientrega; la ruta elige entre seguimiento, pedido pendiente y 404, y lleva `noindex`. Hoy el estado es siempre "Confirmado"; En producción y Enviado los marca el panel. Falta con backend: `Cache-Control: private, no-store` y "Consultar mi pedido".)*
+- [x] Ayuda en pedido pendiente y seguimiento: "¿Tienes alguna duda o novedad con tu pedido? Escríbenos por WhatsApp.", con el mensaje prellenado "Hola 🌿 Te escribo por mi pedido JDS-2048. Tengo la siguiente consulta:". *(Hecha en el pedido pendiente y en el seguimiento.)*
 
 **Plantilla de temporada** (la usa `/san-valentin`; las demás se crean desde el panel)
 
@@ -1119,16 +1120,16 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Implementación acordada**
 
-- **Orden de resolución:** provincia → cantón → localidad (opcional) → zona. Prioridad de asignación: localidad > cantón > provincia > zona de respaldo (Zona C).
+- **Orden de resolución:** provincia → cantón → localidad (opcional) → zona. Prioridad de asignación: localidad > cantón > zona de respaldo (Zona B, la más cara). *(Cambio del 4 nov: la tabla por cantón sale de las tarifas reales de Servientrega; antes se asignaba por provincia.)*
 
 | Zona | Asignación inicial | Tarifa | Tránsito |
 | --- | --- | --- | --- |
-| A | Cantones Guayaquil, Durán y Samborondón; localidades La Aurora, La Joya y Villa Club (Daule) y Villa Italia (cantón por confirmar) | $3,50 | Base |
-| B (Amazonía) | Sucumbíos, Orellana, Napo, Pastaza, Morona Santiago y Zamora Chinchipe | $6,25 | +1 día (ventana de 3 días) |
-| C | Demás provincias continentales y cantones sin asignación propia | $5,00 (editable) | Base |
-| Galápagos | Provincia de Galápagos | No disponible | — |
+| A | Cantones Guayaquil, Daule, Durán, Samborondón y Salitre; Daule completo, así que sus localidades (La Aurora, La Joya, Villa Club y Villa Italia) ya no necesitan regla propia | $3,50 | Base |
+| B | Amazonía y los 140 cantones que Servientrega cobra igual ($7,02), según `zonas-envio.json` | $6,25 | +1 día (ventana de 3 días) |
+| C | Cantones que Servientrega cobra $5,29 o $5,92 (71 cantones) | $5,00 (editable) | Base |
+| No disponible | Galápagos, Taisha y Aguarico (se atienden por WhatsApp) | — | — |
 
-- Si el comprador no elige localidad, se usa la asignación de su cantón (por ejemplo, Daule sin localidad → Zona C).
+- Si el comprador no elige localidad, se usa la asignación de su cantón (por ejemplo, Daule → Zona A; Santa Rosa está por confirmar con Servientrega y mientras tanto es Zona B).
 - Galápagos muestra "Actualmente no realizamos envíos a Galápagos." No se calcula tarifa ni promesa y no se puede crear el pedido.
 - La tarifa y la ventana final se recalculan en el checkout cuando se conoce la ubicación.
 - El envío gratis desde 2 macetas es una regla del Paso 7, no una tarifa.
@@ -1136,7 +1137,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Datos y configuración.** Tablas `provinces`, `cantons`, `localities`, `location_aliases`, `shipping_zones`, `zone_assignments`.
 
-**Acción de Josué.** Confirmar el cantón de Villa Italia y cualquier otra localidad que deba entrar en Zona A.
+**Acción de Josué.** Confirmar con Servientrega el cantón de Santa Rosa (hoy Zona B provisional). Villa Italia ya no importa: todo Daule es Zona A.
 
 **Terminado cuando.** Elegir cualquier cantón o localidad devuelve su zona, tarifa y ventana correctas, y Galápagos queda bloqueado.
 
@@ -1915,7 +1916,7 @@ No se lanza hasta que todo esté marcado.
 - [ ] Imagen oficial de marca y fondo de la imagen social.
 - [ ] Cuentas bancarias y número oficial de WhatsApp.
 - [ ] Feriados nacionales y locales del año, y cierres conocidos.
-- [ ] Cantón de Villa Italia y demás localidades de Zona A.
+- [ ] Cantón de Santa Rosa (El Oro) con Servientrega. *(Villa Italia ya no importa: todo Daule es Zona A.)*
 - [ ] Subcategorías de Amor, Amistad y Familia.
 - [ ] Favoritos de la página principal (6–8 productos).
 - [ ] San Valentín: productos, orden, fechas y promoción si aplica.
@@ -1954,7 +1955,7 @@ Si la implementación llega a uno de estos puntos, se construye la estructura y 
 | --- | --- | --- |
 | Textos legales | Privacidad, términos, envíos, cambios, consentimiento y cookies | Páginas y versiones listas, con texto provisional marcado como borrador |
 | Reembolsos | Cuánto se devuelve, en qué casos y en qué plazo | Se registra a mano el monto que decida Josué |
-| Zona A | Cantón de Villa Italia y nuevas localidades | Localidades editables en el panel |
+| Zona A | Cantón de Santa Rosa y nuevas localidades | Localidades editables en el panel |
 | Zona C | Tarifa futura | $5,00 editable |
 | Complementos | Cuáles habrá y qué campos piden | Esquema de campos listo, sin complementos inventados |
 | Excepciones por producto | Modelos con otra cantidad de accesorios o accesorios con precio extra | Cantidad configurable (2) y precio extra en $0 |

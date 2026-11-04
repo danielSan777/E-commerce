@@ -69,6 +69,13 @@
     }
     }
 
+    @if (sinMaceta()) {
+    <section class="aviso-sin-maceta" role="alert">
+        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+        <p>{{ MENSAJE_SIN_MACETA }}</p>
+        <button type="button" class="btn-continuar" (click)="abrirHoja('macetas')">Elegir una maceta</button>
+    </section>
+    } @else {
     <!-- Franja verde: otra maceta -->
     <section class="franja franja-verde" [class.franja-solo]="envioGratis()">
         <div class="franja-cab">
@@ -107,6 +114,7 @@
         <button type="button" class="ver-mas ver-mas-rosa" (click)="abrirHoja('complementos')">Ver más complementos
             <i class="bi bi-arrow-right"></i></button>
     </section>
+    }
 
     <!-- Subtotal, envío y botones -->
     <div class="pie">
@@ -128,7 +136,11 @@
 
         <div class="pie-botones">
             <a class="btn-seguir" [routerLink]="RUTA_SEGUIR">Seguir comprando</a>
+            @if (sinMaceta() || macetaIgual()) {
+            <span class="btn-continuar btn-continuar-bloqueado" role="link" aria-disabled="true">Continuar <i class="bi bi-arrow-right"></i></span>
+            } @else {
             <a class="btn-continuar" [routerLink]="RUTA_CONTINUAR">Continuar <i class="bi bi-arrow-right"></i></a>
+            }
         </div>
     </div>
 
@@ -411,6 +423,19 @@
             <button type="button" class="dlg-aceptar" [class.peligro]="c.accion === 'eliminar'" (click)="confirmar()">
                 {{ c.accion === 'eliminar' ? 'Sí, eliminar' : 'Sí, editar' }}
             </button>
+        </div>
+    </div>
+</div>
+}
+
+@if (macetaIgual() && !personalizando()) {
+<div class="dialogo-fondo">
+    <div class="dialogo" role="alertdialog" aria-modal="true" aria-labelledby="iguales-titulo">
+        <div class="dialogo-icono"><i class="bi bi-files"></i></div>
+        <h2 class="dialogo-titulo" id="iguales-titulo">Tienes dos macetas exactamente iguales. ¿Es correcto?</h2>
+        <div class="dialogo-botones">
+            <button type="button" class="dlg-cancelar" (click)="revisarIguales()">Revisar</button>
+            <button type="button" class="dlg-aceptar" (click)="confirmarIguales()">Sí, es correcto</button>
         </div>
     </div>
 </div>

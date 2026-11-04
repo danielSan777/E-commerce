@@ -11,7 +11,7 @@ import { RouterLink } from '@angular/router';
 export class NoEncontrada {
 
   // ===== EDITABLES =====
-  readonly RUTA_TIENDA = '/catalogo/todos-productos';
+  readonly RUTA_TIENDA = '/categorias';
 
   constructor() {
     const respuesta = inject(RESPONSE_INIT, { optional: true });
