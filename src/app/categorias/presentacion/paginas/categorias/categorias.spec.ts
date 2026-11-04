@@ -39,9 +39,11 @@ describe('CategoriaService (mock del contrato)', () => {
         expect(servicio.categoria('amor', 'salud')).toBeNull();
     });
 
-    it('el precio con descuento trae la insignia', () => {
-        const p = servicio.categoria('amor')!.products[0];
-        expect(p.price.badge).toBe(`${p.price.discount_percent}% OFF`);
+    it('la insignia solo existe cuando hay descuento (y sin descuento no hay precio tachado)', () => {
+        for (const p of servicio.categoria('amor')!.products) {
+            expect(p.price.badge).toBe(p.price.discount_percent > 0 ? `${p.price.discount_percent}% OFF` : null);
+            expect(p.price.base_cents).toBeGreaterThanOrEqual(p.price.final_cents);
+        }
     });
 });
 
