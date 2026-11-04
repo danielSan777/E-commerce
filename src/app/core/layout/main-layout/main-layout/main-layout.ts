@@ -1,5 +1,8 @@
-import { Component, HostListener, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, HostListener, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs';
+import { TIENDA, enlaceWhatsapp } from '../../../configuracion/tienda';
 import { Navbar } from '../../navbar/navbar/navbar';
 import { Footer } from '../../footer/footer/footer';
 
@@ -14,19 +17,28 @@ import { Footer } from '../../footer/footer/footer';
 export class MainLayout {
 
   // ===== Botón flotante de WhatsApp (editable) =====
-  // Número con código de país, SOLO dígitos (sin +, espacios ni guiones). Ejemplo Ecuador: 593999283765
-  numeroWhatsapp = '593999283765';
-
-  // Mensaje que aparece escrito al abrir el chat
-  mensajeWhatsapp = 'Hola, quisiera más información sobre sus productos.';
+  // El número y el mensaje se cambian en core/configuracion/tienda.ts (un solo lugar)
 
   // Texto que se ve junto al botón
   textoWhatsapp = 'Chatea con nosotros';
 
   // Dirección final del chat
-  get enlaceWhatsapp(): string {
-    return `https://wa.me/${this.numeroWhatsapp}?text=${encodeURIComponent(this.mensajeWhatsapp)}`;
-  }
+  readonly enlaceWhatsapp = enlaceWhatsapp(TIENDA.mensajeWhatsapp);
+
+  // El botón flotante NO se muestra en el checkout (envío, pago, confirmación) ni en el pedido pendiente:
+  // ahí la compra se cierra en la web. En el resto de la tienda sí aparece.
+  // EDITABLE: rutas donde se oculta.
+  readonly RUTAS_SIN_WHATSAPP = ['/checkout', '/pedido'];
+
+  private router = inject(Router);
+  private rutaActual = toSignal(
+    this.router.events.pipe(filter(e => e instanceof NavigationEnd), map(() => this.router.url)),
+    { initialValue: this.router.url },
+  );
+  mostrarWhatsapp = () => !this.RUTAS_SIN_WHATSAPP.some(r => {
+    const ruta = this.rutaActual().split(/[?#]/)[0];
+    return ruta === r || ruta.startsWith(r + '/');
+  });
 
   // ===== Botón flotante "subir arriba" =====
   private readonly distanciaParaMostrar = 300; // píxeles de scroll a partir de los cuales aparece el botón

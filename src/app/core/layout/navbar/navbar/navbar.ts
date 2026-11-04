@@ -3,6 +3,7 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { TIENDA } from '../../../configuracion/tienda';
 import { CatalogoMenu } from '../../../../catalogo/dominio/entidades/catalogo';
 // AJUSTA la ruta si tu carpeta carrito está en otro lugar
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
@@ -15,6 +16,8 @@ import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/En
 })
 
 export class Navbar {
+
+  readonly telefono = TIENDA.telefono;   // se cambia en core/configuracion/tienda.ts
 
   // ===== Anuncio rojo de envío gratis (solo en la pantalla principal) =====
   // EDITABLE: ruta de la pantalla principal (la ruta '' redirige a 'catalogo')

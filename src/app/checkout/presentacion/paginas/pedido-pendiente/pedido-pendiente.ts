@@ -3,7 +3,7 @@ import { CurrencyPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { PedidoPendienteService } from '../../../aplicacion/servicios/PedidoPendienteService';
-import { WHATSAPP_TIENDA } from '../../../dominio/validaciones/mensaje_whatsapp';
+import { enlaceWhatsapp } from '../../../../core/configuracion/tienda';
 import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
 
 // Pedido pendiente de pago por transferencia (/pedido/{token}). Lee el contrato "Pedido pendiente de pago" del Paso 0.
@@ -46,7 +46,7 @@ export class PedidoPendiente {
     const p = this.pedido();
     if (!p) return '';
     const texto = `Hola 🌿 Te escribo por mi pedido ${p.numero}. Tengo la siguiente consulta:`;
-    return `https://wa.me/${WHATSAPP_TIENDA}?text=${encodeURIComponent(texto)}`;
+    return enlaceWhatsapp(texto);
   });
 
   constructor() {

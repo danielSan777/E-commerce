@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TIENDA, enlaceWhatsapp } from '../../../configuracion/tienda';
 
 interface Enlace {
   texto: string;
@@ -29,10 +30,10 @@ export class Footer {
 
   // ===== Botón flotante de WhatsApp (editable) =====
   // Número con código de país, SOLO dígitos (sin +, espacios ni guiones). Ejemplo Ecuador: 593999283765
-  numeroWhatsapp = '593999283765';
+  numeroWhatsapp = TIENDA.whatsapp;
 
   // Mensaje que aparece escrito al abrir el chat
-  mensajeWhatsapp = 'Hola, quisiera más información sobre sus productos.';
+  mensajeWhatsapp = TIENDA.mensajeWhatsapp;
 
   // Texto que se ve junto al botón
   textoWhatsapp = 'Chatea con nosotros';
@@ -47,8 +48,8 @@ export class Footer {
   descripcion =
     'En Jardín de Sele encontrarás los detalles más especiales para decorar tus espacios favoritos, ' +
     'además de recuerdos para regalar en fiestas y ocasiones importantes.';
-  telefono = '+593 999283765';
-  correo = 'info@Jardín de Sel.com';
+  telefono = TIENDA.telefono;
+  correo = TIENDA.correo;
 
   // --- Columnas de enlaces ---
   // Solo van enlaces a páginas que EXISTEN. Cuando se creen las políticas, preguntas frecuentes, etc.
@@ -77,7 +78,7 @@ export class Footer {
   redes: RedSocial[] = [
     { nombre: 'Instagram', icono: 'bi-instagram', enlace: 'https://www.instagram.com/jardindesele?rpxt=b3dib204ZjdybXAx' },
     { nombre: 'TikTok', icono: 'bi-tiktok', enlace: 'https://www.tiktok.com/@jardindesele?_r=1&_t=ZS-9AoGQ9nwUCL' },
-    { nombre: 'WhatsApp', icono: 'bi-whatsapp', enlace: `https://wa.me/${this.numeroWhatsapp}?text=${encodeURIComponent(this.mensajeWhatsapp)}` },
+    { nombre: 'WhatsApp', icono: 'bi-whatsapp', enlace: enlaceWhatsapp() },
   ];
 
   // --- Parte de abajo ---
