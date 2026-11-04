@@ -1,4 +1,4 @@
-import { Component, DOCUMENT, computed, effect, inject, signal } from '@angular/core';
+import { Component, DOCUMENT, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
@@ -32,6 +32,20 @@ export class Categorias {
   categoria = computed(() =>
     this.servicio.categoria(this.datos()['categoria'] ?? null, this.parametros().get('subcategoria')));
 
+  // Flechas de las pestañas: avisan que hay más subcategorías hacia los lados
+  readonly flechaIzq = signal(false);
+  readonly flechaDer = signal(false);
+
+  revisarFlechas(nav: Element | null): void {
+    if (!nav) return;
+    this.flechaIzq.set(nav.scrollLeft > 4);
+    this.flechaDer.set(nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4);
+  }
+
+  mover(nav: HTMLElement, sentido: 1 | -1): void {
+    nav.scrollBy({ left: sentido * nav.clientWidth * 0.6, behavior: 'smooth' });
+  }
+
   // Ruta del botón "Todos" de las pestañas
   rutaTodos = computed(() => `/${this.categoria()?.slug}`);
 
@@ -50,6 +64,7 @@ export class Categorias {
   }
 
   constructor() {
+    afterNextRender(() => setTimeout(() => this.revisarFlechas(this.document.querySelector('nav.pestanas'))));
     // SEO por estado: título, descripción, imagen para compartir y canonical (sin UTMs)
     effect(() => {
       const c = this.categoria();

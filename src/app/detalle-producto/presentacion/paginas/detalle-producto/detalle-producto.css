@@ -698,3 +698,6 @@ button {
 
 /* deja espacio al final para que la barra fija no tape la descripción */
 .detalle { padding-bottom: 84px; }
+
+.btn-programar { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0; padding: 11px;
+  border: 1.5px solid #175437; border-radius: 12px; background: #fff; color: #175437; font-weight: 700; }
