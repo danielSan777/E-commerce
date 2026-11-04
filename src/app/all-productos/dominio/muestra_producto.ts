@@ -20,8 +20,7 @@ export const productos: Producto[] = [
         id: 1,
         nombre: 'Amigo guitarrista',
         slug: 'amigo-guitarrista',
-        descripcion: 'Ideal para: Amigos, músicos, guitarristas o personas que disfrutan la música' +
-            'Contexto de recomendación: Cuando el cliente busca un regalo de amistad, cariño o cumpleaños para un hombre que toca guitarra o disfruta la música.',
+        descripcion: 'Ideal para amigos, músicos, guitarristas o quienes disfrutan la música. Un regalo de amistad, cariño o cumpleaños.',
         precio: 20,
         imagen: 'imagenes/amor-amistad/Amigo-guitarrista.png',
         tipo: 'amor-amistad',
@@ -35,11 +34,8 @@ export const productos: Producto[] = [
         id: 2,
         nombre: 'Bob corazón Hombre',
         slug: 'bob-corazon-hombre',
-        descripcion: 'Ideal para: Hombres, novios, esposos o personas en un contexto romántico' +
-            'Contexto de recomendación: Cuando el cliente busca un regalo de amor para un hombre, novio, esposo o pareja masculina' +
-            'Palabras relacionadas: Bob corazón hombre, hombre con corazón, amor, romántico, novio, esposo, detalle de pareja.',
+        descripcion: 'Ideal para hombres, novios, esposos o detalles de pareja. Un regalo de amor.',
         precio: 20,
-        precioAnterior: 179,
         imagen: 'imagenes/amor-amistad/Bob corazón Hombre.png',
         tipo: 'amor-amistad',
         coleccion: 'Dragon Ball',
@@ -52,7 +48,7 @@ export const productos: Producto[] = [
         id: 3,
         nombre: 'Baby Garfield',
         slug: 'baby-garfield',
-        descripcion: 'Para fans de Garfield o cuando el cliente busca un personaje tierno, divertido o relacionado con gatos.',
+        descripcion: 'Para fans de Garfield: un personaje tierno, divertido y amante de los gatos.',
         precio: 22,
         imagen: 'imagenes/colecciones/personajes/baby.png',
         tipo: 'personaje',
@@ -66,9 +62,8 @@ export const productos: Producto[] = [
         id: 4,
         nombre: 'Bellota Chicas super poderosas',
         slug: 'bellota-chicas-super-poderosas',
-        descripcion: 'Para fans de Las Chicas Superpoderosas o cuando el cliente busca un personaje verde, fuerte, valiente y de carácter.',
+        descripcion: 'Para fans de Las Chicas Superpoderosas: un personaje fuerte, valiente y de carácter.',
         precio: 20,
-        precioAnterior: 199,
         imagen: 'imagenes/colecciones/personajes/bellota.png',
         tipo: 'ALARMA',
         coleccion: 'Deportes',
@@ -81,12 +76,7 @@ export const productos: Producto[] = [
         id: 5,
         nombre: 'Abogada',
         slug: 'abogada',
-        descripcion: '*Incluye ' +
-            '🌿 Plantita natura' +
-            '💌 Dedicatoria personalizada' +
-            '🛍️ Funda kraft JDS' +
-            '📄 Guía de cuidados' +
-            '🪨 Piedritas de repuesto.',
+        descripcion: '',
         precio: 21,
         imagen: 'imagenes/profesionales/abogada.png',
         tipo: 'profesionales',
@@ -100,12 +90,7 @@ export const productos: Producto[] = [
         id: 6,
         nombre: 'Abogado',
         slug: 'abogado',
-        descripcion: '*Incluye:' +
-            '🌿 Plantita natural' +
-            '💌 Dedicatoria personalizada' +
-            '🛍️ Funda kraft JDS' +
-            '📄 Guía de cuidados' +
-            '🪨 Piedritas de repuesto',
+        descripcion: '',
         precio: 21,
         imagen: 'imagenes/profesionales/abogado.png',
         tipo: 'profesionales',
@@ -119,12 +104,7 @@ export const productos: Producto[] = [
         id: 7,
         nombre: 'Doctor',
         slug: 'doctor',
-        descripcion: '*Incluye:*' +
-            '🌿 Plantita natural' +
-            '💌 Dedicatoria personalizada' +
-            '🛍️ Funda kraft JDS' +
-            '📄 Guía de cuidados' +
-            '🪨 Piedritas de repuesto.',
+        descripcion: '',
         precio: 21,
         imagen: 'imagenes/profesionales/doctor.png',
         tipo: 'profesionales',
@@ -138,7 +118,7 @@ export const productos: Producto[] = [
         id: 8,
         nombre: 'Homero',
         slug: 'homero',
-        descripcion: 'Para fans de Los Simpson, series animadas o personajes cómicos, populares y nostálgicos..',
+        descripcion: 'Para fans de Los Simpson, las series animadas y los personajes cómicos y nostálgicos.',
         precio: 22,
         imagen: 'imagenes/colecciones/personajes/homero.png',
         tipo: 'cuadro',
@@ -152,13 +132,7 @@ export const productos: Producto[] = [
         id: 9,
         nombre: 'Lucas con pantalón, personalizado',
         slug: 'lucas-con-pantalon-personalizado',
-        descripcion: '*Incluye:*' +
-            '🌿 Plantita natural' +
-            '💌 Dedicatoria' +
-            '📄 Guía de cuidados' +
-            '🤎 Tarjeta de agradecimiento' +
-            '🎁 Funda kraft JDS incluida' +
-            '🪨 Piedritas decorativas de repuesto.',
+        descripcion: '',
         precio: 22,
         imagen: 'imagenes/colecciones/personajes/lucas.png',
         tipo: 'personaje',
@@ -172,12 +146,7 @@ export const productos: Producto[] = [
         id: 10,
         nombre: 'enfermera',
         slug: 'enfermera',
-        descripcion: '*Incluye:*' +
-            '🌿 Plantita natural' +
-            '💌 Dedicatoria personalizada' +
-            '🛍️ Funda kraft JDS' +
-            '📄 Guía de cuidados' +
-            '🪨 Piedritas de repuesto.',
+        descripcion: '',
         precio: 21,
         imagen: 'imagenes/maceta2.png',
         tipo: 'profesionales',

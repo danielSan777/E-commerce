@@ -116,11 +116,6 @@ export class DetalleProducto implements OnDestroy {
   enlaceTwitter = computed(() => `https://twitter.com/intent/tweet?url=${encodeURIComponent(this.enlace())}&text=${encodeURIComponent(this.producto()?.nombre ?? '')}`);
   enlacePinterest = computed(() => `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(this.enlace())}&description=${encodeURIComponent(this.producto()?.nombre ?? '')}`);
 
-  porcentajeDescuento = computed(() => {
-    const p = this.producto();
-    return p?.precioAnterior ? Math.round((1 - p.precio / p.precioAnterior) * 100) : 0;
-  });
-
 
   // El personalizador es la ruta hija /producto/{slug}/personalizar: la dirección dice si está abierto
   private urlActual = toSignal(
