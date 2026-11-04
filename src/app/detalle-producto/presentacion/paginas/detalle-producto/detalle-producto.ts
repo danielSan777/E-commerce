@@ -14,11 +14,12 @@ import { VentanaDisponible } from '../../../../checkout/dominio/interfaces/prome
 import { textoVentana } from '../../../../checkout/dominio/validaciones/fechas';
 import { ENVIO_DESDE } from '../../../../checkout/dominio/validaciones/envio';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
+import { CalendarioVentanas } from '../../../../shared/componentes/calendario-ventanas/calendario-ventanas';
 import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
 import { ProductoCarrito } from '../../../../carrito/aplicacion/servicios/CarritoService';
 
 @Component({
-  imports: [RouterLink, Personalizador, NoEncontrada],
+  imports: [RouterLink, Personalizador, NoEncontrada, CalendarioVentanas],
   selector: 'app-detalle-producto',
   styleUrl: './detalle-producto.css',
   templateUrl: './detalle-producto.html',

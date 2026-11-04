@@ -14,6 +14,20 @@ export function textoVentana(inicio: string, fin: string): string {
     return `Del ${a.d} de ${MESES[a.m - 1]} al ${b.d} de ${MESES[b.m - 1]}`;
 }
 
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+
+function diaSemana(fecha: string): string {
+    return DIAS[new Date(`${fecha}T12:00:00Z`).getUTCDay()];
+}
+
+/** "2026-11-14" + "2026-11-16" → "sábado 14 y lunes 16 de noviembre" · si cambia el mes: "…martes 30 de noviembre y jueves 2 de diciembre" */
+export function textoDias(inicio: string, fin: string): string {
+    const a = partes(inicio);
+    const b = partes(fin);
+    if (a.m === b.m) return `${diaSemana(inicio)} ${a.d} y ${diaSemana(fin)} ${b.d} de ${MESES[b.m - 1]}`;
+    return `${diaSemana(inicio)} ${a.d} de ${MESES[a.m - 1]} y ${diaSemana(fin)} ${b.d} de ${MESES[b.m - 1]}`;
+}
+
 /**
  * "Paga antes del martes 10 de noviembre, 07:50" (hora de Guayaquil).
  * SOLO la usa el mock: con backend, `deadline_label` llega ya escrito desde Laravel y Angular no formatea el plazo.

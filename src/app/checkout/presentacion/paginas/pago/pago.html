@@ -87,15 +87,7 @@
         </div>
 
         @if (entrega() === 'programada') {
-        <div class="ventanas" role="radiogroup" aria-label="Ventanas disponibles">
-            @for (v of ventanas; track v.start) {
-            <button type="button" class="ventana" role="radio" [attr.aria-checked]="ventanaElegida() === v"
-                [class.marcada]="ventanaElegida() === v" [disabled]="!v.available" (click)="elegirVentana(v)">
-                {{ textoVentana(v.start, v.end) }}
-                @if (!v.available) { <em>No disponible</em> }
-            </button>
-            }
-        </div>
+        <app-calendario-ventanas [ventanas]="ventanas" [elegida]="ventanaElegida()" (elegir)="elegirVentana($event)" />
         }
 
         @if (esAmazonia()) { <p class="nota-amazonia">{{ promesa.amazon_note }}</p> }

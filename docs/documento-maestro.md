@@ -582,7 +582,7 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 - [ ] Galería: imagen principal grande y miniaturas debajo; al tocar una miniatura se muestra arriba. 3–4 fotos + 1 video de 6–8 s (frontal → video → 3/4 → detalle → escala). El video, silenciado, `playsinline` y en bucle, se descarga y reproduce solo cuando su lámina está activa. *(Parcial: Hecho con miniaturas; faltan fotos extra y el video.)*
 - [x] Línea de envío bajo el precio y en el carrito: "Envío desde $3,50 según destino · Lleva 2 macetas y el envío es gratis (excepto Galápagos)". Valores desde la configuración. *(Hecho en la ficha; falta en el carrito.)*
 - [x] Bloque de promesa compacto: "Envío por Servientrega", "Recíbelo entre …", contador y la nota discreta de Amazonía. *(Hecho con el mock de `PromesaService`.)*
-- [x] Calendario de ventanas: dibuja solo lo que llega en `windows`; tocar un día resalta su ventana completa (por ejemplo, sábado + lunes); los días no disponibles aparecen deshabilitados. *(Hecho: cada ventana es un botón y la elección pasa al checkout.)*
+- [x] Calendario de ventanas: dibuja solo lo que llega en `windows`; tocar un día resalta su ventana completa (por ejemplo, sábado + lunes); los días no disponibles aparecen deshabilitados. *(Hecho: calendario mensual compartido por la ficha y el pago (`app-calendario-ventanas`). Tocar un día elige su ventana de 2 días válidos, sin domingos (sábado + lunes); los días sin ventana o no disponibles salen deshabilitados. La elección pasa al checkout.)*
 - [x] Barra inferior fija con precio y "Personalizar". *(Hecho.)*
 - [ ] Sin afirmaciones ecológicas que no estén verificadas.
 

@@ -1,0 +1,44 @@
+<div class="calendario">
+    <div class="cabecera">
+        <button type="button" class="flecha" (click)="mover(-1)" [disabled]="!hayAnterior()" aria-label="Mes anterior">
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </button>
+        <strong class="mes" aria-live="polite"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ tituloMes() }}</strong>
+        <button type="button" class="flecha" (click)="mover(1)" [disabled]="!haySiguiente()" aria-label="Mes siguiente">
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <div class="semana" aria-hidden="true">
+        @for (d of SEMANA; track $index) { <span>{{ d }}</span> }
+    </div>
+
+    <div class="dias" role="grid" aria-label="Fechas de entrega">
+        @for (c of celdas(); track $index) {
+        @if (c) {
+        <button type="button" class="dia"
+            [class.libre]="c.ventana?.available"
+            [class.lleno]="c.ventana && !c.ventana.available"
+            [class.marcado]="esDeVentana(c, elegida())"
+            [class.resaltado]="c.ventana?.available && esDeVentana(c, resaltada())"
+            [disabled]="!c.ventana?.available"
+            [attr.aria-pressed]="esDeVentana(c, elegida())"
+            [attr.aria-label]="c.ventana ? textoDias(c.ventana.start, c.ventana.end) + (c.ventana.available ? '' : ', no disponible') : null"
+            (click)="elegirDia(c)" (mouseenter)="resaltada.set(c.ventana)" (mouseleave)="resaltada.set(undefined)"
+            (focus)="resaltada.set(c.ventana)" (blur)="resaltada.set(undefined)">
+            {{ c.numero }}
+        </button>
+        } @else {
+        <span class="vacio"></span>
+        }
+        }
+    </div>
+
+    <p class="resumen" aria-live="polite">
+        @if (elegida(); as e) {
+        <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Recibirás entre el <b>{{ textoDias(e.start, e.end) }}</b>
+        } @else {
+        Toca un día: se eligen 2 días seguidos (los domingos no cuentan).
+        }
+    </p>
+</div>

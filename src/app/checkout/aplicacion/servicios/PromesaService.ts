@@ -21,13 +21,30 @@ export class PromesaService {
         };
     }
 
+    // Ventanas de 2 días de entrega válidos seguidos, sin domingos ni feriados (un sábado se junta con el lunes).
+    // MOCK: aquí las arma el servicio; con backend las calcula Laravel y Angular solo las dibuja.
     ventanas(): VentanasDisponibles {
-        return {
-            windows: [
-                { start: '2026-11-12', end: '2026-11-13', available: true },
-                { start: '2026-11-14', end: '2026-11-16', available: true },
-                { start: '2026-11-17', end: '2026-11-18', available: false },
-            ],
-        };
+        const FERIADOS = ['2026-12-25', '2027-01-01'];
+        const NO_DISPONIBLES = ['2026-11-17'];          // ventanas llenas (ejemplo)
+        const SEMANAS = 8;
+
+        const texto = (d: Date) => d.toISOString().slice(0, 10);
+        const valido = (d: Date) => d.getUTCDay() !== 0 && !FERIADOS.includes(texto(d));
+
+        const windows: VentanasDisponibles['windows'] = [];
+        const dia = new Date('2026-11-12T00:00:00Z');
+        const fin = new Date(dia.getTime() + SEMANAS * 7 * 86400_000);
+
+        while (dia < fin) {
+            while (!valido(dia)) dia.setUTCDate(dia.getUTCDate() + 1);
+            const start = texto(dia);
+            dia.setUTCDate(dia.getUTCDate() + 1);
+            while (!valido(dia)) dia.setUTCDate(dia.getUTCDate() + 1);
+            const end = texto(dia);
+            dia.setUTCDate(dia.getUTCDate() + 1);
+            windows.push({ start, end, available: !NO_DISPONIBLES.includes(start) });
+        }
+
+        return { windows };
     }
 }
