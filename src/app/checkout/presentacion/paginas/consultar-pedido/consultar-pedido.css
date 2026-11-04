@@ -1,0 +1,14 @@
+:host { display: block; background: var(--jds-crema); color: var(--jds-texto); }
+.pagina { max-width: 520px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-family: Georgia, 'Times New Roman', serif; color: var(--jds-vino); font-size: 1.7rem; margin: 0 0 8px; }
+.intro { margin: 0 0 18px; }
+.formulario { display: flex; flex-direction: column; gap: 6px; background: #fff; border: 1px solid var(--jds-borde); border-radius: 16px; padding: 16px; }
+label { font-weight: 700; font-size: .9rem; margin-top: 6px; }
+input { border: 1px solid var(--jds-borde); border-radius: 10px; padding: 10px 12px; font-size: 1rem; }
+button { margin-top: 12px; background: var(--jds-vino); color: #fff; border: 0; border-radius: 999px; padding: 12px; font-weight: 700; }
+button:disabled { opacity: .6; }
+.error { color: #b3261e; margin: 6px 0 0; font-size: .9rem; }
+.respuesta { background: var(--jds-rosa); border-radius: 12px; padding: 12px 14px; margin: 14px 0 0; }
+.respuesta .bi { color: var(--jds-vino); margin-right: 4px; }
+.ayuda { margin: 18px 0 8px; font-size: .9rem; }
+.volver { color: var(--jds-vino); font-weight: 700; }

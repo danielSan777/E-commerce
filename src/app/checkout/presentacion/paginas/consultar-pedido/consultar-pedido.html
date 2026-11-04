@@ -1,0 +1,20 @@
+<main class="pagina">
+    <h1>Consultar mi pedido</h1>
+    <p class="intro">Escribe tu número de pedido y el correo con el que compraste. Te enviaremos a ese correo el enlace privado para ver el estado de tu pedido.</p>
+
+    <form class="formulario" (submit)="enviar($event)" novalidate>
+        <label for="numero">Número de pedido</label>
+        <input id="numero" name="numero" type="text" autocomplete="off" [(ngModel)]="numero" placeholder="Ej.: JDS-1042">
+
+        <label for="correo">Correo electrónico</label>
+        <input id="correo" name="correo" type="email" autocomplete="email" [(ngModel)]="correo" placeholder="tucorreo@ejemplo.com">
+
+        @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+        <button type="submit" [disabled]="enviando()">{{ enviando() ? 'Enviando…' : 'Enviarme el enlace' }}</button>
+    </form>
+
+    @if (respuesta()) { <p class="respuesta" role="status"><i class="bi bi-envelope-check" aria-hidden="true"></i> {{ respuesta() }}</p> }
+
+    <p class="ayuda">¿Necesitas ayuda? Escríbenos por <a [href]="whatsapp" target="_blank" rel="noopener">WhatsApp</a> o a {{ correoTienda }}.</p>
+    <a class="volver" routerLink="/categorias">Seguir viendo regalos</a>
+</main>

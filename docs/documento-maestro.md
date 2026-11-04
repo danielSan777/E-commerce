@@ -559,7 +559,7 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 - [x] "Cómo funciona" en 3 pasos: elige, personaliza y recíbelo con su plantita. *(Hecho.)*
 - [ ] Testimonios elegidos por Josué (Paso 24).
 - [x] Confianza: pago seguro con tarjeta o transferencia, envíos a todo Ecuador por Servientrega (excepto Galápagos), hecho en Guayaquil. *(Hecho.)*
-- [ ] Pie: WhatsApp, "Consultar mi pedido", políticas y redes. *(Parcial: el pie actual ya tiene WhatsApp; faltan "Consultar mi pedido", políticas y redes porque esas páginas no existen.)*
+- [ ] Pie: WhatsApp, "Consultar mi pedido", políticas y redes. *(Parcial: ya tiene WhatsApp, redes y "Consultar mi pedido"; faltan las políticas, cuyos textos entrega Josué.)*
 
 **Pantalla de categorías**
 
@@ -1368,7 +1368,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - [ ] `/pedido/{token}` con token aleatorio largo (no adivinable): si el pedido está pagado muestra el seguimiento; si es una transferencia pendiente, la vista de pedido pendiente (Paso 14); si venció o se canceló, su estado.
 - [ ] Seguimiento: número de pedido, estado visible, ventana, productos con el nombre personalizado, total y la guía de Servientrega si se cargó.
 - [ ] El enlace va en el correo de pedido recibido (transferencia) y en el de pago confirmado.
-- [ ] Página "Consultar mi pedido" con número de pedido + correo.
+- [x] Página "Consultar mi pedido" con número de pedido + correo. *(Hecho en `/consultar-pedido` con mock `ConsultaPedidoService`: misma respuesta exista o no el pedido y sin mostrar datos; el límite de intentos y el envío del correo los hace Laravel.)*
 - [ ] Ayuda por WhatsApp con el mensaje prellenado del Paso 1.
 
 **Implementación acordada**
