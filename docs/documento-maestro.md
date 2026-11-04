@@ -1124,7 +1124,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 | Zona | Asignación inicial | Tarifa | Tránsito |
 | --- | --- | --- | --- |
-| A | Cantones Guayaquil, Daule, Durán, Samborondón y Salitre; localidades La Aurora, La Joya y Villa Club (Daule) y Villa Italia (cantón por confirmar) | $3,50 | Base |
+| A | Cantones Guayaquil, Daule, Durán, Samborondón y Salitre; Daule completo, así que sus localidades (La Aurora, La Joya, Villa Club y Villa Italia) ya no necesitan regla propia | $3,50 | Base |
 | B | Amazonía y los 140 cantones que Servientrega cobra igual ($7,02), según `zonas-envio.json` | $6,25 | +1 día (ventana de 3 días) |
 | C | Cantones que Servientrega cobra $5,29 o $5,92 (71 cantones) | $5,00 (editable) | Base |
 | No disponible | Galápagos, Taisha y Aguarico (se atienden por WhatsApp) | — | — |
@@ -1137,7 +1137,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Datos y configuración.** Tablas `provinces`, `cantons`, `localities`, `location_aliases`, `shipping_zones`, `zone_assignments`.
 
-**Acción de Josué.** Confirmar el cantón de Villa Italia y cualquier otra localidad que deba entrar en Zona A.
+**Acción de Josué.** Confirmar con Servientrega el cantón de Santa Rosa (hoy Zona B provisional). Villa Italia ya no importa: todo Daule es Zona A.
 
 **Terminado cuando.** Elegir cualquier cantón o localidad devuelve su zona, tarifa y ventana correctas, y Galápagos queda bloqueado.
 
@@ -1916,7 +1916,7 @@ No se lanza hasta que todo esté marcado.
 - [ ] Imagen oficial de marca y fondo de la imagen social.
 - [ ] Cuentas bancarias y número oficial de WhatsApp.
 - [ ] Feriados nacionales y locales del año, y cierres conocidos.
-- [ ] Cantón de Villa Italia y demás localidades de Zona A.
+- [ ] Cantón de Santa Rosa (El Oro) con Servientrega. *(Villa Italia ya no importa: todo Daule es Zona A.)*
 - [ ] Subcategorías de Amor, Amistad y Familia.
 - [ ] Favoritos de la página principal (6–8 productos).
 - [ ] San Valentín: productos, orden, fechas y promoción si aplica.
@@ -1955,7 +1955,7 @@ Si la implementación llega a uno de estos puntos, se construye la estructura y 
 | --- | --- | --- |
 | Textos legales | Privacidad, términos, envíos, cambios, consentimiento y cookies | Páginas y versiones listas, con texto provisional marcado como borrador |
 | Reembolsos | Cuánto se devuelve, en qué casos y en qué plazo | Se registra a mano el monto que decida Josué |
-| Zona A | Cantón de Villa Italia y nuevas localidades | Localidades editables en el panel |
+| Zona A | Cantón de Santa Rosa y nuevas localidades | Localidades editables en el panel |
 | Zona C | Tarifa futura | $5,00 editable |
 | Complementos | Cuáles habrá y qué campos piden | Esquema de campos listo, sin complementos inventados |
 | Excepciones por producto | Modelos con otra cantidad de accesorios o accesorios con precio extra | Cantidad configurable (2) y precio extra en $0 |
