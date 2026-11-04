@@ -65,12 +65,12 @@ export const routes: Routes = [
             // Dirección anterior de la ficha
             { path: 'catalogo/todos-productos/:producto', redirectTo: ({ params }) => `/producto/${params['producto']}` },
 
-            // Pedido pendiente de pago por transferencia (enlace privado con token)
+            // Enlace privado con token: seguimiento si está pagado, pedido pendiente si es una transferencia sin pagar
             {
                 path: 'pedido/:token',
                 loadComponent: () =>
-                    import('./checkout/presentacion/paginas/pedido-pendiente/pedido-pendiente')
-                        .then(m => m.PedidoPendiente)
+                    import('./checkout/presentacion/paginas/pedido-token/pedido-token')
+                        .then(m => m.PedidoToken)
             },
 
             // Cualquier otra dirección: 404 propio (con estado HTTP 404 en el servidor)

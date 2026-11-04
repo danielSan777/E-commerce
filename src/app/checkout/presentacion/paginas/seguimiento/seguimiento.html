@@ -1,0 +1,60 @@
+<div class="pagina">
+    <div class="cabecera">
+        <h1>Pedido {{ pedido().order_number }}</h1>
+        <span class="insignia" [class.confirmado]="!esFinalNegativo()" [class.vencido]="esFinalNegativo()">
+            <i class="bi" [class.bi-check-circle-fill]="!esFinalNegativo()" [class.bi-x-circle]="esFinalNegativo()"
+                aria-hidden="true"></i> {{ etiqueta() }}
+        </span>
+    </div>
+
+    @if (!esFinalNegativo()) {
+    <section class="tarjeta" aria-labelledby="t-estado">
+        <h2 id="t-estado">Estado de tu pedido</h2>
+        <ol class="pasos">
+            @for (paso of PASOS; track paso.clave; let i = $index) {
+            <li [class.hecho]="i < indice()" [class.actual]="i === indice()">
+                <i class="bi" [class]="i < indice() ? 'bi-check-circle-fill' : paso.icono" aria-hidden="true"></i>
+                <span>{{ paso.etiqueta }}</span>
+            </li>
+            }
+        </ol>
+    </section>
+    }
+
+    <section class="tarjeta destacada">
+        <div class="fila"><span>Total</span><strong class="monto">{{ pedido().total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</strong></div>
+        <p class="limite"><i class="bi bi-calendar-check" aria-hidden="true"></i>
+            <span>Entrega estimada: <b>{{ ventana() }}</b></span></p>
+    </section>
+
+    <section class="tarjeta" aria-labelledby="t-productos">
+        <h2 id="t-productos"><i class="bi bi-flower1" aria-hidden="true"></i> Tus productos</h2>
+        <ul class="productos">
+            @for (item of pedido().items; track $index) {
+            <li>
+                <strong>{{ item.name }}</strong>
+                @if (item.name_text) { <small>Nombre: {{ item.name_text }}</small> }
+            </li>
+            }
+        </ul>
+    </section>
+
+    <section class="tarjeta" aria-labelledby="t-envio">
+        <h2 id="t-envio"><i class="bi bi-truck" aria-hidden="true"></i> Envío por {{ pedido().shipment.carrier }}</h2>
+        @if (pedido().shipment.tracking_number; as guia) {
+        <p>Guía: <b>{{ guia }}</b></p>
+        } @else {
+        <p class="sin-guia">Te mostraremos aquí la guía cuando tu pedido sea enviado.</p>
+        }
+    </section>
+
+    <p class="aviso-edicion" role="note"><i class="bi bi-lock" aria-hidden="true"></i>
+        Tu pedido ya no se puede editar.</p>
+
+    <section class="ayuda">
+        <p>¿Tienes alguna duda o novedad con tu pedido? Escríbenos por WhatsApp.</p>
+        <a class="btn btn-borde" [href]="enlaceAyuda()" target="_blank" rel="noopener">
+            <i class="bi bi-whatsapp" aria-hidden="true"></i> Escribir por WhatsApp
+        </a>
+    </section>
+</div>

@@ -621,8 +621,8 @@ Redirecciones 301: `/catalogo/todos-productos` → `/categorias`; `/catalogo/tod
 
 - [ ] `/checkout/confirmacion`, sin token: variante tarjeta pagada y variante transferencia (pedido creado, con las mismas instrucciones del pedido pendiente).
 - [x] **Pedido pendiente** en `/pedido/{token}`: número, total, cuentas bancarias con botón copiar por dato, hora límite exacta ("Paga antes del martes 10, 07:50 para mantener tu fecha"), botón "Subir comprobante", botón de WhatsApp y aviso de que el pedido no se puede editar. Sin seguimiento. *(Hecho en Angular con un mock del contrato del Paso 0 (`PedidoPendienteService`): token largo, plazo en hora de Guayaquil, cuentas con copiar, subir comprobante simulado (JPG, PNG o PDF), WhatsApp, vencido y 404 si el token no coincide. Falta con backend: subida real, límite de intentos y límite de tamaño del archivo (no definido).)*
-- [ ] **Seguimiento** en `/pedido/{token}` cuando el pedido está pagado, con los estados visibles del Paso 0.
-- [x] Ayuda en pedido pendiente y seguimiento: "¿Tienes alguna duda o novedad con tu pedido? Escríbenos por WhatsApp.", con el mensaje prellenado "Hola 🌿 Te escribo por mi pedido JDS-2048. Tengo la siguiente consulta:". *(Hecha en el pedido pendiente; falta el seguimiento.)*
+- [x] **Seguimiento** en `/pedido/{token}` cuando el pedido está pagado, con los estados visibles del Paso 0. *(Hecho en Angular con un mock del contrato "Pedido" (`SeguimientoService`): número, estado visible, ventana, productos con nombre, total y guía de Servientrega; la ruta elige entre seguimiento, pedido pendiente y 404, y lleva `noindex`. Hoy el estado es siempre "Confirmado"; En producción y Enviado los marca el panel. Falta con backend: `Cache-Control: private, no-store` y "Consultar mi pedido".)*
+- [x] Ayuda en pedido pendiente y seguimiento: "¿Tienes alguna duda o novedad con tu pedido? Escríbenos por WhatsApp.", con el mensaje prellenado "Hola 🌿 Te escribo por mi pedido JDS-2048. Tengo la siguiente consulta:". *(Hecha en el pedido pendiente y en el seguimiento.)*
 
 **Plantilla de temporada** (la usa `/san-valentin`; las demás se crean desde el panel)
 
