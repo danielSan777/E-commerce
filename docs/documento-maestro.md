@@ -627,8 +627,8 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 
 **Plantilla de temporada** (la usa `/san-valentin`; las demás se crean desde el panel)
 
-- [ ] En temporada: productos elegidos por Josué en su orden, imagen o video, texto, promoción opcional y el mensaje de fecha límite del Paso 9.
-- [ ] Fuera de temporada: la URL sigue respondiendo (200, sin redirección) con "San Valentín {año} llegará muy pronto", botón a su categoría relacionada (Amor) y productos relacionados. No aparece en la página principal ni en el menú. El año lo entrega Laravel (Paso 5).
+- [x] En temporada: productos elegidos por Josué en su orden, imagen o video, texto, promoción opcional y el mensaje de fecha límite del Paso 9. (mock con datos de prueba; imagen o video y promoción llegan con el panel)
+- [x] Fuera de temporada: la URL sigue respondiendo (200, sin redirección) con "San Valentín {año} llegará muy pronto", botón a su categoría relacionada (Amor) y productos relacionados. No aparece en la página principal ni en el menú. El año lo entrega Laravel (Paso 5). (mock `CampanaService`, estado `upcoming` probado)
 
 **WhatsApp en la web**
 

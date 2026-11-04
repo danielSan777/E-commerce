@@ -1,0 +1,40 @@
+:host { display: block; background: var(--jds-crema); color: var(--jds-texto); }
+.pagina { max-width: 1000px; margin: 0 auto; padding: 10px 14px 40px; display: flex; flex-direction: column; gap: 14px; }
+
+.hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; overflow: hidden;
+  background: linear-gradient(110deg, var(--jds-rosa), #fff3e8); border-radius: 20px; padding: 18px 16px; }
+.hero-texto { flex: 1; min-width: 0; position: relative; z-index: 1; }
+.hero h1 { font-family: Lobster, cursive; font-weight: 400; color: var(--jds-vino); font-size: 2.3rem; line-height: 1.05; margin: 0 0 4px; }
+.lema { margin: 0 0 10px; font-size: 1rem; max-width: 20ch; }
+.fecha { margin: 0 0 12px; font-size: .85rem; max-width: 26ch; }
+.fecha .bi { margin-right: 4px; color: var(--jds-vino); }
+.hero-imagen { width: 130px; height: 130px; object-fit: contain; flex: none; }
+.corazon { position: absolute; color: #e48aa3; opacity: .7; }
+.c1 { top: 10px; left: 62%; font-size: .9rem; }
+.c2 { top: 26px; left: 70%; font-size: 1.2rem; }
+@media (min-width: 768px) { .hero h1 { font-size: 3.2rem; } .hero-imagen { width: 220px; height: 220px; } }
+
+.boton { display: inline-flex; align-items: center; gap: 6px; background: var(--jds-vino); color: #fff; text-decoration: none;
+  font-weight: 700; border-radius: 999px; padding: 10px 20px; }
+.boton.grande { align-self: center; padding: 12px 26px; }
+
+.promesa { background: var(--jds-rosa); border-radius: 14px; padding: 10px 14px; font-size: .88rem; }
+.promesa p { margin: 2px 0; }
+.promesa .bi { color: var(--jds-vino); margin-right: 4px; }
+
+.titulo { font-family: Georgia, 'Times New Roman', serif; color: var(--jds-vino); font-size: 1.4rem; margin: 0 0 10px; text-align: center; }
+.grilla { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (min-width: 768px) { .grilla { grid-template-columns: repeat(3, 1fr); gap: 16px; } }
+.producto { display: flex; flex-direction: column; gap: 6px; height: 100%; background: #fff; border: 1px solid #f1d6dd;
+  border-radius: 16px; padding: 8px; text-align: center; }
+.enlace { display: flex; flex-direction: column; gap: 4px; flex: 1; text-decoration: none; color: inherit; }
+.foto { position: relative; display: block; aspect-ratio: 1; background: var(--jds-rosa); border-radius: 12px; overflow: hidden; }
+.foto img { width: 100%; height: 100%; object-fit: contain; }
+.badge { position: absolute; top: 6px; left: 6px; background: #b3261e; color: #fff; font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.nombre { font-weight: 700; }
+.personalizar { background: var(--jds-vino); color: #fff; text-decoration: none; font-weight: 700; font-size: .9rem;
+  border-radius: 999px; padding: 8px; }
+
+.slogan { text-align: center; font-family: Georgia, 'Times New Roman', serif; font-style: italic; color: var(--jds-vino);
+  background: var(--jds-rosa); border-radius: 14px; padding: 14px; margin: 0; font-size: 1.05rem; }
+.slogan .bi { color: #e48aa3; }

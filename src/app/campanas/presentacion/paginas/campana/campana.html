@@ -1,0 +1,63 @@
+@if (campana(); as c) {
+<div class="pagina">
+
+    <!-- Encabezado -->
+    <section class="hero">
+        <i class="bi bi-heart-fill corazon c1" aria-hidden="true"></i>
+        <i class="bi bi-heart corazon c2" aria-hidden="true"></i>
+        <div class="hero-texto">
+            @if (enTemporada()) {
+            <h1>{{ c.name }}</h1>
+            <p class="lema">{{ c.tagline }}</p>
+            <p class="fecha"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ c.order_deadline.label }}</p>
+            <a class="boton" href="#regalos">Ver regalos <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+            } @else {
+            <h1>{{ c.name }} {{ c.season_year }}</h1>
+            <p class="lema">llegará muy pronto</p>
+            <p class="fecha">Mientras tanto, mira los regalos de amor que ya puedes pedir.</p>
+            <a class="boton" [routerLink]="c.related_category.url">Ver regalos de {{ c.related_category.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+            }
+        </div>
+        @if (c.products[0]; as p) { <img class="hero-imagen" [src]="p.image" alt="" width="150" height="150"> }
+    </section>
+
+    @if (enTemporada()) {
+    <!-- Promesa de entrega -->
+    <section class="promesa" aria-label="Entrega y envío">
+        <p><i class="bi bi-truck" aria-hidden="true"></i> <b>{{ promesa.label }}</b> · {{ promesa.countdown_label }}</p>
+        <p><i class="bi bi-gift" aria-hidden="true"></i> Envío gratis llevando {{ macetasEnvioGratis }} macetas</p>
+    </section>
+    }
+
+    <!-- Productos -->
+    <section id="regalos" [attr.aria-label]="enTemporada() ? 'Regalos de ' + c.name : 'Regalos relacionados'">
+        @if (!enTemporada()) { <h2 class="titulo">Regalos de {{ c.related_category.name }}</h2> }
+        <ul class="grilla">
+            @for (p of c.products; track p.sku) {
+            <li>
+                <article class="producto">
+                    <a class="enlace" [routerLink]="['/producto', p.slug]">
+                        <span class="foto">
+                            <img [src]="p.image" [alt]="p.name" loading="lazy" width="320" height="320">
+                            @if (p.price.badge) { <span class="badge">{{ p.price.badge }}</span> }
+                        </span>
+                        <span class="nombre">{{ p.name }}</span>
+                        <b>{{ p.price.final_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b>
+                    </a>
+                    <a class="personalizar" [routerLink]="['/producto', p.slug, 'personalizar']">Personalizar <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                </article>
+            </li>
+            }
+        </ul>
+    </section>
+
+    @if (enTemporada()) {
+    <p class="slogan"><i class="bi bi-heart" aria-hidden="true"></i> {{ c.slogan }} <i class="bi bi-heart" aria-hidden="true"></i></p>
+    <app-como-funciona />
+    }
+
+    <a class="boton grande" [routerLink]="c.related_category.url">Ver más regalos de {{ c.related_category.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+</div>
+} @else {
+<app-no-encontrada />
+}

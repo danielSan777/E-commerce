@@ -153,6 +153,14 @@ export class CategoriaService {
         });
     }
 
+    // Productos por slug, en ese orden (campañas y selecciones manuales de Josué)
+    productosPorSlug(slugs: string[]): ProductoCategoria[] {
+        return slugs
+            .map(s => productos.find(p => p.slug === s))
+            .filter((p): p is Producto => !!p)
+            .map(p => this.aProducto(p));
+    }
+
     // MOCK: los favoritos que elige y ordena Josué en el panel (Paso 19)
     favoritos(): ProductoCategoria[] {
         return ['doctor', 'bob-corazon-hombre', 'abogada', 'amigo-guitarrista', 'enfermera', 'homero']
