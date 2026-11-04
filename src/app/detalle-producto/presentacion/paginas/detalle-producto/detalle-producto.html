@@ -9,21 +9,31 @@
 
     <div class="detalle-grid">
         <!-- ============ IMAGEN ============ -->
-        <div class="galeria">
-            <img [src]="p.imagen" [alt]="p.nombre" />
-            <button type="button" class="btn-ampliar" (click)="verImagen.set(true)" aria-label="Ver imagen completa">
-                <i class="bi bi-arrows-fullscreen"></i>
-            </button>
-            @if (porcentajeDescuento() > 0) {
-            <span class="etq-descuento">-{{ porcentajeDescuento() }}%</span>
+        <div class="galeria-bloque">
+            <div class="galeria">
+                <img [src]="imagenActiva()" [alt]="p.nombre" />
+                <button type="button" class="btn-ampliar" (click)="verImagen.set(true)" aria-label="Ver imagen completa">
+                    <i class="bi bi-arrows-fullscreen"></i>
+                </button>
+                @if (porcentajeDescuento() > 0) {
+                <span class="etq-descuento">-{{ porcentajeDescuento() }}%</span>
+                }
+            </div>
+            @if (imagenes().length > 1) {
+            <div class="miniaturas" role="list">
+                @for (img of imagenes(); track img; let i = $index) {
+                <button type="button" role="listitem" class="miniatura" [class.activa]="img === imagenActiva()"
+                    [attr.aria-label]="'Ver foto ' + (i + 1)" (click)="imagenElegida.set(img)">
+                    <img [src]="img" alt="" />
+                </button>
+                }
+            </div>
             }
         </div>
 
         <!-- ============ INFORMACIÓN ============ -->
         <div class="info">
             <h1 class="titulo">{{ p.nombre }}</h1>
-
-            <p class="vendidos"><span class="fuego">🔥</span> {{ p.vendidos }} vendidos</p>
 
             <div class="precios">
                 <span class="precio">{{ formato(p.precio) }} {{ codigoMoneda }}</span>
@@ -32,26 +42,48 @@
                 }
             </div>
 
-            <p class="descripcion">{{ p.descripcion }}</p>
-
             @if (!p.disponible) {
             <p class="aviso-agotado"><i class="bi bi-exclamation-circle"></i> Producto agotado por el momento</p>
             }
 
+            <!-- Qué incluye · tamaño · material -->
+            <h2 class="sub-titulo">Qué incluye</h2>
+            <ul class="incluye">
+                @for (x of INCLUYE; track x) { <li><i class="bi bi-check2" aria-hidden="true"></i> {{ x }}</li> }
+            </ul>
+            <p class="dato-producto"><i class="bi bi-rulers" aria-hidden="true"></i> {{ TAMANO_TEXTO }}</p>
+            <p class="dato-producto"><i class="bi bi-printer" aria-hidden="true"></i> {{ MATERIAL_TEXTO }}</p>
+
+            <!-- Línea de envío -->
+            <p class="linea-envio"><i class="bi bi-truck" aria-hidden="true"></i> {{ lineaEnvio() }}</p>
+
             <!-- Promesa de entrega (la calcula Laravel; hoy, un mock): Angular solo la muestra -->
             <div class="promesa" role="note">
-                <i class="bi bi-truck" aria-hidden="true"></i>
+                <i class="bi bi-box-seam" aria-hidden="true"></i>
                 <div>
+                    <small>Envío por Servientrega</small>
                     <strong>{{ promesa.label }}</strong>
                     <small>{{ promesa.countdown_label }}</small>
                     <small>{{ promesa.amazon_note }}</small>
                 </div>
             </div>
 
+            <!-- Calendario: solo dibuja lo que llega en `windows` -->
+            <h2 class="sub-titulo">O prográmalo para una fecha futura</h2>
+            <div class="ventanas" role="radiogroup" aria-label="Ventanas de entrega disponibles">
+                @for (v of ventanas; track v.start) {
+                <button type="button" class="ventana" role="radio" [attr.aria-checked]="ventanaElegida() === v"
+                    [class.marcada]="ventanaElegida() === v" [disabled]="!v.available" (click)="elegirVentana(v)">
+                    {{ textoVentana(v.start, v.end) }}
+                    @if (!v.available) { <em>No disponible</em> }
+                </button>
+                }
+            </div>
+
             <!-- Acciones -->
             <div class="acciones">
                 <button type="button" class="btn-comprar" [disabled]="!p.disponible" (click)="abrirPersonalizador()">
-                    <i class="bi bi-magic"></i>Personalizar Ahora
+                    <i class="bi bi-magic"></i>Personalizar esta maceta
                 </button>
                 <button type="button" class="btn-compartir" (click)="compartirAbierto.set(true)">
                     <i class="bi bi-share"></i> Compartir
@@ -60,7 +92,22 @@
             @if (agregado()) {
             <p class="exito"><i class="bi bi-check-circle-fill"></i> Producto agregado al carrito</p>
             }
+
+            <!-- Descripción -->
+            <h2 class="sub-titulo">Descripción</h2>
+            <p class="descripcion">{{ p.descripcion }}</p>
         </div>
+    </div>
+
+    <!-- Barra inferior fija: precio y "Personalizar" -->
+    <div class="barra-fija">
+        <div class="barra-precio">
+            <small>Precio</small>
+            <strong>{{ formato(p.precio) }}</strong>
+        </div>
+        <button type="button" class="btn-comprar" [disabled]="!p.disponible" (click)="abrirPersonalizador()">
+            <i class="bi bi-magic"></i>Personalizar
+        </button>
     </div>
 
     <!-- ============ MODAL COMPARTIR ============ -->
@@ -99,7 +146,7 @@
         <button type="button" class="modal-cerrar claro" (click)="verImagen.set(false)" aria-label="Cerrar">
             <i class="bi bi-x-lg"></i>
         </button>
-        <img class="imagen-grande" [src]="p.imagen" [alt]="p.nombre" (click)="$event.stopPropagation()" />
+        <img class="imagen-grande" [src]="imagenActiva()" [alt]="p.nombre" (click)="$event.stopPropagation()" />
     </div>
     }
     } @else {

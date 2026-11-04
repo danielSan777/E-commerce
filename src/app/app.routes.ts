@@ -34,12 +34,6 @@ export const routes: Routes = [
                         .then(m => m.Catalogo)
             },
             {
-                path: 'catalogo/todos-productos/personalizador',
-                loadComponent: () =>
-                    import('./personalizador/presentacion/paginas/personalizador/personalizador')
-                        .then(m => m.Personalizador)
-            },
-            {
                 path: 'checkout/confirmacion',
                 loadComponent: () =>
                     import('./checkout/presentacion/paginas/confirmacion/confirmacion')
@@ -58,12 +52,18 @@ export const routes: Routes = [
                     import('./catalogo/presentacion/paginas/catalogo/catalogo')
                         .then(m => m.Catalogo)
             },
+            // Ficha de producto. El personalizador es su ruta hija: /producto/{slug}/personalizar
+            // (la ficha sigue en pantalla; el personalizador sube encima).
             {
-                path: 'catalogo/todos-productos/:producto',
+                path: 'producto/:producto',
                 loadComponent: () =>
                     import('./detalle-producto/presentacion/paginas/detalle-producto/detalle-producto')
-                        .then(m => m.DetalleProducto)
+                        .then(m => m.DetalleProducto),
+                children: [{ path: 'personalizar', children: [] }]
             },
+
+            // Dirección anterior de la ficha
+            { path: 'catalogo/todos-productos/:producto', redirectTo: ({ params }) => `/producto/${params['producto']}` },
 
             // Pedido pendiente de pago por transferencia (enlace privado con token)
             {

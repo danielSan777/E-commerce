@@ -995,7 +995,7 @@ export class Personalizador implements OnDestroy {
   private rutaDelProducto(): string {
     const actual = this.router.url.split(/[?#]/)[0];
     const p = this.producto();
-    return actual.startsWith('/carrito') && p ? `/catalogo/todos-productos/${p.id}` : actual;
+    return actual.startsWith('/carrito') && p ? `/producto/${p.id}` : actual;
   }
 
   private configuracionGuardada(): ConfigGuardada {

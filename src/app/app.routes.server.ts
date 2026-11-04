@@ -6,7 +6,11 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Server
   },
   {
-    path: 'catalogo/todos-productos/:producto',
+    path: 'producto/:producto',
+    renderMode: RenderMode.Server
+  },
+  {
+    path: 'producto/:producto/personalizar',
     renderMode: RenderMode.Server
   },
   {

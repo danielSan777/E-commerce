@@ -577,12 +577,12 @@ Redirecciones 301: `/catalogo/todos-productos` → `/categorias`; `/catalogo/tod
 
 **Ficha de producto** (plantilla de todos los productos; no necesita caber en una sola pantalla)
 
-- [ ] Orden: galería → título → precio (anterior tachado, final destacado, badge) → qué incluye (plantita natural, dedicatoria personalizada, funda kraft) → tamaño → "Impresa en 3D con PLA Plus" → línea de envío → bloque de promesa → "O prográmalo para una fecha futura" → botón "Personalizar esta maceta" → descripción, testimonios y relacionados.
-- [ ] Galería: imagen principal grande y miniaturas debajo; al tocar una miniatura se muestra arriba. 3–4 fotos + 1 video de 6–8 s (frontal → video → 3/4 → detalle → escala). El video, silenciado, `playsinline` y en bucle, se descarga y reproduce solo cuando su lámina está activa.
-- [ ] Línea de envío bajo el precio y en el carrito: "Envío desde $3,50 según destino · Lleva 2 macetas y el envío es gratis (excepto Galápagos)". Valores desde la configuración.
-- [ ] Bloque de promesa compacto: "Envío por Servientrega", "Recíbelo entre …", contador y la nota discreta de Amazonía.
-- [ ] Calendario de ventanas: dibuja solo lo que llega en `windows`; tocar un día resalta su ventana completa (por ejemplo, sábado + lunes); los días no disponibles aparecen deshabilitados.
-- [ ] Barra inferior fija con precio y "Personalizar".
+- [ ] Orden: galería → título → precio (anterior tachado, final destacado, badge) → qué incluye (plantita natural, dedicatoria personalizada, funda kraft) → tamaño → "Impresa en 3D con PLA Plus" → línea de envío → bloque de promesa → "O prográmalo para una fecha futura" → botón "Personalizar esta maceta" → descripción, testimonios y relacionados. *(Parcial: Hecho el orden hasta el botón; faltan testimonios y relacionados.)*
+- [ ] Galería: imagen principal grande y miniaturas debajo; al tocar una miniatura se muestra arriba. 3–4 fotos + 1 video de 6–8 s (frontal → video → 3/4 → detalle → escala). El video, silenciado, `playsinline` y en bucle, se descarga y reproduce solo cuando su lámina está activa. *(Parcial: Hecho con miniaturas; faltan fotos extra y el video.)*
+- [x] Línea de envío bajo el precio y en el carrito: "Envío desde $3,50 según destino · Lleva 2 macetas y el envío es gratis (excepto Galápagos)". Valores desde la configuración. *(Hecho en la ficha; falta en el carrito.)*
+- [x] Bloque de promesa compacto: "Envío por Servientrega", "Recíbelo entre …", contador y la nota discreta de Amazonía. *(Hecho con el mock de `PromesaService`.)*
+- [x] Calendario de ventanas: dibuja solo lo que llega en `windows`; tocar un día resalta su ventana completa (por ejemplo, sábado + lunes); los días no disponibles aparecen deshabilitados. *(Hecho: cada ventana es un botón y la elección pasa al checkout.)*
+- [x] Barra inferior fija con precio y "Personalizar". *(Hecho.)*
 - [ ] Sin afirmaciones ecológicas que no estén verificadas.
 
 **Personalizador** (`/producto/{slug}/personalizar`)
