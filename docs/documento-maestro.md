@@ -545,20 +545,20 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 | `/san-valentin` | Campaña de temporada (y las que se creen después) |
 | Políticas y 404 propio | — |
 
-Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega con el servidor)*: `/catalogo/todos-productos` → `/categorias`; `/catalogo/todos-productos/:producto` → `/producto/{slug}`; `/catalogo/:slug` → su categoría.
+Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega con el servidor)*: `/catalogo/todos-productos` → `/categorias`; `/catalogo/todos-productos/:producto` → `/producto/{slug}`; `/catalogo/:slug` → su categoría; `/catalogo` → `/`.
 
 **Página principal** (de arriba hacia abajo en el celular)
 
-- [ ] Barra superior: logo, lupa, carrito y menú.
-- [ ] Video principal (la esposa de Josué mostrando las macetas) con el botón "Encuentra tu detalle perfecto", que abre `/categorias`.
-- [ ] Franja de promesa: "Pide hoy y recíbelo entre … y …" (desde la promesa vigente) y "Envío gratis llevando 2 macetas".
+- [x] Barra superior: logo, lupa, carrito y menú. *(Hecho en la barra existente, con la lupa hacia `/buscar`.)*
+- [ ] Video principal (la esposa de Josué mostrando las macetas) con el botón "Encuentra tu detalle perfecto", que abre `/categorias`. *(Parcial: botón y espacio listos, con la portada como imagen; falta el video de Josué (`VIDEO.url` en `inicio.ts`).)*
+- [x] Franja de promesa: "Pide hoy y recíbelo entre … y …" (desde la promesa vigente) y "Envío gratis llevando 2 macetas". *(Hecho con el mock de `PromesaService` y el número de macetas de `EnvioGratisService`.)*
 - [ ] Campaña activa (por ejemplo, San Valentín), solo en temporada.
-- [ ] Las 4 categorías en tarjetas con foto.
-- [ ] Favoritos: 6–8 productos elegidos y ordenados por Josué en el panel.
-- [ ] "Cómo funciona" en 3 pasos: elige, personaliza y recíbelo con su plantita.
+- [x] Las 4 categorías en tarjetas con foto. *(Hecho.)*
+- [x] Favoritos: 6–8 productos elegidos y ordenados por Josué en el panel. *(Hecho con 6 favoritos de prueba; con backend los ordena Josué.)*
+- [x] "Cómo funciona" en 3 pasos: elige, personaliza y recíbelo con su plantita. *(Hecho.)*
 - [ ] Testimonios elegidos por Josué (Paso 24).
-- [ ] Confianza: pago seguro con tarjeta o transferencia, envíos a todo Ecuador por Servientrega (excepto Galápagos), hecho en Guayaquil.
-- [ ] Pie: WhatsApp, "Consultar mi pedido", políticas y redes.
+- [x] Confianza: pago seguro con tarjeta o transferencia, envíos a todo Ecuador por Servientrega (excepto Galápagos), hecho en Guayaquil. *(Hecho.)*
+- [ ] Pie: WhatsApp, "Consultar mi pedido", políticas y redes. *(Parcial: el pie actual ya tiene WhatsApp; faltan "Consultar mi pedido", políticas y redes porque esas páginas no existen.)*
 
 **Pantalla de categorías**
 

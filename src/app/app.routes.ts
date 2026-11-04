@@ -6,6 +6,13 @@ const CATEGORIAS = ['profesiones-y-hobbies', 'amor', 'amistad', 'familia'];
 const pantallaCategorias = () =>
     import('./categorias/presentacion/paginas/categorias/categorias').then(m => m.Categorias);
 
+// Catálogos del menú anterior → su categoría
+const CATALOGO_A_CATEGORIA: Record<string, string> = {
+    macetas: '/amor',
+    profesionales: '/profesiones-y-hobbies',
+    personajes: '/amistad',
+};
+
 export const routes: Routes = [
 
     // Checkout: pantalla completa con su propio encabezado (va antes del MainLayout para que no lleve el navbar de la tienda)
@@ -21,10 +28,12 @@ export const routes: Routes = [
         path: '',
         component: MainLayout,
         children: [
+            // Página principal
             {
                 path: '',
-                redirectTo: 'catalogo',
-                pathMatch: 'full'
+                pathMatch: 'full',
+                loadComponent: () =>
+                    import('./inicio/presentacion/paginas/inicio/inicio').then(m => m.Inicio)
             },
             { path: 'buscar', loadComponent: () => import('./busqueda/presentacion/paginas/buscar/buscar').then(m => m.Buscar) },
 
@@ -35,12 +44,8 @@ export const routes: Routes = [
                 { path: `${slug}/:subcategoria`, loadComponent: pantallaCategorias, data: { categoria: slug } },
             ]),
             { path: 'catalogo/todos-productos', redirectTo: '/categorias', pathMatch: 'full' },
-            {
-                path: 'catalogo',
-                loadComponent: () =>
-                    import('./catalogo/presentacion/paginas/catalogo/catalogo')
-                        .then(m => m.Catalogo)
-            },
+            // Direcciones anteriores de la pantalla principal y de sus catálogos
+            { path: 'catalogo', redirectTo: '/', pathMatch: 'full' },
             {
                 path: 'checkout/confirmacion',
                 loadComponent: () =>
@@ -54,12 +59,7 @@ export const routes: Routes = [
                         .then(m => m.Pago)
             },
             { path: 'carrito', loadComponent: () => import('./carrito/presentacion/paginas/carrito/carrito').then(m => m.Carrito) },
-            {
-                path: 'catalogo/:slug',
-                loadComponent: () =>
-                    import('./catalogo/presentacion/paginas/catalogo/catalogo')
-                        .then(m => m.Catalogo)
-            },
+            { path: 'catalogo/:slug', redirectTo: ({ params }) => CATALOGO_A_CATEGORIA[params['slug']] ?? '/categorias' },
             // Ficha de producto. El personalizador es su ruta hija: /producto/{slug}/personalizar
             // (la ficha sigue en pantalla; el personalizador sube encima).
             {

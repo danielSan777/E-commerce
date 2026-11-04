@@ -21,8 +21,8 @@ export class Navbar {
   readonly telefono = TIENDA.telefono;   // se cambia en core/configuracion/tienda.ts
 
   // ===== Anuncio rojo de envío gratis (solo en la pantalla principal) =====
-  // EDITABLE: ruta de la pantalla principal (la ruta '' redirige a 'catalogo')
-  readonly RUTA_INICIO = '/catalogo';
+  // EDITABLE: ruta de la pantalla principal
+  readonly RUTA_INICIO = '/';
 
   private router = inject(Router);
   envio = inject(EnvioGratisService);

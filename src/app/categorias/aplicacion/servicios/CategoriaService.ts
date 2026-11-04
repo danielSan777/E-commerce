@@ -149,7 +149,7 @@ export class CategoriaService {
 
     // MOCK: los favoritos que elige y ordena Josué en el panel (Paso 19)
     favoritos(): ProductoCategoria[] {
-        return ['doctor', 'bob-corazon-hombre', 'abogada', 'amigo-guitarrista']
+        return ['doctor', 'bob-corazon-hombre', 'abogada', 'amigo-guitarrista', 'enfermera', 'homero']
             .map(s => productos.find(p => p.slug === s))
             .filter((p): p is Producto => !!p)
             .map(p => this.aProducto(p));

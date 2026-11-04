@@ -1,0 +1,39 @@
+:host { display: block; background: #fff9ef; color: #3b2a1e; }
+.hero { position: relative; background: #eaf3ed; overflow: hidden; }
+.hero-medio { display: block; width: 100%; height: 60vh; min-height: 320px; max-height: 560px; object-fit: cover; }
+.hero-texto { position: absolute; inset: auto 0 0 0; padding: 48px 16px 20px; color: #fff; text-align: center;
+  background: linear-gradient(to top, rgba(0,0,0,.65), rgba(0,0,0,0)); }
+.hero-texto h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 1.9rem; margin: 0 0 4px; }
+.hero-texto p { margin: 0 0 12px; }
+.boton { display: inline-block; background: #175437; color: #fff; text-decoration: none; font-weight: 700;
+  padding: 12px 22px; border-radius: 999px; }
+.boton.borde { background: transparent; color: #175437; border: 2px solid #175437; }
+
+.promesa { background: #175437; color: #fff; padding: 10px 16px; text-align: center; font-size: .92rem; }
+.promesa p { margin: 2px 0; }
+
+.bloque { max-width: 1100px; margin: 0 auto; padding: 28px 16px; text-align: center; }
+.bloque.fondo { max-width: none; background: #fff; }
+.bloque h2 { font-family: Georgia, 'Times New Roman', serif; color: #5a1717; font-size: 1.4rem; margin: 0 0 16px; }
+
+.categorias, .favoritos { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (min-width: 768px) { .categorias { grid-template-columns: repeat(4, 1fr); } .favoritos { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 992px) { .favoritos { grid-template-columns: repeat(6, 1fr); } }
+.categoria, .producto { display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; color: inherit;
+  background: #fff; border: 1px solid #eadcc6; border-radius: 14px; padding: 10px; height: 100%; font-weight: 700; }
+.categoria img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+.foto { display: block; width: 100%; aspect-ratio: 1; }
+.foto img { width: 100%; height: 100%; object-fit: contain; }
+.nombre { font-weight: 600; }
+
+.pasos { list-style: none; margin: 0 auto; padding: 0; display: grid; gap: 20px; max-width: 900px; }
+@media (min-width: 768px) { .pasos { grid-template-columns: repeat(3, 1fr); } }
+.pasos .bi { font-size: 2rem; color: #175437; }
+.pasos h3 { font-size: 1.1rem; margin: 6px 0 4px; }
+.pasos p { margin: 0; }
+
+.confianza { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
+@media (min-width: 768px) { .confianza { grid-template-columns: repeat(3, 1fr); } }
+.confianza .bi { color: #175437; margin-right: 6px; }
+.ayuda { margin: 0; }
+.ayuda a { color: #175437; font-weight: 700; }

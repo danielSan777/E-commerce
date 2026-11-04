@@ -1,0 +1,76 @@
+<!-- Video principal con el botón a categorías -->
+<section class="hero">
+    @if (verVideo()) {
+    <video class="hero-medio" [src]="VIDEO.url!" [poster]="VIDEO.poster" autoplay muted loop playsinline
+        preload="metadata" aria-hidden="true"></video>
+    } @else {
+    <img class="hero-medio" [src]="VIDEO.poster" alt="" width="800" height="800" fetchpriority="high">
+    }
+    <div class="hero-texto">
+        <h1>Regalos que florecen</h1>
+        <p>Macetas personalizadas con su nombre y una plantita natural.</p>
+        <a class="boton" [routerLink]="RUTA_CATEGORIAS">Encuentra tu detalle perfecto</a>
+    </div>
+</section>
+
+<!-- Franja de promesa -->
+<section class="promesa" aria-label="Entrega y envío">
+    <p><i class="bi bi-truck" aria-hidden="true"></i> <b>{{ promesa.label }}</b> · {{ promesa.countdown_label }}</p>
+    <p><i class="bi bi-gift" aria-hidden="true"></i> Envío gratis llevando {{ macetasEnvioGratis }} macetas</p>
+</section>
+
+<!-- Las 4 categorías -->
+<section class="bloque" aria-labelledby="t-categorias">
+    <h2 id="t-categorias">¿Para quién es tu regalo?</h2>
+    <ul class="categorias">
+        @for (c of categorias; track c.slug) {
+        <li>
+            <a class="categoria" [routerLink]="c.url">
+                <img [src]="c.image" alt="" loading="lazy" width="240" height="240">
+                <span>{{ c.name }}</span>
+            </a>
+        </li>
+        }
+    </ul>
+</section>
+
+<!-- Favoritos -->
+<section class="bloque" aria-labelledby="t-favoritos">
+    <h2 id="t-favoritos">Nuestros favoritos</h2>
+    <ul class="favoritos">
+        @for (p of favoritos; track p.sku) {
+        <li>
+            <a class="producto" [routerLink]="['/producto', p.slug]">
+                <span class="foto"><img [src]="p.image" [alt]="p.name" loading="lazy" width="320" height="320"></span>
+                <span class="nombre">{{ p.name }}</span>
+                <b>{{ p.price.final_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b>
+            </a>
+        </li>
+        }
+    </ul>
+    <a class="boton borde" [routerLink]="RUTA_CATEGORIAS">Ver todas las macetas</a>
+</section>
+
+<!-- Cómo funciona -->
+<section class="bloque fondo" aria-labelledby="t-como">
+    <h2 id="t-como">Cómo funciona</h2>
+    <ol class="pasos">
+        @for (paso of PASOS; track paso.titulo; let i = $index) {
+        <li>
+            <i class="bi" [class]="paso.icono" aria-hidden="true"></i>
+            <h3>{{ i + 1 }}. {{ paso.titulo }}</h3>
+            <p>{{ paso.texto }}</p>
+        </li>
+        }
+    </ol>
+</section>
+
+<!-- Confianza -->
+<section class="bloque" aria-label="Por qué confiar en nosotros">
+    <ul class="confianza">
+        @for (c of CONFIANZA; track c.texto) {
+        <li><i class="bi" [class]="c.icono" aria-hidden="true"></i> {{ c.texto }}</li>
+        }
+    </ul>
+    <p class="ayuda">¿Dudas? <a [href]="enlaceAyuda" target="_blank" rel="noopener">Escríbenos por WhatsApp</a></p>
+</section>
