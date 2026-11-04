@@ -69,8 +69,16 @@
             </div>
 
             <!-- Calendario: solo dibuja lo que llega en `windows` -->
-            <h2 class="sub-titulo">O prográmalo para una fecha futura</h2>
-            <app-calendario-ventanas [ventanas]="ventanas" [elegida]="ventanaElegida()" (elegir)="elegirVentana($event)" />
+            <button type="button" class="btn-programar" [attr.aria-expanded]="calendarioAbierto()" aria-controls="calendario-ficha"
+                    (click)="calendarioAbierto.set(!calendarioAbierto())">
+                <i class="bi bi-calendar3" aria-hidden="true"></i> Programar para fecha futura
+                <i class="bi" [class.bi-chevron-down]="!calendarioAbierto()" [class.bi-chevron-up]="calendarioAbierto()" aria-hidden="true"></i>
+            </button>
+            @if (calendarioAbierto()) {
+            <div id="calendario-ficha">
+                <app-calendario-ventanas [ventanas]="ventanas" [elegida]="ventanaElegida()" (elegir)="elegirVentana($event)" />
+            </div>
+            }
 
             <!-- Acciones -->
             <div class="acciones">

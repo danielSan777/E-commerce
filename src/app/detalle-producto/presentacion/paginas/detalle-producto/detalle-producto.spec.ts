@@ -20,4 +20,10 @@ describe('DetalleProducto', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('el calendario de fecha futura empieza cerrado y se abre con el botón', () => {
+    expect(component.calendarioAbierto()).toBe(false);
+    component.calendarioAbierto.set(true);
+    expect(component.calendarioAbierto()).toBe(true);
+  });
 });

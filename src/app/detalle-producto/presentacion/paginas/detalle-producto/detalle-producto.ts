@@ -74,6 +74,9 @@ export class DetalleProducto implements OnDestroy {
   // La elección queda en el checkout (entrega programada) y se muestra después en el pago.
   ventanas = this.promesas.ventanas().windows;
   textoVentana = textoVentana;
+  // El calendario se abre solo con el botón (o ya abierto si hay una fecha programada)
+  calendarioAbierto = signal(this.checkout.datos().entrega === 'programada');
+
   ventanaElegida = computed(() => {
     const d = this.checkout.datos();
     return d.entrega === 'programada'

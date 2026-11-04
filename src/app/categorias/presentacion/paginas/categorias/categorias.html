@@ -26,7 +26,9 @@
 
     <!-- Pestañas de subcategorías (solo si la categoría las tiene) -->
     @if (c.subcategories.length) {
-    <nav class="pestanas" aria-label="Subcategorías">
+    <div class="pestanas-caja" (window:resize)="revisarFlechas(nav)">
+    @if (flechaIzq()) { <button type="button" class="flecha izq" aria-label="Ver subcategorías anteriores" (click)="mover(nav, -1)"><i class="bi bi-chevron-left" aria-hidden="true"></i></button> }
+    <nav #nav class="pestanas" aria-label="Subcategorías" (scroll)="revisarFlechas(nav)">
         <a [routerLink]="rutaTodos()" [class.activa]="!c.active_subcategory"><i class="bi bi-grid" aria-hidden="true"></i> Todos</a>
         @for (s of c.subcategories; track s.slug) {
         <a [routerLink]="s.url" [class.activa]="c.active_subcategory === s.slug">
@@ -34,6 +36,8 @@
         </a>
         }
     </nav>
+    @if (flechaDer()) { <button type="button" class="flecha der" aria-label="Ver más subcategorías" (click)="mover(nav, 1)"><i class="bi bi-chevron-right" aria-hidden="true"></i></button> }
+    </div>
     }
 
     @if (subcategoria(); as s) {
