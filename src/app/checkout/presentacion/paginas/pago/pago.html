@@ -192,7 +192,7 @@
         <label class="casilla">
             <input type="checkbox" [checked]="aceptaTerminos()" (change)="aceptaTerminos.set($any($event.target).checked)"
                 [attr.aria-invalid]="errorTerminos() ? 'true' : null" aria-describedby="error-terminos">
-            <span>Acepto los términos y condiciones y la política de privacidad <b>*</b></span>
+            <span>Acepto los <a href="/terminos-y-condiciones" target="_blank" rel="noopener">términos y condiciones</a> y la <a href="/politicas-privacidad" target="_blank" rel="noopener">política de privacidad</a> <b>*</b></span>
         </label>
         @if (errorTerminos()) {
         <p class="error" id="error-terminos" role="alert">Para confirmar tu pedido debes aceptar los términos y condiciones.</p>

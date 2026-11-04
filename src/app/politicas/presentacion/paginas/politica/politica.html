@@ -1,0 +1,21 @@
+@if (politica(); as p) {
+<main class="pagina">
+    <h1>{{ p.title }}</h1>
+    @if (p.version && p.effective_date) {
+    <p class="version">Versión {{ p.version }} · vigente desde {{ p.effective_date + 'T00:00:00' | date:'d \'de\' MMMM \'de\' y' }}</p>
+    }
+
+    @if (p.paragraphs.length) {
+    @for (t of p.paragraphs; track $index) { <p>{{ t }}</p> }
+    } @else {
+    <p class="pendiente"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Estamos terminando de redactar y revisar este texto. Si tienes una duda, escríbenos por
+        <a [href]="whatsapp" target="_blank" rel="noopener">WhatsApp</a> o a {{ correoTienda }}.</p>
+    }
+
+    <nav class="otras" aria-label="Otras políticas">
+        @for (o of otras(); track o.slug) { <a [routerLink]="o.url">{{ o.title }}</a> }
+    </nav>
+</main>
+} @else {
+<app-no-encontrada />
+}

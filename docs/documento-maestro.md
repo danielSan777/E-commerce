@@ -559,7 +559,7 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 - [x] "Cómo funciona" en 3 pasos: elige, personaliza y recíbelo con su plantita. *(Hecho.)*
 - [ ] Testimonios elegidos por Josué (Paso 24).
 - [x] Confianza: pago seguro con tarjeta o transferencia, envíos a todo Ecuador por Servientrega (excepto Galápagos), hecho en Guayaquil. *(Hecho.)*
-- [ ] Pie: WhatsApp, "Consultar mi pedido", políticas y redes. *(Parcial: ya tiene WhatsApp, redes y "Consultar mi pedido"; faltan las políticas, cuyos textos entrega Josué.)*
+- [x] Pie: WhatsApp, "Consultar mi pedido", políticas y redes. *(Hecho: WhatsApp, redes, "Consultar mi pedido" y las cuatro políticas.)*
 
 **Pantalla de categorías**
 
@@ -1675,7 +1675,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - [ ] Métricas desde pedidos pagados: número de pedidos, total comprado, ticket promedio, primera y última compra.
 - [ ] Tabla de consentimientos con historial y baja en un clic en cada correo de marketing, cuando exista marketing.
 - [ ] Aviso de cookies simple; los pixeles se cargan según la elección del visitante (Paso 20).
-- [ ] Páginas de políticas con versión y fecha: privacidad, términos y condiciones, envíos, y cambios de productos personalizados. Los textos los entrega Josué.
+- [ ] Páginas de políticas con versión y fecha: privacidad, términos y condiciones, envíos, y cambios de productos personalizados. Los textos los entrega Josué. *(Plantilla lista en Angular: `/politicas-privacidad`, `/terminos-y-condiciones`, `/politicas-de-envio` y `/cambios-de-productos-personalizados`, con mock `PoliticaService`; sin texto aprobado muestran un aviso y `noindex`. Falta el texto de Josué y la tabla `policies` en Laravel, por eso sigue sin marcar.)
 - [ ] Registro de la aceptación de términos por pedido (Paso 12).
 
 **Implementación acordada**

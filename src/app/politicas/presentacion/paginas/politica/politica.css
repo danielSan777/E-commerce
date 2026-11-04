@@ -1,0 +1,8 @@
+:host { display: block; background: var(--jds-crema); color: var(--jds-texto); }
+.pagina { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.6; }
+h1 { font-family: Georgia, 'Times New Roman', serif; color: var(--jds-vino); font-size: 1.7rem; margin: 0 0 6px; }
+.version { color: #6b6b6b; font-size: .85rem; margin: 0 0 16px; }
+.pendiente { background: var(--jds-rosa); border-radius: 12px; padding: 14px; }
+.pendiente .bi { color: var(--jds-vino); margin-right: 4px; }
+.otras { display: flex; flex-direction: column; gap: 6px; margin-top: 28px; border-top: 1px solid var(--jds-borde); padding-top: 14px; }
+.otras a, .pendiente a { color: var(--jds-vino); font-weight: 700; }
