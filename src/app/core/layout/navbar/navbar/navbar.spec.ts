@@ -20,4 +20,20 @@ describe('Navbar', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('el menú lleva a Inicio y a las 4 categorías', () => {
+    const rutas = component.catalogos().map(c => c.ruta);
+
+    expect(rutas).toEqual(['/', '/profesiones-y-hobbies', '/amor', '/amistad', '/familia']);
+  });
+
+  it('los enlaces del menú del celular apuntan a esas direcciones', async () => {
+    component.abrir();
+    await fixture.whenStable();
+    const enlaces = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('.sidebar-enlace'))
+      .map(a => a.getAttribute('href'));
+
+    expect(enlaces).toContain('/amor');
+    expect(enlaces).toContain('/profesiones-y-hobbies');
+  });
 });
