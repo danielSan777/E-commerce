@@ -33,8 +33,8 @@ interface Categoria {
 export class Carrito implements AfterViewInit, OnDestroy {
 
   // ===== EDITABLES: rutas de tu aplicación =====
-  readonly RUTA_MACETAS = '/catalogo/todos-productos';  // botón del carrito vacío
-  readonly RUTA_SEGUIR = '/catalogo/todos-productos';   // "Seguir comprando"
+  readonly RUTA_MACETAS = '/categorias';  // botón del carrito vacío
+  readonly RUTA_SEGUIR = '/categorias';   // "Seguir comprando"
   readonly RUTA_CONTINUAR = '/checkout';  // "Continuar"
 
   // ===== EDITABLE: categorías de la hoja "Elige otra maceta" =====

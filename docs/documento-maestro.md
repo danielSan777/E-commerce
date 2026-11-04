@@ -545,7 +545,7 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 | `/san-valentin` | Campaña de temporada (y las que se creen después) |
 | Políticas y 404 propio | — |
 
-Redirecciones 301: `/catalogo/todos-productos` → `/categorias`; `/catalogo/todos-productos/:producto` → `/producto/{slug}`; `/catalogo/:slug` → su categoría.
+Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega con el servidor)*: `/catalogo/todos-productos` → `/categorias`; `/catalogo/todos-productos/:producto` → `/producto/{slug}`; `/catalogo/:slug` → su categoría.
 
 **Página principal** (de arriba hacia abajo en el celular)
 
@@ -562,12 +562,12 @@ Redirecciones 301: `/catalogo/todos-productos` → `/categorias`; `/catalogo/tod
 
 **Pantalla de categorías**
 
-- [ ] Una sola plantilla, según el mockup de Josué: arriba las 4 categorías (Profesiones y Hobbies, Amor, Amistad, Familia); debajo, las pestañas de subcategorías de la categoría activa; abajo, la grilla de productos.
-- [ ] Cada estado tiene su URL. Cambiar de categoría o de pestaña actualiza la URL sin recargar; entrar directo a cualquiera de esas URL (por ejemplo, desde un anuncio) abre la pantalla en ese estado.
-- [ ] Encabezado por categoría: título, texto, video horizontal o imagen opcional, promesa de entrega vigente y precio "desde".
-- [ ] Grilla: foto, nombre, precio con descuento y badge; sin video en las tarjetas; todos los productos de la pestaña activa, sin "Ver más" ni virtualización, con imágenes diferidas.
-- [ ] Cada categoría y subcategoría tiene su propio título, descripción e imagen para compartir; funciona con UTMs y carga rápido en el celular.
-- [ ] Subcategorías iniciales de Profesiones y Hobbies: Salud, Administrativos, Fuerza Pública, Cocina y Hobbies. Las de Amor, Amistad y Familia las define Josué; mientras no existan, la categoría se muestra sin pestañas.
+- [x] Una sola plantilla, según el mockup de Josué: arriba las 4 categorías (Profesiones y Hobbies, Amor, Amistad, Familia); debajo, las pestañas de subcategorías de la categoría activa; abajo, la grilla de productos. *(Hecho con datos de prueba (`CategoriaService`, mock del contrato). El mockup de Josué todavía no está en el repositorio: el diseño es provisional hasta recibirlo.)*
+- [x] Cada estado tiene su URL. Cambiar de categoría o de pestaña actualiza la URL sin recargar; entrar directo a cualquiera de esas URL (por ejemplo, desde un anuncio) abre la pantalla en ese estado. *(Hecho: `/categorias`, `/{categoria}` y `/{categoria}/{subcategoria}`; una subcategoría inexistente da 404. Falta conservar el scroll al volver desde un producto.)*
+- [x] Encabezado por categoría: título, texto, video horizontal o imagen opcional, promesa de entrega vigente y precio "desde". *(Hecho con imagen opcional; el video llega con los medios reales.)*
+- [x] Grilla: foto, nombre, precio con descuento y badge; sin video en las tarjetas; todos los productos de la pestaña activa, sin "Ver más" ni virtualización, con imágenes diferidas. *(Hecho con imágenes diferidas y todos los productos de la pestaña.)*
+- [x] Cada categoría y subcategoría tiene su propio título, descripción e imagen para compartir; funciona con UTMs y carga rápido en el celular. *(Hecho: título, descripción, imagen para compartir y canonical por estado; la imagen social definitiva la entrega Josué.)*
+- [x] Subcategorías iniciales de Profesiones y Hobbies: Salud, Administrativos, Fuerza Pública, Cocina y Hobbies. Las de Amor, Amistad y Familia las define Josué; mientras no existan, la categoría se muestra sin pestañas. *(Hecho; Amor, Amistad y Familia salen sin pestañas.)*
 
 **Búsqueda**
 

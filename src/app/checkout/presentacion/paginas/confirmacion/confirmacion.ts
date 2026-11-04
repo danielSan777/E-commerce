@@ -17,7 +17,7 @@ import {
 export class Confirmacion {
 
   // ===== EDITABLES =====
-  readonly RUTA_SEGUIR = '/catalogo/todos-productos';   // "Seguir comprando"
+  readonly RUTA_SEGUIR = '/categorias';   // "Seguir comprando"
   readonly TITULAR = TITULAR_TRANSFERENCIA;
   readonly CUENTAS = CUENTAS;
 

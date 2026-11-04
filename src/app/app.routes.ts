@@ -1,6 +1,11 @@
 import { Routes } from '@angular/router';
 import { MainLayout } from './core/layout/main-layout/main-layout/main-layout';
 
+// Categorías con URL propia (cada una abre la pantalla de categorías en ese estado)
+const CATEGORIAS = ['profesiones-y-hobbies', 'amor', 'amistad', 'familia'];
+const pantallaCategorias = () =>
+    import('./categorias/presentacion/paginas/categorias/categorias').then(m => m.Categorias);
+
 export const routes: Routes = [
 
     // Checkout: pantalla completa con su propio encabezado (va antes del MainLayout para que no lleve el navbar de la tienda)
@@ -21,12 +26,13 @@ export const routes: Routes = [
                 redirectTo: 'catalogo',
                 pathMatch: 'full'
             },
-            {
-                path: 'catalogo/todos-productos',
-                loadComponent: () =>
-                    import('./all-productos/presentacion/paginas/all-productos/all-productos')
-                        .then(m => m.AllProductos)
-            },
+            // Pantalla de categorías: reemplaza a "Todos los productos"
+            { path: 'categorias', loadComponent: pantallaCategorias },
+            ...CATEGORIAS.flatMap(slug => [
+                { path: slug, loadComponent: pantallaCategorias, data: { categoria: slug } },
+                { path: `${slug}/:subcategoria`, loadComponent: pantallaCategorias, data: { categoria: slug } },
+            ]),
+            { path: 'catalogo/todos-productos', redirectTo: '/categorias', pathMatch: 'full' },
             {
                 path: 'catalogo',
                 loadComponent: () =>

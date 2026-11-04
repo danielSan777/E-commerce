@@ -23,7 +23,7 @@ export class Pago {
   // ===== EDITABLES =====
   readonly RUTA_VOLVER = '/checkout';
   readonly RUTA_CONFIRMAR = '/checkout/confirmacion';  // "Confirmar pedido"
-  readonly RUTA_CATALOGO = '/catalogo/todos-productos';
+  readonly RUTA_CATALOGO = '/categorias';
 
   // Las tarifas de envío por cantón están en dominio/validaciones/envio.ts
   readonly RECARGO_PAYPHONE = 0.06;  // 6 % sobre (subtotal + envío) cuando se paga con tarjeta

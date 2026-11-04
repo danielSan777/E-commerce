@@ -169,7 +169,7 @@ export class DetalleProducto implements OnDestroy {
       this.location.back();
     } else {
       // Si entró directamente, ir al listado de productos.
-      void this.router.navigate(['/catalogo/todos-productos']);
+      void this.router.navigate(['/categorias']);
     }
   }
 

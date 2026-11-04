@@ -16,7 +16,7 @@ import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontra
 export class PedidoPendiente {
 
   // ===== EDITABLES =====
-  readonly RUTA_COMPRAR = '/catalogo/todos-productos';
+  readonly RUTA_COMPRAR = '/categorias';
   readonly TIPOS_COMPROBANTE = ['image/jpeg', 'image/png', 'application/pdf'];   // JPG, PNG o PDF
 
   private route = inject(ActivatedRoute);
