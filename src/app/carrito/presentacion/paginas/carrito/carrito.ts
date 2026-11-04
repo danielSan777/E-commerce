@@ -1,3 +1,4 @@
+import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
 import {
   AfterViewInit, Component, ElementRef, HostListener, OnDestroy, PLATFORM_ID, computed, effect, inject, signal, untracked
 } from '@angular/core';
@@ -142,6 +143,7 @@ export class Carrito implements AfterViewInit, OnDestroy {
   private itemsAlAbrir: unknown = null;
 
   constructor() {
+    inject(AnalyticsService).track('view_cart');
     // Bloquea el scroll de la página mientras hay una hoja abierta
     effect(() => {
       const abierta = this.hoja() !== null || this.personalizando() !== null;

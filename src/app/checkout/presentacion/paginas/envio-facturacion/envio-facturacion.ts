@@ -1,3 +1,4 @@
+import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
 import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -93,6 +94,7 @@ export class EnvioFacturacion {
   });
 
   constructor() {
+    inject(AnalyticsService).track('begin_checkout');
     // Solo en el navegador: así el servidor y el cliente pintan lo mismo en el primer render
     afterNextRender(() => {
       this.checkout.restaurar();

@@ -1,3 +1,4 @@
+import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
 import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -96,6 +97,8 @@ export class Pago {
 
   porcentajeTexto = Math.round(this.RECARGO_PAYPHONE * 100);
 
+  private analytics = inject(AnalyticsService);
+
   constructor() {
     // Solo en el navegador: así el servidor y el cliente pintan lo mismo en el primer render
     afterNextRender(() => {
@@ -125,6 +128,7 @@ export class Pago {
 
   elegir(metodo: Metodo): void {
     this.checkout.actualizar({ metodoPago: metodo });
+    this.analytics.track('add_payment_info', { payment_type: metodo === 'payphone' ? 'card' : 'transfer' });
   }
 
   confirmar(): void {

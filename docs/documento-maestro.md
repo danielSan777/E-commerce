@@ -636,8 +636,8 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 
 **Tracking en el frontend**
 
-- [ ] Captura de atribución al aterrizar: UTMs, `fbclid`, `ttclid`, landing y fecha en almacenamiento propio (primer y último toque).
-- [ ] `dataLayer`: una función `track()` en cada paso del recorrido con los nombres del plan de eventos (Paso 20).
+- [x] Captura de atribución al aterrizar: UTMs, `fbclid`, `ttclid`, landing y fecha en almacenamiento propio (primer y último toque). *(Hecho: `AtribucionService`; `fbp`, `fbc`, `ttp` y los ids de GA4 llegan con GTM en el Paso 20.)*
+- [ ] `dataLayer`: una función `track()` en cada paso del recorrido con los nombres del plan de eventos (Paso 20). *(Parcial: `AnalyticsService.track()` ya envía `page_view` (menos `/pedido/{token}`), `view_item`, `start_customization`, `add_to_cart`, `view_cart`, `begin_checkout` y `add_payment_info`. Faltan `select_subcategory`, `search`, `select_item`, `select_delivery_window`, `whatsapp_click`, `open_more_products` y `add_shipping_info`.)*
 
 **Limpieza, navegación y video**
 
