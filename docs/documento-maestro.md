@@ -589,12 +589,12 @@ Redirecciones 301: `/catalogo/todos-productos` → `/categorias`; `/catalogo/tod
 
 - [ ] Foto base del modelo con su elemento fijo ya integrado; el slot izquierdo queda reservado para ese elemento.
 - [ ] Pestañas en hoja inferior: Hobbies, Amor, Mascotas y Marcos. Lentes y gafas aparte, con una imagen real por color.
-- [ ] **Accesorios:** el comprador elige **exactamente 2** (contador "1 de 2", "2 de 2"). Cuentan hobbies, amor, mascotas, marco con foto y marco con frase. No cuentan el elemento fijo, el nombre, las gafas o lentes ni la dedicatoria. Con 2 elegidos, para agregar otro debe quitar uno; con menos de 2 no puede continuar.
-- [ ] **Marco con foto:** sube la foto en ese momento; aviso si es muy pequeña para imprimirse bien.
-- [ ] **Marco con frase:** campo con el ejemplo "Avanza en fe hacia tus propósitos. Dios te bendiga." y contador "0/60".
-- [ ] **Dedicatoria:** texto de hasta 250 caracteres con contador (emojis, tildes y ñ) **u** opción visible "No quiero dedicatoria". Debe elegir una de las dos para continuar.
+- [x] **Accesorios:** el comprador elige **exactamente 2** (contador "1 de 2", "2 de 2"). Cuentan hobbies, amor, mascotas, marco con foto y marco con frase. No cuentan el elemento fijo, el nombre, las gafas o lentes ni la dedicatoria. Con 2 elegidos, para agregar otro debe quitar uno; con menos de 2 no puede continuar. *(Hecho: contador "n de 2" y exactamente 2.)*
+- [x] **Marco con foto:** sube la foto en ese momento; aviso si es muy pequeña para imprimirse bien. *(Hecho; el aviso salta con el lado menor bajo 600 px, valor provisional en `minPxFoto` hasta que el negocio defina el mínimo.)*
+- [x] **Marco con frase:** campo con el ejemplo "Avanza en fe hacia tus propósitos. Dios te bendiga." y contador "0/60". *(Hecho; el contador cuenta emojis como 1.)*
+- [x] **Dedicatoria:** texto de hasta 250 caracteres con contador (emojis, tildes y ñ) **u** opción visible "No quiero dedicatoria". Debe elegir una de las dos para continuar. *(Hecho; el contador cuenta emojis como 1.)*
 - [ ] Nombre en placa según la regla de abajo.
-- [ ] Borrador automático: la personalización se guarda en el navegador antes de agregarla al carrito y se ofrece "Continuar personalización" al volver.
+- [x] Borrador automático: la personalización se guarda en el navegador antes de agregarla al carrito y se ofrece "Continuar personalización" al volver. *(Hecho en `localStorage` por producto; la foto del marco no se guarda y hay que subirla otra vez.)*
 - [ ] Al guardar, la maceta entra al carrito como un ítem nuevo.
 
 **Carrito**

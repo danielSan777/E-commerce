@@ -1,4 +1,13 @@
 <div class="personalizador container-fluid">
+    @if (borrador()) {
+    <div class="borrador-aviso" role="status">
+        <span><i class="bi bi-clock-history" aria-hidden="true"></i> Tienes una personalización sin terminar.</span>
+        <span class="borrador-botones">
+            <button type="button" class="btn btn-sm btn-primary" (click)="continuarBorrador()">Continuar personalización</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="descartarBorrador()">Empezar de nuevo</button>
+        </span>
+    </div>
+    }
     <div class="row g-3 g-lg-4">
 
         <!-- ================= PRODUCTO ================= -->
@@ -182,7 +191,7 @@
                 <div class="campo-nombre">
                     <div class="nombre-cabecera">
                         <label for="nombre" class="form-label mb-0">Nombre o título</label>
-                        <span class="contador-nombre">{{ nombreCliente().length }}/{{ maxNombre }}</span>
+                        <span class="contador-nombre">{{ contar(nombreCliente()) }}/{{ maxNombre }}</span>
                     </div>
                     <input id="nombre" type="text" class="form-control" [maxLength]="maxNombre"
                         placeholder="Escribe el nombre" [ngModel]="nombreCliente()"
@@ -270,6 +279,10 @@
                 <!-- ===== ACCESORIOS (clasificados por categoría) ===== -->
                 @case ('accesorios') {
 
+                <p class="contador-accesorios" [class.completo]="cantidadAccesorios() >= maximoAccesorios">
+                    {{ cantidadAccesorios() }} de {{ maximoAccesorios }} accesorios
+                </p>
+
                 <!-- Accesorios seleccionados: con su X para quitarlos -->
                 @if (accesoriosElegidos().length > 0) {
                 <div class="elegidos" #chips [class.vibrar]="vibrando()">
@@ -335,9 +348,9 @@
                         }
                     </div>
                     <div class="caja-dedicatoria">
-                        <textarea id="dedicatoria" rows="3" [maxLength]="maxDedicatoria" [value]="dedicatoria()"
+                        <textarea id="dedicatoria" rows="3" [value]="dedicatoria()"
                             placeholder="Escribe tu mensaje aquí..." (input)="escribirDedicatoria($event)"></textarea>
-                        <span class="contador-texto">{{ dedicatoria().length }}/{{ maxDedicatoria }}</span>
+                        <span class="contador-texto">{{ contar(dedicatoria()) }}/{{ maxDedicatoria }}</span>
                     </div>
                 </div>
 
@@ -350,6 +363,12 @@
                         <span class="etiqueta-obligatorio">Obligatorio</span>
                     </div>
                     <p class="bloque-ayuda">Seleccionaste un marco con foto. Sube la imagen que irá en tu marco.</p>
+                    @if (fotoPequena()) {
+                    <p class="aviso-foto" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                        Tu foto es pequeña y puede verse borrosa al imprimirse. Si puedes, sube una más grande.
+                    </p>
+                    }
 
                     <input #archivoMarco type="file" accept="image/*" hidden (change)="elegirFotoMarco($event)" />
                     @if (fotoMarcoUrl(); as url) {
@@ -385,10 +404,10 @@
                     <p class="bloque-ayuda">Seleccionaste un marco con frase. Escribe el texto que irá en tu marco.</p>
 
                     <div class="caja-dedicatoria">
-                        <textarea id="textoMarco" rows="2" [maxLength]="maxTextoMarco" [value]="textoMarco()"
+                        <textarea id="textoMarco" rows="2" [value]="textoMarco()"
                             placeholder="Escribe la frase para tu marco..."
                             (input)="escribirTextoMarco($event)"></textarea>
-                        <span class="contador-texto">{{ textoMarco().length }}/{{ maxTextoMarco }}</span>
+                        <span class="contador-texto">{{ contar(textoMarco()) }}/{{ maxTextoMarco }}</span>
                     </div>
                 </div>
                 }

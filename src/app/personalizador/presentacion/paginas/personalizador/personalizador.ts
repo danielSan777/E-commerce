@@ -1,6 +1,7 @@
 import {
   Component, OnInit, OnDestroy, signal, ViewChild, ElementRef, HostListener,
   computed,
+  effect,
   inject,
   input,
   output,
@@ -12,6 +13,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TextoPlaca } from '../../../../shared/componentes/texto-placa/texto-placa';
 import { COLOR_DORADO_PLACA, PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE, tamanoLetra } from '../../../dominio/placa';
 import { ExcepcionGuardada, Geometria, UbicacionGuardada } from '../../../dominio/ubicaciones';
+import { contarCaracteres, recortarCaracteres, sinEmojis } from '../../../dominio/texto';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 // AJUSTA la ruta según donde dejes carrito.service.ts
 import {
@@ -169,6 +171,14 @@ export class Personalizador implements OnDestroy {
 
       // Si viene del carrito con el botón "Editar", vuelve a poner lo que el cliente había elegido
       this.restaurarEdicion();
+
+      if (this.editandoUid) {
+        this.borradorResuelto = true;
+      } else {
+        const b = this.leerBorrador();
+        if (b) this.borrador.set(b);
+        else this.borradorResuelto = true;
+      }
 
     } catch (error) {
       console.error('Error al cargar la configuración:', error);
@@ -555,7 +565,7 @@ export class Personalizador implements OnDestroy {
   }
 
   cambiarNombre(texto: string): void {
-    this.nombreCliente.set(texto);
+    this.nombreCliente.set(sinEmojis(texto));
     this.errorPanel.set('');
     this.invalidarGuardado('nombre');
   }
@@ -617,6 +627,20 @@ export class Personalizador implements OnDestroy {
   }
 
   readonly maxMbFoto = 5;
+  // Lado menor mínimo para imprimir bien el marco (EDITABLE; el valor definitivo lo da el negocio)
+  readonly minPxFoto = 600;
+  fotoPequena = signal(false);
+
+  private medirFoto(archivo: File): void {
+    const url = URL.createObjectURL(archivo);
+    const img = new Image();
+    img.onload = () => {
+      if (this.fotoMarcoArchivo === archivo) this.fotoPequena.set(Math.min(img.naturalWidth, img.naturalHeight) < this.minPxFoto);
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
+  }
 
   // ==========================================
   // DEDICATORIA / MARCOS
@@ -627,6 +651,7 @@ export class Personalizador implements OnDestroy {
 
   readonly maxNombre = 30;        // EDITABLE: caracteres del nombre del visor
   readonly maxDedicatoria = 250;  // EDITABLE: caracteres del mensaje de la tarjeta
+  readonly contar = contarCaracteres;
   readonly maxTextoMarco = 60;    // EDITABLE: caracteres de la frase del marco
 
   hayMarcoFoto = computed(() =>
@@ -641,7 +666,10 @@ export class Personalizador implements OnDestroy {
   dedicatoria = signal('');
 
   escribirDedicatoria(evento: Event): void {
-    this.dedicatoria.set((evento.target as HTMLTextAreaElement).value.slice(0, this.maxDedicatoria));
+    const campo = evento.target as HTMLTextAreaElement;
+    const texto = recortarCaracteres(campo.value, this.maxDedicatoria);
+    if (texto !== campo.value) campo.value = texto;
+    this.dedicatoria.set(texto);
     this.cambioDedicatoria();
   }
 
@@ -668,6 +696,8 @@ export class Personalizador implements OnDestroy {
     this.fotoMarcoArchivo = archivo;
     this.fotoMarcoUrl.set(URL.createObjectURL(archivo));
     this.fotoMarcoNombre.set(archivo.name);
+    this.fotoPequena.set(false);
+    this.medirFoto(archivo);
     this.cambioDedicatoria();
   }
 
@@ -676,6 +706,7 @@ export class Personalizador implements OnDestroy {
     this.fotoMarcoArchivo = null;
     this.fotoMarcoUrl.set(null);
     this.fotoMarcoNombre.set('');
+    this.fotoPequena.set(false);
     this.errorFotoMarco.set('');
     input.value = '';
     this.cambioDedicatoria();
@@ -690,7 +721,10 @@ export class Personalizador implements OnDestroy {
   textoMarco = signal('');
 
   escribirTextoMarco(evento: Event): void {
-    this.textoMarco.set((evento.target as HTMLTextAreaElement).value.slice(0, this.maxTextoMarco));
+    const campo = evento.target as HTMLTextAreaElement;
+    const texto = recortarCaracteres(campo.value, this.maxTextoMarco);
+    if (texto !== campo.value) campo.value = texto;
+    this.textoMarco.set(texto);
     this.cambioDedicatoria();
   }
 
@@ -987,6 +1021,7 @@ export class Personalizador implements OnDestroy {
       }
     );
 
+    this.borrarBorradorGuardado();   // ya está en el carrito: el borrador sobra
     await this.router.navigate(['carrito']);
   }
 
@@ -1070,6 +1105,12 @@ export class Personalizador implements OnDestroy {
     this.editandoUid = item.uid;
     this.editandoRuta = item.ruta;
 
+    // Las fotos subidas solo se recuerdan mientras no se recargue la página
+    this.aplicarConfig(c, this.carrito.archivosDe(item.uid).fotoMarco ?? null);
+  }
+
+  // Vuelve a poner una configuración (de un ítem del carrito o del borrador)
+  private aplicarConfig(c: ConfigGuardada, fotoMarco: File | null): void {
     this.colorSeleccionado = c.colorLentes;
     this.colorGafas = c.colorGafas;
     this.nombreCliente.set(c.nombre);
@@ -1077,13 +1118,11 @@ export class Personalizador implements OnDestroy {
     this.textoMarco.set(c.textoMarco);
     this.sinTarjeta.set(c.sinTarjeta);
 
-    // Las fotos subidas solo se recuerdan mientras no se recargue la página
-    const fotos = this.carrito.archivosDe(item.uid);
-
-    if (fotos.fotoMarco) {
-      this.fotoMarcoArchivo = fotos.fotoMarco;
-      this.fotoMarcoUrl.set(URL.createObjectURL(fotos.fotoMarco));
-      this.fotoMarcoNombre.set(fotos.fotoMarco.name);
+    if (fotoMarco) {
+      this.fotoMarcoArchivo = fotoMarco;
+      this.fotoMarcoUrl.set(URL.createObjectURL(fotoMarco));
+      this.fotoMarcoNombre.set(fotoMarco.name);
+      this.medirFoto(fotoMarco);
     }
 
     this.siguienteId = Math.max(0, ...c.accesorios.map(a => a.id)) + 1;
@@ -1094,6 +1133,55 @@ export class Personalizador implements OnDestroy {
     const completas = new Set<IdPestana>(this.pestanas.map(p => p.id));
     if (this.hayMarcoFoto() && !this.fotoMarcoArchivo) completas.delete('dedicatoria');
     this.guardadas.set(completas);
+  }
+
+  // ==========================================
+  // BORRADOR AUTOMÁTICO (en el navegador, antes de agregar al carrito)
+  // ==========================================
+  // La foto del marco no se guarda en el borrador: hay que subirla otra vez.
+  borrador = signal<ConfigGuardada | null>(null);
+  private borradorResuelto = false;
+
+  private claveBorrador(): string {
+    return `jds.borrador.${this.producto()?.id ?? 'detalle'}`;
+  }
+
+  private leerBorrador(): ConfigGuardada | null {
+    try {
+      const crudo = localStorage.getItem(this.claveBorrador());
+      const c = crudo ? JSON.parse(crudo) as ConfigGuardada : null;
+      const conContenido = !!c && (c.nombre?.trim() || c.dedicatoria?.trim() || c.textoMarco?.trim() || c.sinTarjeta);
+      return conContenido ? c : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private guardarBorrador = effect(() => {
+    // Depende de todo lo que forma la personalización
+    const c = this.configuracionGuardada();
+    if (!this.borradorResuelto || this.editandoUid) return;
+    try {
+      localStorage.setItem(this.claveBorrador(), JSON.stringify(c));
+    } catch { /* sin espacio o navegación privada: el borrador es opcional */ }
+  });
+
+  continuarBorrador(): void {
+    const c = this.borrador();
+    if (c) this.aplicarConfig(c, null);
+    this.borrador.set(null);
+    this.borradorResuelto = true;
+  }
+
+  descartarBorrador(): void {
+    try { localStorage.removeItem(this.claveBorrador()); } catch { /* nada */ }
+    this.borrador.set(null);
+    this.borradorResuelto = true;
+  }
+
+  private borrarBorradorGuardado(): void {
+    this.borradorResuelto = false;
+    try { localStorage.removeItem(this.claveBorrador()); } catch { /* nada */ }
   }
 
   // ----- Foto de la maceta ya personalizada (para el carrito) -----
