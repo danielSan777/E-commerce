@@ -36,6 +36,7 @@ export interface ItemCarrito {
     ruta: string;                  // pantalla donde se personalizó (para el botón Editar)
     resumen: LineaResumen[];
     configuracion?: ConfigGuardada;
+    igualConfirmada?: boolean;     // el comprador confirmó que quiere dos macetas idénticas
 }
 
 // Las fotos que subió el cliente no caben en localStorage: viven en memoria mientras no se recargue la página
