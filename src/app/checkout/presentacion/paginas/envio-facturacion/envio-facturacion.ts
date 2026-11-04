@@ -7,7 +7,7 @@ import { UbicacionesService } from '../../../aplicacion/servicios/UbicacionesSer
 import {
   correoValido, documentoValido, normalizar, soloDigitos, telefonoValido
 } from '../../../dominio/validaciones/validaciones';
-import { MENSAJE_GALAPAGOS } from '../../../dominio/validaciones/envio';
+import { envioDisponible, MENSAJE_SIN_ENVIO } from '../../../dominio/validaciones/envio';
 import { buscarProvincia } from '../../../dominio/ubicaciones';
 
 type Lista = 'provincia' | 'canton' | 'fProvincia' | 'fCanton';
@@ -65,8 +65,9 @@ export class EnvioFacturacion {
     if (!telefonoValido(d.celular, '+593')) e['celular'] = 'Escribe un celular válido. Ej. 099 123 4567';
     if (!correoValido(d.correo)) e['correo'] = 'Ingresa un correo válido';
     if (!d.provincia) e['provincia'] = 'Elige una provincia';
-    else if (buscarProvincia(d.provincia)?.codigo === '20') e['provincia'] = MENSAJE_GALAPAGOS;
+    else if (buscarProvincia(d.provincia)?.codigo === '20') e['provincia'] = MENSAJE_SIN_ENVIO;
     if (!d.canton) e['canton'] = 'Elige un cantón';
+    else if (!envioDisponible(d.provincia, d.canton)) e['canton'] = MENSAJE_SIN_ENVIO;
     if (d.direccion.trim().length < 5) e['direccion'] = 'Escribe tu dirección completa';
 
     // Otros datos de facturación: los mismos campos del envío, menos la referencia

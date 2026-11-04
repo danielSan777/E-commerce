@@ -8,7 +8,7 @@ import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { PromesaService } from '../../../aplicacion/servicios/PromesaService';
 import { EntregaPedido, VentanaDisponible } from '../../../dominio/interfaces/promesa';
 import { textoVentana } from '../../../dominio/validaciones/fechas';
-import { costoEnvio, envioDisponible, MENSAJE_GALAPAGOS, zonaEnvio } from '../../../dominio/validaciones/envio';
+import { costoEnvio, envioDisponible, MENSAJE_SIN_ENVIO, tieneDiaAdicional } from '../../../dominio/validaciones/envio';
 
 type Metodo = DatosCheckout['metodoPago'];
 
@@ -49,7 +49,7 @@ export class Pago {
   entrega = computed(() => this.datos().entrega);
   ventanaElegida = computed(() =>
     this.ventanas.find(v => v.start === this.datos().ventanaInicio && v.end === this.datos().ventanaFin && v.available));
-  esAmazonia = computed(() => zonaEnvio(this.datos().provincia, this.datos().canton) === 'amazonia');
+  esAmazonia = computed(() => tieneDiaAdicional(this.datos().provincia, this.datos().canton));
 
   entregaPedido = computed<EntregaPedido | null>(() => {
     if (this.entrega() === 'inmediata') {
@@ -76,7 +76,7 @@ export class Pago {
 
   // Galápagos: no hay envío, no se puede pagar el pedido
   sinEnvio = computed(() => !envioDisponible(this.datos().provincia, this.datos().canton));
-  readonly MENSAJE_GALAPAGOS = MENSAJE_GALAPAGOS;
+  readonly MENSAJE_GALAPAGOS = MENSAJE_SIN_ENVIO;
 
   // Tarifa según el cantón y la provincia elegidos en "Envío y facturación"
   tarifaEnvio = computed(() => costoEnvio(this.datos().provincia, this.datos().canton));

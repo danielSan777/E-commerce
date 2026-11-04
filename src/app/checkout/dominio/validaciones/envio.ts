@@ -1,58 +1,46 @@
-import { buscarCanton, buscarProvincia, buscarSector } from '../ubicaciones';
+import { buscarCanton, buscarSector } from '../ubicaciones';
+import tablaZonas from '../datos/zonas-envio.json';
 
 /*
- * Zona y costo de envío según la provincia y el cantón que el comprador eligió (códigos del INEC).
+ * Zona y costo de envío según el cantón que el comprador eligió (códigos del INEC).
+ * La zona de cada cantón está en dominio/datos/zonas-envio.json (tarifas reales de Servientrega).
  *
- *   Zona A: Guayaquil, Durán y Samborondón ........ $3.50
- *   Zona B: provincias de la Amazonía ............. $6.25
- *   Zona C: el resto del país continental ......... $5.00
- *   Galápagos ..................................... no hay envío
+ *   Zona A: Servientrega cobra $2.59 (Guayaquil, Daule, Durán, Samborondón, Salitre) ....... $3.50
+ *   Zona B: Amazonía y destinos que Servientrega cobra igual, $7.02 (+1 día) ............... $6.25
+ *   Zona C: resto del país continental, Servientrega $5.29 o $5.92 ......................... $5.00
+ *   no_disponible: Galápagos, Taisha y Aguarico (se atiende por WhatsApp)
  *
- * Prioridad de asignación: sector > cantón > provincia > Zona C. Los sectores (La Aurora, La Joya, Villa Club
- * y Villa Italia, de Daule) salen en la lista de cantones como "La Aurora - Daule" y son Zona A
- * (dominio/datos/sectores-zona-a.json).
- *
- * (El envío gratis por 2 macetas lo decide EnvioGratisService; aquí solo está la tarifa.)
+ * Prioridad: sector (sectores-zona-a.json) > cantón (zonas-envio.json) > Zona B de respaldo (la más cara).
  */
 
 // ===== EDITABLES =====
-export const ENVIO_LOCAL = 3.5;
-export const ENVIO_AMAZONIA = 6.25;
-export const ENVIO_RESTO = 5;
+export const TARIFAS_ENVIO = { A: 3.5, B: 6.25, C: 5 } as const;
 
-// Códigos del INEC
-const CANTONES_ZONA_A = ['0901', '0907', '0916'];                         // Guayaquil, Durán, Samborondón
-const PROVINCIAS_AMAZONIA = ['14', '15', '16', '19', '21', '22'];        // Morona Santiago, Napo, Pastaza, Zamora Chinchipe, Sucumbíos, Orellana
-const PROVINCIA_GALAPAGOS = '20';
+// La tarifa más baja, para "Envío desde $3,50 según destino" en la ficha de producto.
+export const ENVIO_DESDE = Math.min(...Object.values(TARIFAS_ENVIO));
 
-export const MENSAJE_GALAPAGOS = 'Actualmente no realizamos envíos a Galápagos.';
+export const MENSAJE_SIN_ENVIO = 'Por ahora no enviamos a esta zona desde la web. Escríbenos por WhatsApp y lo coordinamos.';
 
-export type ZonaEnvio = 'local' | 'amazonia' | 'resto' | 'no_disponible';
+export type ZonaEnvio = 'A' | 'B' | 'C' | 'no_disponible';
+
+const ZONA_POR_CANTON = new Map(tablaZonas.cantones.map(c => [c.codigo, c.zona as ZonaEnvio]));
 
 export function zonaEnvio(provincia: string, canton: string): ZonaEnvio {
-    const prov = buscarProvincia(provincia);
-    if (prov?.codigo === PROVINCIA_GALAPAGOS) return 'no_disponible';
-
-    if (buscarSector(provincia, canton)) return 'local';
-
+    if (buscarSector(provincia, canton)) return 'A';
     const cant = buscarCanton(provincia, canton);
-    if (cant && CANTONES_ZONA_A.includes(cant.codigo)) return 'local';
-
-    if (prov && PROVINCIAS_AMAZONIA.includes(prov.codigo)) return 'amazonia';
-
-    return 'resto';
+    return (cant && ZONA_POR_CANTON.get(cant.codigo)) || 'B';
 }
 
 export function envioDisponible(provincia: string, canton: string): boolean {
     return zonaEnvio(provincia, canton) !== 'no_disponible';
 }
 
-// En Galápagos no hay tarifa: devuelve 0 y la pantalla bloquea el pedido con envioDisponible().
+// Zona B suma 1 día a la ventana de entrega.
+export function tieneDiaAdicional(provincia: string, canton: string): boolean {
+    return zonaEnvio(provincia, canton) === 'B';
+}
+
 export function costoEnvio(provincia: string, canton: string): number {
-    switch (zonaEnvio(provincia, canton)) {
-        case 'local': return ENVIO_LOCAL;
-        case 'amazonia': return ENVIO_AMAZONIA;
-        case 'no_disponible': return 0;
-        default: return ENVIO_RESTO;
-    }
+    const zona = zonaEnvio(provincia, canton);
+    return zona === 'no_disponible' ? 0 : TARIFAS_ENVIO[zona];
 }

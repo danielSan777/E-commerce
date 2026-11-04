@@ -17,7 +17,7 @@ export class PromesaService {
             label: 'Recíbelo entre jueves 12 y viernes 13 de noviembre',
             countdown_label: 'Pídelo en las próximas 3 h 42 min',
             promise_token: 'firmado-por-laravel',
-            amazon_note: 'Región Amazónica: considera 1 día adicional.',
+            amazon_note: 'Amazonía y zonas alejadas: considera 1 día adicional.',
         };
     }
 

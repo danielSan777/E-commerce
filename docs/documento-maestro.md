@@ -206,8 +206,9 @@ Todos se editan desde el panel; ninguno va fijo en el código.
 | Precio de referencia de una maceta | $25 (cada producto tiene su precio en el panel) |
 | Envío gratis | Desde 2 macetas, en todas las zonas habilitadas; los complementos no cuentan |
 | Zona A (Gran Guayaquil y localidades configuradas) | $3,50 |
-| Zona B (Amazonía) | $6,25 y +1 día de tránsito |
+| Zona B (Amazonía y destinos que Servientrega cobra igual) | $6,25 y +1 día de tránsito |
 | Zona C (resto continental habilitado) | $5,00 |
+| Origen de las zonas | Cotizador público de Servientrega (4 nov 2026), por cantón del INEC, en `zonas-envio.json` |
 | Galápagos | No disponible |
 | Nombre en placa | Máximo 30 caracteres contando espacios |
 | Frase del marco | Máximo 60 caracteres (validar con una impresión real) |
@@ -1119,16 +1120,16 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Implementación acordada**
 
-- **Orden de resolución:** provincia → cantón → localidad (opcional) → zona. Prioridad de asignación: localidad > cantón > provincia > zona de respaldo (Zona C).
+- **Orden de resolución:** provincia → cantón → localidad (opcional) → zona. Prioridad de asignación: localidad > cantón > zona de respaldo (Zona B, la más cara). *(Cambio del 4 nov: la tabla por cantón sale de las tarifas reales de Servientrega; antes se asignaba por provincia.)*
 
 | Zona | Asignación inicial | Tarifa | Tránsito |
 | --- | --- | --- | --- |
-| A | Cantones Guayaquil, Durán y Samborondón; localidades La Aurora, La Joya y Villa Club (Daule) y Villa Italia (cantón por confirmar) | $3,50 | Base |
-| B (Amazonía) | Sucumbíos, Orellana, Napo, Pastaza, Morona Santiago y Zamora Chinchipe | $6,25 | +1 día (ventana de 3 días) |
-| C | Demás provincias continentales y cantones sin asignación propia | $5,00 (editable) | Base |
-| Galápagos | Provincia de Galápagos | No disponible | — |
+| A | Cantones Guayaquil, Daule, Durán, Samborondón y Salitre; localidades La Aurora, La Joya y Villa Club (Daule) y Villa Italia (cantón por confirmar) | $3,50 | Base |
+| B | Amazonía y los 140 cantones que Servientrega cobra igual ($7,02), según `zonas-envio.json` | $6,25 | +1 día (ventana de 3 días) |
+| C | Cantones que Servientrega cobra $5,29 o $5,92 (71 cantones) | $5,00 (editable) | Base |
+| No disponible | Galápagos, Taisha y Aguarico (se atienden por WhatsApp) | — | — |
 
-- Si el comprador no elige localidad, se usa la asignación de su cantón (por ejemplo, Daule sin localidad → Zona C).
+- Si el comprador no elige localidad, se usa la asignación de su cantón (por ejemplo, Daule → Zona A; Santa Rosa está por confirmar con Servientrega y mientras tanto es Zona B).
 - Galápagos muestra "Actualmente no realizamos envíos a Galápagos." No se calcula tarifa ni promesa y no se puede crear el pedido.
 - La tarifa y la ventana final se recalculan en el checkout cuando se conoce la ubicación.
 - El envío gratis desde 2 macetas es una regla del Paso 7, no una tarifa.
