@@ -21,11 +21,10 @@ describe('Pago', () => {
     expect(component).toBeTruthy();
   });
 
-  it('la entrega empieza como "lo antes posible" y los términos y marketing desmarcados', () => {
+  it('la entrega empieza como "lo antes posible" y los términos desmarcados', () => {
     expect(component.entrega()).toBe('inmediata');
     expect(component.entregaPedido()?.label).toBe('Recíbelo entre jueves 12 y viernes 13 de noviembre');
     expect(component.aceptaTerminos()).toBe(false);
-    expect(component.aceptaMarketing()).toBe(false);
   });
 
   it('programar elige la primera ventana disponible; una no disponible no se puede elegir', () => {

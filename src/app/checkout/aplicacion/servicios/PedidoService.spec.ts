@@ -6,7 +6,6 @@ function nuevo(metodo: 'transferencia' | 'payphone'): NuevoPedido {
         metodo, items: [], datos: { metodoPago: metodo } as DatosCheckout,
         subtotal: 25, envio: 3.5, envioGratis: false, recargo: 0, total: 28.5,
         entrega: { tipo: 'inmediata', window: { start: '2026-11-12', end: '2026-11-13' }, label: 'x', promise_token: 't' },
-        marketing: false,
     };
 }
 

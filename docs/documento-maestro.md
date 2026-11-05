@@ -518,7 +518,7 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 - [ ] Provincias, cantones y localidades desde el JSON del INEC dentro del proyecto (Paso 10). *(Hecho: provincias y cantones del INEC 2026 y sin countriesnow.space. Hecho también: La Aurora, La Joya, Villa Club y Villa Italia salen en la lista de cantones como "La Aurora - Daule" etc., desde `sectores-zona-a.json`, sin selector aparte. Falta: el panel que las edite.)* Eliminar el uso de countriesnow.space en `UbicacionesService`: no trae cantones como Durán y, si falla, nadie puede comprar.
 - [ ] Zona y tarifa por localidad > cantón > provincia (Paso 10), no por nombre de ciudad. Amazonía $6,25. *(Hecho por cantón y provincia con códigos del INEC; Galápagos bloqueado; esos cuatro sectores de Daule son Zona A $3,50.)*
 - [x] Lista de países del número de contacto fija dentro del proyecto (sin restcountries.com), con Ecuador (+593) primero. *(Decisión del 3 nov: solo se envía a Ecuador, así que se quita el selector y el número queda fijo en +593.)*
-- [x] Casilla obligatoria de términos y casilla de marketing, ambas desmarcadas (Paso 12). *(Hecho en `/checkout/pago`; los enlaces a las políticas se agregan cuando existan esas páginas.)*
+- [x] Una sola casilla obligatoria y desmarcada, "Acepto los términos y condiciones de Jardín de Sele", con enlace a `/terminos-y-condiciones` (Paso 12). Decisión de Josué (5 nov): no hay casilla de marketing. *(Hecho en `/checkout/pago`.)*
 - [x] Resumen final con la personalización completa de cada maceta y el aviso "Revisa bien: después de confirmar no se puede editar".
 - [x] Fecha de entrega desde la promesa del mock (Paso 0), no el texto fijo "jueves a viernes"; elección de ventana inmediata o programada en el checkout. *(Hecho en pago y confirmación con `PromesaService`, un mock con la forma exacta del Paso 0. Falta mostrarla en la ficha y la página principal.)*
 - [x] Transferencia: después de confirmar, mostrar la hora límite de 12 horas y el botón "Subir comprobante" (pedido pendiente, Paso 14). El mensaje de WhatsApp es corto: "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." con el total y hasta 3 productos, sin datos personales ni dirección. *(El botón abre WhatsApp con el mensaje corto; la subida del comprobante en la web llega con el Paso 14.)*
@@ -559,7 +559,7 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 - [x] "Cómo funciona" en 3 pasos: elige, personaliza y recíbelo con su plantita. *(Hecho.)*
 - [ ] Testimonios elegidos por Josué (Paso 24).
 - [x] Confianza: pago seguro con tarjeta o transferencia, envíos a todo Ecuador por Servientrega (excepto Galápagos), hecho en Guayaquil. *(Hecho.)*
-- [x] Pie: WhatsApp, "Consultar mi pedido", políticas y redes. *(Hecho: WhatsApp, redes, "Consultar mi pedido" y las cuatro políticas.)*
+- [x] Pie: WhatsApp, "Consultar mi pedido", términos y redes. *(Hecho: WhatsApp, redes, "Consultar mi pedido" y los términos y condiciones.)*
 
 **Pantalla de categorías**
 
@@ -615,7 +615,7 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 - [ ] Ventana: inmediata o la programada.
 - [ ] Método de pago: tarjeta o transferencia. Al elegir tarjeta aparece, antes de pagar, la línea "Recargo por pago con tarjeta (6%)" con su valor.
 - [ ] Resumen final de cada maceta (modelo, nombre, gafas, los 2 accesorios, frase o foto y dedicatoria) con el aviso "Revisa bien: después de confirmar no se puede editar".
-- [ ] Casilla obligatoria y desmarcada "Acepto los términos y condiciones" (con enlace), separada de la casilla de marketing, también desmarcada.
+- [x] Casilla obligatoria y desmarcada "Acepto los términos y condiciones de Jardín de Sele" (con enlace). Sin casilla de marketing.
 - [ ] Pago: espacio para la Cajita de PayPhone (simulada) y opción de transferencia.
 
 **Después de pagar**
@@ -1206,8 +1206,8 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 **Implementación acordada**
 
 - **Identidad del cliente:** correo + número de contacto. Los datos de envío pertenecen al pedido, porque pueden ser de quien recibe el regalo. El checkout no separa comprador y receptor.
-- **Términos:** casilla obligatoria y desmarcada, separada del consentimiento de marketing. Se guarda aceptación, fecha y hora, versión del texto, pedido, IP y user agent. La arquitectura queda lista para cargar los textos legales cuando Josué los entregue.
-- **Consentimiento de marketing:** casilla desmarcada por defecto; se guarda con historial (Paso 23).
+- **Términos:** una sola casilla obligatoria y desmarcada, sin casilla de marketing (decisión de Josué, 5 nov). Se guarda aceptación, fecha y hora, versión del texto, pedido, IP y user agent. La arquitectura queda lista para cargar los textos legales cuando Josué los entregue.
+- **Consentimiento de marketing:** no hay casilla en el checkout (decisión de Josué, 5 nov). Si más adelante se quiere pedir ese permiso, se define aparte (Paso 23).
 - **Sin edición del comprador:** una vez creado el pedido, pendiente o pagado, el comprador no lo edita. Solo Josué corrige desde el panel (Paso 15).
 - **`event_id`:** lo genera Laravel al crear el pedido: `purchase-<uuid del pedido>`. Es el mismo en navegador, Conversions API, TikTok y reintentos.
 - **Facturación SRI:** solo se capturan los datos; la factura la emite Josué manualmente.
@@ -1675,7 +1675,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - [ ] Métricas desde pedidos pagados: número de pedidos, total comprado, ticket promedio, primera y última compra.
 - [ ] Tabla de consentimientos con historial y baja en un clic en cada correo de marketing, cuando exista marketing.
 - [ ] Aviso de cookies simple; los pixeles se cargan según la elección del visitante (Paso 20).
-- [ ] Páginas de políticas con versión y fecha: privacidad, términos y condiciones, envíos, y cambios de productos personalizados. Los textos los entrega Josué. *(Plantilla lista en Angular: `/politicas-privacidad`, `/terminos-y-condiciones`, `/politicas-de-envio` y `/cambios-de-productos-personalizados`, con mock `PoliticaService`; sin texto aprobado muestran un aviso y `noindex`. Falta el texto de Josué y la tabla `policies` en Laravel, por eso sigue sin marcar.)
+- [ ] Página de términos y condiciones con versión y fecha (una sola página; incluye envíos, cambios, cancelaciones, devoluciones y datos del cliente). *(Texto oficial de Josué ya publicado en `/terminos-y-condiciones` con mock; falta la tabla `policies` con versión y fecha en Laravel, por eso sigue sin marcar. Ya no hay páginas separadas de privacidad, envíos ni cambios.)*
 - [ ] Registro de la aceptación de términos por pedido (Paso 12).
 
 **Implementación acordada**
@@ -1691,7 +1691,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Acción de Josué**
 
-- Entregar los textos de privacidad, términos, envíos, cambios, casilla de consentimiento y aviso de cookies, aprobados con un abogado.
+- Términos y condiciones: texto entregado el 5 de noviembre (única página legal). Falta el aviso de cookies, aprobado con un abogado.
 - Definir el plazo de conservación de las fotos de pedidos.
 
 **Terminado cuando.** Las políticas están publicadas con su versión, el aviso de cookies controla los pixeles y cada pedido guarda la versión de términos aceptada.
@@ -1893,7 +1893,7 @@ No se lanza hasta que todo esté marcado.
 **Urgentes (frenan el lanzamiento)**
 
 - [ ] PayPhone: apps de Pruebas y Producción, StoreID y Token de cada una, dominios y URLs de respuesta, solicitud de la Notificación Externa (3–5 días hábiles) y las dos preguntas externas.
-- [ ] Textos legales aprobados con un abogado: privacidad, términos, envíos, cambios de productos personalizados, casilla de consentimiento y aviso de cookies.
+- [ ] Textos legales aprobados con un abogado: términos y condiciones (entregados el 5 de noviembre, una sola página) y aviso de cookies.
 - [ ] Fotos y videos reales: video principal con su esposa, cada producto, cada accesorio y una foto por cada color de gafa y de lente.
 - [ ] Lista de productos con SKU, nombre, categoría, subcategoría, precio, costo, tamaño, "qué incluye" y descripción; accesorios y complementos con sus precios.
 - [ ] GitHub del negocio: crear la cuenta (correo propio y verificación en dos pasos), coordinar la fecha y aceptar la transferencia del repositorio.

@@ -7,7 +7,7 @@ function pedido(limitePago: string | null, comprobante = false): Pedido {
         numero: 'JDS-2049', token: 't', fecha: '2026-11-09T19:50:00-05:00', metodo: 'transferencia',
         pagoConfirmado: false, pagoSimulado: false, limitePago,
         entrega: { tipo: 'inmediata', window: { start: '2026-11-12', end: '2026-11-13' }, label: 'x', promise_token: 't' },
-        marketing: false, comprobante: comprobante ? { nombre: 'pago.jpg', subidoEn: '2026-11-10T11:00:00Z' } : null,
+        comprobante: comprobante ? { nombre: 'pago.jpg', subidoEn: '2026-11-10T11:00:00Z' } : null,
         items: [], datos: {} as Pedido['datos'], subtotal: 47.5, envio: 2.5, envioGratis: false, recargo: 0, total: 50,
     };
 }

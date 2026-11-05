@@ -25,7 +25,6 @@ function pedidoDePrueba(): Pedido {
         pagoSimulado: false,
         limitePago: '2026-11-04T04:00:00.000Z',
         entrega: { tipo: 'inmediata', window: { start: '2026-11-12', end: '2026-11-13' }, label: 'Recíbelo entre jueves 12 y viernes 13 de noviembre', promise_token: 'firmado-por-laravel' },
-        marketing: false,
         items: [item],
         datos: {
             nombre: 'María Pérez', tipoDoc: 'cedula', cedula: '0954091989', celular: '0991234567',

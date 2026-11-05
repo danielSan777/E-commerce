@@ -1,21 +1,21 @@
-@if (politica(); as p) {
 <main class="pagina">
-    <h1>{{ p.title }}</h1>
-    @if (p.version && p.effective_date) {
-    <p class="version">Versión {{ p.version }} · vigente desde {{ p.effective_date + 'T00:00:00' | date:'d \'de\' MMMM \'de\' y' }}</p>
+    <h1>{{ terminos.title }}</h1>
+    @if (terminos.version && terminos.effective_date) {
+    <p class="version">Versión {{ terminos.version }} · vigente desde {{ terminos.effective_date + 'T00:00:00' | date:'d \'de\' MMMM \'de\' y' }}</p>
     }
 
-    @if (p.paragraphs.length) {
-    @for (t of p.paragraphs; track $index) { <p>{{ t }}</p> }
-    } @else {
-    <p class="pendiente"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Estamos terminando de redactar y revisar este texto. Si tienes una duda, escríbenos por
-        <a [href]="whatsapp" target="_blank" rel="noopener">WhatsApp</a> o a {{ correoTienda }}.</p>
+    @for (c of terminos.chapters; track c.numero) {
+    <section [attr.aria-labelledby]="'cap-' + c.numero">
+        <h2 [id]="'cap-' + c.numero">Capítulo {{ c.numero }}. {{ c.titulo }}</h2>
+        @for (i of c.items; track $index) {
+        <p>
+            @if (i.numero) { <b>{{ i.numero }} {{ i.titulo }}.</b> }
+            @for (t of trozos(i.texto); track $index) { @if (t.negrita) { <b>{{ t.texto }}</b> } @else { {{ t.texto }} } }
+        </p>
+        @if (i.lista.length) {
+        <ul>@for (l of i.lista; track $index) { <li>{{ l }}</li> }</ul>
+        }
+        }
+    </section>
     }
-
-    <nav class="otras" aria-label="Otras políticas">
-        @for (o of otras(); track o.slug) { <a [routerLink]="o.url">{{ o.title }}</a> }
-    </nav>
 </main>
-} @else {
-<app-no-encontrada />
-}

@@ -44,10 +44,7 @@ export const routes: Routes = [
                 { path: `${slug}/:subcategoria`, loadComponent: pantallaCategorias, data: { categoria: slug } },
             ]),
             { path: 'consultar-pedido', loadComponent: () => import('./checkout/presentacion/paginas/consultar-pedido/consultar-pedido').then(m => m.ConsultarPedido) },
-            { path: 'politicas-privacidad', data: { politica: 'privacidad' }, loadComponent: () => import('./politicas/presentacion/paginas/politica/politica').then(m => m.Politica) },
-            { path: 'terminos-y-condiciones', data: { politica: 'terminos' }, loadComponent: () => import('./politicas/presentacion/paginas/politica/politica').then(m => m.Politica) },
-            { path: 'politicas-de-envio', data: { politica: 'envios' }, loadComponent: () => import('./politicas/presentacion/paginas/politica/politica').then(m => m.Politica) },
-            { path: 'cambios-de-productos-personalizados', data: { politica: 'cambios' }, loadComponent: () => import('./politicas/presentacion/paginas/politica/politica').then(m => m.Politica) },
+            { path: 'terminos-y-condiciones', loadComponent: () => import('./politicas/presentacion/paginas/politica/politica').then(m => m.Politica) },
             // Campaña de temporada (la URL no lleva año; fuera de temporada sigue respondiendo)
             { path: 'san-valentin', data: { campana: 'san-valentin' }, loadComponent: () => import('./campanas/presentacion/paginas/campana/campana').then(m => m.Campana) },
             { path: 'catalogo/todos-productos', redirectTo: '/categorias', pathMatch: 'full' },

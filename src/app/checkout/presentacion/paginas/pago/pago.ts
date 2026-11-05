@@ -65,7 +65,6 @@ export class Pago {
 
   // ===== Casillas (siempre empiezan desmarcadas) =====
   aceptaTerminos = signal(false);
-  aceptaMarketing = signal(false);
   intentoConfirmar = signal(false);
   errorTerminos = computed(() => this.intentoConfirmar() && !this.aceptaTerminos());
   errorEntrega = computed(() => this.intentoConfirmar() && !this.entregaPedido());
@@ -151,7 +150,6 @@ export class Pago {
       recargo: payphone ? this.recargoPayphone() : 0,
       total: this.totalFinal(),
       entrega,
-      marketing: this.aceptaMarketing(),
     });
 
     // El carrito se vacía cuando ya se llegó a la confirmación (el pedido quedó guardado aparte)

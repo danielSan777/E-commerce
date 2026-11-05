@@ -13,7 +13,7 @@ const item: ItemCarrito = {
 function nuevo(metodo: 'payphone' | 'transferencia'): NuevoPedido {
     return {
         metodo, items: [item], datos: { metodoPago: metodo } as DatosCheckout,
-        subtotal: 25, envio: 3.5, envioGratis: false, recargo: 0, total: 28.5, marketing: false,
+        subtotal: 25, envio: 3.5, envioGratis: false, recargo: 0, total: 28.5,
         entrega: { tipo: 'inmediata', window: { start: '2026-11-12', end: '2026-11-13' }, label: 'x', promise_token: 't' },
     };
 }

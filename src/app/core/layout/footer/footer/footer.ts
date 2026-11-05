@@ -66,10 +66,7 @@ export class Footer {
       titulo: 'Ayuda',
       enlaces: [
         { texto: 'Consultar mi pedido', ruta: '/consultar-pedido' },
-        { texto: 'Política de privacidad', ruta: '/politicas-privacidad' },
         { texto: 'Términos y condiciones', ruta: '/terminos-y-condiciones' },
-        { texto: 'Política de envíos', ruta: '/politicas-de-envio' },
-        { texto: 'Cambios de productos personalizados', ruta: '/cambios-de-productos-personalizados' },
       ]
     },
   ];

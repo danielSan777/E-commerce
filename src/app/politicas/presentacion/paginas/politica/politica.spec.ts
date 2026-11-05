@@ -1,33 +1,38 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
 import { Politica } from './politica';
+import { CAPITULOS_TERMINOS } from '../../../aplicacion/servicios/terminos-contenido';
 
-async function montar(slug: string) {
-    TestBed.configureTestingModule({
-        imports: [Politica],
-        providers: [provideRouter([]), { provide: ActivatedRoute, useValue: { snapshot: { data: { politica: slug } } } }],
-    });
+async function montar() {
+    TestBed.configureTestingModule({ imports: [Politica] });
     const f = TestBed.createComponent(Politica);
     await f.whenStable();
-    return f.nativeElement as HTMLElement;
+    return { html: f.nativeElement as HTMLElement, componente: f.componentInstance };
 }
 
-describe('Politica', () => {
-    it('muestra el título y, sin texto aprobado, un aviso claro (sin inventar texto legal)', async () => {
-        const html = await montar('terminos');
+describe('Términos y condiciones', () => {
+    it('muestra el título y los 10 capítulos del texto oficial', async () => {
+        const { html } = await montar();
 
-        expect(html.querySelector('h1')?.textContent).toContain('Términos y condiciones');
-        expect(html.querySelector('.pendiente')).not.toBeNull();
+        expect(html.querySelector('h1')?.textContent).toBe('Términos y condiciones de Jardín de Sele');
+        expect(CAPITULOS_TERMINOS.length).toBe(10);
+        expect(html.querySelectorAll('h2').length).toBe(10);
+        expect(html.querySelector('h2')?.textContent).toContain('Capítulo 1. Información del vendedor');
+        expect(html.textContent).toContain('RUC 0930247994001');
+        expect(html.textContent).toContain('ayuda@jardindesele.com');
     });
 
-    it('enlaza a las otras tres políticas', async () => {
-        const html = await montar('privacidad');
+    it('dibuja las cláusulas con su número, la negrita y las listas', async () => {
+        const { html } = await montar();
 
-        expect(Array.from(html.querySelectorAll('.otras a')).map(a => a.getAttribute('href')))
-            .toEqual(['/terminos-y-condiciones', '/politicas-de-envio', '/cambios-de-productos-personalizados']);
+        expect(html.textContent).toContain('5.6 Fechas de eventos y demoras.');
+        expect(Array.from(html.querySelectorAll('b')).some(b => b.textContent?.includes('en especial en la posición'))).toBe(true);
+        expect(html.querySelectorAll('li').length).toBe(4);       // 2 canales de atención + 2 reembolsos del 7.1
+        expect(html.textContent).not.toContain('**');
     });
 
-    it('una política desconocida muestra el 404', async () => {
-        expect((await montar('otra')).textContent).toContain('No encontramos esta página');
+    it('sin versión ni fecha de Laravel no muestra la línea de versión', async () => {
+        const { html } = await montar();
+
+        expect(html.querySelector('.version')).toBeNull();
     });
 });
