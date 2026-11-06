@@ -14,6 +14,15 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Server
   },
   {
+    // El panel depende del token del navegador: se dibuja solo en el cliente
+    path: 'admin',
+    renderMode: RenderMode.Client
+  },
+  {
+    path: 'admin/**',
+    renderMode: RenderMode.Client
+  },
+  {
     path: '**',
     renderMode: RenderMode.Server
   }

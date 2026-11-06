@@ -50,7 +50,7 @@ Este documento es la única fuente de verdad para construir y lanzar la web de J
 | Angular CLI | Frontend con SSR | Angular 22, la del repositorio |
 | PHP y Composer | Backend | PHP 8.4.27 o superior, u 8.5.12 o superior (parche de PHP2Shell) |
 | Laravel | Backend, API, cola y scheduler | Versión con soporte vigente |
-| Filament (recomendado) | Panel de administración sobre Laravel | Criterio del desarrollador; evita construir el panel desde cero |
+| Panel en Angular (decisión del desarrollador) | Panel de administración hecho en Angular que consume `/api/v1/admin/*` de Laravel | Laravel es solo API; sin pantallas en el backend. Sustituye a Filament |
 | MariaDB local | Base de datos en desarrollo | La misma versión mayor que Hostinger |
 | Claude Code | Programar con IA paso a paso | Flujo abajo |
 | hPanel de Hostinger y Cloudflare | Despliegue, correo, DNS y caché | Accesos del Paso 2 |
@@ -802,7 +802,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 * [ ] Un único servicio `BusinessCalendar` para todo cálculo de fechas de negocio, con la zona `America/Guayaquil` por nombre.
 * [ ] Solo la carpeta `public` de Laravel es accesible desde la web.
 * [ ] Laravel confía en el proxy de Cloudflare y lee la IP real de `CF-Connecting-IP`.
-* [ ] Autenticación del panel: un solo rol Administrador, doble factor con opción de recordar el dispositivo, y botón para cerrar todas las sesiones.
+* [ ] Autenticación del panel: un solo rol Administrador, doble factor con opción de recordar el dispositivo, y botón para cerrar todas las sesiones. *(Hecho: login con token Bearer, `/admin/login`, guarda de rutas, "Cerrar sesión" y "Cerrar todas las sesiones". Falta el doble factor.)*
 * [ ] CSRF en todo el panel y en las acciones del cliente; todas las acciones por POST, nunca por GET.
 * [ ] Límites de intentos: login, subida de comprobantes, "Consultar mi pedido" y subida de fotos.
 * [ ] Cola con driver `database`, tablas `jobs` y `failed_jobs`.
@@ -849,7 +849,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 
 **Tareas**
 
-- [ ] **Panel de administración** (Filament recomendado), cómodo en el celular para las acciones frecuentes.
+- [ ] **Panel de administración** en Angular (consume la API de Laravel; Filament descartado), cómodo en el celular para las acciones frecuentes.
 - [ ] **Categorías:** nombre, slug, descripción, orden, imagen o video de encabezado, imagen social, SEO, activa o inactiva. Admiten categorías nuevas sin cambiar código. Iniciales: Profesiones y Hobbies, Amor, Amistad y Familia.
 - [ ] **Subcategorías:** nombre, slug, orden y categoría. Iniciales de Profesiones y Hobbies: Salud, Administrativos, Fuerza Pública, Cocina y Hobbies.
 - [ ] **Productos:** tipo (`personalizable` o `complemento`), SKU, slug, nombre, categoría, subcategoría, precio base, costo interno, tamaño, "qué incluye", descripción, disponibilidad, activo o inactivo, relacionados, sinónimos de búsqueda, SEO e imagen social.
