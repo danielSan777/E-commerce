@@ -1,0 +1,7 @@
+:host { display: block; background: var(--jds-crema); color: var(--jds-texto); }
+.pagina { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.6; }
+h1 { font-family: Georgia, 'Times New Roman', serif; color: var(--jds-vino); font-size: 1.7rem; margin: 0 0 6px; }
+h2 { font-size: 1.1rem; color: var(--jds-vino); margin: 26px 0 8px; }
+.version { color: #6b6b6b; font-size: .85rem; margin: 0 0 16px; }
+p { margin: 0 0 10px; }
+ul { margin: 0 0 10px; padding-left: 22px; }

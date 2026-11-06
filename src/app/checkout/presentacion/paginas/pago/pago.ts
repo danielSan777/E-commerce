@@ -1,3 +1,4 @@
+import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
 import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -64,7 +65,6 @@ export class Pago {
 
   // ===== Casillas (siempre empiezan desmarcadas) =====
   aceptaTerminos = signal(false);
-  aceptaMarketing = signal(false);
   intentoConfirmar = signal(false);
   errorTerminos = computed(() => this.intentoConfirmar() && !this.aceptaTerminos());
   errorEntrega = computed(() => this.intentoConfirmar() && !this.entregaPedido());
@@ -96,6 +96,8 @@ export class Pago {
 
   porcentajeTexto = Math.round(this.RECARGO_PAYPHONE * 100);
 
+  private analytics = inject(AnalyticsService);
+
   constructor() {
     // Solo en el navegador: así el servidor y el cliente pintan lo mismo en el primer render
     afterNextRender(() => {
@@ -120,11 +122,13 @@ export class Pago {
 
   elegirVentana(v: VentanaDisponible): void {
     if (!v.available) return;
+    this.analytics.track('select_delivery_window', { start: v.start, end: v.end });
     this.checkout.actualizar({ entrega: 'programada', ventanaInicio: v.start, ventanaFin: v.end });
   }
 
   elegir(metodo: Metodo): void {
     this.checkout.actualizar({ metodoPago: metodo });
+    this.analytics.track('add_payment_info', { payment_type: metodo === 'payphone' ? 'card' : 'transfer' });
   }
 
   confirmar(): void {
@@ -146,7 +150,6 @@ export class Pago {
       recargo: payphone ? this.recargoPayphone() : 0,
       total: this.totalFinal(),
       entrega,
-      marketing: this.aceptaMarketing(),
     });
 
     // El carrito se vacía cuando ya se llegó a la confirmación (el pedido quedó guardado aparte)

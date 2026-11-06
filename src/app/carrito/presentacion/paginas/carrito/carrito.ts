@@ -1,3 +1,4 @@
+import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
 import {
   AfterViewInit, Component, ElementRef, HostListener, OnDestroy, PLATFORM_ID, computed, effect, inject, signal, untracked
 } from '@angular/core';
@@ -141,7 +142,10 @@ export class Carrito implements AfterViewInit, OnDestroy {
   editandoUid = signal<string | null>(null);   // uid del item que se está editando (null = maceta nueva)
   private itemsAlAbrir: unknown = null;
 
+  private analytics = inject(AnalyticsService);
+
   constructor() {
+    this.analytics.track('view_cart');
     // Bloquea el scroll de la página mientras hay una hoja abierta
     effect(() => {
       const abierta = this.hoja() !== null || this.personalizando() !== null;
@@ -159,6 +163,7 @@ export class Carrito implements AfterViewInit, OnDestroy {
 
   abrirHoja(tipo: 'macetas' | 'complementos'): void {
     this.hoja.set(tipo);
+    this.analytics.track('open_more_products', { list: tipo });
   }
 
   cerrarHoja(): void {

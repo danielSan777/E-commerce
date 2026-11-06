@@ -19,7 +19,6 @@ export interface Pedido {
     pagoSimulado: boolean;    // true = PayPhone sin cobro real (solo pruebas); nunca debe llegar así a producción
     limitePago: string | null; // ISO; solo transferencia: creación + 12 h
     entrega: EntregaPedido;
-    marketing: boolean;       // aceptó recibir novedades (casilla desmarcada por defecto)
     comprobante: { nombre: string; subidoEn: string } | null;   // transferencia: comprobante subido (hoy simulado)
     items: ItemCarrito[];
     datos: DatosCheckout;
@@ -40,7 +39,6 @@ export interface NuevoPedido {
     recargo: number;
     total: number;
     entrega: EntregaPedido;
-    marketing: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

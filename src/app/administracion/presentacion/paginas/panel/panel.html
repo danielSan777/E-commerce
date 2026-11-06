@@ -1,0 +1,15 @@
+<header class="barra">
+  <strong>Panel de Jardín de Sele</strong>
+  <span class="usuario">{{ usuario()?.name }} · {{ usuario()?.email }}</span>
+</header>
+<main class="contenido">
+  <h1>Hola, {{ usuario()?.name }}</h1>
+  <p>Aquí irán categorías, productos, campañas y pedidos.</p>
+
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+
+  <div class="acciones">
+    <button type="button" (click)="cerrarSesion()" [disabled]="ocupado()">Cerrar sesión</button>
+    <button type="button" class="secundario" (click)="cerrarTodas()" [disabled]="ocupado()">Cerrar todas las sesiones</button>
+  </div>
+</main>

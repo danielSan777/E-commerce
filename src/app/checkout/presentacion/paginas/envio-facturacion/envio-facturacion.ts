@@ -1,3 +1,4 @@
+import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
 import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -92,7 +93,10 @@ export class EnvioFacturacion {
     return e;
   });
 
+  private analytics = inject(AnalyticsService);
+
   constructor() {
+    this.analytics.track('begin_checkout');
     // Solo en el navegador: así el servidor y el cliente pintan lo mismo en el primer render
     afterNextRender(() => {
       this.checkout.restaurar();
@@ -245,6 +249,7 @@ export class EnvioFacturacion {
       return;
     }
 
+    this.analytics.track('add_shipping_info');
     this.router.navigateByUrl(this.RUTA_PAGO);
   }
 

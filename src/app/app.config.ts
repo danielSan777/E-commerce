@@ -1,11 +1,14 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withInMemoryScrolling } from '@angular/router';
 import { routes } from './app.routes';
 import { provideClientHydration } from '@angular/platform-browser';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { adminAuthInterceptor } from './administracion/aplicacion/adminAuth';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes), provideClientHydration()
+    provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' })), provideClientHydration(),
+    provideHttpClient(withFetch(), withInterceptors([adminAuthInterceptor]))
   ]
 };

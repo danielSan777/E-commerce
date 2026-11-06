@@ -1,0 +1,8 @@
+.barra { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding: .9rem 1.25rem; background: #2f6b34; color: #fff; }
+.usuario { opacity: .9; font-size: .9rem; }
+.contenido { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem; }
+.acciones { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+button { padding: .7rem 1rem; border: 0; border-radius: 8px; background: #2f6b34; color: #fff; font-weight: 600; cursor: pointer; }
+button.secundario { background: #fff; color: #8a1c13; border: 1px solid #8a1c13; }
+button:disabled { opacity: .6; cursor: default; }
+.error { background: #fdecea; color: #8a1c13; border-radius: 8px; padding: .6rem .8rem; }

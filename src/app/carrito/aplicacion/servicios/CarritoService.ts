@@ -1,4 +1,5 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { AnalyticsService } from '../../../core/seguimiento/AnalyticsService';
 import { AccesorioColocado } from '../../../personalizador/dominio/Accesorios';
 
 // Producto que se está personalizando (lo manda la pantalla del producto al personalizador)
@@ -50,6 +51,7 @@ export class CarritoService {
     private readonly CLAVE = 'carrito-jardin-de-sele';
 
     private archivos = new Map<string, ArchivosItem>();
+    private analytics = inject(AnalyticsService);
 
     readonly items = signal<ItemCarrito[]>(this.leer());
 
@@ -61,6 +63,8 @@ export class CarritoService {
 
     // Agrega el item; si ya existe uno con el mismo uid (se estaba editando) lo reemplaza en su lugar
     guardar(item: ItemCarrito, archivos?: ArchivosItem): void {
+        const esNuevo = !this.items().some(i => i.uid === item.uid);
+        if (esNuevo) this.analytics.track('add_to_cart', { items: [{ item_id: String(item.producto.id), item_name: item.producto.nombre }] });
         this.items.update(lista =>
             lista.some(i => i.uid === item.uid)
                 ? lista.map(i => (i.uid === item.uid ? item : i))

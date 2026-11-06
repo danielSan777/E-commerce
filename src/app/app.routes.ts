@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './administracion/aplicacion/adminAuth';
 import { MainLayout } from './core/layout/main-layout/main-layout/main-layout';
 
 // Categorías con URL propia (cada una abre la pantalla de categorías en ese estado)
@@ -14,6 +15,17 @@ const CATALOGO_A_CATEGORIA: Record<string, string> = {
 };
 
 export const routes: Routes = [
+
+    // Panel del administrador (Angular consume /api/v1/admin/*). Pantalla completa, sin el navbar de la tienda.
+    {
+        path: 'admin/login',
+        loadComponent: () => import('./administracion/presentacion/paginas/login/login').then(m => m.AdminLogin)
+    },
+    {
+        path: 'admin',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/panel/panel').then(m => m.AdminPanel)
+    },
 
     // Checkout: pantalla completa con su propio encabezado (va antes del MainLayout para que no lleve el navbar de la tienda)
     {
@@ -43,6 +55,8 @@ export const routes: Routes = [
                 { path: slug, loadComponent: pantallaCategorias, data: { categoria: slug } },
                 { path: `${slug}/:subcategoria`, loadComponent: pantallaCategorias, data: { categoria: slug } },
             ]),
+            { path: 'consultar-pedido', loadComponent: () => import('./checkout/presentacion/paginas/consultar-pedido/consultar-pedido').then(m => m.ConsultarPedido) },
+            { path: 'terminos-y-condiciones', loadComponent: () => import('./politicas/presentacion/paginas/politica/politica').then(m => m.Politica) },
             // Campaña de temporada (la URL no lleva año; fuera de temporada sigue respondiendo)
             { path: 'san-valentin', data: { campana: 'san-valentin' }, loadComponent: () => import('./campanas/presentacion/paginas/campana/campana').then(m => m.Campana) },
             { path: 'catalogo/todos-productos', redirectTo: '/categorias', pathMatch: 'full' },

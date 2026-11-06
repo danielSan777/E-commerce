@@ -15,9 +15,6 @@
                 <button type="button" class="btn-ampliar" (click)="verImagen.set(true)" aria-label="Ver imagen completa">
                     <i class="bi bi-arrows-fullscreen"></i>
                 </button>
-                @if (porcentajeDescuento() > 0) {
-                <span class="etq-descuento">-{{ porcentajeDescuento() }}%</span>
-                }
             </div>
             @if (imagenes().length > 1) {
             <div class="miniaturas" role="list">
@@ -37,9 +34,6 @@
 
             <div class="precios">
                 <span class="precio">{{ formato(p.precio) }} {{ codigoMoneda }}</span>
-                @if (p.precioAnterior) {
-                <span class="precio-anterior">{{ formato(p.precioAnterior) }}</span>
-                }
             </div>
 
             @if (!p.disponible) {
@@ -94,8 +88,10 @@
             }
 
             <!-- Descripción -->
+            @if (p.descripcion) {
             <h2 class="sub-titulo">Descripción</h2>
             <p class="descripcion">{{ p.descripcion }}</p>
+            }
         </div>
     </div>
 

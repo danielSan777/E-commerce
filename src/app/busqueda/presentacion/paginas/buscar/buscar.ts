@@ -1,3 +1,4 @@
+import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
 import { Component, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, NgTemplateOutlet } from '@angular/common';
 import { Meta } from '@angular/platform-browser';
@@ -32,8 +33,15 @@ export class Buscar {
     inject(Meta).updateTag({ name: 'robots', content: 'noindex, follow' });
   }
 
+  private analytics = inject(AnalyticsService);
+  private temporizador: ReturnType<typeof setTimeout> | null = null;
+
   escribir(valor: string): void {
     this.termino.set(valor);
+    // Un solo evento cuando la persona deja de escribir (término y cantidad de resultados)
+    if (this.temporizador) clearTimeout(this.temporizador);
+    if (valor.trim()) this.temporizador = setTimeout(() =>
+      this.analytics.track('search', { search_term: valor.trim(), results_count: this.resultados().length }), 800);
     // La dirección guarda lo buscado (se puede compartir y el botón "atrás" no se llena de pasos)
     void this.router.navigate([], { queryParams: { q: valor.trim() || null }, replaceUrl: true });
   }

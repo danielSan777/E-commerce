@@ -15,6 +15,7 @@ import { textoVentana } from '../../../../checkout/dominio/validaciones/fechas';
 import { ENVIO_DESDE } from '../../../../checkout/dominio/validaciones/envio';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { CalendarioVentanas } from '../../../../shared/componentes/calendario-ventanas/calendario-ventanas';
+import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
 import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
 import { ProductoCarrito } from '../../../../carrito/aplicacion/servicios/CarritoService';
 
@@ -31,6 +32,7 @@ export class DetalleProducto implements OnDestroy {
   private location = inject(Location);
   private promesas = inject(PromesaService);
   private checkout = inject(CheckoutService);
+  private analytics = inject(AnalyticsService);
   private envioGratis = inject(EnvioGratisService);
   private esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
   // ====== EDITABLE ======
@@ -86,6 +88,7 @@ export class DetalleProducto implements OnDestroy {
 
   elegirVentana(v: VentanaDisponible): void {
     if (!v.available) return;
+    this.analytics.track('select_delivery_window', { start: v.start, end: v.end });
     // Tocar otra vez la ventana elegida vuelve a "lo antes posible"
     if (this.ventanaElegida() === v) this.checkout.actualizar({ entrega: 'inmediata', ventanaInicio: '', ventanaFin: '' });
     else this.checkout.actualizar({ entrega: 'programada', ventanaInicio: v.start, ventanaFin: v.end });
@@ -113,11 +116,6 @@ export class DetalleProducto implements OnDestroy {
   enlaceTwitter = computed(() => `https://twitter.com/intent/tweet?url=${encodeURIComponent(this.enlace())}&text=${encodeURIComponent(this.producto()?.nombre ?? '')}`);
   enlacePinterest = computed(() => `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(this.enlace())}&description=${encodeURIComponent(this.producto()?.nombre ?? '')}`);
 
-  porcentajeDescuento = computed(() => {
-    const p = this.producto();
-    return p?.precioAnterior ? Math.round((1 - p.precio / p.precioAnterior) * 100) : 0;
-  });
-
 
   // El personalizador es la ruta hija /producto/{slug}/personalizar: la dirección dice si está abierto
   private urlActual = toSignal(
@@ -135,6 +133,8 @@ export class DetalleProducto implements OnDestroy {
 
     afterNextRender(() => {
       this.checkout.restaurar();                                   // la ventana elegida en una visita anterior
+      const p = this.producto();
+      if (p) this.analytics.track('view_item', { items: [{ item_id: p.slug, item_name: p.nombre }] });
       this.document.body.classList.add('con-barra-ficha');         // la barra fija de la ficha ocupa el lugar de la barra del celular
     });
   }
@@ -181,6 +181,7 @@ export class DetalleProducto implements OnDestroy {
   // El cambio de aspecto lo hace el CSS; aquí solo se bloquea el scroll de la página de atrás.
   abrirPersonalizador(): void {
     this.abiertoDesdeLaFicha = true;
+    this.analytics.track('start_customization', { item_id: this.producto()?.slug });
     void this.router.navigate(['/producto', this.nombre(), 'personalizar']);
   }
 

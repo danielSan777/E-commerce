@@ -59,6 +59,14 @@ export class Footer {
       titulo: 'Sobre Nosotros',
       enlaces: [
         { texto: 'Inicio', ruta: '/' },
+        { texto: 'Todas las categorías', ruta: '/categorias' },
+      ]
+    },
+    {
+      titulo: 'Ayuda',
+      enlaces: [
+        { texto: 'Consultar mi pedido', ruta: '/consultar-pedido' },
+        { texto: 'Términos y condiciones', ruta: '/terminos-y-condiciones' },
       ]
     },
   ];

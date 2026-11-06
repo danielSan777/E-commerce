@@ -4,8 +4,8 @@
 export const TIENDA = {
     nombre: 'Jardín de Sele',
 
-    /** Correo de contacto. Hoy es un correo de ejemplo: reemplázalo por el real. */
-    correo: 'info@Jardín de Sel.com',
+    /** Correo de contacto (el mismo de los términos y condiciones). */
+    correo: 'ayuda@jardindesele.com',
 
     /** Teléfono como se ve en pantalla. */
     telefono: '+593 999283765',
