@@ -1,3 +1,4 @@
+import { API_URL } from '../../../../core/configuracion/api';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -7,7 +8,7 @@ import { AdminPanel } from './panel';
 describe('AdminPanel', () => {
   async function montar() {
     localStorage.setItem('jds_admin_sesion', JSON.stringify({ token: 't', expires_at: new Date(Date.now() + 3600_000).toISOString(), user: { name: 'Sele', email: 's@s.com' } }));
-    TestBed.configureTestingModule({ imports: [AdminPanel], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ imports: [AdminPanel], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
     const fixture = TestBed.createComponent(AdminPanel);
     await fixture.whenStable();
     return { fixture, ctrl: TestBed.inject(HttpTestingController), ir: vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true) };

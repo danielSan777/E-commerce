@@ -1,3 +1,4 @@
+import { API_URL } from '../../../../core/configuracion/api';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -23,7 +24,7 @@ describe('AdminLogin', () => {
     TestBed.configureTestingModule({
       imports: [AdminLogin],
       providers: [
-        provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
+        provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => returnUrl } } } },
       ],
     });

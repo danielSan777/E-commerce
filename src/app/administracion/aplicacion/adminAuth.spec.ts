@@ -1,3 +1,4 @@
+import { API_URL } from '../../core/configuracion/api';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -15,7 +16,7 @@ describe('Autenticación del panel', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), provideHttpClient(withInterceptors([adminAuthInterceptor])), provideHttpClientTesting()],
+      providers: [provideRouter([]), provideHttpClient(withInterceptors([adminAuthInterceptor])), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }],
     });
     http = TestBed.inject(HttpClient);
     ctrl = TestBed.inject(HttpTestingController);
@@ -55,7 +56,7 @@ describe('Autenticación del panel', () => {
     TestBed.inject(SesionAdminService).olvidar();
     entrar();
     TestBed.resetTestingModule();
-    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
     expect(TestBed.runInInjectionContext(() => adminGuard({} as never, estado))).toBe(true);
   });
 });

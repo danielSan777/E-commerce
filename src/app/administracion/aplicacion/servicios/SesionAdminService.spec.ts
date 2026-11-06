@@ -1,3 +1,4 @@
+import { API_URL } from '../../../core/configuracion/api';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -9,7 +10,7 @@ describe('SesionAdminService', () => {
   let http: HttpTestingController;
 
   function crear(): SesionAdminService {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
     http = TestBed.inject(HttpTestingController);
     return TestBed.inject(SesionAdminService);
   }
