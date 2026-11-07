@@ -14,3 +14,5 @@
 .acciones button { padding: .5rem .8rem; border-radius: 8px; border: 1px solid #c9d2c9; background: #fff; cursor: pointer; }
 .acciones .peligro { border-color: #8a1c13; color: #8a1c13; }
 .vacio { color: #5b665b; }
+h3 { margin: 1rem 0 .25rem; font-size: 1.05rem; }
+.etiqueta { display: grid; gap: .25rem; font-size: .85rem; color: #3d493d; }

@@ -6,6 +6,7 @@
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
 
   <div class="subir">
+    <h3>Subir una imagen nueva</h3>
     <label for="rol-imagen">Tipo de imagen</label>
     <select id="rol-imagen" [(ngModel)]="rol" name="rol">
       @for (r of roles; track r.valor) { <option [value]="r.valor">{{ r.texto }}</option> }
@@ -23,14 +24,20 @@
   @if (cargando()) {
     <p>Cargando imágenes…</p>
   } @else {
+    <h3>Imágenes subidas</h3>
+    <p class="ayuda">Si cambias el tipo o la descripción de una imagen, pulsa "Guardar" debajo de ella.</p>
     <ul class="imagenes">
       @for (i of imagenes(); track i.id) {
         <li>
           <img [src]="miniatura(i)" [alt]="i.alt || 'Imagen del catálogo'" loading="lazy" />
+          <label class="etiqueta">Tipo
           <select #rolImg [value]="i.role" aria-label="Tipo de imagen">
             @for (r of roles; track r.valor) { <option [value]="r.valor" [selected]="r.valor === i.role">{{ r.texto }}</option> }
           </select>
-          <input #altImg [value]="i.alt ?? ''" maxlength="200" placeholder="Descripción" aria-label="Descripción de la imagen" />
+          </label>
+          <label class="etiqueta">Descripción
+          <input #altImg [value]="i.alt ?? ''" maxlength="200" placeholder="Describe lo que se ve" aria-label="Descripción de la imagen" />
+          </label>
           <div class="acciones">
             <button type="button" (click)="guardarDatos(i, altImg.value, rolImg.value)">Guardar</button>
             @if (porEliminar() === i.id) {
