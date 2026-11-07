@@ -10,7 +10,7 @@ const CLAVE = 'jds_sesion';
 /** Convierte cualquier fallo HTTP en un ErrorApi con mensaje en español para mostrar. */
 export function aErrorApi(e: unknown): ErrorApi {
   if (e instanceof HttpErrorResponse && e.error && typeof e.error === 'object' && 'code' in e.error) {
-    return { status: e.status, code: e.error.code, message: e.error.message, errors: e.error.errors };
+    return { status: e.status, code: e.error.code, message: e.error.message, errors: e.error.errors, products: e.error.products, products_count: e.error.products_count };
   }
   if (e instanceof HttpErrorResponse && e.status === 429) {
     return { status: 429, code: 'too_many_requests', message: 'Demasiados intentos. Espera un minuto e inténtalo de nuevo.' };

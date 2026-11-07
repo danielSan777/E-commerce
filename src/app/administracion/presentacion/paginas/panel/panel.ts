@@ -1,12 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { SesionService } from '../../../../cuenta/aplicacion/servicios/SesionService';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 
 // Pantalla inicial del panel. Las secciones (categorías, productos…) se agregan aquí a medida que existan sus APIs.
 @Component({
   selector: 'app-admin-panel',
+  imports: [RouterLink],
   templateUrl: './panel.html',
   styleUrl: './panel.css',
 })

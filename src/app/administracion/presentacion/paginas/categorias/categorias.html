@@ -1,0 +1,81 @@
+<header class="barra">
+  <strong>Categorías</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+  @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
+
+  @if (bloqueada(); as b) {
+    <div class="error" role="alert">
+      <p>{{ b.message }}</p>
+      <ul>
+        @for (p of b.products; track p.sku) { <li>{{ p.name }} <small>({{ p.sku }})</small></li> }
+      </ul>
+    </div>
+  }
+
+  @if (error() && editando() === null) { <p class="error" role="alert">{{ error() }}</p> }
+
+  @if (editando() === null) {
+    <button type="button" class="primario" (click)="nueva()">Nueva categoría</button>
+  } @else {
+    <form class="formulario" (submit)="guardar($event)" novalidate>
+      <h2>{{ editando() === '' ? 'Nueva categoría' : 'Editar categoría' }}</h2>
+
+      <label for="name">Nombre</label>
+      <input id="name" name="name" [(ngModel)]="form.name" required />
+
+      <label for="slug">Identificador de la dirección (slug)</label>
+      <input id="slug" name="slug" [(ngModel)]="form.slug" [disabled]="editando() !== ''" placeholder="Se genera del nombre si lo dejas vacío" />
+
+      <label for="headline">Título destacado</label>
+      <input id="headline" name="headline" [(ngModel)]="form.headline" />
+
+      <label for="sort_order">Orden</label>
+      <input id="sort_order" name="sort_order" type="number" min="0" [(ngModel)]="form.sort_order" />
+
+      <label class="casilla"><input type="checkbox" name="is_active" [(ngModel)]="form.is_active" /> Activa (visible en la tienda)</label>
+
+      @if (error()) {
+        <div class="error" role="alert">
+          <p>{{ error() }}</p>
+          @for (d of detalle(); track d) { <p class="detalle">{{ d }}</p> }
+        </div>
+      }
+
+      <div class="acciones">
+        <button type="submit" class="primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+        <button type="button" (click)="cancelar()">Cancelar</button>
+      </div>
+    </form>
+  }
+
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+    <ul class="lista">
+      @for (c of categorias(); track c.slug) {
+        <li>
+          <div class="datos">
+            <strong>{{ c.name }}</strong>
+            <small>/{{ c.slug }} · {{ c.products_count }} producto(s) · {{ c.subcategories_count }} subcategoría(s)</small>
+            @if (!c.is_active) { <span class="inactiva">Inactiva</span> }
+          </div>
+          <div class="acciones">
+            <button type="button" (click)="editar(c)">Editar</button>
+            @if (porEliminar() === c.slug) {
+              <span>¿Eliminar?</span>
+              <button type="button" class="peligro" (click)="eliminar(c.slug)">Sí, eliminar</button>
+              <button type="button" (click)="porEliminar.set(null)">No</button>
+            } @else {
+              <button type="button" class="peligro" (click)="pedirEliminar(c.slug)">Eliminar</button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li>Todavía no hay categorías.</li>
+      }
+    </ul>
+  }
+</main>

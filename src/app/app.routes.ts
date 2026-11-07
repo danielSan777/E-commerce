@@ -20,6 +20,11 @@ export const routes: Routes = [
     // El ingreso es uno solo (/ingresar): la API dice el rol y de ahí se decide a dónde ir.
     { path: 'admin/login', redirectTo: '/ingresar', pathMatch: 'full' },
     {
+        path: 'admin/categorias',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/categorias/categorias').then(m => m.AdminCategorias)
+    },
+    {
         path: 'admin',
         canActivate: [adminGuard],
         loadComponent: () => import('./administracion/presentacion/paginas/panel/panel').then(m => m.AdminPanel)

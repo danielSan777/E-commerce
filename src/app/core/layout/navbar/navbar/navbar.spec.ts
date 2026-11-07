@@ -7,6 +7,7 @@ describe('Navbar', () => {
   let fixture: ComponentFixture<Navbar>;
 
   beforeEach(async () => {
+    localStorage.clear(); // sin sesión guardada por otras pruebas
     await TestBed.configureTestingModule({
       imports: [Navbar],
       providers: [provideRouter([])],

@@ -33,4 +33,7 @@ export interface ErrorApi {
   code: string;
   message: string;
   errors?: Record<string, string[]>;
+  /** Solo en `category_has_products` (409): los productos que impiden borrar la categoría. */
+  products?: { sku: string; slug: string; name: string }[];
+  products_count?: number;
 }
