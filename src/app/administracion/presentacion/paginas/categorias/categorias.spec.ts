@@ -103,7 +103,7 @@ describe('AdminCategorias', () => {
     expect(c.aviso()).toBe('Categoría creada.');
   });
 
-  it('al crear muestra la dirección generada del nombre (guion bajo por espacio) y no es editable', async () => {
+  it('al crear muestra la dirección generada del nombre (guion por espacio) y no es editable', async () => {
     const fixture = await montar([]);
     const c = fixture.componentInstance;
     c.nueva();
@@ -111,8 +111,8 @@ describe('AdminCategorias', () => {
     fixture.detectChanges();
 
     const campo = fixture.nativeElement.querySelector('#slug') as HTMLInputElement;
-    expect(c.slugMostrado()).toBe('dia_de_la_madre');
-    expect(campo.value).toBe('/dia_de_la_madre');
+    expect(c.slugMostrado()).toBe('dia-de-la-madre');
+    expect(campo.value).toBe('/dia-de-la-madre');
     expect(campo.readOnly).toBe(true);
   });
 

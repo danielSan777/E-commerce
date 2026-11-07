@@ -29,7 +29,7 @@
       <label for="slug">Dirección en la web (se genera sola)</label>
       <input id="slug" type="text" [value]="slugMostrado() ? '/' + slugMostrado() : ''" readonly tabindex="-1"
         placeholder="Se genera del nombre" aria-describedby="ayuda-slug" />
-      <small id="ayuda-slug" class="ayuda">Se arma con el nombre: sin tildes, en minúsculas y con "_" en lugar de espacios. No se puede cambiar después.</small>
+      <small id="ayuda-slug" class="ayuda">Se arma con el nombre: sin tildes, en minúsculas y con "-" en lugar de espacios. No se puede cambiar después.</small>
 
       <label for="headline">Frase bajo el nombre (opcional)</label>
       <input id="headline" name="headline" [(ngModel)]="form.headline" aria-describedby="ayuda-headline" />
