@@ -1,0 +1,49 @@
+<section class="galeria">
+  <h2>Imágenes</h2>
+  <p class="ayuda">JPG, PNG o WebP, de hasta 8 MB y mínimo 300 × 300 píxeles. Laravel las convierte a WebP y crea las versiones para la web.</p>
+
+  @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+
+  <div class="subir">
+    <label for="rol-imagen">Tipo de imagen</label>
+    <select id="rol-imagen" [(ngModel)]="rol" name="rol">
+      @for (r of roles; track r.valor) { <option [value]="r.valor">{{ r.texto }}</option> }
+    </select>
+
+    <label for="alt-imagen">Descripción (opcional, ayuda a Google y a personas con lector de pantalla)</label>
+    <input id="alt-imagen" name="alt" maxlength="200" [(ngModel)]="alt" />
+
+    <label class="boton primario" [class.desactivado]="subiendo()">
+      {{ subiendo() ? 'Subiendo…' : 'Elegir y subir imagen' }}
+      <input type="file" accept="image/jpeg,image/png,image/webp" hidden [disabled]="subiendo()" (change)="elegir($event)" />
+    </label>
+  </div>
+
+  @if (cargando()) {
+    <p>Cargando imágenes…</p>
+  } @else {
+    <ul class="imagenes">
+      @for (i of imagenes(); track i.id) {
+        <li>
+          <img [src]="miniatura(i)" [alt]="i.alt || 'Imagen del catálogo'" loading="lazy" />
+          <select #rolImg [value]="i.role" aria-label="Tipo de imagen">
+            @for (r of roles; track r.valor) { <option [value]="r.valor" [selected]="r.valor === i.role">{{ r.texto }}</option> }
+          </select>
+          <input #altImg [value]="i.alt ?? ''" maxlength="200" placeholder="Descripción" aria-label="Descripción de la imagen" />
+          <div class="acciones">
+            <button type="button" (click)="guardarDatos(i, altImg.value, rolImg.value)">Guardar</button>
+            @if (porEliminar() === i.id) {
+              <button type="button" class="peligro" (click)="eliminar(i.id)">Sí, eliminar</button>
+              <button type="button" (click)="porEliminar.set(null)">No</button>
+            } @else {
+              <button type="button" class="peligro" (click)="porEliminar.set(i.id)">Eliminar</button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li class="vacio">Todavía no hay imágenes.</li>
+      }
+    </ul>
+  }
+</section>

@@ -77,5 +77,11 @@
         <a class="boton" routerLink="/admin/productos">Cancelar</a>
       </div>
     </form>
+
+    @if (esNuevo) {
+      <p class="ayuda">Guarda el producto y luego podrás subir sus imágenes.</p>
+    } @else {
+      <app-galeria-imagenes dueno="products" [clave]="sku!" />
+    }
   }
 </main>

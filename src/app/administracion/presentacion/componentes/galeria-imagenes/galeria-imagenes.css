@@ -1,0 +1,16 @@
+.galeria { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #dfe6df; }
+.ayuda { color: #5b665b; font-size: .85rem; }
+.aviso { background: #e8f5e9; color: #1b5e20; padding: .6rem .8rem; border-radius: 8px; }
+.error { background: #fdecea; color: #8a1c13; padding: .6rem .8rem; border-radius: 8px; }
+.subir { display: grid; gap: .5rem; margin: 1rem 0; max-width: 32rem; }
+.subir select, .subir input, .imagenes select, .imagenes input { padding: .55rem .7rem; border: 1px solid #c9d2c9; border-radius: 8px; font-size: 1rem; font-family: inherit; background: #fff; }
+.boton { display: inline-block; text-align: center; padding: .7rem 1rem; border-radius: 8px; border: 1px solid #2e7d32; cursor: pointer; }
+.primario { background: #2e7d32; color: #fff; }
+.desactivado { opacity: .6; pointer-events: none; }
+.imagenes { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; }
+.imagenes li { display: grid; gap: .5rem; padding: .75rem; border: 1px solid #dfe6df; border-radius: 12px; background: #fff; align-content: start; }
+.imagenes img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #f1f4f1; }
+.acciones { display: flex; gap: .5rem; flex-wrap: wrap; }
+.acciones button { padding: .5rem .8rem; border-radius: 8px; border: 1px solid #c9d2c9; background: #fff; cursor: pointer; }
+.acciones .peligro { border-color: #8a1c13; color: #8a1c13; }
+.vacio { color: #5b665b; }

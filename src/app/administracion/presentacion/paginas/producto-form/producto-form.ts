@@ -9,6 +9,7 @@ import { centavosADolares, dolaresACentavos } from '../../../aplicacion/dinero';
 import { generarSlug } from '../../../aplicacion/slug';
 import { CategoriaAdmin, SubcategoriaAdmin } from '../../../dominio/interfaces/categoria-admin';
 import { DatosProducto, ProductoAdmin } from '../../../dominio/interfaces/producto-admin';
+import { GaleriaImagenes } from '../../componentes/galeria-imagenes/galeria-imagenes';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 
 interface Formulario {
@@ -25,7 +26,7 @@ const VACIO: Formulario = {
 // Crear o editar un producto. La persona escribe dólares; se envían centavos enteros. Laravel valida y calcula todo.
 @Component({
   selector: 'app-admin-producto-form',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, GaleriaImagenes],
   templateUrl: './producto-form.html',
   styleUrl: './producto-form.css',
 })
