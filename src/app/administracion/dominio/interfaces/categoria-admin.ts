@@ -20,3 +20,19 @@ export interface DatosCategoria {
   sort_order: number;
   is_active: boolean;
 }
+
+// Contrato: GET/POST/PUT/DELETE /api/v1/admin/categories/{categoria}/subcategories
+export interface SubcategoriaAdmin {
+  slug: string;
+  name: string;
+  category_slug: string;
+  sort_order: number;
+  is_active: boolean;
+  products_count: number;
+}
+
+export interface DatosSubcategoria {
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+}

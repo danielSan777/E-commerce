@@ -67,6 +67,7 @@
             @if (!c.is_active) { <span class="inactiva">Inactiva</span> }
           </div>
           <div class="acciones">
+            <a class="boton" [routerLink]="['/admin/categorias', c.slug, 'subcategorias']">Subcategorías ({{ c.subcategories_count }})</a>
             <button type="button" (click)="editar(c)">Editar</button>
             @if (porEliminar() === c.slug) {
               <span>¿Eliminar?</span>

@@ -15,6 +15,7 @@ input[readonly] { background: #f1f4f1; color: #3d493d; }
 .ayuda { color: #5b665b; font-size: .8rem; }
 input[type=text], input:not([type]), input[type=number] { padding: .6rem .7rem; border: 1px solid #c9d2c9; border-radius: 8px; font-size: 1rem; }
 button { padding: .55rem .9rem; border: 1px solid #b8c4b8; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; }
+a.boton { padding: .55rem .9rem; border: 1px solid #b8c4b8; border-radius: 8px; background: #fff; font-weight: 600; text-decoration: none; color: inherit; }
 button.primario { background: #2f6b34; color: #fff; border-color: #2f6b34; align-self: flex-start; }
 button.peligro { color: #8a1c13; border-color: #8a1c13; }
 button:disabled { opacity: .6; cursor: default; }

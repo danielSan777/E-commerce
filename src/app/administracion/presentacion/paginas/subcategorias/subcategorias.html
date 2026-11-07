@@ -1,0 +1,80 @@
+<header class="barra">
+  <strong>Subcategorías de /{{ categoria }}</strong>
+  <a routerLink="/admin/categorias">← Volver a categorías</a>
+</header>
+
+<main class="contenido">
+  @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
+
+  @if (bloqueada(); as b) {
+    <div class="error" role="alert">
+      <p>{{ b.message }}</p>
+      <ul>
+        @for (p of b.products; track p.sku) { <li>{{ p.name }} <small>({{ p.sku }})</small></li> }
+      </ul>
+    </div>
+  }
+
+  @if (error() && editando() === null) { <p class="error" role="alert">{{ error() }}</p> }
+
+  @if (editando() === null) {
+    <button type="button" class="primario" (click)="nueva()">Nueva subcategoría</button>
+  } @else {
+    <form class="formulario" (submit)="guardar($event)" novalidate>
+      <h2>{{ editando() === '' ? 'Nueva subcategoría' : 'Editar subcategoría' }}</h2>
+
+      <label for="name">Nombre</label>
+      <input id="name" name="name" [(ngModel)]="form.name" required />
+
+      <label for="slug">Dirección en la web (se genera sola)</label>
+      <input id="slug" type="text" [value]="slugMostrado() ? '/' + categoria + '/' + slugMostrado() : ''" readonly tabindex="-1" placeholder="Se genera del nombre" />
+      <small class="ayuda">Se arma con el nombre: sin tildes, en minúsculas y con "-" en lugar de espacios. No se puede cambiar después.</small>
+
+      <label for="sort_order">Posición en las pestañas</label>
+      <input id="sort_order" name="sort_order" type="number" min="0" [(ngModel)]="form.sort_order" />
+      <small class="ayuda">1 sale primero, 2 después, y así.</small>
+
+      <label class="casilla"><input type="checkbox" name="is_active" [(ngModel)]="form.is_active" /> Activa (visible en la tienda)</label>
+
+      @if (error()) {
+        <div class="error" role="alert">
+          <p>{{ error() }}</p>
+          @for (d of detalle(); track d) { <p class="detalle">{{ d }}</p> }
+        </div>
+      }
+
+      <div class="acciones">
+        <button type="submit" class="primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+        <button type="button" (click)="cancelar()">Cancelar</button>
+      </div>
+    </form>
+  }
+
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+    <ul class="lista">
+      @for (s of lista(); track s.slug) {
+        <li>
+          <div class="datos">
+            <strong>{{ s.name }}</strong>
+            <small>/{{ categoria }}/{{ s.slug }} · {{ s.products_count }} producto(s)</small>
+            @if (!s.is_active) { <span class="inactiva">Inactiva</span> }
+          </div>
+          <div class="acciones">
+            <button type="button" (click)="editar(s)">Editar</button>
+            @if (porEliminar() === s.slug) {
+              <span>¿Eliminar?</span>
+              <button type="button" class="peligro" (click)="eliminar(s.slug)">Sí, eliminar</button>
+              <button type="button" (click)="porEliminar.set(null)">No</button>
+            } @else {
+              <button type="button" class="peligro" (click)="pedirEliminar(s.slug)">Eliminar</button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li>Esta categoría todavía no tiene subcategorías.</li>
+      }
+    </ul>
+  }
+</main>

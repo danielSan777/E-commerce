@@ -849,7 +849,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 
 **Tareas**
 
-- [ ] **Panel de administración** en Angular (consume la API de Laravel; Filament descartado), cómodo en el celular para las acciones frecuentes. *(En curso: hecho el ingreso y las categorías —listar, crear, editar y eliminar con aviso de productos—; faltan subcategorías, productos, accesorios, campañas e imágenes.)*
+- [ ] **Panel de administración** en Angular (consume la API de Laravel; Filament descartado), cómodo en el celular para las acciones frecuentes. *(En curso: hecho el ingreso, las categorías y las subcategorías —listar, crear, editar y eliminar con aviso de productos—; faltan productos, accesorios, campañas e imágenes, y los campos de Google en categorías.)*
 - [ ] **Categorías:** nombre, slug, descripción, orden, imagen o video de encabezado, imagen social, SEO, activa o inactiva. Admiten categorías nuevas sin cambiar código. Iniciales: Profesiones y Hobbies, Amor, Amistad y Familia.
 - [ ] **Subcategorías:** nombre, slug, orden y categoría. Iniciales de Profesiones y Hobbies: Salud, Administrativos, Fuerza Pública, Cocina y Hobbies.
 - [ ] **Productos:** tipo (`personalizable` o `complemento`), SKU, slug, nombre, categoría, subcategoría, precio base, costo interno, tamaño, "qué incluye", descripción, disponibilidad, activo o inactivo, relacionados, sinónimos de búsqueda, SEO e imagen social.
