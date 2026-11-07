@@ -79,11 +79,20 @@ export class SesionService {
     try {
       const r = await firstValueFrom(this.http.post<RespuestaSesion>(`${this.api}/auth/${ruta}`, cuerpo));
       // El vencimiento se calcula con el reloj de este navegador (no depende de que coincida con el del servidor).
-      const vence = typeof r.expires_in === 'number' ? new Date(Date.now() + r.expires_in * 1000).toISOString() : r.expires_at;
-      this.guardar({ token: r.token, expires_at: vence, user: r.user });
+      this.guardar({ token: r.token, expires_at: this.vencimiento(r), user: r.user });
     } catch (e) {
       throw aErrorApi(e);
     }
+  }
+
+  /**
+   * Vencimiento calculado con el reloj de este navegador. Si el servidor no manda `expires_in` y su fecha ya pasó
+   * (reloj desfasado o configuración vieja), se asume 1 hora: Laravel sigue siendo quien rechaza un token vencido (401).
+   */
+  private vencimiento(r: RespuestaSesion): string {
+    if (typeof r.expires_in === 'number' && r.expires_in > 0) return new Date(Date.now() + r.expires_in * 1000).toISOString();
+    const delServidor = Date.parse(r.expires_at);
+    return delServidor > Date.now() ? r.expires_at : new Date(Date.now() + 3600_000).toISOString();
   }
 
   private async avisar(ruta: 'logout' | 'logout-all'): Promise<void> {

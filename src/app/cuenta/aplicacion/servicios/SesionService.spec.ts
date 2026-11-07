@@ -43,6 +43,17 @@ describe('SesionService', () => {
     expect(s.estaAutenticado()).toBe(true);
   });
 
+  it('si el servidor manda un vencimiento ya pasado y no manda expires_in, la sesión no nace vencida', async () => {
+    const s = crear();
+    const p = s.iniciarSesion('sele@jardindesele.com', 'clave');
+    const { expires_in, ...viejo } = { ...RESPUESTA, expires_in: 0 };
+    http.expectOne('/api/v1/auth/login').flush({ ...viejo, expires_at: '2020-01-01T00:00:00+00:00' });
+    await p;
+
+    expect(s.estaAutenticado()).toBe(true);
+    expect(s.token()).toBe('abc123');
+  });
+
   it('crear cuenta: llama a /auth/register, guarda la sesión del cliente', async () => {
     const s = crear();
     const p = s.crearCuenta({ name: 'Ana', email: 'ana@correo.com', password: 'clave-segura-1', password_confirmation: 'clave-segura-1' });
