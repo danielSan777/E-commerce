@@ -1,6 +1,6 @@
 <section class="galeria">
   <h2>Imágenes</h2>
-  <p class="ayuda">Solo una imagen puede ser la principal: si marcas otra, la anterior pasa a "Otro ángulo". JPG, PNG o WebP, de hasta 8 MB y mínimo 300 × 300 píxeles. Laravel las convierte a WebP y crea las versiones para la web.</p>
+  <p class="ayuda">Solo una imagen puede ser la principal. Si ya hay una, el tipo "Principal" queda bloqueado: para cambiarla, cambia primero el tipo de la actual. JPG, PNG o WebP, de hasta 8 MB y mínimo 300 × 300 píxeles. Laravel las convierte a WebP y crea las versiones para la web.</p>
 
   @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
@@ -9,7 +9,7 @@
     <h3>Subir una imagen nueva</h3>
     <label for="rol-imagen">Tipo de imagen</label>
     <select id="rol-imagen" [(ngModel)]="rol" name="rol">
-      @for (r of roles; track r.valor) { <option [value]="r.valor">{{ r.texto }}</option> }
+      @for (r of roles; track r.valor) { <option [value]="r.valor" [disabled]="r.valor === 'front' && principalId() !== null">{{ r.texto }}{{ r.valor === 'front' && principalId() !== null ? ' (ya hay una)' : '' }}</option> }
     </select>
 
     <label for="alt-imagen">Descripción de la imagen (obligatoria)</label>
@@ -33,7 +33,7 @@
           <img [src]="miniatura(i)" [alt]="i.alt || 'Imagen del catálogo'" loading="lazy" />
           <label class="etiqueta">Tipo
           <select #rolImg [value]="i.role" aria-label="Tipo de imagen">
-            @for (r of roles; track r.valor) { <option [value]="r.valor" [selected]="r.valor === i.role">{{ r.texto }}</option> }
+            @for (r of roles; track r.valor) { <option [value]="r.valor" [selected]="r.valor === i.role" [disabled]="r.valor === 'front' && principalId() !== null && principalId() !== i.id">{{ r.texto }}{{ r.valor === 'front' && principalId() !== null && principalId() !== i.id ? ' (ya hay una)' : '' }}</option> }
           </select>
           </label>
           <label class="etiqueta">Descripción

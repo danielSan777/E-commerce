@@ -112,15 +112,56 @@ describe('GaleriaImagenes', () => {
     expect(c.imagenes()[0].alt).toBe('Homero');
   });
 
-  it('al subir una principal vuelve a leer la lista porque la anterior cambia de tipo', async () => {
+  it('si ya hay una principal, bloquea "Principal" para la imagen nueva y para las demás', async () => {
+    const fixture = await montar([img(1), img(2, { role: 'detail' })]);
+    const html = fixture.nativeElement as HTMLElement;
+    const opcionFront = (select: Element) => Array.from(select.querySelectorAll('option')).find(o => o.value === 'front')!;
+
+    expect(fixture.componentInstance.principalId()).toBe(1);
+    // select de "subir imagen nueva": bloqueado, y el tipo elegido deja de ser "Principal"
+    expect(opcionFront(html.querySelector('#rol-imagen')!).disabled).toBe(true);
+    expect(fixture.componentInstance.rol).toBe('angle');
+    // select de cada imagen: la principal conserva su opción; la otra la tiene bloqueada
+    const selects = html.querySelectorAll('.imagenes select');
+    expect(opcionFront(selects[0]).disabled).toBe(false);
+    expect(opcionFront(selects[1]).disabled).toBe(true);
+  });
+
+  it('sin principal, "Principal" está disponible y se vuelve a bloquear al subirla', async () => {
+    const fixture = await montar([]);
+    const c = fixture.componentInstance;
+    const html = fixture.nativeElement as HTMLElement;
+    expect(c.principalId()).toBeNull();
+    expect(c.rol).toBe('front');
+    expect((Array.from(html.querySelectorAll('#rol-imagen option')).find(o => (o as HTMLOptionElement).value === 'front') as HTMLOptionElement).disabled).toBe(false);
+
+    c.alt = 'Doctor';
+    const p = c.elegir(evento(new File(['x'], 'a.png', { type: 'image/png' })));
+    ctrl.expectOne(BASE).flush(img(3), { status: 201, statusText: 'Created' });
+    await p;
+    expect(c.principalId()).toBe(3);
+    expect(c.rol).toBe('angle');
+  });
+
+  it('al eliminar la principal, el tipo queda libre', async () => {
     const fixture = await montar([img(1)]);
     const c = fixture.componentInstance;
-    c.alt = 'Nueva principal';
-    const p = c.elegir(evento(new File(['x'], 'a.png', { type: 'image/png' })));
-    ctrl.expectOne(BASE).flush(img(2), { status: 201, statusText: 'Created' });
-    await esperar();
-    ctrl.expectOne(BASE).flush({ data: [img(1, { role: 'angle' }), img(2)] });
+    const p = c.eliminar(1);
+    ctrl.expectOne('/api/v1/admin/media/1').flush(null, { status: 204, statusText: 'No Content' });
     await p;
-    expect(c.imagenes().map(i => i.role)).toEqual(['angle', 'front']);
+    expect(c.principalId()).toBeNull();
+    expect(c.rol).toBe('front');
+  });
+
+  it('muestra el mensaje de Laravel si rechaza marcar otra principal', async () => {
+    const fixture = await montar([img(1), img(2, { role: 'detail' })]);
+    const c = fixture.componentInstance;
+    const p = c.guardarDatos(c.imagenes()[1], 'Detalle', 'front');
+    ctrl.expectOne('/api/v1/admin/media/2').flush(
+      { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { role: ['Ya hay una imagen principal. Cambia primero su tipo (por ejemplo a "Otro ángulo") para marcar otra.'] } },
+      { status: 422, statusText: 'Unprocessable' },
+    );
+    await p;
+    expect(c.error()).toContain('Ya hay una imagen principal');
   });
 });
