@@ -63,6 +63,7 @@ export class GaleriaImagenes implements OnInit {
     this.error.set('');
     this.aviso.set('');
 
+    if (!this.alt.trim()) return this.error.set('Escribe la descripción de la imagen antes de subirla.');
     if (!TIPOS_PERMITIDOS.includes(archivo.type)) return this.error.set('Elige una imagen JPG, PNG o WebP.');
     if (archivo.size > MAX_BYTES) return this.error.set('La imagen debe pesar menos de 8 MB.');
 
@@ -83,8 +84,9 @@ export class GaleriaImagenes implements OnInit {
   async guardarDatos(imagen: ImagenAdmin, alt: string, rol: string): Promise<void> {
     this.error.set('');
     this.aviso.set('');
+    if (!alt.trim()) return this.error.set('La descripción de la imagen no puede quedar vacía.');
     try {
-      const guardada = await this.api.editar(imagen.id, { alt: alt.trim() || null, role: rol });
+      const guardada = await this.api.editar(imagen.id, { alt: alt.trim(), role: rol });
       this.imagenes.update(l => l.map(i => (i.id === guardada.id ? guardada : i)));
       this.aviso.set('Cambios guardados.');
     } catch (e) {

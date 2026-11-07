@@ -33,14 +33,6 @@ describe('ImagenesAdminService', () => {
     expect((await p).id).toBe(5);
   });
 
-  it('no envía la descripción si está vacía', async () => {
-    const p = servicio.subir('products', 'PRO-1', new File(['x'], 'a.png', { type: 'image/png' }), 'front', '  ');
-    const req = ctrl.expectOne('/api/v1/admin/products/PRO-1/media');
-    expect((req.request.body as FormData).has('alt')).toBe(false);
-    req.flush({ id: 1 }, { status: 201, statusText: 'Created' });
-    await p;
-  });
-
   it('muestra el mensaje de Laravel cuando el archivo no sirve', async () => {
     const p = servicio.subir('products', 'PRO-1', new File(['x'], 'a.png', { type: 'image/png' }), 'front', '');
     ctrl.expectOne('/api/v1/admin/products/PRO-1/media').flush(

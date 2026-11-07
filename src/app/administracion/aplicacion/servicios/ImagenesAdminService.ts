@@ -23,11 +23,11 @@ export class ImagenesAdminService {
     const datos = new FormData();
     datos.append('image', archivo);
     datos.append('role', rol);
-    if (alt.trim()) datos.append('alt', alt.trim());
+    datos.append('alt', alt.trim());
     return this.pedir(() => firstValueFrom(this.http.post<ImagenAdmin>(this.url(dueno, clave), datos)));
   }
 
-  editar(id: number, datos: { alt?: string | null; role?: string }): Promise<ImagenAdmin> {
+  editar(id: number, datos: { alt?: string; role?: string }): Promise<ImagenAdmin> {
     return this.pedir(() => firstValueFrom(this.http.put<ImagenAdmin>(`${this.api}/admin/media/${id}`, datos)));
   }
 

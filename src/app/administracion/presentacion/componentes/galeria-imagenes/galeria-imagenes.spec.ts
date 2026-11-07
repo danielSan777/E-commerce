@@ -30,8 +30,26 @@ describe('GaleriaImagenes', () => {
     expect(fixture.nativeElement.querySelector('.imagenes img').getAttribute('src')).toBe('/media/a1-600.webp');
   });
 
+  it('no sube la imagen si falta la descripción', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.alt = '   ';
+    await c.elegir(evento(new File(['x'], 'a.png', { type: 'image/png' })));
+    expect(c.error()).toBe('Escribe la descripción de la imagen antes de subirla.');
+    ctrl.verify();
+  });
+
+  it('no guarda una descripción vacía al editar', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    await c.guardarDatos(c.imagenes()[0], ' ', 'front');
+    expect(c.error()).toBe('La descripción de la imagen no puede quedar vacía.');
+    ctrl.verify();
+  });
+
   it('no llama a la API si el archivo no es JPG, PNG o WebP', async () => {
     const fixture = await montar();
+    fixture.componentInstance.alt = 'x';
     await fixture.componentInstance.elegir(evento(new File(['x'], 'a.gif', { type: 'image/gif' })));
     expect(fixture.componentInstance.error()).toBe('Elige una imagen JPG, PNG o WebP.');
     ctrl.verify();
@@ -39,6 +57,7 @@ describe('GaleriaImagenes', () => {
 
   it('no llama a la API si pesa más de 8 MB', async () => {
     const fixture = await montar();
+    fixture.componentInstance.alt = 'x';
     const grande = new File([new Uint8Array(8 * 1024 * 1024 + 1)], 'a.png', { type: 'image/png' });
     await fixture.componentInstance.elegir(evento(grande));
     expect(fixture.componentInstance.error()).toBe('La imagen debe pesar menos de 8 MB.');
@@ -49,6 +68,7 @@ describe('GaleriaImagenes', () => {
     const fixture = await montar([]);
     const c = fixture.componentInstance;
     c.rol = 'detail';
+    c.alt = 'Doctor con lentes';
     const p = c.elegir(evento(new File(['x'], 'a.png', { type: 'image/png' })));
     const req = ctrl.expectOne(BASE);
     expect((req.request.body as FormData).get('role')).toBe('detail');
@@ -61,6 +81,7 @@ describe('GaleriaImagenes', () => {
   it('muestra el mensaje de Laravel si rechaza la imagen', async () => {
     const fixture = await montar([]);
     const c = fixture.componentInstance;
+    c.alt = 'Doctor';
     const p = c.elegir(evento(new File(['x'], 'a.png', { type: 'image/png' })));
     ctrl.expectOne(BASE).flush(
       { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { image: ['La imagen es muy pequeña. Debe medir al menos 300 × 300 píxeles.'] } },
