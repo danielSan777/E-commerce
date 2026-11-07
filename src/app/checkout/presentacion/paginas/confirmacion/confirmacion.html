@@ -167,6 +167,17 @@
                     aria-hidden="true"></i>
             </button>
         </div>
+
+        @if (fotos().length) {
+        <div class="fotos-pedido">
+            <p><strong>¿Quieres enviar también la foto de tu pedido?</strong> Descárgala y adjúntala en el chat, junto al comprobante.</p>
+            @for (f of fotos(); track f.item.uid) {
+            <a class="btn btn-borde descargar" [href]="f.item.vista" [attr.download]="f.nombre">
+                <i class="bi bi-download" aria-hidden="true"></i> Descargar foto: {{ f.item.producto.nombre }}
+            </a>
+            }
+        </div>
+        }
     </section>
 
     <a class="btn btn-primario" [href]="enlaceWhatsapp()" target="_blank" rel="noopener">
