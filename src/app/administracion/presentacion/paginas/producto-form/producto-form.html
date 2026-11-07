@@ -1,0 +1,81 @@
+<header class="barra">
+  <strong>{{ esNuevo ? 'Nuevo producto' : 'Editar producto' }}</strong>
+  <a routerLink="/admin/productos">← Volver a productos</a>
+</header>
+
+<main class="contenido">
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+    <form class="formulario" (submit)="guardar($event)" novalidate>
+      <label for="name">Nombre</label>
+      <input id="name" name="name" [(ngModel)]="form.name" required [attr.aria-invalid]="errores()['name'] ? true : null" />
+      @if (errores()['name']) { <small class="campo-error">{{ errores()['name'] }}</small> }
+
+      <label for="slug">Dirección en la web (se genera sola)</label>
+      <input id="slug" type="text" [value]="slugMostrado() ? '/producto/' + slugMostrado() : ''" readonly tabindex="-1" placeholder="Se genera del nombre" />
+      <small class="ayuda">Sin tildes, en minúsculas y con "-" en lugar de espacios. No se puede cambiar después.</small>
+
+      <label for="sku">Código (SKU)</label>
+      <input id="sku" name="sku" [(ngModel)]="form.sku" [readonly]="!esNuevo" [placeholder]="esNuevo ? 'Si lo dejas vacío se genera uno (JDS-XXXXXX)' : ''" />
+      <small class="ayuda">Identifica al producto en todos los sistemas. No se puede cambiar ni reutilizar.</small>
+
+      <label for="type">Tipo</label>
+      <select id="type" name="type" [(ngModel)]="form.type">
+        <option value="personalizable">Personalizable</option>
+        <option value="complemento">Complemento</option>
+      </select>
+
+      <label for="category">Categoría</label>
+      <select id="category" name="category" [(ngModel)]="form.category" (ngModelChange)="cambiarCategoria()" [attr.aria-invalid]="errores()['category'] ? true : null">
+        <option value="">Elige una categoría</option>
+        @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
+      </select>
+      @if (errores()['category']) { <small class="campo-error">{{ errores()['category'] }}</small> }
+
+      @if (subcategorias().length) {
+        <label for="subcategory">Subcategoría (opcional)</label>
+        <select id="subcategory" name="subcategory" [(ngModel)]="form.subcategory">
+          <option value="">Sin subcategoría</option>
+          @for (s of subcategorias(); track s.slug) { <option [value]="s.slug">{{ s.name }}</option> }
+        </select>
+      }
+
+      <label for="precio">Precio de venta (USD)</label>
+      <input id="precio" name="precio" inputmode="decimal" placeholder="21.50" [(ngModel)]="form.precio" [attr.aria-invalid]="errores()['precio'] ? true : null" />
+      @if (errores()['precio']) { <small class="campo-error">{{ errores()['precio'] }}</small> }
+
+      <label for="costo">Costo interno (USD, opcional)</label>
+      <input id="costo" name="costo" inputmode="decimal" placeholder="9.00" [(ngModel)]="form.costo" [attr.aria-invalid]="errores()['costo'] ? true : null" />
+      <small class="ayuda">Solo lo ves tú. Nunca se muestra en la tienda.</small>
+      @if (errores()['costo']) { <small class="campo-error">{{ errores()['costo'] }}</small> }
+
+      <label for="size_text">Tamaño (opcional)</label>
+      <input id="size_text" name="size_text" [(ngModel)]="form.size_text" />
+
+      <label for="material_text">Material (opcional)</label>
+      <input id="material_text" name="material_text" [(ngModel)]="form.material_text" />
+
+      <label for="incluye">Incluye (uno por línea, opcional)</label>
+      <textarea id="incluye" name="incluye" rows="4" [(ngModel)]="form.incluye"></textarea>
+
+      <label for="description_html">Descripción (opcional)</label>
+      <textarea id="description_html" name="description_html" rows="5" [(ngModel)]="form.description_html"></textarea>
+
+      <label class="casilla"><input type="checkbox" name="is_available" [(ngModel)]="form.is_available" /> Disponible para comprar</label>
+      <label class="casilla"><input type="checkbox" name="is_active" [(ngModel)]="form.is_active" /> Activo (visible en la tienda)</label>
+
+      @if (error()) {
+        <div class="error" role="alert">
+          <p>{{ error() }}</p>
+          @for (d of detalle(); track d) { <p class="detalle">{{ d }}</p> }
+        </div>
+      }
+
+      <div class="acciones">
+        <button type="submit" class="primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+        <a class="boton" routerLink="/admin/productos">Cancelar</a>
+      </div>
+    </form>
+  }
+</main>

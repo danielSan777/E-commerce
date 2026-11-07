@@ -20,6 +20,21 @@ export const routes: Routes = [
     // El ingreso es uno solo (/ingresar): la API dice el rol y de ahí se decide a dónde ir.
     { path: 'admin/login', redirectTo: '/ingresar', pathMatch: 'full' },
     {
+        path: 'admin/productos/nuevo',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/producto-form/producto-form').then(m => m.AdminProductoForm)
+    },
+    {
+        path: 'admin/productos/:sku',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/producto-form/producto-form').then(m => m.AdminProductoForm)
+    },
+    {
+        path: 'admin/productos',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/productos/productos').then(m => m.AdminProductos)
+    },
+    {
         path: 'admin/categorias/:slug/subcategorias',
         canActivate: [adminGuard],
         loadComponent: () => import('./administracion/presentacion/paginas/subcategorias/subcategorias').then(m => m.AdminSubcategorias)

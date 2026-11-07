@@ -1,0 +1,49 @@
+<header class="barra">
+  <strong>Productos</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+  @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+
+  <a class="boton primario" routerLink="/admin/productos/nuevo">Nuevo producto</a>
+
+  <form class="filtros" (submit)="buscar($event)">
+    <input name="texto" type="search" placeholder="Buscar por nombre o código (SKU)" [(ngModel)]="texto" />
+    <select name="categoria" [(ngModel)]="categoria" (ngModelChange)="cargar()" aria-label="Filtrar por categoría">
+      <option value="">Todas las categorías</option>
+      @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
+    </select>
+    <button type="submit">Buscar</button>
+  </form>
+
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+    <ul class="lista">
+      @for (p of productos(); track p.sku) {
+        <li>
+          <div class="datos">
+            <strong>{{ p.name }}</strong>
+            <small>{{ p.sku }} · {{ p.category_name }}@if (p.subcategory_slug) { / {{ p.subcategory_slug }} } · ${{ dolares(p.base_price_cents) }}</small>
+            @if (!p.is_active) { <span class="inactiva">Inactivo</span> }
+            @else if (!p.is_available) { <span class="inactiva">Agotado</span> }
+          </div>
+          <div class="acciones">
+            <a class="boton" [routerLink]="['/admin/productos', p.sku]">Editar</a>
+            @if (porEliminar() === p.sku) {
+              <span>¿Eliminar?</span>
+              <button type="button" class="peligro" (click)="eliminar(p.sku)">Sí, eliminar</button>
+              <button type="button" (click)="porEliminar.set(null)">No</button>
+            } @else {
+              <button type="button" class="peligro" (click)="pedirEliminar(p.sku)">Eliminar</button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li>No hay productos con ese filtro.</li>
+      }
+    </ul>
+  }
+</main>

@@ -5,7 +5,8 @@
 <main class="contenido">
   <h1>Hola, {{ usuario()?.name }}</h1>
   <p>Desde aquí administras la tienda. Pronto: productos, campañas y pedidos.</p>
-  <nav class="secciones"><a routerLink="/admin/categorias">Categorías</a></nav>
+  <nav class="secciones"><a routerLink="/admin/categorias">Categorías</a>
+    <a routerLink="/admin/productos">Productos</a></nav>
 
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
 
