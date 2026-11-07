@@ -41,6 +41,9 @@ export class GaleriaImagenes implements OnInit {
   rol = 'front';
   alt = '';
 
+  /** Sin descripción no se puede subir: el botón queda bloqueado y se explica por qué. */
+  falta = () => !this.alt.trim();
+
   /** Imagen que hoy es la principal; mientras exista, el tipo "Principal" queda bloqueado para las demás. */
   principalId = computed(() => this.imagenes().find(i => i.role === 'front')?.id ?? null);
 

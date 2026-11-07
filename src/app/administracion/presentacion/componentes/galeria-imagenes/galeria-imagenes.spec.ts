@@ -164,4 +164,33 @@ describe('GaleriaImagenes', () => {
     await p;
     expect(c.error()).toContain('Ya hay una imagen principal');
   });
+
+  it('el botón de subir está bloqueado hasta escribir la descripción y explica por qué', async () => {
+    const fixture = await montar([]);
+    const html = fixture.nativeElement as HTMLElement;
+    const archivo = () => html.querySelector<HTMLInputElement>('input[type=file]')!;
+    const aviso = () => html.querySelector('.subir .campo-error')?.textContent ?? '';
+
+    expect(archivo().disabled).toBe(true);
+    expect(html.querySelector('label.boton')!.classList).toContain('desactivado');
+    expect(aviso()).toContain('Escribe una descripción antes de subir una imagen.');
+
+    const campo = html.querySelector<HTMLInputElement>('#alt-imagen')!;
+    campo.value = 'Doctor con lentes';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(archivo().disabled).toBe(false);
+    expect(html.querySelector('label.boton')!.classList).not.toContain('desactivado');
+    expect(aviso()).toBe('');
+
+    campo.value = '   ';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(archivo().disabled).toBe(true);
+  });
 });
