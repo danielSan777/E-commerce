@@ -1,20 +1,30 @@
-// Contrato de la API de administración (Laravel): POST /api/v1/admin/login
-export interface UsuarioAdmin {
+// Contrato de la API de cuentas (Laravel): POST /api/v1/auth/login y /auth/register
+export type Rol = 'customer' | 'admin';
+
+export interface Usuario {
   name: string;
   email: string;
+  role: Rol;
 }
 
-export interface RespuestaLogin {
+export interface RespuestaSesion {
   token: string;
   token_type: 'Bearer';
   expires_at: string; // ISO 8601
-  user: UsuarioAdmin;
+  user: Usuario;
 }
 
-export interface SesionAdmin {
+export interface Sesion {
   token: string;
   expires_at: string;
-  user: UsuarioAdmin;
+  user: Usuario;
+}
+
+export interface DatosRegistro {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
 }
 
 /** Error de la API ya normalizado: `code` estable (decide la lógica) y `message` en español (se muestra tal cual). */

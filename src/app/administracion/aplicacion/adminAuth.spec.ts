@@ -3,10 +3,10 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { adminAuthInterceptor, adminGuard } from './adminAuth';
-import { SesionAdminService } from './servicios/SesionAdminService';
+import { sesionInterceptor, adminGuard, sesionGuard } from './adminAuth';
+import { SesionService } from '../../cuenta/aplicacion/servicios/SesionService';
 
-const SESION = { token: 'tok', expires_at: new Date(Date.now() + 3600_000).toISOString(), user: { name: 'Sele', email: 's@s.com' } };
+const SESION = { token: 'tok', expires_at: new Date(Date.now() + 3600_000).toISOString(), user: { name: 'Sele', email: 's@s.com', role: 'admin' as const } };
 
 describe('Autenticación del panel', () => {
   let http: HttpClient;
@@ -16,7 +16,7 @@ describe('Autenticación del panel', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), provideHttpClient(withInterceptors([adminAuthInterceptor])), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }],
+      providers: [provideRouter([]), provideHttpClient(withInterceptors([sesionInterceptor])), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }],
     });
     http = TestBed.inject(HttpClient);
     ctrl = TestBed.inject(HttpTestingController);
@@ -24,7 +24,7 @@ describe('Autenticación del panel', () => {
   });
   afterEach(() => ctrl.verify());
 
-  const entrar = () => localStorage.setItem('jds_admin_sesion', JSON.stringify(SESION));
+  const entrar = () => localStorage.setItem('jds_sesion', JSON.stringify(SESION));
 
   it('envía el token Bearer a las rutas /admin/* pero no a la API pública ni al login', () => {
     entrar();
@@ -34,8 +34,13 @@ describe('Autenticación del panel', () => {
     http.get('/api/v1/categories').subscribe();
     expect(ctrl.expectOne('/api/v1/categories').request.headers.has('Authorization')).toBe(false);
 
-    http.post('/api/v1/admin/login', {}).subscribe();
-    expect(ctrl.expectOne('/api/v1/admin/login').request.headers.has('Authorization')).toBe(false);
+    http.get('/api/v1/auth/me').subscribe();
+    expect(ctrl.expectOne('/api/v1/auth/me').request.headers.get('Authorization')).toBe('Bearer tok');
+
+    http.post('/api/v1/auth/login', {}).subscribe();
+    expect(ctrl.expectOne('/api/v1/auth/login').request.headers.has('Authorization')).toBe(false);
+    http.post('/api/v1/auth/register', {}).subscribe();
+    expect(ctrl.expectOne('/api/v1/auth/register').request.headers.has('Authorization')).toBe(false);
   });
 
   it('ante un 401 olvida la sesión y manda al login con la pantalla de regreso', async () => {
@@ -44,19 +49,31 @@ describe('Autenticación del panel', () => {
     http.get('/api/v1/admin/me').subscribe({ error: () => {} });
     ctrl.expectOne('/api/v1/admin/me').flush({ code: 'unauthenticated', message: 'x' }, { status: 401, statusText: 'Unauthorized' });
 
-    expect(TestBed.inject(SesionAdminService).estaAutenticado()).toBe(false);
-    expect(navegar).toHaveBeenCalledWith(['/admin/login'], { queryParams: { returnUrl: expect.any(String) } });
+    expect(TestBed.inject(SesionService).estaAutenticado()).toBe(false);
+    expect(navegar).toHaveBeenCalledWith(['/ingresar'], { queryParams: { returnUrl: expect.any(String) } });
   });
 
-  it('la guarda deja pasar con sesión y sin ella redirige al login con returnUrl', () => {
-    const estado = { url: '/admin/pedidos/5' } as never;
-    const sinSesion = TestBed.runInInjectionContext(() => adminGuard({} as never, estado));
-    expect(router.serializeUrl(sinSesion as never)).toBe('/admin/login?returnUrl=%2Fadmin%2Fpedidos%2F5');
+  const correr = (guarda: typeof adminGuard, url = '/admin') =>
+    TestBed.runInInjectionContext(() => guarda({} as never, { url } as never));
 
-    TestBed.inject(SesionAdminService).olvidar();
+  it('sin sesión, las guardas mandan a /ingresar con la pantalla de regreso', () => {
+    for (const guarda of [sesionGuard, adminGuard]) {
+      expect(router.serializeUrl(correr(guarda, '/admin/pedidos/5') as never)).toBe('/ingresar?returnUrl=%2Fadmin%2Fpedidos%2F5');
+    }
+  });
+
+  it('el administrador pasa por ambas guardas', () => {
     entrar();
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
-    expect(TestBed.runInInjectionContext(() => adminGuard({} as never, estado))).toBe(true);
+    TestBed.inject(SesionService); // lee la sesión guardada
+    expect(correr(sesionGuard)).toBe(true);
+    expect(correr(adminGuard)).toBe(true);
+  });
+
+  it('un cliente pasa la guarda de sesión pero no la del panel: va a /mi-cuenta', () => {
+    localStorage.setItem('jds_sesion', JSON.stringify({ ...SESION, user: { ...SESION.user, role: 'customer' } }));
+    TestBed.inject(SesionService);
+
+    expect(correr(sesionGuard)).toBe(true);
+    expect(router.serializeUrl(correr(adminGuard) as never)).toBe('/mi-cuenta');
   });
 });

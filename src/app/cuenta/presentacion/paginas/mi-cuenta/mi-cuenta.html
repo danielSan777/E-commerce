@@ -1,0 +1,18 @@
+<main class="cuenta">
+  <section class="tarjeta">
+    <h1>Hola, {{ usuario()?.name }}</h1>
+    <p class="sub">{{ usuario()?.email }}</p>
+
+    @if (esAdministrador()) {
+      <a class="enlace" routerLink="/admin">Ir al panel de administración</a>
+    }
+    <a class="enlace" routerLink="/consultar-pedido">Consultar mi pedido</a>
+
+    @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+
+    <div class="acciones">
+      <button type="button" (click)="cerrarSesion()" [disabled]="ocupado()">Cerrar sesión</button>
+      <button type="button" class="secundario" (click)="cerrarTodas()" [disabled]="ocupado()">Cerrar todas las sesiones</button>
+    </div>
+  </section>
+</main>

@@ -1,0 +1,10 @@
+.cuenta { min-height: 60vh; display: grid; place-items: start center; padding: 2rem 1rem; background: #f4f7f2; }
+.tarjeta { width: 100%; max-width: 480px; background: #fff; padding: 1.75rem; border-radius: 14px; box-shadow: 0 6px 24px rgba(0, 0, 0, .08); display: flex; flex-direction: column; gap: .6rem; }
+h1 { font-size: 1.35rem; margin: 0; }
+.sub { margin: 0 0 .5rem; color: #5b665b; }
+.enlace { color: #2f6b34; font-weight: 600; }
+.acciones { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+button { padding: .7rem 1rem; border: 0; border-radius: 8px; background: #2f6b34; color: #fff; font-weight: 600; cursor: pointer; }
+button.secundario { background: #fff; color: #8a1c13; border: 1px solid #8a1c13; }
+button:disabled { opacity: .6; cursor: default; }
+.error { background: #fdecea; color: #8a1c13; border-radius: 8px; padding: .6rem .8rem; margin: 0; }

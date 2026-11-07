@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard } from './administracion/aplicacion/adminAuth';
+import { adminGuard, sesionGuard } from './administracion/aplicacion/adminAuth';
 import { MainLayout } from './core/layout/main-layout/main-layout/main-layout';
 
 // Categorías con URL propia (cada una abre la pantalla de categorías en ese estado)
@@ -17,10 +17,8 @@ const CATALOGO_A_CATEGORIA: Record<string, string> = {
 export const routes: Routes = [
 
     // Panel del administrador (Angular consume /api/v1/admin/*). Pantalla completa, sin el navbar de la tienda.
-    {
-        path: 'admin/login',
-        loadComponent: () => import('./administracion/presentacion/paginas/login/login').then(m => m.AdminLogin)
-    },
+    // El ingreso es uno solo (/ingresar): la API dice el rol y de ahí se decide a dónde ir.
+    { path: 'admin/login', redirectTo: '/ingresar', pathMatch: 'full' },
     {
         path: 'admin',
         canActivate: [adminGuard],
@@ -40,6 +38,11 @@ export const routes: Routes = [
         path: '',
         component: MainLayout,
         children: [
+            // Cuentas de clientes y administradores
+            { path: 'ingresar', loadComponent: () => import('./cuenta/presentacion/paginas/ingresar/ingresar').then(m => m.Ingresar) },
+            { path: 'crear-cuenta', loadComponent: () => import('./cuenta/presentacion/paginas/crear-cuenta/crear-cuenta').then(m => m.CrearCuenta) },
+            { path: 'mi-cuenta', canActivate: [sesionGuard], loadComponent: () => import('./cuenta/presentacion/paginas/mi-cuenta/mi-cuenta').then(m => m.MiCuenta) },
+
             // Página principal
             {
                 path: '',

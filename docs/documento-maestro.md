@@ -150,7 +150,7 @@ No se programan hasta que Josué los pida. La arquitectura no debe impedirlos, p
 | Al crecer | "¿Para quién es?", `/regalos`, campo de género y etiquetas de ocasión | Las categorías y las temporadas cubren el uso actual |
 | Al crecer | Catálogos de Google y TikTok, y Merchant Center | Solo si se pauta ahí |
 | Al crecer | Contador de insumos con alerta, permisos para empleados e importación de compradores antiguos | No hacen falta con el volumen actual |
-| Solo con mucho volumen | Centro de tareas con prioridades, motor de mensajes con plantillas e historial, API de WhatsApp, flujo completo de cancelaciones y reembolsos, integración con Servientrega y estado "Entregado", validación automática de transferencias y cuentas de cliente | Automatización para un equipo grande |
+| Solo con mucho volumen | Centro de tareas con prioridades, motor de mensajes con plantillas e historial, API de WhatsApp, flujo completo de cancelaciones y reembolsos, integración con Servientrega y estado "Entregado", validación automática de transferencias y ~~cuentas de cliente~~ *(las cuentas de cliente se adelantaron por decisión del desarrollador el 2026-11-07: registro, ingreso único con rol y `/mi-cuenta`; el comprador sigue pudiendo comprar y consultar su pedido sin cuenta)* | Automatización para un equipo grande |
 
 **Eliminado del diseño (ya no existe):** información pendiente o "enviar por WhatsApp después"; protección de promesa de 15/60 minutos con señales de actividad; hora de revisión de transferencias, vencimiento a las 72 h y reactivación; pasaporte; agrupación por colección dentro de la categoría (la reemplazan las pestañas); redirección 302 de campañas fuera de temporada; página "Todos los productos" (la reemplaza la pantalla de categorías).
 
@@ -802,7 +802,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 * [ ] Un único servicio `BusinessCalendar` para todo cálculo de fechas de negocio, con la zona `America/Guayaquil` por nombre.
 * [ ] Solo la carpeta `public` de Laravel es accesible desde la web.
 * [ ] Laravel confía en el proxy de Cloudflare y lee la IP real de `CF-Connecting-IP`.
-* [ ] Autenticación del panel: un solo rol Administrador, doble factor con opción de recordar el dispositivo, y botón para cerrar todas las sesiones. *(Hecho: login con token Bearer, `/admin/login`, guarda de rutas, "Cerrar sesión" y "Cerrar todas las sesiones". Falta el doble factor.)*
+* [ ] Autenticación del panel: un solo rol Administrador, doble factor con opción de recordar el dispositivo, y botón para cerrar todas las sesiones. *(Hecho: ingreso único `/ingresar` con token Bearer, guarda de rutas por rol, "Cerrar sesión" y "Cerrar todas las sesiones". Falta el doble factor.)*
 * [ ] CSRF en todo el panel y en las acciones del cliente; todas las acciones por POST, nunca por GET.
 * [ ] Límites de intentos: login, subida de comprobantes, "Consultar mi pedido" y subida de fotos.
 * [ ] Cola con driver `database`, tablas `jobs` y `failed_jobs`.

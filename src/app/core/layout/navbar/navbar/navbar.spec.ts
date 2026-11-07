@@ -17,6 +17,11 @@ describe('Navbar', () => {
     await fixture.whenStable();
   });
 
+  it('la cuenta lleva a /ingresar si no hay sesión', () => {
+    expect(component.cuentaRuta()).toBe('/ingresar');
+    expect(component.cuentaEtiqueta()).toBe('Ingresar');
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });

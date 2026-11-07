@@ -1,8 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { SesionAdminService } from '../../../aplicacion/servicios/SesionAdminService';
-import { ErrorApi } from '../../../dominio/interfaces/sesion';
+import { SesionService } from '../../../../cuenta/aplicacion/servicios/SesionService';
+import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 
 // Pantalla inicial del panel. Las secciones (categorías, productos…) se agregan aquí a medida que existan sus APIs.
 @Component({
@@ -11,7 +11,7 @@ import { ErrorApi } from '../../../dominio/interfaces/sesion';
   styleUrl: './panel.css',
 })
 export class AdminPanel {
-  private sesion = inject(SesionAdminService);
+  private sesion = inject(SesionService);
   private router = inject(Router);
 
   readonly usuario = this.sesion.usuario;
@@ -40,7 +40,7 @@ export class AdminPanel {
       this.error.set((e as ErrorApi).message);
     } finally {
       this.ocupado.set(false);
-      await this.router.navigate(['/admin/login']); // el navegador ya quedó sin token aunque la API haya fallado
+      await this.router.navigate(['/ingresar']); // el navegador ya quedó sin token aunque la API haya fallado
     }
   }
 }

@@ -7,6 +7,7 @@ import { TIENDA } from '../../../configuracion/tienda';
 import { CategoriaService } from '../../../../categorias/aplicacion/servicios/CategoriaService';
 import { CatalogoMenu } from '../../../../catalogo/dominio/entidades/catalogo';
 // AJUSTA la ruta si tu carpeta carrito está en otro lugar
+import { SesionService } from '../../../../cuenta/aplicacion/servicios/SesionService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 
 @Component({
@@ -25,6 +26,12 @@ export class Navbar {
   readonly RUTA_INICIO = '/';
 
   private router = inject(Router);
+  private sesion = inject(SesionService);
+
+  // Cuenta: sin sesión lleva a /ingresar; cliente a /mi-cuenta; administrador a su panel.
+  cuentaRuta = computed(() => !this.sesion.usuario() ? '/ingresar' : this.sesion.esAdministrador() ? '/admin' : '/mi-cuenta');
+  cuentaIcono = computed(() => this.sesion.usuario() ? 'bi-person-check' : 'bi-person');
+  cuentaEtiqueta = computed(() => this.sesion.usuario() ? 'Mi cuenta' : 'Ingresar');
   envio = inject(EnvioGratisService);
 
   private url = toSignal(

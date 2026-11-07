@@ -48,6 +48,7 @@
             <!-- Iconos del lado derecho -->
             <div class="iconos-navbar d-flex align-items-center gap-3 ms-auto">
                 <a routerLink="/buscar" class="icono-nav" aria-label="Buscar productos"><i class="bi bi-search"></i></a>
+                <a [routerLink]="cuentaRuta()" class="icono-nav" [attr.aria-label]="cuentaEtiqueta()"><i [class]="'bi ' + cuentaIcono()"></i></a>
                 <a routerLink="/carrito" class="icono-nav" aria-label="Carrito de compras"><i
                         class="bi bi-cart3"></i></a>
             </div>
@@ -72,6 +73,7 @@
 
     <div class="d-flex align-items-center gap-3">
         <a routerLink="/buscar" class="icono-nav" aria-label="Buscar productos"><i class="bi bi-search"></i></a>
+        <a [routerLink]="cuentaRuta()" class="icono-nav" [attr.aria-label]="cuentaEtiqueta()"><i [class]="'bi ' + cuentaIcono()"></i></a>
         <a routerLink="/carrito" class="icono-nav" aria-label="Carrito de compras"><i class="bi bi-cart3"></i></a>
     </div>
 </header>

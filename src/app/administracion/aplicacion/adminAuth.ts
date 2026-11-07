@@ -3,34 +3,47 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { API_URL } from '../../core/configuracion/api';
-import { SesionAdminService } from './servicios/SesionAdminService';
+import { SesionService } from '../../cuenta/aplicacion/servicios/SesionService';
 
-/** Añade el token Bearer solo a las llamadas `/admin/*` (nunca al login ni a la API pública). */
-export const adminAuthInterceptor: HttpInterceptorFn = (req, next) => {
+/** Rutas de la API que llevan el token: la cuenta (`/auth/*`, salvo login y registro) y la administración (`/admin/*`). */
+function llevaToken(url: string, api: string): boolean {
+  if (url.startsWith(`${api}/admin/`)) return true;
+  return url.startsWith(`${api}/auth/`) && !url.endsWith('/auth/login') && !url.endsWith('/auth/register');
+}
+
+/** Añade el token Bearer solo a esas rutas (nunca a la API pública ni al login). */
+export const sesionInterceptor: HttpInterceptorFn = (req, next) => {
   const api = inject(API_URL);
-  const sesion = inject(SesionAdminService);
+  const sesion = inject(SesionService);
   const router = inject(Router);
 
-  const esAdmin = req.url.startsWith(`${api}/admin/`) && !req.url.endsWith('/admin/login');
-  if (!esAdmin) return next(req);
+  if (!llevaToken(req.url, api)) return next(req);
 
   const token = sesion.token();
   const conToken = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
   return next(conToken).pipe(
     catchError((e) => {
-      // Token vencido o cerrado en otro dispositivo: volver al login y regresar a esta pantalla después.
+      // Token vencido o cerrado en otro dispositivo: volver al ingreso y regresar a esta pantalla después.
       if (e?.status === 401 && !req.url.endsWith('/logout') && !req.url.endsWith('/logout-all')) {
         sesion.olvidar();
-        router.navigate(['/admin/login'], { queryParams: { returnUrl: router.url } });
+        router.navigate(['/ingresar'], { queryParams: { returnUrl: router.url } });
       }
       return throwError(() => e);
     }),
   );
 };
 
-/** Protege el panel: sin sesión vigente va al login y vuelve a la pantalla pedida. */
+/** Pantallas que piden estar identificado (cliente o administrador). */
+export const sesionGuard: CanActivateFn = (_ruta, estado) => {
+  const sesion = inject(SesionService);
+  return sesion.estaAutenticado() || inject(Router).createUrlTree(['/ingresar'], { queryParams: { returnUrl: estado.url } });
+};
+
+/** Panel del administrador. Sin sesión va al ingreso; un cliente va a su cuenta. (Laravel igual responde 403 a un cliente.) */
 export const adminGuard: CanActivateFn = (_ruta, estado) => {
-  const sesion = inject(SesionAdminService);
-  return sesion.estaAutenticado() || inject(Router).createUrlTree(['/admin/login'], { queryParams: { returnUrl: estado.url } });
+  const sesion = inject(SesionService);
+  const router = inject(Router);
+  if (!sesion.estaAutenticado()) return router.createUrlTree(['/ingresar'], { queryParams: { returnUrl: estado.url } });
+  return sesion.esAdministrador() || router.createUrlTree(['/mi-cuenta']);
 };

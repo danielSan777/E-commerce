@@ -1,0 +1,29 @@
+<main class="cuenta">
+  <form class="tarjeta" (submit)="crear($event)" novalidate>
+    <h1>Crear cuenta</h1>
+    <p class="sub">Con tu cuenta podrás ingresar más rápido.</p>
+
+    <label for="name">Nombre</label>
+    <input id="name" name="name" type="text" autocomplete="name" [(ngModel)]="name" required />
+
+    <label for="email">Correo</label>
+    <input id="email" name="email" type="email" autocomplete="username" [(ngModel)]="email" required />
+
+    <label for="password">Contraseña (mínimo 8 caracteres)</label>
+    <input id="password" name="password" type="password" autocomplete="new-password" [(ngModel)]="password" required />
+
+    <label for="confirmacion">Repite la contraseña</label>
+    <input id="confirmacion" name="confirmacion" type="password" autocomplete="new-password" [(ngModel)]="confirmacion" required />
+
+    @if (error()) {
+      <div class="error" role="alert">
+        <p>{{ error() }}</p>
+        @for (d of detalle(); track d) { <p class="detalle">{{ d }}</p> }
+      </div>
+    }
+
+    <button type="submit" [disabled]="enviando()">{{ enviando() ? 'Creando…' : 'Crear cuenta' }}</button>
+
+    <p class="alterna">¿Ya tienes cuenta? <a routerLink="/ingresar" queryParamsHandling="preserve">Ingresar</a></p>
+  </form>
+</main>

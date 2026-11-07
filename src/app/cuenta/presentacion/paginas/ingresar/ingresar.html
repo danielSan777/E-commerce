@@ -1,7 +1,7 @@
-<main class="login">
+<main class="cuenta">
   <form class="tarjeta" (submit)="entrar($event)" novalidate>
-    <h1>Panel de Jardín de Sele</h1>
-    <p class="sub">Ingresa con tu cuenta de administrador.</p>
+    <h1>Ingresar</h1>
+    <p class="sub">Entra con tu correo y contraseña.</p>
 
     <label for="email">Correo</label>
     <input id="email" name="email" type="email" autocomplete="username" [(ngModel)]="email" required />
@@ -17,5 +17,7 @@
     }
 
     <button type="submit" [disabled]="enviando()">{{ enviando() ? 'Ingresando…' : 'Ingresar' }}</button>
+
+    <p class="alterna">¿No tienes cuenta? <a routerLink="/crear-cuenta" queryParamsHandling="preserve">Crear cuenta</a></p>
   </form>
 </main>
