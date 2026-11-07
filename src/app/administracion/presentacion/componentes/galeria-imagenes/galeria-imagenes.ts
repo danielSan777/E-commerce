@@ -72,7 +72,8 @@ export class GaleriaImagenes implements OnInit {
       const nueva = await this.api.subir(this.dueno(), this.clave(), archivo, this.rol, this.alt);
       this.imagenes.update(l => [...l, nueva]);
       this.alt = '';
-      this.aviso.set('Imagen subida.');
+      this.aviso.set(this.rol === 'front' ? 'Imagen subida. Es la principal; la anterior pasó a "Otro ángulo".' : 'Imagen subida.');
+      if (this.rol === 'front') await this.cargar(); // Laravel deja una sola principal: se vuelve a leer la lista
     } catch (e) {
       const err = e as ErrorApi;
       this.error.set(Object.values(err.errors ?? {}).flat()[0] ?? err.message);
@@ -89,6 +90,7 @@ export class GaleriaImagenes implements OnInit {
       const guardada = await this.api.editar(imagen.id, { alt: alt.trim(), role: rol });
       this.imagenes.update(l => l.map(i => (i.id === guardada.id ? guardada : i)));
       this.aviso.set('Cambios guardados.');
+      if (rol === 'front') await this.cargar(); // si esta pasó a principal, la anterior cambió de tipo
     } catch (e) {
       const err = e as ErrorApi;
       this.error.set(Object.values(err.errors ?? {}).flat()[0] ?? err.message);

@@ -111,4 +111,16 @@ describe('GaleriaImagenes', () => {
     await p;
     expect(c.imagenes()[0].alt).toBe('Homero');
   });
+
+  it('al subir una principal vuelve a leer la lista porque la anterior cambia de tipo', async () => {
+    const fixture = await montar([img(1)]);
+    const c = fixture.componentInstance;
+    c.alt = 'Nueva principal';
+    const p = c.elegir(evento(new File(['x'], 'a.png', { type: 'image/png' })));
+    ctrl.expectOne(BASE).flush(img(2), { status: 201, statusText: 'Created' });
+    await esperar();
+    ctrl.expectOne(BASE).flush({ data: [img(1, { role: 'angle' }), img(2)] });
+    await p;
+    expect(c.imagenes().map(i => i.role)).toEqual(['angle', 'front']);
+  });
 });
