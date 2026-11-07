@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -33,6 +34,7 @@ export class AdminSubcategorias implements OnInit {
   error = signal('');
   detalle = signal<string[]>([]);
   aviso = signal('');
+  private avisos = inject(AvisosService);
   bloqueada = signal<{ slug: string; message: string; products: NonNullable<ErrorApi['products']> } | null>(null);
 
   constructor() {
@@ -90,9 +92,11 @@ export class AdminSubcategorias implements OnInit {
       if (slug === '') {
         await this.servicio.crear(this.categoria, datos);
         this.aviso.set('Subcategoría creada.');
+        this.avisos.exito('Subcategoría creada.');
       } else {
         await this.servicio.editar(this.categoria, slug, datos);
         this.aviso.set('Cambios guardados.');
+        this.avisos.exito('Cambios guardados.');
       }
       this.editando.set(null);
       await this.cargar();
@@ -115,6 +119,7 @@ export class AdminSubcategorias implements OnInit {
     try {
       await this.servicio.eliminar(this.categoria, slug);
       this.aviso.set('Subcategoría eliminada.');
+      this.avisos.exito('Subcategoría eliminada.');
       await this.cargar();
     } catch (e) {
       const err = e as ErrorApi;

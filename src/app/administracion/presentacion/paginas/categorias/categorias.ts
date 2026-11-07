@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
@@ -35,6 +36,7 @@ export class AdminCategorias implements OnInit {
   error = signal('');
   detalle = signal<string[]>([]);
   aviso = signal('');
+  private avisos = inject(AvisosService);
   /** Respuesta 409: la categoría tiene productos y no se borró. */
   bloqueada = signal<{ slug: string; message: string; products: NonNullable<ErrorApi['products']> } | null>(null);
 
@@ -89,9 +91,11 @@ export class AdminCategorias implements OnInit {
       if (slug === '') {
         await this.servicio.crear(base); // el slug lo genera Laravel a partir del nombre
         this.aviso.set('Categoría creada.');
+        this.avisos.exito('Categoría creada.');
       } else {
         await this.servicio.editar(slug, base);
         this.aviso.set('Cambios guardados.');
+        this.avisos.exito('Cambios guardados.');
       }
       this.editando.set(null);
       await this.cargar();
@@ -119,6 +123,7 @@ export class AdminCategorias implements OnInit {
     try {
       await this.servicio.eliminar(slug);
       this.aviso.set('Categoría eliminada.');
+      this.avisos.exito('Categoría eliminada.');
       await this.cargar();
     } catch (e) {
       const err = e as ErrorApi;

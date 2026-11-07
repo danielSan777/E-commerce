@@ -2,7 +2,6 @@
   <h2>Imágenes</h2>
   <p class="ayuda">Solo una imagen puede ser la principal. Si ya hay una, el tipo "Principal" queda bloqueado: para cambiarla, cambia primero el tipo de la actual. JPG, PNG o WebP, de hasta 8 MB y mínimo 300 × 300 píxeles. Laravel las convierte a WebP y crea las versiones para la web.</p>
 
-  @if (aviso()) { <p class="aviso" role="status">{{ aviso() }}</p> }
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
 
   <div class="subir">

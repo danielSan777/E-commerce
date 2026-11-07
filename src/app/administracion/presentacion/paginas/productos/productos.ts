@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
@@ -25,6 +26,7 @@ export class AdminProductos implements OnInit {
   cargando = signal(true);
   error = signal('');
   aviso = signal('');
+  private avisos = inject(AvisosService);
   porEliminar = signal<string | null>(null);
 
   texto = '';
@@ -76,6 +78,7 @@ export class AdminProductos implements OnInit {
     try {
       await this.productosApi.eliminar(sku);
       this.aviso.set('Producto eliminado.');
+      this.avisos.exito('Producto eliminado.');
       await this.cargar();
     } catch (e) {
       this.error.set((e as ErrorApi).message);

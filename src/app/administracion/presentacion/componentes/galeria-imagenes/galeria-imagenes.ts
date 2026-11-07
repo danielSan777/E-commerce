@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { FormsModule } from '@angular/forms';
 import { ImagenesAdminService } from '../../../aplicacion/servicios/ImagenesAdminService';
 import { DuenoDeImagenes, ImagenAdmin } from '../../../dominio/interfaces/imagen-admin';
@@ -26,6 +27,7 @@ export const ROLES_IMAGEN: { valor: string; texto: string }[] = [
 })
 export class GaleriaImagenes implements OnInit {
   private api = inject(ImagenesAdminService);
+  private avisos = inject(AvisosService);
 
   readonly dueno = input.required<DuenoDeImagenes>();
   readonly clave = input.required<string>();
@@ -80,6 +82,7 @@ export class GaleriaImagenes implements OnInit {
       this.imagenes.update(l => [...l, nueva]);
       this.alt = '';
       this.aviso.set('Imagen subida.');
+      this.avisos.exito('Imagen subida.');
       this.ajustarTipo();
     } catch (e) {
       const err = e as ErrorApi;
@@ -97,6 +100,7 @@ export class GaleriaImagenes implements OnInit {
       const guardada = await this.api.editar(imagen.id, { alt: alt.trim(), role: rol });
       this.imagenes.update(l => l.map(i => (i.id === guardada.id ? guardada : i)));
       this.aviso.set('Cambios guardados.');
+      this.avisos.exito('Cambios guardados.');
       this.ajustarTipo();
     } catch (e) {
       const err = e as ErrorApi;
@@ -111,6 +115,7 @@ export class GaleriaImagenes implements OnInit {
       await this.api.eliminar(id);
       this.imagenes.update(l => l.filter(i => i.id !== id));
       this.aviso.set('Imagen eliminada.');
+      this.avisos.exito('Imagen eliminada.');
       this.ajustarTipo();
     } catch (e) {
       this.error.set((e as ErrorApi).message);
