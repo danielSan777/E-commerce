@@ -93,7 +93,7 @@ describe('AdminCategorias', () => {
 
     const post = ctrl.expectOne('/api/v1/admin/categories');
     expect(post.request.body).toMatchObject({ name: 'Día de la Madre', headline: null, is_active: true });
-    expect('slug' in post.request.body).toBe(false); // sin slug: Laravel lo genera
+    expect('slug' in post.request.body).toBe(false); // el slug no se envía: Laravel lo genera del nombre
     post.flush(cat('dia-de-la-madre', 'Día de la Madre'), { status: 201, statusText: 'Created' });
     await esperar();
     ctrl.expectOne('/api/v1/admin/categories').flush({ data: [cat('dia-de-la-madre', 'Día de la Madre')] });
@@ -101,5 +101,29 @@ describe('AdminCategorias', () => {
 
     expect(c.editando()).toBeNull();
     expect(c.aviso()).toBe('Categoría creada.');
+  });
+
+  it('al crear muestra la dirección generada del nombre (guion bajo por espacio) y no es editable', async () => {
+    const fixture = await montar([]);
+    const c = fixture.componentInstance;
+    c.nueva();
+    c.form.name = 'Día de la Madre';
+    fixture.detectChanges();
+
+    const campo = fixture.nativeElement.querySelector('#slug') as HTMLInputElement;
+    expect(c.slugMostrado()).toBe('dia_de_la_madre');
+    expect(campo.value).toBe('/dia_de_la_madre');
+    expect(campo.readOnly).toBe(true);
+  });
+
+  it('al editar muestra la dirección guardada aunque se cambie el nombre', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.editar(c.categorias()[0]);
+    c.form.name = 'Otro nombre distinto';
+    fixture.detectChanges();
+
+    expect(c.slugMostrado()).toBe('amor');
+    expect((fixture.nativeElement.querySelector('#slug') as HTMLInputElement).value).toBe('/amor');
   });
 });

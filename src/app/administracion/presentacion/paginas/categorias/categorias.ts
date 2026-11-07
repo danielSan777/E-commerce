@@ -4,11 +4,12 @@ import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { CategoriasAdminService } from '../../../aplicacion/servicios/CategoriasAdminService';
 import { CategoriaAdmin } from '../../../dominio/interfaces/categoria-admin';
+import { generarSlug } from '../../../aplicacion/slug';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 
-interface Formulario { name: string; slug: string; headline: string; sort_order: number; is_active: boolean }
+interface Formulario { name: string; headline: string; sort_order: number; is_active: boolean }
 
-const VACIO: Formulario = { name: '', slug: '', headline: '', sort_order: 0, is_active: true };
+const VACIO: Formulario = { name: '', headline: '', sort_order: 0, is_active: true };
 
 // Categorías en el panel. Angular solo muestra lo que Laravel responde y sus mensajes (validación, 409 con productos).
 @Component({
@@ -26,6 +27,8 @@ export class AdminCategorias implements OnInit {
   /** null = formulario cerrado; '' = nueva categoría; otro valor = slug de la que se edita. */
   editando = signal<string | null>(null);
   form: Formulario = { ...VACIO };
+  /** Slug de la categoría que se edita (no cambia). Al crear no se usa: se muestra la vista previa. */
+  slugActual = '';
   /** Pidió eliminar esta categoría y falta confirmar. */
   porEliminar = signal<string | null>(null);
 
@@ -57,13 +60,15 @@ export class AdminCategorias implements OnInit {
 
   nueva(): void {
     this.limpiar();
+    this.slugActual = '';
     this.form = { ...VACIO, sort_order: this.categorias().length + 1 };
     this.editando.set('');
   }
 
   editar(c: CategoriaAdmin): void {
     this.limpiar();
-    this.form = { name: c.name, slug: c.slug, headline: c.headline ?? '', sort_order: c.sort_order, is_active: c.is_active };
+    this.slugActual = c.slug;
+    this.form = { name: c.name, headline: c.headline ?? '', sort_order: c.sort_order, is_active: c.is_active };
     this.editando.set(c.slug);
   }
 
@@ -82,7 +87,7 @@ export class AdminCategorias implements OnInit {
     try {
       const slug = this.editando()!;
       if (slug === '') {
-        await this.servicio.crear({ ...base, ...(this.form.slug.trim() ? { slug: this.form.slug.trim() } : {}) });
+        await this.servicio.crear(base); // el slug lo genera Laravel a partir del nombre
         this.aviso.set('Categoría creada.');
       } else {
         await this.servicio.editar(slug, base);
@@ -97,6 +102,11 @@ export class AdminCategorias implements OnInit {
     } finally {
       this.guardando.set(false);
     }
+  }
+
+  /** El identificador que se mostrará: el guardado al editar, o la vista previa del nombre al crear. */
+  slugMostrado(): string {
+    return this.editando() === '' ? generarSlug(this.form.name) : this.slugActual;
   }
 
   pedirEliminar(slug: string): void {

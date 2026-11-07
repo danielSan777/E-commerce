@@ -11,6 +11,8 @@
 .formulario h2 { font-size: 1.15rem; margin: 0 0 .5rem; }
 label { font-weight: 600; font-size: .9rem; margin-top: .4rem; }
 label.casilla { display: flex; gap: .5rem; align-items: center; font-weight: 400; }
+input[readonly] { background: #f1f4f1; color: #3d493d; }
+.ayuda { color: #5b665b; font-size: .8rem; }
 input[type=text], input:not([type]), input[type=number] { padding: .6rem .7rem; border: 1px solid #c9d2c9; border-radius: 8px; font-size: 1rem; }
 button { padding: .55rem .9rem; border: 1px solid #b8c4b8; border-radius: 8px; background: #fff; cursor: pointer; font-weight: 600; }
 button.primario { background: #2f6b34; color: #fff; border-color: #2f6b34; align-self: flex-start; }
