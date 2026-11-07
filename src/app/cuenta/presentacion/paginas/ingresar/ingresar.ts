@@ -4,6 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SesionService } from '../../../aplicacion/servicios/SesionService';
 import { destinoSeguro } from '../../../aplicacion/destino';
+import { Errores, validarIngreso } from '../../../aplicacion/validacion';
 import { ErrorApi } from '../../../dominio/interfaces/sesion';
 
 // Ingreso único para clientes y administradores. La validación y los mensajes vienen de Laravel;
@@ -24,6 +25,8 @@ export class Ingresar {
   enviando = signal(false);
   error = signal('');
   detalle = signal<string[]>([]);
+  /** Errores por campo (vacío, formato) detectados en el navegador antes de llamar a la API. */
+  errores = signal<Errores>({});
 
   constructor() {
     inject(Title).setTitle('Ingresar | Jardín de Sele');
@@ -37,15 +40,27 @@ export class Ingresar {
     if (this.enviando()) return;
     this.error.set('');
     this.detalle.set([]);
+    const errores = validarIngreso(this.email, this.password);
+    this.errores.set(errores);
+    if (Object.keys(errores).length) return; // campos vacíos o inválidos: no se llama a la API
     this.enviando.set(true);
     try {
       await this.sesion.iniciarSesion(this.email.trim(), this.password);
-      this.password = '';
-      await this.router.navigateByUrl(this.destino(this.sesion.usuario()!.role));
     } catch (e) {
-      const err = e as ErrorApi;
-      this.error.set(err.message);
+      const err = e as Partial<ErrorApi>;
+      this.error.set(err.message || 'No pudimos iniciar sesión. Inténtalo de nuevo.');
       this.detalle.set(Object.values(err.errors ?? {}).flat());
+      this.enviando.set(false);
+      return;
+    }
+    this.password = '';
+    try {
+      // `false` = alguna guarda bloqueó la navegación: no se deja al usuario sin respuesta
+      if (!(await this.router.navigateByUrl(this.destino(this.sesion.usuario()!.role)))) {
+        this.error.set('Ingresaste, pero no pudimos abrir la pantalla. Recarga la página e inténtalo de nuevo.');
+      }
+    } catch {
+      this.error.set('Ingresaste, pero no pudimos abrir la pantalla. Recarga la página e inténtalo de nuevo.');
     } finally {
       this.enviando.set(false);
     }

@@ -4,16 +4,24 @@
     <p class="sub">Con tu cuenta podrás ingresar más rápido.</p>
 
     <label for="name">Nombre</label>
-    <input id="name" name="name" type="text" autocomplete="name" [(ngModel)]="name" required />
+    <input id="name" name="name" type="text" autocomplete="name" [(ngModel)]="name" required
+      [attr.aria-invalid]="errores()['name'] ? true : null" />
+    @if (errores()['name']) { <small class="campo-error">{{ errores()['name'] }}</small> }
 
     <label for="email">Correo</label>
-    <input id="email" name="email" type="email" autocomplete="username" [(ngModel)]="email" required />
+    <input id="email" name="email" type="email" autocomplete="username" [(ngModel)]="email" required
+      [attr.aria-invalid]="errores()['email'] ? true : null" />
+    @if (errores()['email']) { <small class="campo-error">{{ errores()['email'] }}</small> }
 
     <label for="password">Contraseña (mínimo 8 caracteres)</label>
-    <input id="password" name="password" type="password" autocomplete="new-password" [(ngModel)]="password" required />
+    <input id="password" name="password" type="password" autocomplete="new-password" [(ngModel)]="password" required
+      [attr.aria-invalid]="errores()['password'] ? true : null" />
+    @if (errores()['password']) { <small class="campo-error">{{ errores()['password'] }}</small> }
 
     <label for="confirmacion">Repite la contraseña</label>
-    <input id="confirmacion" name="confirmacion" type="password" autocomplete="new-password" [(ngModel)]="confirmacion" required />
+    <input id="confirmacion" name="confirmacion" type="password" autocomplete="new-password" [(ngModel)]="confirmacion" required
+      [attr.aria-invalid]="errores()['confirmacion'] ? true : null" />
+    @if (errores()['confirmacion']) { <small class="campo-error">{{ errores()['confirmacion'] }}</small> }
 
     @if (error()) {
       <div class="error" role="alert">

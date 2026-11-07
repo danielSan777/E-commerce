@@ -11,6 +11,7 @@ export interface RespuestaSesion {
   token: string;
   token_type: 'Bearer';
   expires_at: string; // ISO 8601
+  expires_in?: number; // segundos de vida; con esto Angular calcula el vencimiento con su propio reloj
   user: Usuario;
 }
 

@@ -43,6 +43,21 @@ describe('CrearCuenta', () => {
     expect(fixture.componentInstance.password).toBe('');
   });
 
+  it('con campos vacíos o contraseñas distintas avisa y NO llama a la API', async () => {
+    const fixture = await montar();
+    Object.assign(fixture.componentInstance, { name: '', email: '', password: 'corta', confirmacion: 'otra' });
+    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    ctrl.expectNone('/api/v1/auth/register');
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).toContain('Escribe tu nombre.');
+    expect(texto).toContain('Escribe tu correo.');
+    expect(texto).toContain('La contraseña debe tener al menos 8 caracteres.');
+    expect(texto).toContain('Las contraseñas no coinciden.');
+  });
+
   it('muestra los errores de Laravel en español (por ejemplo correo repetido)', async () => {
     const fixture = await montar();
     const ir = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);

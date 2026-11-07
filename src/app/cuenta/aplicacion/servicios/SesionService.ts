@@ -78,7 +78,9 @@ export class SesionService {
   private async abrir(ruta: 'login' | 'register', cuerpo: object): Promise<void> {
     try {
       const r = await firstValueFrom(this.http.post<RespuestaSesion>(`${this.api}/auth/${ruta}`, cuerpo));
-      this.guardar({ token: r.token, expires_at: r.expires_at, user: r.user });
+      // El vencimiento se calcula con el reloj de este navegador (no depende de que coincida con el del servidor).
+      const vence = typeof r.expires_in === 'number' ? new Date(Date.now() + r.expires_in * 1000).toISOString() : r.expires_at;
+      this.guardar({ token: r.token, expires_at: vence, user: r.user });
     } catch (e) {
       throw aErrorApi(e);
     }

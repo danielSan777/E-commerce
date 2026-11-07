@@ -4,6 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SesionService } from '../../../aplicacion/servicios/SesionService';
 import { destinoSeguro } from '../../../aplicacion/destino';
+import { Errores, validarRegistro } from '../../../aplicacion/validacion';
 import { ErrorApi } from '../../../dominio/interfaces/sesion';
 
 // Crear cuenta de cliente. Laravel valida y devuelve los mensajes en español; la cuenta siempre nace como cliente.
@@ -25,6 +26,8 @@ export class CrearCuenta {
   enviando = signal(false);
   error = signal('');
   detalle = signal<string[]>([]);
+  /** Errores por campo detectados en el navegador antes de llamar a la API. */
+  errores = signal<Errores>({});
 
   constructor() {
     inject(Title).setTitle('Crear cuenta | Jardín de Sele');
@@ -36,6 +39,9 @@ export class CrearCuenta {
     if (this.enviando()) return;
     this.error.set('');
     this.detalle.set([]);
+    const errores = validarRegistro({ name: this.name, email: this.email, password: this.password, confirmacion: this.confirmacion });
+    this.errores.set(errores);
+    if (Object.keys(errores).length) return; // campos vacíos o inválidos: no se llama a la API
     this.enviando.set(true);
     try {
       await this.sesion.crearCuenta({
@@ -45,10 +51,12 @@ export class CrearCuenta {
         password_confirmation: this.confirmacion,
       });
       this.password = this.confirmacion = '';
-      await this.router.navigateByUrl(destinoSeguro(this.ruta.snapshot.queryParamMap.get('returnUrl'), this.sesion.usuario()!.role));
+      if (!(await this.router.navigateByUrl(destinoSeguro(this.ruta.snapshot.queryParamMap.get('returnUrl'), this.sesion.usuario()!.role)))) {
+        this.error.set('Tu cuenta se creó, pero no pudimos abrir la pantalla. Recarga la página e ingresa.');
+      }
     } catch (e) {
-      const err = e as ErrorApi;
-      this.error.set(err.message);
+      const err = e as Partial<ErrorApi>;
+      this.error.set(err.message || 'No pudimos crear la cuenta. Inténtalo de nuevo.');
       this.detalle.set(Object.values(err.errors ?? {}).flat());
     } finally {
       this.enviando.set(false);

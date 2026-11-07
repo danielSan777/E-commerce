@@ -33,6 +33,16 @@ describe('SesionService', () => {
     expect(JSON.parse(localStorage.getItem('jds_sesion')!).token).toBe('abc123');
   });
 
+  it('el vencimiento se calcula con expires_in (reloj del navegador), no con la fecha del servidor', async () => {
+    const s = crear();
+    const p = s.iniciarSesion('sele@jardindesele.com', 'clave');
+    // el servidor manda una fecha "ya vencida" (reloj desfasado) pero con 1 hora de vida
+    http.expectOne('/api/v1/auth/login').flush({ ...RESPUESTA, expires_at: '2000-01-01T00:00:00+00:00', expires_in: 3600 });
+    await p;
+
+    expect(s.estaAutenticado()).toBe(true);
+  });
+
   it('crear cuenta: llama a /auth/register, guarda la sesión del cliente', async () => {
     const s = crear();
     const p = s.crearCuenta({ name: 'Ana', email: 'ana@correo.com', password: 'clave-segura-1', password_confirmation: 'clave-segura-1' });

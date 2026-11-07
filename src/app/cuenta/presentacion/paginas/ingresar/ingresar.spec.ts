@@ -81,7 +81,7 @@ describe('Ingresar', () => {
 
   it('muestra el detalle de validación en español', async () => {
     const fixture = await montar();
-    enviar(fixture, '', '');
+    enviar(fixture, 'ana@correo.com', 'x');
 
     ctrl.expectOne('/api/v1/auth/login').flush({ code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { email: ['Escribe tu correo.'], password: ['Escribe tu contraseña.'] } }, { status: 422, statusText: 'Unprocessable' });
     await fixture.whenStable();
@@ -91,6 +91,52 @@ describe('Ingresar', () => {
     expect(texto).toContain('Revisa los datos ingresados.');
     expect(texto).toContain('Escribe tu correo.');
     expect(texto).toContain('Escribe tu contraseña.');
+  });
+
+  it('con correo y contraseña vacíos avisa en cada campo y NO llama a la API', async () => {
+    const fixture = await montar();
+    enviar(fixture, '', '');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    ctrl.expectNone('/api/v1/auth/login');
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).toContain('Escribe tu correo.');
+    expect(texto).toContain('Escribe tu contraseña.');
+    expect(fixture.nativeElement.querySelector('#email').getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('con un correo mal escrito avisa y no llama a la API', async () => {
+    const fixture = await montar();
+    enviar(fixture, 'sin-arroba', 'clave');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    ctrl.expectNone('/api/v1/auth/login');
+    expect(fixture.nativeElement.textContent).toContain('Escribe un correo válido.');
+  });
+
+  it('si entra bien pero la navegación se bloquea, avisa en vez de quedar en blanco', async () => {
+    const fixture = await montar();
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(false);
+    enviar(fixture, 'ana@correo.com', 'clave');
+
+    ctrl.expectOne('/api/v1/auth/login').flush(sesion('customer'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[role=alert]').textContent).toContain('no pudimos abrir la pantalla');
+  });
+
+  it('si la API responde algo inesperado muestra un mensaje general', async () => {
+    const fixture = await montar();
+    enviar(fixture, 'ana@correo.com', 'clave');
+
+    ctrl.expectOne('/api/v1/auth/login').error(new ProgressEvent('error'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[role=alert]').textContent).toContain('No pudimos conectarnos');
   });
 
   it('ofrece crear cuenta', async () => {
