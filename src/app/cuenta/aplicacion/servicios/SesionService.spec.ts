@@ -99,6 +99,13 @@ describe('SesionService', () => {
     await expect(b).rejects.toMatchObject({ code: 'network_error' });
   });
 
+  it('un error 500 sin JSON se distingue de la falta de conexión', async () => {
+    const s = crear();
+    const a = s.iniciarSesion('a@a.com', 'x');
+    http.expectOne('/api/v1/auth/login').flush('<html>Error</html>', { status: 500, statusText: 'Server Error' });
+    await expect(a).rejects.toMatchObject({ code: 'server_error', status: 500 });
+  });
+
   it('una sesión vencida se descarta', () => {
     localStorage.setItem('jds_sesion', JSON.stringify({ ...RESPUESTA, expires_at: new Date(Date.now() - 1000).toISOString() }));
     const s = crear();

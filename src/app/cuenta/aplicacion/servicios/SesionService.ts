@@ -15,6 +15,9 @@ export function aErrorApi(e: unknown): ErrorApi {
   if (e instanceof HttpErrorResponse && e.status === 429) {
     return { status: 429, code: 'too_many_requests', message: 'Demasiados intentos. Espera un minuto e inténtalo de nuevo.' };
   }
+  if (e instanceof HttpErrorResponse && e.status >= 500) {
+    return { status: e.status, code: 'server_error', message: 'El servidor tuvo un problema al procesar la solicitud. Revisa el último error en storage/logs/laravel.log del backend.' };
+  }
   return { status: 0, code: 'network_error', message: 'No pudimos conectarnos con el servidor. Inténtalo de nuevo.' };
 }
 
