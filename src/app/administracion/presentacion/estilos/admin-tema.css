@@ -1,0 +1,57 @@
+/* Tema del panel de administración. Propuesta de diseño generada con la guía ui-ux-pro-max
+   (verdes de éxito + acento naranja, Rubik/Nunito Sans). Los colores de texto sobre botones se oscurecieron
+   respecto a la guía para cumplir contraste 4.5:1. Solo afecta al panel (/admin). */
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Rubik:wght@500;600;700&display=swap');
+
+:host {
+  --primario: #047857; --primario-oscuro: #065f46; --acento: #c2410c; --acento-oscuro: #9a3412;
+  --fondo: #ecfdf5; --tarjeta: #ffffff; --borde: #a7f3d0; --texto: #064e3b; --suave: #475569; --peligro: #b91c1c;
+  display: block; min-height: 100vh; background: var(--fondo); color: var(--texto);
+  font-family: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 1rem; line-height: 1.5;
+}
+h1, h2, h3, strong, .barra { font-family: 'Rubik', 'Nunito Sans', system-ui, sans-serif; }
+
+.barra { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; padding: .9rem 1.25rem; background: var(--primario); color: #fff; box-shadow: 0 2px 10px rgba(6, 78, 59, .25); }
+.barra a { color: #fff; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.contenido { max-width: 760px; margin: 0 auto; padding: 1.25rem 1rem 3rem; display: flex; flex-direction: column; gap: 1rem; }
+
+.lista { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .75rem; }
+.lista li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; padding: 1rem 1.1rem; background: var(--tarjeta); border: 1px solid var(--borde); border-left: 5px solid var(--primario); border-radius: 12px; box-shadow: 0 2px 8px rgba(6, 78, 59, .08); transition: box-shadow .2s ease, transform .2s ease; }
+.lista li:hover { box-shadow: 0 6px 16px rgba(6, 78, 59, .14); transform: translateY(-1px); }
+.datos { display: flex; flex-direction: column; gap: .15rem; }
+.datos strong { font-size: 1.1rem; }
+.datos small { color: var(--suave); }
+.inactiva { align-self: flex-start; background: #fee2e2; color: var(--peligro); font-size: .8rem; font-weight: 700; padding: .1rem .55rem; border-radius: 999px; }
+.acciones { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+
+.formulario { display: flex; flex-direction: column; gap: .4rem; background: var(--tarjeta); padding: 1.25rem; border: 1px solid var(--borde); border-radius: 14px; box-shadow: 0 4px 14px rgba(6, 78, 59, .1); }
+.formulario h2 { font-size: 1.2rem; margin: 0 0 .5rem; }
+label { font-weight: 700; font-size: .92rem; margin-top: .5rem; }
+label.casilla { display: flex; gap: .5rem; align-items: center; font-weight: 400; min-height: 44px; }
+label.casilla input { width: 1.2rem; height: 1.2rem; accent-color: var(--primario); }
+.ayuda { color: var(--suave); font-size: .82rem; }
+.campo-error { color: var(--peligro); font-size: .85rem; font-weight: 600; }
+
+input[type=text], input:not([type]), input[type=number], input[type=search], select, textarea {
+  padding: .65rem .8rem; min-height: 44px; border: 1px solid #86d4b4; border-radius: 10px; font-size: 1rem; background: #fff; color: var(--texto); font-family: inherit;
+}
+textarea { min-height: 6rem; }
+input[readonly] { background: #f1f5f4; color: #3d493d; }
+input[aria-invalid=true], select[aria-invalid=true] { border-color: var(--peligro); }
+
+button, a.boton { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .55rem 1rem; border: 1px solid var(--primario); border-radius: 10px; background: #fff; color: var(--primario-oscuro); font: 700 .95rem 'Nunito Sans', system-ui, sans-serif; text-decoration: none; cursor: pointer; transition: background-color .15s ease, box-shadow .15s ease; }
+button:hover, a.boton:hover { background: #d1fae5; }
+button.primario, a.boton.primario { background: var(--acento); border-color: var(--acento); color: #fff; align-self: flex-start; }
+button.primario:hover, a.boton.primario:hover { background: var(--acento-oscuro); border-color: var(--acento-oscuro); }
+button.peligro { color: var(--peligro); border-color: var(--peligro); }
+button.peligro:hover { background: #fee2e2; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+:is(button, a, input, select, textarea):focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+
+.error { background: #fee2e2; color: #7f1d1d; border: 1px solid #fecaca; border-radius: 10px; padding: .7rem .9rem; }
+.error p, .error ul { margin: 0; }
+.error ul { padding-left: 1.2rem; margin-top: .4rem; }
+.detalle { font-size: .85rem; }
+.aviso { background: #d1fae5; color: #064e3b; border-radius: 10px; padding: .7rem .9rem; margin: 0; }
+
+@media (prefers-reduced-motion: reduce) { .lista li, button, a.boton { transition: none; } .lista li:hover { transform: none; } }

@@ -1,10 +1,8 @@
-.barra { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding: .9rem 1.25rem; background: #2f6b34; color: #fff; }
-.usuario { opacity: .9; font-size: .9rem; }
-.contenido { max-width: 720px; margin: 0 auto; padding: 1.5rem 1rem; }
-.secciones { display: flex; gap: .75rem; margin-top: 1rem; }
-.secciones a { padding: .7rem 1rem; border-radius: 8px; background: #e8f5e9; color: #1b5e20; font-weight: 600; text-decoration: none; }
-.acciones { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
-button { padding: .7rem 1rem; border: 0; border-radius: 8px; background: #2f6b34; color: #fff; font-weight: 600; cursor: pointer; }
-button.secundario { background: #fff; color: #8a1c13; border: 1px solid #8a1c13; }
-button:disabled { opacity: .6; cursor: default; }
-.error { background: #fdecea; color: #8a1c13; border-radius: 8px; padding: .6rem .8rem; }
+@import '../../estilos/admin-tema.css';
+.usuario { opacity: .95; font-size: .9rem; }
+.contenido { padding-top: 1.5rem; }
+.secciones { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.secciones a { display: inline-flex; align-items: center; min-height: 48px; padding: .7rem 1.2rem; border: 1px solid var(--borde); border-left: 5px solid var(--primario); border-radius: 12px; background: #fff; color: var(--primario-oscuro); font-weight: 700; text-decoration: none; box-shadow: 0 2px 8px rgba(6, 78, 59, .08); transition: box-shadow .2s ease; }
+.secciones a:hover { box-shadow: 0 6px 16px rgba(6, 78, 59, .14); }
+.acciones { margin-top: 1.25rem; }
+button.secundario { background: #fff; color: var(--peligro); border-color: var(--peligro); }
