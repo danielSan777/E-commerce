@@ -61,6 +61,9 @@ export class AdminProductoForm implements OnInit, OnDestroy {
   categorias = signal<CategoriaAdmin[]>([]);
   subcategorias = signal<SubcategoriaAdmin[]>([]);
   subcategoriasListas = signal(false);
+  /** true mientras Laravel responde las subcategorías de la categoría elegida. */
+  cargandoSubcategorias = signal(false);
+  private pedidoSub = 0;
   precioFinal = signal<PrevisualizacionPrecio | null>(null);
   cargando = signal(true);
   guardando = signal(false);
@@ -111,15 +114,21 @@ export class AdminProductoForm implements OnInit, OnDestroy {
   }
 
   private async cargarSubcategorias(): Promise<void> {
+    const pedido = ++this.pedidoSub;
     this.subcategoriasListas.set(false);
-    if (!this.form.category) return this.subcategorias.set([]);
+    this.subcategorias.set([]);
+    if (!this.form.category) return this.cargandoSubcategorias.set(false);
+    this.cargandoSubcategorias.set(true);
+    let lista: SubcategoriaAdmin[] = [];
     try {
-      this.subcategorias.set(await this.subcategoriasApi.listar(this.form.category));
+      lista = await this.subcategoriasApi.listar(this.form.category);
     } catch {
-      this.subcategorias.set([]);
-    } finally {
-      this.subcategoriasListas.set(true);
+      lista = [];
     }
+    if (pedido !== this.pedidoSub) return; // llegó una respuesta vieja: otra categoría ya fue elegida
+    this.subcategorias.set(lista);
+    this.subcategoriasListas.set(true);
+    this.cargandoSubcategorias.set(false);
   }
 
   /** Pide a Laravel cuánto sería el descuento en dinero (con una pequeña espera mientras la persona escribe). */

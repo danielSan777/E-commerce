@@ -62,6 +62,26 @@ describe('AdminProductoForm', () => {
     fixture.detectChanges();
   }
 
+  it('mientras cargan las subcategorías el campo queda bloqueado y dice "Cargando…"', async () => {
+    const fixture = await montar(null);
+    const c = fixture.componentInstance;
+    const el = fixture.nativeElement as HTMLElement;
+    c.form.category = CAT.slug;
+    const p = c.cambiarCategoria();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const select = el.querySelector<HTMLSelectElement>('#subcategory')!;
+    expect(select.disabled).toBe(true);
+    expect(select.options[0].textContent).toContain('Cargando…');
+    ctrl.expectOne(`/api/v1/admin/categories/${CAT.slug}/subcategories`).flush({ data: [SUB] });
+    await p;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(select.disabled).toBe(false);
+    expect(select.options[0].textContent).toContain('Elige una subcategoría');
+    expect(select.options.length).toBe(2);
+  });
+
   it('muestra el código siguiente en solo lectura: no se puede escribir', async () => {
     const fixture = await montar(null);
     const campo = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#sku')!;

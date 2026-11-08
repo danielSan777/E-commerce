@@ -37,8 +37,8 @@
       @if (errores()['category']) { <small class="campo-error">{{ errores()['category'] }}</small> }
 
       <label for="subcategory">Subcategoría</label>
-      <select id="subcategory" name="subcategory" [(ngModel)]="form.subcategory" (ngModelChange)="quitarError('subcategory')" [disabled]="!form.category || !subcategorias().length" [attr.aria-invalid]="errores()['subcategory'] ? true : null">
-        <option value="">{{ form.category ? 'Elige una subcategoría' : 'Primero elige la categoría' }}</option>
+      <select id="subcategory" name="subcategory" [(ngModel)]="form.subcategory" (ngModelChange)="quitarError('subcategory')" [disabled]="!form.category || cargandoSubcategorias() || !subcategorias().length" [attr.aria-invalid]="errores()['subcategory'] ? true : null">
+        <option value="">{{ cargandoSubcategorias() ? 'Cargando…' : form.category ? 'Elige una subcategoría' : 'Primero elige la categoría' }}</option>
         @for (s of subcategorias(); track s.slug) { <option [value]="s.slug">{{ s.name }}</option> }
       </select>
       @if (form.category && subcategoriasListas() && !subcategorias().length) {
