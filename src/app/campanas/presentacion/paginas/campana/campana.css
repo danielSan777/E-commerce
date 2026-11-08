@@ -38,3 +38,5 @@
 .slogan { text-align: center; font-family: Georgia, 'Times New Roman', serif; font-style: italic; color: var(--jds-vino);
   background: var(--jds-rosa); border-radius: 14px; padding: 14px; margin: 0; font-size: 1.05rem; }
 .slogan .bi { color: #e48aa3; }
+
+.estado { text-align: center; padding: 60px 16px; color: #555; }

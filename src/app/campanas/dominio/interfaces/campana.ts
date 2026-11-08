@@ -8,7 +8,7 @@ export interface CampanaContrato {
     state: 'active' | 'upcoming';         // en temporada | fuera de temporada
     season_year: number;
     event_date: string;                   // YYYY-MM-DD
-    order_deadline: { date: string; label: string };
+    order_deadline: { date: string; label: string } | null;   // Laravel la informa cuando exista el calendario operativo (Paso 9)
     tagline: string;                      // "Un regalo con su nombre que sigue creciendo"
     slogan: string;                       // frase del banner de en medio
     related_category: { slug: string; name: string; url: string };

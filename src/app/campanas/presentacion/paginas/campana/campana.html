@@ -9,7 +9,7 @@
             @if (enTemporada()) {
             <h1>{{ c.name }}</h1>
             <p class="lema">{{ c.tagline }}</p>
-            <p class="fecha"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ c.order_deadline.label }}</p>
+            @if (c.order_deadline) { <p class="fecha"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ c.order_deadline.label }}</p> }
             <a class="boton" href="#regalos">Ver regalos <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
             } @else {
             <h1>{{ c.name }} {{ c.season_year }}</h1>
@@ -58,6 +58,10 @@
 
     <a class="boton grande" [routerLink]="c.related_category.url">Ver más regalos de {{ c.related_category.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
 </div>
-} @else {
+} @else if (fallo()) {
+<p class="estado" role="alert">No pudimos cargar esta página. Inténtalo de nuevo en unos minutos.</p>
+} @else if (campana() === null) {
 <app-no-encontrada />
+} @else {
+<p class="estado">Cargando…</p>
 }

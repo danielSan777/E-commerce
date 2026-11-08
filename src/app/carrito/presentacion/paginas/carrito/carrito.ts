@@ -6,7 +6,9 @@ import { CurrencyPipe, DOCUMENT, NgTemplateOutlet, isPlatformBrowser } from '@an
 import { RouterLink } from '@angular/router';
 // AJUSTA la ruta según donde dejes carrito.service.ts
 import { CarritoService, ProductoCarrito } from '../../../aplicacion/servicios/CarritoService';
-import { productos } from '../../../../all-productos/dominio/muestra_producto';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
+import { CategoriaService } from '../../../../categorias/aplicacion/servicios/CategoriaService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { macetaIgualSinConfirmar } from '../../../dominio/iguales';
 import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
@@ -38,27 +40,20 @@ export class Carrito implements AfterViewInit, OnDestroy {
   readonly RUTA_SEGUIR = '/categorias';   // "Seguir comprando"
   readonly RUTA_CONTINUAR = '/checkout';  // "Continuar"
 
-  // ===== EDITABLE: categorías de la hoja "Elige otra maceta" =====
-  // "clave" es el campo `tipo` de tus productos. El orden de esta lista es el orden de las pestañas.
-  // Las categorías sin productos disponibles no se muestran.
-  readonly CATEGORIAS_MACETAS: Categoria[] = [
-    { clave: 'profesionales', etiqueta: 'Profesiones y hobbies' },
-    { clave: 'amor-amistad', etiqueta: 'Amor y amistad' },
-    { clave: 'personaje', etiqueta: 'Personajes' },
-    { clave: 'cuadro', etiqueta: 'Cuadros' },
-  ];
+  // ===== Otras macetas: los productos activos y disponibles que entrega Laravel =====
+  private productosApi = toSignal(inject(CategoriaService).productos().pipe(catchError(() => of([]))), { initialValue: [] });
 
-  // ===== Otras macetas: salen de tus productos (muestra_producto.ts), solo los disponibles =====
-  readonly macetas: Sugerencia[] = productos
-    .filter(p => p.disponible)
+  /** Precio en dólares para mostrarlo y guardarlo en el carrito; el precio final lo calculó Laravel. */
+  readonly macetas = computed<Sugerencia[]>(() => this.productosApi()
+    .filter(p => p.available)
     .map(p => ({
-      id: String(p.id),
-      nombre: p.nombre,
-      precio: p.precio,
-      imagen: p.imagen,
-      categoria: p.tipo,
+      id: p.sku,
+      nombre: p.name,
+      precio: p.price.final_cents / 100,
+      imagen: p.image,
+      categoria: p.category.slug,
       slug: p.slug,
-    }));
+    })));
 
   // ===== EDITABLE: complementos (rutas de tus accesorios; el precio de cada uno es de ejemplo) =====
   readonly complementos: Sugerencia[] = [
@@ -110,13 +105,13 @@ export class Carrito implements AfterViewInit, OnDestroy {
   textoProductos = computed(() => `${this.cantidad()} ${this.cantidad() === 1 ? 'producto' : 'productos'}`);
 
   // ----- Categorías de las hojas -----
+  // Las pestañas de "Elige otra maceta" son las categorías de la base de datos que tienen productos disponibles
   catsMacetas = computed<Categoria[]>(() => {
-    const usadas = new Set(this.macetas.map(m => m.categoria));
-    const conocidas = this.CATEGORIAS_MACETAS.filter(c => usadas.has(c.clave));
-    const otras = [...usadas]
-      .filter(t => t && !this.CATEGORIAS_MACETAS.some(c => c.clave === t))
-      .map(t => ({ clave: t as string, etiqueta: t as string }));
-    return [...conocidas, ...otras];
+    const vistas = new Map<string, string>();
+    for (const p of this.productosApi()) {
+      if (p.available && !vistas.has(p.category.slug)) vistas.set(p.category.slug, p.category.name);
+    }
+    return [...vistas].map(([clave, etiqueta]) => ({ clave, etiqueta }));
   });
 
   catsComplementos = computed<Categoria[]>(() =>
@@ -128,7 +123,7 @@ export class Carrito implements AfterViewInit, OnDestroy {
 
   macetasDeCategoria = computed(() => {
     const cat = this.catMaceta() || this.catsMacetas()[0]?.clave;
-    return this.macetas.filter(m => m.categoria === cat);
+    return this.macetas().filter(m => m.categoria === cat);
   });
 
   complementosDeCategoria = computed(() => {
