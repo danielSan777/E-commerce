@@ -1,7 +1,7 @@
 /* Tema del panel de administración. Propuesta de diseño generada con la guía ui-ux-pro-max
    (verdes de éxito + acento naranja, Rubik/Nunito Sans). Los colores de texto sobre botones se oscurecieron
    respecto a la guía para cumplir contraste 4.5:1. Solo afecta al panel (/admin). */
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Rubik:wght@500;600;700&display=swap');
+/* Fuentes: Rubik y Nunito Sans se usan si están instaladas; si no, el sistema. No se carga ninguna fuente externa (el build no debe depender de internet). */
 
 :host {
   --primario: #047857; --primario-oscuro: #065f46; --acento: #c2410c; --acento-oscuro: #9a3412;
