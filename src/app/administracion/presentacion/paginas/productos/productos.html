@@ -25,7 +25,7 @@
         <li>
           <div class="datos">
             <strong>{{ p.name }}</strong>
-            <small>{{ p.sku }} · {{ p.category_name }}@if (p.subcategory_slug) { / {{ p.subcategory_slug }} } · ${{ dolares(p.base_price_cents) }}</small>
+            <small>{{ p.sku }} · {{ p.category_name }}@if (p.subcategory_slug) { / {{ p.subcategory_slug }} } · ${{ dolares(p.final_price_cents) }}@if (p.discount_cents > 0) { <s>${{ dolares(p.base_price_cents) }}</s> (−{{ p.discount_percent }}%) }</small>
             @if (!p.is_active) { <span class="inactiva">Inactivo</span> }
             @else if (!p.is_available) { <span class="inactiva">Agotado</span> }
           </div>

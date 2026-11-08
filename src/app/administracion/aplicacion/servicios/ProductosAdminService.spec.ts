@@ -50,4 +50,19 @@ describe('ProductosAdminService', () => {
     ctrl.expectOne('/api/v1/admin/products/NO').flush({ code: 'not_found', message: 'No encontrado.' }, { status: 404, statusText: 'Not Found' });
     await expect(p).rejects.toMatchObject({ message: 'No encontrado.' });
   });
+
+  it('pide el código siguiente', async () => {
+    const p = servicio.siguienteSku();
+    ctrl.expectOne('/api/v1/admin/products/next-sku').flush({ sku: 'JDS-004' });
+    expect(await p).toBe('JDS-004');
+  });
+
+  it('pide a Laravel el cálculo del descuento', async () => {
+    const p = servicio.previsualizarPrecio(2150, 12.5);
+    const req = ctrl.expectOne(r => r.url === '/api/v1/admin/products/price-preview');
+    expect(req.request.params.get('base_price_cents')).toBe('2150');
+    expect(req.request.params.get('discount_percent')).toBe('12.5');
+    req.flush({ base_price_cents: 2150, discount_percent: 12.5, discount_cents: 269, final_price_cents: 1881 });
+    expect((await p).final_price_cents).toBe(1881);
+  });
 });
