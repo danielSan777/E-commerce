@@ -1,0 +1,137 @@
+<header class="barra">
+  <strong>Campañas</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+
+  @if (error() && editando() === null) { <p class="error" role="alert">{{ error() }}</p> }
+
+  @if (editando() === null) {
+    <button type="button" class="primario" (click)="nueva()">Nueva campaña</button>
+  } @else {
+    <form class="formulario" (submit)="guardar($event)" novalidate>
+      <h2>{{ editando() === '' ? 'Nueva campaña' : 'Editar campaña' }}</h2>
+
+      <label for="name">Nombre</label>
+      <input id="name" name="name" [(ngModel)]="form.name" required placeholder="San Valentín" />
+
+      <label for="slug">Dirección en la web (se genera sola)</label>
+      <input id="slug" type="text" [value]="slugMostrado() ? '/' + slugMostrado() : ''" readonly tabindex="-1" placeholder="Se genera del nombre" aria-describedby="ayuda-slug" />
+      <small id="ayuda-slug" class="ayuda">Sin tilde, en minúsculas y con "-" en lugar de espacios. No lleva el año y no se puede cambiar después.</small>
+
+      <label for="categoria">Categoría relacionada</label>
+      <select id="categoria" name="categoria" [(ngModel)]="form.related_category" aria-describedby="ayuda-categoria">
+        <option value="">Elige una categoría</option>
+        @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
+      </select>
+      <small id="ayuda-categoria" class="ayuda">Fuera de temporada, la campaña muestra los regalos de esta categoría.</small>
+
+      <label for="inicio-dia">La temporada empieza</label>
+      <div class="fecha">
+        <select id="inicio-dia" name="inicio-dia" [(ngModel)]="form.inicio.dia" aria-label="Día de inicio">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
+        <select name="inicio-mes" [(ngModel)]="form.inicio.mes" aria-label="Mes de inicio">@for (m of meses; track m; let i = $index) { <option [ngValue]="i + 1">{{ m }}</option> }</select>
+      </div>
+
+      <label for="fin-dia">La temporada termina</label>
+      <div class="fecha">
+        <select id="fin-dia" name="fin-dia" [(ngModel)]="form.fin.dia" aria-label="Día en que termina">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
+        <select name="fin-mes" [(ngModel)]="form.fin.mes" aria-label="Mes en que termina">@for (m of meses; track m; let i = $index) { <option [ngValue]="i + 1">{{ m }}</option> }</select>
+      </div>
+
+      <label for="evento-dia">Fecha del evento</label>
+      <div class="fecha">
+        <select id="evento-dia" name="evento-dia" [(ngModel)]="form.evento.dia" aria-label="Día del evento">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
+        <select name="evento-mes" [(ngModel)]="form.evento.mes" aria-label="Mes del evento">@for (m of meses; track m; let i = $index) { <option [ngValue]="i + 1">{{ m }}</option> }</select>
+      </div>
+      <small class="ayuda">Las fechas se repiten todos los años. Laravel decide si hoy está en temporada y de qué año es.</small>
+
+      <label for="tagline">Lema (opcional)</label>
+      <input id="tagline" name="tagline" [(ngModel)]="form.tagline" placeholder="Un regalo con su nombre que sigue creciendo" />
+
+      <label for="slogan">Frase del banner (opcional)</label>
+      <input id="slogan" name="slogan" [(ngModel)]="form.slogan" placeholder="Las flores duran una semana. Esta maceta, años." />
+
+      <label>Productos de la campaña</label>
+      <small class="ayuda">En temporada se muestran estos productos, en este orden. Si no eliges ninguno, se muestran los de la categoría relacionada.</small>
+      @if (elegidos().length) {
+        <ol class="elegidos" aria-label="Productos elegidos, en orden">
+          @for (sku of elegidos(); track sku; let i = $index; let ultimo = $last) {
+            <li>
+              <span>{{ i + 1 }}. {{ nombreProducto(sku) }}</span>
+              <button type="button" (click)="mover(sku, -1)" [disabled]="i === 0" aria-label="Subir">↑</button>
+              <button type="button" (click)="mover(sku, 1)" [disabled]="ultimo" aria-label="Bajar">↓</button>
+              <button type="button" class="peligro" (click)="alternar(sku)" aria-label="Quitar">✕</button>
+            </li>
+          }
+        </ol>
+      }
+      <div class="opciones" role="group" aria-label="Elegir productos">
+        @for (p of productos(); track p.sku) {
+          <label class="casilla">
+            <input type="checkbox" [checked]="estaElegido(p.sku)" (change)="alternar(p.sku)" />
+            {{ p.name }} <small class="ayuda">({{ p.sku }}){{ p.is_active ? '' : ' · inactivo' }}</small>
+          </label>
+        } @empty {
+          <small class="ayuda">Todavía no hay productos. Crea uno primero.</small>
+        }
+      </div>
+
+      <fieldset class="google">
+        <legend>Cómo aparece en Google (opcional)</legend>
+
+        <label for="seo_title">Título para Google</label>
+        <input id="seo_title" name="seo_title" maxlength="255" [(ngModel)]="form.seo_title" aria-describedby="ayuda-seo-title" />
+        <small id="ayuda-seo-title" class="ayuda">Si lo dejas vacío se usará: <strong>{{ form.seo_title.trim() || (form.name.trim() ? form.name.trim() + ' | Jardín de Sele' : 'Nombre | Jardín de Sele') }}</strong>.</small>
+
+        <label for="seo_description">Descripción para Google</label>
+        <textarea id="seo_description" name="seo_description" rows="3" maxlength="320" [(ngModel)]="form.seo_description" aria-describedby="ayuda-seo-desc"></textarea>
+        <small id="ayuda-seo-desc" class="ayuda">{{ form.seo_description.length }} de 320 caracteres.</small>
+      </fieldset>
+
+      <label class="casilla"><input type="checkbox" name="is_active" [(ngModel)]="form.is_active" /> Activa (visible en la tienda)</label>
+
+      @if (error()) {
+        <div class="error" role="alert">
+          <p>{{ error() }}</p>
+          @for (d of detalle(); track d) { <p class="detalle">{{ d }}</p> }
+        </div>
+      }
+
+      <div class="acciones">
+        <button type="submit" class="primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+        <button type="button" (click)="cancelar()">Cancelar</button>
+      </div>
+    </form>
+  }
+
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+    <ul class="lista">
+      @for (c of campanas(); track c.slug) {
+        <li>
+          <div class="datos">
+            <strong>{{ c.name }}</strong>
+            <small>/{{ c.slug }} · {{ textoFecha(c.start_md) }} al {{ textoFecha(c.end_md) }} · evento el {{ textoFecha(c.event_md) }} · {{ c.products.length }} producto(s)</small>
+            <span class="estado" [class.activa]="c.state === 'active'">{{ c.state === 'active' ? 'En temporada ahora' : 'Fuera de temporada · llega en ' + c.season_year }}</span>
+            @if (!c.is_active) { <span class="inactiva">Inactiva</span> }
+          </div>
+          <div class="acciones">
+            <a class="boton" [href]="'/' + c.slug" target="_blank" rel="noopener">Ver en la tienda</a>
+            <button type="button" (click)="editar(c)">Editar</button>
+            @if (porEliminar() === c.slug) {
+              <span>¿Eliminar?</span>
+              <button type="button" class="peligro" (click)="eliminar(c.slug)">Sí, eliminar</button>
+              <button type="button" (click)="porEliminar.set(null)">No</button>
+            } @else {
+              <button type="button" class="peligro" (click)="pedirEliminar(c.slug)">Eliminar</button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li>Todavía no hay campañas.</li>
+      }
+    </ul>
+  }
+</main>
