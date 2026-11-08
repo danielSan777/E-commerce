@@ -8,9 +8,14 @@ import { CategoriaAdmin } from '../../../dominio/interfaces/categoria-admin';
 import { generarSlug } from '../../../aplicacion/slug';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 
-interface Formulario { name: string; headline: string; sort_order: number; is_active: boolean }
+interface Formulario { name: string; headline: string; intro: string; seo_title: string; seo_description: string; sort_order: number; is_active: boolean }
 
-const VACIO: Formulario = { name: '', headline: '', sort_order: 0, is_active: true };
+/** Largo máximo de la descripción para Google (lo mismo que valida Laravel). */
+export const MAX_DESCRIPCION_GOOGLE = 320;
+/** Largo recomendado del título: Google suele cortarlo alrededor de 60 caracteres. */
+export const MAX_TITULO_GOOGLE = 60;
+
+const VACIO: Formulario = { name: '', headline: '', intro: '', seo_title: '', seo_description: '', sort_order: 0, is_active: true };
 
 // Categorías en el panel. Angular solo muestra lo que Laravel responde y sus mensajes (validación, 409 con productos).
 @Component({
@@ -70,7 +75,7 @@ export class AdminCategorias implements OnInit {
   editar(c: CategoriaAdmin): void {
     this.limpiar();
     this.slugActual = c.slug;
-    this.form = { name: c.name, headline: c.headline ?? '', sort_order: c.sort_order, is_active: c.is_active };
+    this.form = { name: c.name, headline: c.headline ?? '', intro: c.intro_html ?? '', seo_title: c.seo_title ?? '', seo_description: c.seo_description ?? '', sort_order: c.sort_order, is_active: c.is_active };
     this.editando.set(c.slug);
   }
 
@@ -85,7 +90,10 @@ export class AdminCategorias implements OnInit {
     this.error.set('');
     this.detalle.set([]);
     this.guardando.set(true);
-    const base = { name: this.form.name.trim(), headline: this.form.headline.trim() || null, sort_order: Number(this.form.sort_order), is_active: this.form.is_active };
+    const base = {
+      name: this.form.name.trim(), headline: this.form.headline.trim() || null,
+      intro_html: this.form.intro.trim() || null, seo_title: this.form.seo_title.trim() || null, seo_description: this.form.seo_description.trim() || null,
+      sort_order: Number(this.form.sort_order), is_active: this.form.is_active };
     try {
       const slug = this.editando()!;
       if (slug === '') {
@@ -107,6 +115,14 @@ export class AdminCategorias implements OnInit {
       this.guardando.set(false);
     }
   }
+
+  /** Cómo se vería en Google si se deja vacío: "Nombre | Jardín de Sele". */
+  tituloVistaPrevia(): string {
+    return this.form.seo_title.trim() || (this.form.name.trim() ? `${this.form.name.trim()} | Jardín de Sele` : '');
+  }
+
+  readonly maxDescripcion = MAX_DESCRIPCION_GOOGLE;
+  readonly maxTitulo = MAX_TITULO_GOOGLE;
 
   /** El identificador que se mostrará: el guardado al editar, o la vista previa del nombre al crear. */
   slugMostrado(): string {

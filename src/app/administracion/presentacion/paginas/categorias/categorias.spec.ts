@@ -126,4 +126,49 @@ describe('AdminCategorias', () => {
     expect(c.slugMostrado()).toBe('amor');
     expect((fixture.nativeElement.querySelector('#slug') as HTMLInputElement).value).toBe('/amor');
   });
+
+  it('los campos de Google son opcionales: vacíos se envían como null', async () => {
+    const fixture = await montar([]);
+    const c = fixture.componentInstance;
+    c.nueva();
+    c.form.name = 'Amor';
+    const p = c.guardar(new Event('submit'));
+    const post = ctrl.expectOne('/api/v1/admin/categories');
+    expect(post.request.body).toMatchObject({ intro_html: null, seo_title: null, seo_description: null });
+    post.flush(cat('amor', 'Amor'), { status: 201, statusText: 'Created' });
+    await esperar();
+    ctrl.expectOne('/api/v1/admin/categories').flush({ data: [] });
+    await p;
+  });
+
+  it('al editar carga los campos de Google guardados y al guardar los envía', async () => {
+    const fixture = await montar([cat('amor', 'Amor', { seo_title: 'Regalos de amor', seo_description: 'Macetas con nombre', intro_html: 'Un regalo que crece' })]);
+    const c = fixture.componentInstance;
+    c.editar(c.categorias()[0]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    expect((el.querySelector('#seo_title') as HTMLInputElement).value).toBe('Regalos de amor');
+    expect((el.querySelector('#seo_description') as HTMLTextAreaElement).value).toBe('Macetas con nombre');
+    expect((el.querySelector('#intro') as HTMLTextAreaElement).value).toBe('Un regalo que crece');
+
+    c.form.seo_title = '  Amor | Jardín  ';
+    const p = c.guardar(new Event('submit'));
+    const put = ctrl.expectOne('/api/v1/admin/categories/amor');
+    expect(put.request.body).toMatchObject({ seo_title: 'Amor | Jardín', seo_description: 'Macetas con nombre', intro_html: 'Un regalo que crece' });
+    put.flush(cat('amor', 'Amor'));
+    await esperar();
+    ctrl.expectOne('/api/v1/admin/categories').flush({ data: [] });
+    await p;
+  });
+
+  it('si el título de Google está vacío muestra cuál se usará: "Nombre | Jardín de Sele"', async () => {
+    const fixture = await montar([]);
+    const c = fixture.componentInstance;
+    c.nueva();
+    c.form.name = 'Amistad';
+    expect(c.tituloVistaPrevia()).toBe('Amistad | Jardín de Sele');
+    c.form.seo_title = 'Regalos de amistad';
+    expect(c.tituloVistaPrevia()).toBe('Regalos de amistad');
+  });
 });

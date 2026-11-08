@@ -38,6 +38,24 @@
       <input id="sort_order" name="sort_order" type="number" min="0" [(ngModel)]="form.sort_order" aria-describedby="ayuda-orden" />
       <small id="ayuda-orden" class="ayuda">1 sale primero, 2 después, y así. Define el orden en que se muestran las categorías.</small>
 
+      <label for="intro">Introducción de la categoría (opcional)</label>
+      <textarea id="intro" name="intro" rows="4" [(ngModel)]="form.intro" aria-describedby="ayuda-intro"></textarea>
+      <small id="ayuda-intro" class="ayuda">Un párrafo que presenta la categoría en la tienda y ayuda a que Google la entienda. Escríbelo como texto normal, sin etiquetas.</small>
+
+      <fieldset class="google">
+        <legend>Cómo aparece en Google (opcional)</legend>
+
+        <label for="seo_title">Título para Google</label>
+        <input id="seo_title" name="seo_title" maxlength="255" [(ngModel)]="form.seo_title" aria-describedby="ayuda-seo-title" />
+        <small id="ayuda-seo-title" class="ayuda">
+          {{ form.seo_title.trim().length }} caracteres (lo ideal es hasta {{ maxTitulo }}). Si lo dejas vacío, se usará: <strong>{{ tituloVistaPrevia() || 'Nombre | Jardín de Sele' }}</strong>.
+        </small>
+
+        <label for="seo_description">Descripción para Google</label>
+        <textarea id="seo_description" name="seo_description" rows="3" [attr.maxlength]="maxDescripcion" [(ngModel)]="form.seo_description" aria-describedby="ayuda-seo-desc"></textarea>
+        <small id="ayuda-seo-desc" class="ayuda">{{ form.seo_description.length }} de {{ maxDescripcion }} caracteres. Es el texto que aparece bajo el título en los resultados de búsqueda.</small>
+      </fieldset>
+
       <label class="casilla"><input type="checkbox" name="is_active" [(ngModel)]="form.is_active" /> Activa (visible en la tienda)</label>
 
       @if (error()) {

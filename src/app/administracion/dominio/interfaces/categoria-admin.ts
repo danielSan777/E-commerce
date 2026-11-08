@@ -17,6 +17,9 @@ export interface DatosCategoria {
   name: string;
   slug?: string;
   headline: string | null;
+  intro_html: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
   sort_order: number;
   is_active: boolean;
 }

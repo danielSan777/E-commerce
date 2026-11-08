@@ -24,13 +24,13 @@ describe('CategoriasAdminService', () => {
   });
 
   it('crea con POST y edita con PUT sin enviar el slug', async () => {
-    const a = s.crear({ name: 'Nueva', headline: null, sort_order: 1, is_active: true });
+    const a = s.crear({ name: 'Nueva', headline: null, intro_html: null, seo_title: null, seo_description: null, sort_order: 1, is_active: true });
     const post = http.expectOne('/api/v1/admin/categories');
     expect(post.request.method).toBe('POST');
     post.flush({ ...CAT, slug: 'nueva' }, { status: 201, statusText: 'Created' });
     await a;
 
-    const b = s.editar('amor', { name: 'Amor y pareja', headline: null, sort_order: 1, is_active: false });
+    const b = s.editar('amor', { name: 'Amor y pareja', headline: null, intro_html: null, seo_title: null, seo_description: null, sort_order: 1, is_active: false });
     const put = http.expectOne('/api/v1/admin/categories/amor');
     expect(put.request.method).toBe('PUT');
     expect('slug' in put.request.body).toBe(false);
