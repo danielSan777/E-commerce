@@ -862,7 +862,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 - [ ] **Relacionados:** selección manual de 3–4; si no hay, misma subcategoría; si tampoco, misma categoría.
 - [ ] **Edición masiva:** filtros, búsqueda, selección múltiple, activar o desactivar, cambiar categoría o subcategoría y aplicar promoción (Paso 7).
 - [ ] **Redirecciones 301:** al cambiar un slug se crea la redirección automáticamente, sin cadenas (la URL vieja apunta directo a la nueva), y se actualizan enlaces internos, canonical y sitemap. Un slug usado nunca se reutiliza.
-- [ ] **API pública** de categoría, subcategoría, producto, campaña y manifiesto del configurador con los contratos del Paso 0; Angular SSR obtiene los datos en el servidor.
+- [ ] **API pública** de categoría, subcategoría, producto, campaña y manifiesto del configurador con los contratos del Paso 0; Angular SSR obtiene los datos en el servidor. *(En curso: la tienda ya lee de Laravel el menú, las categorías y subcategorías —también las nuevas, sin tocar código—, la ficha del producto, los favoritos —por ahora los 6 más nuevos— y la búsqueda; el HTML del servidor trae nombre y precio. Faltan campañas, manifiesto del configurador, carrito y las páginas viejas `/catalogo`, que siguen con datos de prueba.)*
 - [ ] Cargar el producto modelo Doctor con datos reales.
 
 **Implementación acordada**

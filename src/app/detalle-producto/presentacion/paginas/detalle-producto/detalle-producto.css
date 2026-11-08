@@ -701,3 +701,18 @@ button {
 
 .btn-programar { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0; padding: 11px;
   border: 1.5px solid #175437; border-radius: 12px; background: #fff; color: #175437; font-weight: 700; }
+
+.insignia {
+    background: #b42318;
+    color: #fff;
+    font-size: .85rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.estado {
+    text-align: center;
+    padding: 60px 16px;
+    color: #555;
+}

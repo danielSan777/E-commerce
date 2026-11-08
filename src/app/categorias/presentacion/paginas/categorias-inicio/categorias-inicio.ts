@@ -1,4 +1,6 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { CategoriaService } from '../../../aplicacion/servicios/CategoriaService';
@@ -14,13 +16,16 @@ import { ComoFunciona } from '../../../../shared/componentes/como-funciona/como-
 export class CategoriasInicio {
   private servicio = inject(CategoriaService);
 
-  readonly tarjetas = this.servicio.categorias();
+  readonly tarjetas = toSignal(this.servicio.categorias().pipe(catchError(() => of([]))), { initialValue: [] });
   // Video del banner (H.264 sin audio). Mientras sea null se muestra solo el banner con imágenes.
   readonly VIDEO: string | null = null;
-  readonly seo = computed(() => this.servicio.categoria(null)!.seo);
+  readonly seo = {
+    title: 'Todos los productos | Jardín de Sele',
+    description: 'Macetas personalizadas con plantita natural. Envíos a todo Ecuador.',
+  };
 
   constructor() {
-    inject(Title).setTitle(this.seo().title);
-    inject(Meta).updateTag({ name: 'description', content: this.seo().description });
+    inject(Title).setTitle(this.seo.title);
+    inject(Meta).updateTag({ name: 'description', content: this.seo.description });
   }
 }

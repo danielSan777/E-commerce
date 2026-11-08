@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { CategoriaService } from '../../../categorias/aplicacion/servicios/CategoriaService';
+import { CatalogoDePrueba } from '../../../categorias/aplicacion/servicios/CatalogoDePrueba';
 import { CampanaContrato } from '../../dominio/interfaces/campana';
 
 const SITIO = 'https://jardindesele.com';
@@ -8,7 +8,7 @@ const SITIO = 'https://jardindesele.com';
 // (en temporada o no), el año, las fechas y la selección ordenada de productos los decide el panel (Paso 9).
 @Injectable({ providedIn: 'root' })
 export class CampanaService {
-    private categorias = inject(CategoriaService);
+    private categorias = inject(CatalogoDePrueba);
 
     // ===== MOCK EDITABLE =====
     // 'active' muestra la campaña con sus productos; 'upcoming', el "llegará muy pronto".

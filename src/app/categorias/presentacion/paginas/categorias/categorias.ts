@@ -1,8 +1,10 @@
 import { Component, DOCUMENT, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of, switchMap, tap } from 'rxjs';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { CategoriaContrato } from '../../../dominio/interfaces/categoria';
 import { CategoriaService } from '../../../aplicacion/servicios/CategoriaService';
 import { PromesaService } from '../../../../checkout/aplicacion/servicios/PromesaService';
 import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
@@ -26,11 +28,22 @@ export class Categorias {
   private datos = toSignal(this.route.data, { initialValue: this.route.snapshot.data });
   private parametros = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
 
-  readonly tarjetas = this.servicio.categorias();
+  readonly tarjetas = toSignal(this.servicio.categorias().pipe(catchError(() => of([]))), { initialValue: [] });
   readonly promesa = inject(PromesaService).promesa();
 
-  categoria = computed(() =>
-    this.servicio.categoria(this.datos()['categoria'] ?? null, this.parametros().get('subcategoria')));
+  /** true si la API no respondió (distinto de "no existe": eso es un 404). */
+  readonly fallo = signal(false);
+
+  /** undefined = cargando · null = no existe (404) · contrato = lo que Laravel entregó. */
+  categoria = toSignal<CategoriaContrato | null | undefined>(
+    toObservable(computed(() => [this.datos()['categoria'] ?? this.parametros().get('categoria'), this.parametros().get('subcategoria')] as const)).pipe(
+      tap(() => this.fallo.set(false)),
+      switchMap(([categoria, subcategoria]) => this.servicio.categoria(categoria, subcategoria).pipe(
+        catchError(() => { this.fallo.set(true); return of(null); }),
+      )),
+    ),
+    { initialValue: undefined },
+  );
 
   // Flechas de las pestañas: avisan que hay más subcategorías hacia los lados
   readonly flechaIzq = signal(false);
@@ -54,7 +67,7 @@ export class Categorias {
     const c = this.categoria();
     return c?.subcategories.find(s => s.slug === c.active_subcategory);
   });
-  otras = computed(() => this.tarjetas.filter(t => t.slug !== this.categoria()?.slug));
+  otras = computed(() => this.tarjetas().filter(t => t.slug !== this.categoria()?.slug));
 
   // "Ver más de Salud": al inicio se ven los primeros productos; todos están en el HTML (los demás, ocultos)
   readonly PRODUCTOS_INICIALES = 4;

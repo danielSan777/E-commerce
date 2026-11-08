@@ -2,8 +2,6 @@ import { Routes } from '@angular/router';
 import { adminGuard, sesionGuard } from './administracion/aplicacion/adminAuth';
 import { MainLayout } from './core/layout/main-layout/main-layout/main-layout';
 
-// Categorías con URL propia (cada una abre la pantalla de categorías en ese estado)
-const CATEGORIAS = ['profesiones-y-hobbies', 'amor', 'amistad', 'familia'];
 const pantallaCategorias = () =>
     import('./categorias/presentacion/paginas/categorias/categorias').then(m => m.Categorias);
 
@@ -84,10 +82,6 @@ export const routes: Routes = [
 
             // Pantalla de categorías: reemplaza a "Todos los productos"
             { path: 'categorias', loadComponent: () => import('./categorias/presentacion/paginas/categorias-inicio/categorias-inicio').then(m => m.CategoriasInicio) },
-            ...CATEGORIAS.flatMap(slug => [
-                { path: slug, loadComponent: pantallaCategorias, data: { categoria: slug } },
-                { path: `${slug}/:subcategoria`, loadComponent: pantallaCategorias, data: { categoria: slug } },
-            ]),
             { path: 'consultar-pedido', loadComponent: () => import('./checkout/presentacion/paginas/consultar-pedido/consultar-pedido').then(m => m.ConsultarPedido) },
             { path: 'terminos-y-condiciones', loadComponent: () => import('./politicas/presentacion/paginas/politica/politica').then(m => m.Politica) },
             // Campaña de temporada (la URL no lleva año; fuera de temporada sigue respondiendo)
@@ -129,6 +123,12 @@ export const routes: Routes = [
                     import('./checkout/presentacion/paginas/pedido-token/pedido-token')
                         .then(m => m.PedidoToken)
             },
+
+            // Categorías y subcategorías (/amor, /profesiones-y-hobbies/salud…). La lista sale de la base de datos: una categoría
+            // creada en el panel tiene su dirección sin tocar código. Va después de todas las rutas fijas; si Laravel dice que
+            // no existe, la pantalla muestra el 404.
+            { path: ':categoria', loadComponent: pantallaCategorias },
+            { path: ':categoria/:subcategoria', loadComponent: pantallaCategorias },
 
             // Cualquier otra dirección: 404 propio (con estado HTTP 404 en el servidor)
             {

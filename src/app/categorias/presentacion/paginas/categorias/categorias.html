@@ -94,6 +94,10 @@
         </ul>
     </section>
 </div>
-} @else {
+} @else if (fallo()) {
+<p class="vacio" role="alert">No pudimos cargar esta página. Inténtalo de nuevo en unos minutos.</p>
+} @else if (categoria() === null) {
 <app-no-encontrada />
+} @else {
+<p class="vacio">Cargando…</p>
 }

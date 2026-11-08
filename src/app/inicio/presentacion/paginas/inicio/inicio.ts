@@ -1,5 +1,7 @@
 import { Component, PLATFORM_ID, computed, inject } from '@angular/core';
 import { CurrencyPipe, isPlatformBrowser } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { CategoriaService } from '../../../../categorias/aplicacion/servicios/CategoriaService';
@@ -32,8 +34,9 @@ export class Inicio {
     { icono: 'bi-geo-alt', texto: 'Hecho en Guayaquil' },
   ];
 
-  readonly categorias = inject(CategoriaService).categorias();
-  readonly favoritos = inject(CategoriaService).favoritos();
+  private catalogo = inject(CategoriaService);
+  readonly categorias = toSignal(this.catalogo.categorias().pipe(catchError(() => of([]))), { initialValue: [] });
+  readonly favoritos = toSignal(this.catalogo.favoritos().pipe(catchError(() => of([]))), { initialValue: [] });
   readonly promesa = inject(PromesaService).promesa();
   readonly macetasEnvioGratis = inject(EnvioGratisService).MACETAS_PARA_ENVIO_GRATIS;
   readonly enlaceAyuda = enlaceWhatsapp();
