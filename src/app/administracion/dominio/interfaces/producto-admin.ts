@@ -16,6 +16,8 @@ export interface ProductoAdmin {
   material_text: string | null;
   includes: string[];
   description_html: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
   is_available: boolean;
   is_active: boolean;
   search_synonyms: string[];
@@ -34,6 +36,8 @@ export interface DatosProducto {
   material_text: string | null;
   includes: string[];
   description_html: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
   is_available: boolean;
   is_active: boolean;
 }

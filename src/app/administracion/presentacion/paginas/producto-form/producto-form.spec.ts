@@ -207,9 +207,11 @@ describe('AdminProductoForm', () => {
     const fixture = await montar('JDS-001', {
       sku: 'JDS-001', slug: 'doctor', name: 'Doctor', type: 'personalizable', category_slug: CAT.slug, subcategory_slug: 'salud',
       base_price_cents: 2150, cost_cents: null, discount_percent: 10, discount_cents: 215, final_price_cents: 1935,
-      size_text: null, material_text: null, includes: ['Maceta'], description_html: null, is_available: true, is_active: true,
+      size_text: null, material_text: null, includes: ['Maceta'], description_html: null, seo_title: 'Doctor | Regalo', seo_description: 'Maceta para doctores', is_available: true, is_active: true,
     });
     const c = fixture.componentInstance;
+    expect(c.form.seo_title).toBe('Doctor | Regalo');
+    expect(c.form.seo_description).toBe('Maceta para doctores');
     expect(c.form.precio).toBe('21.50');
     expect(c.form.descuento).toBe('10');
     expect(c.skuMostrado()).toBe('JDS-001');
@@ -222,10 +224,31 @@ describe('AdminProductoForm', () => {
     const p = c.guardar(new Event('submit'));
     const put = ctrl.expectOne('/api/v1/admin/products/JDS-001');
     expect(put.request.method).toBe('PUT');
-    expect(put.request.body).toMatchObject({ subcategory: 'salud', discount_percent: 10 });
+    expect(put.request.body).toMatchObject({ subcategory: 'salud', discount_percent: 10, seo_title: 'Doctor | Regalo', seo_description: 'Maceta para doctores' });
     expect('sku' in put.request.body).toBe(false);
     expect('slug' in put.request.body).toBe(false);
     put.flush({});
+    await p;
+  });
+
+  it('los campos de Google vacíos se envían como null y se muestra el título que se usará', async () => {
+    const fixture = await montar(null);
+    await elegirCategoria(fixture);
+    const c = fixture.componentInstance;
+    c.form.name = 'Doctor';
+    c.form.precio = '21.50';
+    c.form.subcategory = 'salud';
+    expect(c.tituloVistaPrevia()).toBe('Doctor | Jardín de Sele');
+    c.form.seo_title = 'Maceta para doctores';
+    expect(c.tituloVistaPrevia()).toBe('Maceta para doctores');
+    c.form.seo_title = '   ';
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const p = c.guardar(new Event('submit'));
+    await esperar(350);
+    ctrl.match(r => r.url.endsWith('/price-preview')).forEach(r => r.flush({ base_price_cents: 2150, discount_percent: 0, discount_cents: 0, final_price_cents: 2150 }));
+    const post = ctrl.expectOne('/api/v1/admin/products');
+    expect(post.request.body).toMatchObject({ seo_title: null, seo_description: null });
+    post.flush({ sku: 'JDS-001' }, { status: 201, statusText: 'Created' });
     await p;
   });
 

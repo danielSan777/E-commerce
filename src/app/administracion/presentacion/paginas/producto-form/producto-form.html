@@ -80,6 +80,20 @@
       <label for="description_html">Descripción (opcional)</label>
       <textarea id="description_html" name="description_html" rows="5" [(ngModel)]="form.description_html"></textarea>
 
+      <fieldset class="google">
+        <legend>Cómo aparece en Google (opcional)</legend>
+
+        <label for="seo_title">Título para Google</label>
+        <input id="seo_title" name="seo_title" maxlength="255" [(ngModel)]="form.seo_title" aria-describedby="ayuda-seo-title" />
+        <small id="ayuda-seo-title" class="ayuda">
+          {{ form.seo_title.trim().length }} caracteres (lo ideal es hasta {{ maxTitulo }}). Si lo dejas vacío, se usará: <strong>{{ tituloVistaPrevia() || 'Nombre | Jardín de Sele' }}</strong>.
+        </small>
+
+        <label for="seo_description">Descripción para Google</label>
+        <textarea id="seo_description" name="seo_description" rows="3" [attr.maxlength]="maxDescripcion" [(ngModel)]="form.seo_description" aria-describedby="ayuda-seo-desc"></textarea>
+        <small id="ayuda-seo-desc" class="ayuda">{{ form.seo_description.length }} de {{ maxDescripcion }} caracteres. Es el texto que aparece bajo el título en los resultados de búsqueda.</small>
+      </fieldset>
+
       <label class="casilla"><input type="checkbox" name="is_available" [(ngModel)]="form.is_available" /> Disponible para comprar</label>
       <label class="casilla"><input type="checkbox" name="is_active" [(ngModel)]="form.is_active" /> Activo (visible en la tienda)</label>
 

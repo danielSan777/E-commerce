@@ -16,12 +16,16 @@ import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 interface Formulario {
   name: string; type: 'personalizable' | 'complemento'; category: string; subcategory: string;
   precio: string; costo: string; descuento: string; size_text: string; material_text: string; incluye: string;
-  description_html: string; is_available: boolean; is_active: boolean;
+  description_html: string; seo_title: string; seo_description: string; is_available: boolean; is_active: boolean;
 }
+
+/** Lo mismo que valida Laravel. El título se recomienda hasta 60: Google suele cortarlo ahí. */
+export const MAX_DESCRIPCION_GOOGLE = 320;
+export const MAX_TITULO_GOOGLE = 60;
 
 const VACIO: Formulario = {
   name: '', type: 'personalizable', category: '', subcategory: '', precio: '', costo: '', descuento: '', size_text: '',
-  material_text: '', incluye: '', description_html: '', is_available: true, is_active: true,
+  material_text: '', incluye: '', description_html: '', seo_title: '', seo_description: '', is_available: true, is_active: true,
 };
 
 const DESCUENTO_MAXIMO = 90; // el mismo tope que valida Laravel (config/catalogo.php)
@@ -152,6 +156,14 @@ export class AdminProductoForm implements OnInit, OnDestroy {
     }, 300);
   }
 
+  readonly maxTitulo = MAX_TITULO_GOOGLE;
+  readonly maxDescripcion = MAX_DESCRIPCION_GOOGLE;
+
+  /** Cómo se vería en Google si se deja vacío: "Nombre | Jardín de Sele". */
+  tituloVistaPrevia(): string {
+    return this.form.seo_title.trim() || (this.form.name.trim() ? `${this.form.name.trim()} | Jardín de Sele` : '');
+  }
+
   /** El aviso rojo de un campo desaparece apenas la persona lo corrige. */
   quitarError(campo: string): void {
     if (!this.errores()[campo]) return;
@@ -197,6 +209,8 @@ export class AdminProductoForm implements OnInit, OnDestroy {
       material_text: this.form.material_text.trim() || null,
       includes: this.form.incluye.split('\n').map(l => l.trim()).filter(Boolean),
       description_html: this.form.description_html.trim() || null,
+      seo_title: this.form.seo_title.trim() || null,
+      seo_description: this.form.seo_description.trim() || null,
       is_available: this.form.is_available,
       is_active: this.form.is_active,
     };
@@ -226,7 +240,7 @@ export class AdminProductoForm implements OnInit, OnDestroy {
       precio: centavosADolares(p.base_price_cents), costo: p.cost_cents === null ? '' : centavosADolares(p.cost_cents),
       descuento: p.discount_percent > 0 ? String(p.discount_percent) : '',
       size_text: p.size_text ?? '', material_text: p.material_text ?? '', incluye: p.includes.join('\n'),
-      description_html: p.description_html ?? '', is_available: p.is_available, is_active: p.is_active,
+      description_html: p.description_html ?? '', seo_title: p.seo_title ?? '', seo_description: p.seo_description ?? '', is_available: p.is_available, is_active: p.is_active,
     };
   }
 }
