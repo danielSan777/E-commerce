@@ -35,6 +35,29 @@ export function textoFechaAnual(md: string): string {
 }
 
 interface Fecha { dia: number; mes: number }
+
+/** Días de cada mes (febrero con 29: la fecha se repite todos los años, incluidos los bisiestos). */
+const DIAS_DEL_MES = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+export type ErroresCampana = Partial<Record<'name' | 'related_category' | 'inicio' | 'fin' | 'evento', string>>;
+
+/** Revisa el formulario en Angular, sin llamar a la API: nombre, categoría y que las tres fechas tengan sentido. */
+export function validarCampana(f: { name: string; related_category: string; inicio: Fecha; fin: Fecha; evento: Fecha }): ErroresCampana {
+  const e: ErroresCampana = {};
+  if (!f.name.trim()) e.name = 'Escribe el nombre de la campaña.';
+  if (!f.related_category) e.related_category = 'Elige la categoría relacionada.';
+
+  const existe = (x: Fecha) => x.dia <= DIAS_DEL_MES[x.mes - 1];
+  const nombre = (x: Fecha) => `${x.dia} de ${MESES[x.mes - 1]}`;
+  if (!existe(f.inicio)) e.inicio = `El ${nombre(f.inicio)} no existe. Elige otro día.`;
+  if (!existe(f.fin)) e.fin = `El ${nombre(f.fin)} no existe. Elige otro día.`;
+  if (!existe(f.evento)) e.evento = `El ${nombre(f.evento)} no existe. Elige otro día.`;
+
+  // Las fechas son "MM-DD": comparadas como texto quedan en orden de calendario.
+  if (!e.inicio && !e.fin && aFechaAnual(f.fin) < aFechaAnual(f.inicio)) e.fin = 'La temporada no puede terminar antes de empezar.';
+  if (!e.inicio && !e.evento && aFechaAnual(f.evento) < aFechaAnual(f.inicio)) e.evento = 'El evento no puede ser antes de que empiece la temporada.';
+  return e;
+}
 interface Formulario {
   name: string; related_category: string; inicio: Fecha; fin: Fecha; evento: Fecha;
   tagline: string; slogan: string; color: string; emoji: string; seo_title: string; seo_description: string; is_active: boolean;
@@ -82,6 +105,8 @@ export class AdminCampanas implements OnInit {
   /** SKU de los productos elegidos, en el orden en que se mostrarán. */
   elegidos = signal<string[]>([]);
   porEliminar = signal<string | null>(null);
+  /** Se pulsó Guardar al menos una vez: recién entonces se marcan los campos vacíos. */
+  intento = signal(false);
 
   error = signal('');
   detalle = signal<string[]>([]);
@@ -115,6 +140,7 @@ export class AdminCampanas implements OnInit {
     this.slugActual = '';
     this.form = structuredClone(VACIO);
     this.elegidos.set([]);
+    this.intento.set(false);
     this.editando.set('');
   }
 
@@ -127,6 +153,7 @@ export class AdminCampanas implements OnInit {
       tagline: c.tagline ?? '', slogan: c.slogan ?? '', color: c.theme_color ?? '', emoji: c.emoji ?? '', seo_title: c.seo_title ?? '', seo_description: c.seo_description ?? '', is_active: c.is_active,
     };
     this.elegidos.set(c.products.map(p => p.sku));
+    this.intento.set(false);
     this.editando.set(c.slug);
   }
 
@@ -164,6 +191,8 @@ export class AdminCampanas implements OnInit {
     if (this.guardando() || this.editando() === null) return;
     this.error.set('');
     this.detalle.set([]);
+    this.intento.set(true);
+    if (Object.keys(this.errores()).length) return; // algo está mal en el formulario: no se llama a la API
     this.guardando.set(true);
     const datos = {
       name: this.form.name.trim(),
@@ -195,6 +224,13 @@ export class AdminCampanas implements OnInit {
         this.detalle.set(Object.values(err.errors ?? {}).flat());
       },
     });
+  }
+
+  /** Errores del formulario ahora mismo. Las fechas se avisan al instante; nombre y categoría, después de pulsar Guardar. */
+  errores(): ErroresCampana {
+    const e = validarCampana(this.form);
+    if (!this.intento()) { delete e.name; delete e.related_category; }
+    return e;
   }
 
   /** La dirección que se mostrará: la guardada al editar, o la vista previa del nombre al crear. */

@@ -23,3 +23,6 @@
 .vista-previa .etiqueta { margin: 0; font-weight: 700; color: var(--c); text-transform: uppercase; letter-spacing: .06em; font-size: .8rem; }
 .vista-previa .titulo-previa { margin: 0; font-family: Lobster, Georgia, serif; font-size: 1.5rem; color: var(--c); line-height: 1.1; }
 .vista-previa .boton-previa { background: var(--c); color: #fff; font-weight: 700; border-radius: 999px; padding: 6px 16px; font-size: .9rem; }
+
+.campo-error { color: #b00020; font-weight: 600; }
+.fecha.invalida select { border-color: #b00020; }

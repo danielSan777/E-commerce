@@ -14,37 +14,42 @@
       <h2>{{ editando() === '' ? 'Nueva campaña' : 'Editar campaña' }}</h2>
 
       <label for="name">Nombre</label>
-      <input id="name" name="name" [(ngModel)]="form.name" required placeholder="San Valentín" />
+      <input id="name" name="name" [(ngModel)]="form.name" required placeholder="San Valentín" [attr.aria-invalid]="errores().name ? true : null" aria-describedby="err-name" />
+      @if (errores().name; as m) { <small id="err-name" class="campo-error" role="alert">{{ m }}</small> }
 
       <label for="slug">Dirección en la web (se genera sola)</label>
       <input id="slug" type="text" [value]="slugMostrado() ? '/' + slugMostrado() : ''" readonly tabindex="-1" placeholder="Se genera del nombre" aria-describedby="ayuda-slug" />
       <small id="ayuda-slug" class="ayuda">Sin tilde, en minúsculas y con "-" en lugar de espacios. No lleva el año y no se puede cambiar después.</small>
 
       <label for="categoria">Categoría relacionada</label>
-      <select id="categoria" name="categoria" [(ngModel)]="form.related_category" aria-describedby="ayuda-categoria">
+      <select id="categoria" name="categoria" [(ngModel)]="form.related_category" [attr.aria-invalid]="errores().related_category ? true : null" aria-describedby="ayuda-categoria err-categoria">
         <option value="">Elige una categoría</option>
         @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
       </select>
+      @if (errores().related_category; as m) { <small id="err-categoria" class="campo-error" role="alert">{{ m }}</small> }
       <small id="ayuda-categoria" class="ayuda">Fuera de temporada, la campaña muestra los regalos de esta categoría.</small>
 
       <label for="inicio-dia">La temporada empieza</label>
-      <div class="fecha">
+      <div class="fecha" [class.invalida]="errores().inicio">
         <select id="inicio-dia" name="inicio-dia" [(ngModel)]="form.inicio.dia" aria-label="Día de inicio">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
         <select name="inicio-mes" [(ngModel)]="form.inicio.mes" aria-label="Mes de inicio">@for (m of meses; track m; let i = $index) { <option [ngValue]="i + 1">{{ m }}</option> }</select>
       </div>
+      @if (errores().inicio; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
 
       <label for="fin-dia">La temporada termina</label>
-      <div class="fecha">
+      <div class="fecha" [class.invalida]="errores().fin">
         <select id="fin-dia" name="fin-dia" [(ngModel)]="form.fin.dia" aria-label="Día en que termina">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
         <select name="fin-mes" [(ngModel)]="form.fin.mes" aria-label="Mes en que termina">@for (m of meses; track m; let i = $index) { <option [ngValue]="i + 1">{{ m }}</option> }</select>
       </div>
+      @if (errores().fin; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
 
       <label for="evento-dia">Fecha del evento</label>
-      <div class="fecha">
+      <div class="fecha" [class.invalida]="errores().evento">
         <select id="evento-dia" name="evento-dia" [(ngModel)]="form.evento.dia" aria-label="Día del evento">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
         <select name="evento-mes" [(ngModel)]="form.evento.mes" aria-label="Mes del evento">@for (m of meses; track m; let i = $index) { <option [ngValue]="i + 1">{{ m }}</option> }</select>
       </div>
-      <small class="ayuda">Las fechas se repiten todos los años. Laravel decide si hoy está en temporada y de qué año es.</small>
+      @if (errores().evento; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+      <small class="ayuda">Las fechas se repiten todos los años: la temporada termina el mismo año en que empieza, y el evento no puede ser antes del inicio. Laravel decide si hoy está en temporada y de qué año es.</small>
 
       <label for="tagline">Lema (opcional)</label>
       <input id="tagline" name="tagline" [(ngModel)]="form.tagline" placeholder="Un regalo con su nombre que sigue creciendo" />

@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { API_URL } from '../../../../core/configuracion/api';
-import { AdminCampanas, aFechaAnual, leerFechaAnual, textoFechaAnual } from './campanas';
+import { AdminCampanas, aFechaAnual, leerFechaAnual, textoFechaAnual, validarCampana } from './campanas';
 
 const esperar = () => new Promise<void>(r => setTimeout(r));
 
@@ -20,6 +20,36 @@ describe('fechas anuales', () => {
     expect(leerFechaAnual('05-10')).toEqual({ dia: 10, mes: 5 });
     expect(aFechaAnual({ dia: 4, mes: 2 })).toBe('02-04');
     expect(textoFechaAnual('02-14')).toBe('14 de febrero');
+  });
+});
+
+describe('validarCampana (sin llamar a la API)', () => {
+  const ok = { name: 'Navidad', related_category: 'amor', inicio: { dia: 1, mes: 11 }, fin: { dia: 24, mes: 12 }, evento: { dia: 25, mes: 12 } };
+
+  it('un formulario correcto no tiene errores', () => expect(validarCampana(ok)).toEqual({}));
+
+  it('la temporada no puede terminar antes de empezar (9 de noviembre → 8 de noviembre)', () => {
+    expect(validarCampana({ ...ok, inicio: { dia: 9, mes: 11 }, fin: { dia: 8, mes: 11 } }).fin).toBe('La temporada no puede terminar antes de empezar.');
+  });
+
+  it('puede empezar y terminar el mismo día', () => {
+    expect(validarCampana({ ...ok, inicio: { dia: 9, mes: 11 }, fin: { dia: 9, mes: 11 } }).fin).toBeUndefined();
+  });
+
+  it('el evento no puede ser antes de que empiece la temporada, pero sí después de que termine', () => {
+    expect(validarCampana({ ...ok, evento: { dia: 31, mes: 10 } }).evento).toBe('El evento no puede ser antes de que empiece la temporada.');
+    expect(validarCampana(ok).evento).toBeUndefined();
+  });
+
+  it('rechaza días que no existen (31 de febrero) pero acepta el 29 de febrero', () => {
+    expect(validarCampana({ ...ok, fin: { dia: 31, mes: 2 } }).fin).toContain('no existe');
+    expect(validarCampana({ ...ok, inicio: { dia: 29, mes: 2 }, fin: { dia: 1, mes: 3 }, evento: { dia: 1, mes: 3 } })).toEqual({});
+  });
+
+  it('pide nombre y categoría', () => {
+    const e = validarCampana({ ...ok, name: '  ', related_category: '' });
+    expect(e.name).toBe('Escribe el nombre de la campaña.');
+    expect(e.related_category).toBe('Elige la categoría relacionada.');
   });
 });
 
@@ -109,6 +139,7 @@ describe('AdminCampanas', () => {
 
         c.nueva();
         c.form.name = 'Otra';
+        c.form.related_category = 'amor';
         c.guardar(new Event('submit'));
         const sin = ctrl.expectOne('/api/v1/admin/campaigns');
         expect(sin.request.body.theme_color).toBeNull();
@@ -126,4 +157,38 @@ describe('AdminCampanas', () => {
         expect(c.form.emoji).toBe('🎄');
         expect((fixture.nativeElement.querySelector('.vista-previa') as HTMLElement).style.getPropertyValue('--c')).toBe('#1b5e20');
     });
+
+  it('con fechas al revés muestra el aviso al instante y no llama a la API al guardar', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.nueva();
+    c.form.name = 'Navidad';
+    c.form.related_category = 'amor';
+    c.form.inicio = { dia: 9, mes: 11 };
+    c.form.fin = { dia: 8, mes: 11 };
+    c.form.evento = { dia: 7, mes: 11 };
+    fixture.detectChanges();
+
+    const avisos = Array.from(fixture.nativeElement.querySelectorAll('.campo-error')).map(e => (e as HTMLElement).textContent);
+    expect(avisos).toContain('La temporada no puede terminar antes de empezar.');
+    expect(avisos).toContain('El evento no puede ser antes de que empiece la temporada.');
+
+    c.guardar(new Event('submit'));
+    ctrl.expectNone('/api/v1/admin/campaigns');
+    expect(c.guardando()).toBe(false);
+  });
+
+  it('nombre y categoría vacíos solo se marcan después de pulsar Guardar, y tampoco llaman a la API', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.nueva();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#err-name')).toBeNull();
+
+    c.guardar(new Event('submit'));
+    fixture.detectChanges();
+    ctrl.expectNone('/api/v1/admin/campaigns');
+    expect(fixture.nativeElement.querySelector('#err-name').textContent).toContain('Escribe el nombre');
+    expect(fixture.nativeElement.querySelector('#err-categoria').textContent).toContain('Elige la categoría');
+  });
 });
