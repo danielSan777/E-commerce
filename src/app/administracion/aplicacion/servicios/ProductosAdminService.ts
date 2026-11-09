@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
-import { aErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
+import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
 import { DatosProducto, PrevisualizacionPrecio, ProductoAdmin } from '../../dominio/interfaces/producto-admin';
 
 // Productos del panel: todo viene de Laravel (que calcula y valida). El código (SKU) lo asigna Laravel y la dirección (slug) sale del nombre.
@@ -15,45 +15,37 @@ export class ProductosAdminService {
     return sku ? `${this.api}/admin/products/${encodeURIComponent(sku)}` : `${this.api}/admin/products`;
   }
 
-  async listar(categoria?: string, texto?: string): Promise<ProductoAdmin[]> {
+  listar(categoria?: string, texto?: string): Observable<ProductoAdmin[]> {
     let params = new HttpParams();
     if (categoria) params = params.set('category', categoria);
     if (texto?.trim()) params = params.set('q', texto.trim());
-    return this.pedir(async () => (await firstValueFrom(this.http.get<{ data: ProductoAdmin[] }>(this.url(), { params }))).data);
+    return this.http.get<{ data: ProductoAdmin[] }>(this.url(), { params }).pipe(map(r => r.data), conErrorApi());
   }
 
-  ver(sku: string): Promise<ProductoAdmin> {
-    return this.pedir(() => firstValueFrom(this.http.get<ProductoAdmin>(this.url(sku))));
+  ver(sku: string): Observable<ProductoAdmin> {
+    return this.http.get<ProductoAdmin>(this.url(sku)).pipe(conErrorApi());
   }
 
-  crear(datos: DatosProducto): Promise<ProductoAdmin> {
-    return this.pedir(() => firstValueFrom(this.http.post<ProductoAdmin>(this.url(), datos)));
+  crear(datos: DatosProducto): Observable<ProductoAdmin> {
+    return this.http.post<ProductoAdmin>(this.url(), datos).pipe(conErrorApi());
   }
 
-  editar(sku: string, datos: DatosProducto): Promise<ProductoAdmin> {
-    return this.pedir(() => firstValueFrom(this.http.put<ProductoAdmin>(this.url(sku), datos)));
+  editar(sku: string, datos: DatosProducto): Observable<ProductoAdmin> {
+    return this.http.put<ProductoAdmin>(this.url(sku), datos).pipe(conErrorApi());
   }
 
   /** Código que recibiría el próximo producto (solo para mostrarlo; el definitivo se asigna al guardar). */
-  async siguienteSku(): Promise<string> {
-    return this.pedir(async () => (await firstValueFrom(this.http.get<{ sku: string }>(`${this.url()}/next-sku`))).sku);
+  siguienteSku(): Observable<string> {
+    return this.http.get<{ sku: string }>(`${this.url()}/next-sku`).pipe(map(r => r.sku), conErrorApi());
   }
 
   /** Descuento en dinero y precio final, calculados por Laravel. */
-  previsualizarPrecio(baseCents: number, porcentaje: number): Promise<PrevisualizacionPrecio> {
+  previsualizarPrecio(baseCents: number, porcentaje: number): Observable<PrevisualizacionPrecio> {
     const params = new HttpParams().set('base_price_cents', baseCents).set('discount_percent', porcentaje);
-    return this.pedir(() => firstValueFrom(this.http.get<PrevisualizacionPrecio>(`${this.url()}/price-preview`, { params })));
+    return this.http.get<PrevisualizacionPrecio>(`${this.url()}/price-preview`, { params }).pipe(conErrorApi());
   }
 
-  eliminar(sku: string): Promise<void> {
-    return this.pedir(async () => { await firstValueFrom(this.http.delete(this.url(sku))); });
-  }
-
-  private async pedir<T>(accion: () => Promise<T>): Promise<T> {
-    try {
-      return await accion();
-    } catch (e) {
-      throw aErrorApi(e);
-    }
+  eliminar(sku: string): Observable<void> {
+    return this.http.delete<void>(this.url(sku)).pipe(conErrorApi());
   }
 }

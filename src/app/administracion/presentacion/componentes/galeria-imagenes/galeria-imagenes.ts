@@ -1,4 +1,6 @@
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { FormsModule } from '@angular/forms';
 import { ImagenesAdminService } from '../../../aplicacion/servicios/ImagenesAdminService';
@@ -28,6 +30,7 @@ export const ROLES_IMAGEN: { valor: string; texto: string }[] = [
 export class GaleriaImagenes implements OnInit {
   private api = inject(ImagenesAdminService);
   private avisos = inject(AvisosService);
+  private destroyRef = inject(DestroyRef);
 
   readonly dueno = input.required<DuenoDeImagenes>();
   readonly clave = input.required<string>();
@@ -50,21 +53,20 @@ export class GaleriaImagenes implements OnInit {
   principalId = computed(() => this.imagenes().find(i => i.role === 'front')?.id ?? null);
 
   ngOnInit(): void {
-    void this.cargar();
+    this.cargar();
   }
 
-  async cargar(): Promise<void> {
-    try {
-      this.imagenes.set(await this.api.listar(this.dueno(), this.clave()));
-      this.ajustarTipo();
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    } finally {
-      this.cargando.set(false);
-    }
+  cargar(): void {
+    this.api.listar(this.dueno(), this.clave()).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
+      next: lista => {
+        this.imagenes.set(lista);
+        this.ajustarTipo();
+      },
+      error: (e: ErrorApi) => this.error.set(e.message),
+    });
   }
 
-  async elegir(evento: Event): Promise<void> {
+  elegir(evento: Event): void {
     const campo = evento.target as HTMLInputElement;
     const archivo = campo.files?.[0];
     campo.value = ''; // permite volver a elegir el mismo archivo
@@ -77,49 +79,45 @@ export class GaleriaImagenes implements OnInit {
     if (archivo.size > MAX_BYTES) return this.error.set('La imagen debe pesar menos de 8 MB.');
 
     this.subiendo.set(true);
-    try {
-      const nueva = await this.api.subir(this.dueno(), this.clave(), archivo, this.rol, this.alt);
-      this.imagenes.update(l => [...l, nueva]);
-      this.alt = '';
-      this.aviso.set('Imagen subida.');
-      this.avisos.exito('Imagen subida.');
-      this.ajustarTipo();
-    } catch (e) {
-      const err = e as ErrorApi;
-      this.error.set(Object.values(err.errors ?? {}).flat()[0] ?? err.message);
-    } finally {
-      this.subiendo.set(false);
-    }
+    this.api.subir(this.dueno(), this.clave(), archivo, this.rol, this.alt).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.subiendo.set(false))).subscribe({
+      next: nueva => {
+        this.imagenes.update(l => [...l, nueva]);
+        this.alt = '';
+        this.aviso.set('Imagen subida.');
+        this.avisos.exito('Imagen subida.');
+        this.ajustarTipo();
+      },
+      error: (err: ErrorApi) => this.error.set(Object.values(err.errors ?? {}).flat()[0] ?? err.message),
+    });
   }
 
-  async guardarDatos(imagen: ImagenAdmin, alt: string, rol: string): Promise<void> {
+  guardarDatos(imagen: ImagenAdmin, alt: string, rol: string): void {
     this.error.set('');
     this.aviso.set('');
     if (!alt.trim()) return this.error.set('La descripción de la imagen no puede quedar vacía.');
-    try {
-      const guardada = await this.api.editar(imagen.id, { alt: alt.trim(), role: rol });
-      this.imagenes.update(l => l.map(i => (i.id === guardada.id ? guardada : i)));
-      this.aviso.set('Cambios guardados.');
-      this.avisos.exito('Cambios guardados.');
-      this.ajustarTipo();
-    } catch (e) {
-      const err = e as ErrorApi;
-      this.error.set(Object.values(err.errors ?? {}).flat()[0] ?? err.message);
-    }
+    this.api.editar(imagen.id, { alt: alt.trim(), role: rol }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: guardada => {
+        this.imagenes.update(l => l.map(i => (i.id === guardada.id ? guardada : i)));
+        this.aviso.set('Cambios guardados.');
+        this.avisos.exito('Cambios guardados.');
+        this.ajustarTipo();
+      },
+      error: (err: ErrorApi) => this.error.set(Object.values(err.errors ?? {}).flat()[0] ?? err.message),
+    });
   }
 
-  async eliminar(id: number): Promise<void> {
+  eliminar(id: number): void {
     this.porEliminar.set(null);
     this.error.set('');
-    try {
-      await this.api.eliminar(id);
-      this.imagenes.update(l => l.filter(i => i.id !== id));
-      this.aviso.set('Imagen eliminada.');
-      this.avisos.exito('Imagen eliminada.');
-      this.ajustarTipo();
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    }
+    this.api.eliminar(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.imagenes.update(l => l.filter(i => i.id !== id));
+        this.aviso.set('Imagen eliminada.');
+        this.avisos.exito('Imagen eliminada.');
+        this.ajustarTipo();
+      },
+      error: (e: ErrorApi) => this.error.set(e.message),
+    });
   }
 
   /** Si ya hay una principal, el tipo elegido para la próxima imagen no puede ser "Principal". Al liberarse, vuelve a ser el predeterminado. */

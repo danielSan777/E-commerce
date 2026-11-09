@@ -1,4 +1,6 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Observable, Subject, Subscription, catchError, finalize, from, map, of, switchMap, tap, timer } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -47,7 +49,7 @@ export function leerDescuento(texto: string): number | null {
   templateUrl: './producto-form.html',
   styleUrl: './producto-form.css',
 })
-export class AdminProductoForm implements OnInit, OnDestroy {
+export class AdminProductoForm implements OnInit {
   private productosApi = inject(ProductosAdminService);
   private categoriasApi = inject(CategoriasAdminService);
   private subcategoriasApi = inject(SubcategoriasAdminService);
@@ -67,7 +69,6 @@ export class AdminProductoForm implements OnInit, OnDestroy {
   subcategoriasListas = signal(false);
   /** true mientras Laravel responde las subcategorías de la categoría elegida. */
   cargandoSubcategorias = signal(false);
-  private pedidoSub = 0;
   precioFinal = signal<PrevisualizacionPrecio | null>(null);
   cargando = signal(true);
   guardando = signal(false);
@@ -75,36 +76,46 @@ export class AdminProductoForm implements OnInit, OnDestroy {
   detalle = signal<string[]>([]);
   errores = signal<Record<string, string>>({});
 
-  private temporizador: ReturnType<typeof setTimeout> | null = null;
-  private consulta = 0;
+  private destroyRef = inject(DestroyRef);
+  /** Consultas de precio: `switchMap` descarta la anterior (espera y petición) cuando llega una nueva. */
+  private consultaPrecio$ = new Subject<{ base: number; porcentaje: number } | null>();
+  private subcategoriasPendientes?: Subscription;
 
   constructor() {
     inject(Title).setTitle('Producto | Panel de Jardín de Sele');
     inject(Meta).updateTag({ name: 'robots', content: 'noindex, nofollow' });
+    this.consultaPrecio$.pipe(
+      // Pequeña espera mientras la persona escribe; Laravel calcula el descuento.
+      switchMap(c => c === null ? of(null) : timer(300).pipe(
+        switchMap(() => this.productosApi.previsualizarPrecio(c.base, c.porcentaje)),
+        catchError(() => of(null)),
+      )),
+      takeUntilDestroyed(),
+    ).subscribe(r => this.precioFinal.set(r));
   }
 
-  async ngOnInit(): Promise<void> {
-    try {
-      this.categorias.set(await this.categoriasApi.listar());
-      if (this.sku) {
-        const p = await this.productosApi.ver(this.sku);
-        this.slugActual = p.slug;
-        this.skuMostrado.set(p.sku);
-        this.form = this.aFormulario(p);
-        await this.cargarSubcategorias();
-        this.verPrecio();
-      } else {
-        this.productosApi.siguienteSku().then(s => this.skuMostrado.set(s), () => this.skuMostrado.set(''));
-      }
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    } finally {
-      this.cargando.set(false);
-    }
-  }
-
-  ngOnDestroy(): void {
-    if (this.temporizador) clearTimeout(this.temporizador);
+  ngOnInit(): void {
+    this.categoriasApi.listar().pipe(
+      tap(lista => this.categorias.set(lista)),
+      switchMap(() => {
+        if (!this.sku) {
+          // Solo informativo: si falla, el código simplemente no se muestra.
+          this.productosApi.siguienteSku().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: s => this.skuMostrado.set(s), error: () => this.skuMostrado.set('') });
+          return of(undefined);
+        }
+        return this.productosApi.ver(this.sku).pipe(
+          tap(p => {
+            this.slugActual = p.slug;
+            this.skuMostrado.set(p.sku);
+            this.form = this.aFormulario(p);
+          }),
+          switchMap(() => this.subcategoriasDeLaCategoria()),
+          tap(() => this.verPrecio()),
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.cargando.set(false)),
+    ).subscribe({ error: (e: ErrorApi) => this.error.set(e.message) });
   }
 
   slugMostrado(): string {
@@ -112,48 +123,36 @@ export class AdminProductoForm implements OnInit, OnDestroy {
   }
 
   /** Al cambiar la categoría se piden sus subcategorías y se limpia la elegida. */
-  async cambiarCategoria(): Promise<void> {
+  cambiarCategoria(): void {
     this.form.subcategory = '';
-    await this.cargarSubcategorias();
+    this.subcategoriasPendientes?.unsubscribe(); // si llega otra elección, la respuesta vieja se descarta
+    this.subcategoriasPendientes = this.subcategoriasDeLaCategoria().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 
-  private async cargarSubcategorias(): Promise<void> {
-    const pedido = ++this.pedidoSub;
+  private subcategoriasDeLaCategoria(): Observable<void> {
     this.subcategoriasListas.set(false);
     this.subcategorias.set([]);
-    if (!this.form.category) return this.cargandoSubcategorias.set(false);
-    this.cargandoSubcategorias.set(true);
-    let lista: SubcategoriaAdmin[] = [];
-    try {
-      lista = await this.subcategoriasApi.listar(this.form.category);
-    } catch {
-      lista = [];
+    if (!this.form.category) {
+      this.cargandoSubcategorias.set(false);
+      return of(undefined);
     }
-    if (pedido !== this.pedidoSub) return; // llegó una respuesta vieja: otra categoría ya fue elegida
-    this.subcategorias.set(lista);
-    this.subcategoriasListas.set(true);
-    this.cargandoSubcategorias.set(false);
+    this.cargandoSubcategorias.set(true);
+    return this.subcategoriasApi.listar(this.form.category).pipe(
+      catchError(() => of([] as SubcategoriaAdmin[])),
+      tap(lista => {
+        this.subcategorias.set(lista);
+        this.subcategoriasListas.set(true);
+        this.cargandoSubcategorias.set(false);
+      }),
+      map(() => undefined),
+    );
   }
 
   /** Pide a Laravel cuánto sería el descuento en dinero (con una pequeña espera mientras la persona escribe). */
   verPrecio(): void {
-    if (this.temporizador) clearTimeout(this.temporizador);
     const base = dolaresACentavos(this.form.precio);
     const porcentaje = leerDescuento(this.form.descuento);
-    if (base === null || porcentaje === null || porcentaje === 0) {
-      this.consulta++;
-      this.precioFinal.set(null);
-      return;
-    }
-    const numero = ++this.consulta;
-    this.temporizador = setTimeout(async () => {
-      try {
-        const r = await this.productosApi.previsualizarPrecio(base, porcentaje);
-        if (numero === this.consulta) this.precioFinal.set(r); // se ignoran respuestas viejas
-      } catch {
-        if (numero === this.consulta) this.precioFinal.set(null);
-      }
-    }, 300);
+    this.consultaPrecio$.next(base === null || porcentaje === null || porcentaje === 0 ? null : { base, porcentaje });
   }
 
   readonly maxTitulo = MAX_TITULO_GOOGLE;
@@ -174,7 +173,7 @@ export class AdminProductoForm implements OnInit, OnDestroy {
     return centavosADolares(centavos);
   }
 
-  async guardar(evento: Event): Promise<void> {
+  guardar(evento: Event): void {
     evento.preventDefault();
     if (this.guardando()) return;
     this.error.set('');
@@ -216,22 +215,19 @@ export class AdminProductoForm implements OnInit, OnDestroy {
     };
 
     this.guardando.set(true);
-    try {
-      if (this.esNuevo) {
-        const creado = await this.productosApi.crear(datos);
-        this.avisos.exito(`Producto creado con el código ${creado.sku}.`);
-      } else {
-        await this.productosApi.editar(this.sku!, datos);
-        this.avisos.exito('Cambios guardados.');
-      }
-      await this.router.navigate(['/admin/productos']);
-    } catch (e) {
-      const err = e as Partial<ErrorApi>;
-      this.error.set(err.message || 'No pudimos guardar el producto. Inténtalo de nuevo.');
-      this.detalle.set(Object.values(err.errors ?? {}).flat());
-    } finally {
-      this.guardando.set(false);
-    }
+    const peticion = this.esNuevo
+      ? this.productosApi.crear(datos).pipe(tap(creado => this.avisos.exito(`Producto creado con el código ${creado.sku}.`)))
+      : this.productosApi.editar(this.sku!, datos).pipe(tap(() => this.avisos.exito('Cambios guardados.')));
+    peticion.pipe(
+      switchMap(() => from(this.router.navigate(['/admin/productos']))),
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.guardando.set(false)),
+    ).subscribe({
+      error: (err: Partial<ErrorApi>) => {
+        this.error.set(err.message || 'No pudimos guardar el producto. Inténtalo de nuevo.');
+        this.detalle.set(Object.values(err.errors ?? {}).flat());
+      },
+    });
   }
 
   private aFormulario(p: ProductoAdmin): Formulario {

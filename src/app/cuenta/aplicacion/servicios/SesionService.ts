@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, Injector, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { firstValueFrom } from 'rxjs';
+import { MonoTypeOperatorFunction, Observable, catchError, finalize, map, of, tap, throwError } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
 import { DatosRegistro, ErrorApi, RespuestaSesion, Sesion } from '../../dominio/interfaces/sesion';
 
@@ -19,6 +19,11 @@ export function aErrorApi(e: unknown): ErrorApi {
     return { status: e.status, code: 'server_error', message: 'El servidor tuvo un problema al procesar la solicitud. Revisa el último error en storage/logs/laravel.log del backend.' };
   }
   return { status: 0, code: 'network_error', message: 'No pudimos conectarnos con el servidor. Inténtalo de nuevo.' };
+}
+
+/** Operador RxJS: convierte el error HTTP del flujo en un ErrorApi (mensaje en español). */
+export function conErrorApi<T>(): MonoTypeOperatorFunction<T> {
+  return catchError(e => throwError(() => aErrorApi(e)));
 }
 
 // Sesión de clientes y administradores. Laravel valida todo y dice el rol; aquí solo se guarda el token Bearer y se lo envía.
@@ -54,22 +59,22 @@ export class SesionService {
     return true;
   }
 
-  async iniciarSesion(email: string, password: string): Promise<void> {
-    await this.abrir('login', { email, password, device: this.dispositivo() });
+  iniciarSesion(email: string, password: string): Observable<void> {
+    return this.abrir('login', { email, password, device: this.dispositivo() });
   }
 
-  async crearCuenta(datos: DatosRegistro): Promise<void> {
-    await this.abrir('register', { ...datos, device: this.dispositivo() });
+  crearCuenta(datos: DatosRegistro): Observable<void> {
+    return this.abrir('register', { ...datos, device: this.dispositivo() });
   }
 
   /** Cierra esta sesión. Aunque la API falle, el navegador queda sin token. */
-  async cerrarSesion(): Promise<void> {
-    await this.avisar('logout');
+  cerrarSesion(): Observable<void> {
+    return this.avisar('logout');
   }
 
   /** "Cerrar todas las sesiones": invalida el token de todos los dispositivos. */
-  async cerrarTodas(): Promise<void> {
-    await this.avisar('logout-all');
+  cerrarTodas(): Observable<void> {
+    return this.avisar('logout-all');
   }
 
   /** La API rechazó el token (401): se descarta sin llamar a la API. */
@@ -78,14 +83,13 @@ export class SesionService {
     this.borrar();
   }
 
-  private async abrir(ruta: 'login' | 'register', cuerpo: object): Promise<void> {
-    try {
-      const r = await firstValueFrom(this.http.post<RespuestaSesion>(`${this.api}/auth/${ruta}`, cuerpo));
+  private abrir(ruta: 'login' | 'register', cuerpo: object): Observable<void> {
+    return this.http.post<RespuestaSesion>(`${this.api}/auth/${ruta}`, cuerpo).pipe(
       // El vencimiento se calcula con el reloj de este navegador (no depende de que coincida con el del servidor).
-      this.guardar({ token: r.token, expires_at: this.vencimiento(r), user: r.user });
-    } catch (e) {
-      throw aErrorApi(e);
-    }
+      tap(r => this.guardar({ token: r.token, expires_at: this.vencimiento(r), user: r.user })),
+      map(() => undefined),
+      conErrorApi(),
+    );
   }
 
   /**
@@ -98,18 +102,17 @@ export class SesionService {
     return delServidor > Date.now() ? r.expires_at : new Date(Date.now() + 3600_000).toISOString();
   }
 
-  private async avisar(ruta: 'logout' | 'logout-all'): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${this.api}/auth/${ruta}`, {}));
-    } catch (e) {
+  private avisar(ruta: 'logout' | 'logout-all'): Observable<void> {
+    return this.http.post(`${this.api}/auth/${ruta}`, {}).pipe(
+      map(() => undefined),
       // Si el token ya no servía (401) la sesión ya está cerrada en el servidor.
-      if (!(e instanceof HttpErrorResponse && e.status === 401)) {
+      catchError(e => {
+        if (e instanceof HttpErrorResponse && e.status === 401) return of(undefined);
         this.olvidar();
-        throw aErrorApi(e);
-      }
-    } finally {
-      this.olvidar();
-    }
+        return throwError(() => aErrorApi(e));
+      }),
+      finalize(() => this.olvidar()),
+    );
   }
 
   private dispositivo(): string | null {

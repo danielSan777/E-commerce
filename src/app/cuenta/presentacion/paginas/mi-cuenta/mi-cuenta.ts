@@ -1,6 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
+import { Observable, finalize } from 'rxjs';
 import { SesionService } from '../../../aplicacion/servicios/SesionService';
 import { ErrorApi } from '../../../dominio/interfaces/sesion';
 
@@ -14,6 +16,7 @@ import { ErrorApi } from '../../../dominio/interfaces/sesion';
 export class MiCuenta {
   private sesion = inject(SesionService);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   readonly usuario = this.sesion.usuario;
   readonly esAdministrador = this.sesion.esAdministrador;
@@ -25,24 +28,23 @@ export class MiCuenta {
     inject(Meta).updateTag({ name: 'robots', content: 'noindex, nofollow' });
   }
 
-  cerrarSesion(): Promise<void> {
-    return this.salir(() => this.sesion.cerrarSesion());
+  cerrarSesion(): void {
+    this.salir(this.sesion.cerrarSesion());
   }
 
-  cerrarTodas(): Promise<void> {
-    return this.salir(() => this.sesion.cerrarTodas());
+  cerrarTodas(): void {
+    this.salir(this.sesion.cerrarTodas());
   }
 
-  private async salir(accion: () => Promise<void>): Promise<void> {
+  private salir(accion: Observable<void>): void {
     this.error.set('');
     this.ocupado.set(true);
-    try {
-      await accion();
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    } finally {
-      this.ocupado.set(false);
-      await this.router.navigate(['/ingresar']); // el navegador ya quedó sin token aunque la API haya fallado
-    }
+    accion.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        this.ocupado.set(false);
+        void this.router.navigate(['/ingresar']); // el navegador ya quedó sin token aunque la API haya fallado
+      }),
+    ).subscribe({ error: (e: ErrorApi) => this.error.set(e.message) });
   }
 }

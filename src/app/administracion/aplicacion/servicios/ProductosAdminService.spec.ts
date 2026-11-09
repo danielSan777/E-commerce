@@ -1,3 +1,4 @@
+import { firstValueFrom } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -15,7 +16,7 @@ describe('ProductosAdminService', () => {
   });
 
   it('listar envía categoría y búsqueda como parámetros', async () => {
-    const p = servicio.listar('profesiones-y-hobbies', ' doctor ');
+    const p = firstValueFrom(servicio.listar('profesiones-y-hobbies', ' doctor '));
     const req = ctrl.expectOne(r => r.url === '/api/v1/admin/products');
     expect(req.request.params.get('category')).toBe('profesiones-y-hobbies');
     expect(req.request.params.get('q')).toBe('doctor');
@@ -24,7 +25,7 @@ describe('ProductosAdminService', () => {
   });
 
   it('listar sin filtros no envía parámetros', async () => {
-    const p = servicio.listar();
+    const p = firstValueFrom(servicio.listar());
     const req = ctrl.expectOne(r => r.url === '/api/v1/admin/products');
     expect(req.request.params.keys().length).toBe(0);
     req.flush({ data: [] });
@@ -32,13 +33,13 @@ describe('ProductosAdminService', () => {
   });
 
   it('editar usa el SKU en la dirección y eliminar usa DELETE', async () => {
-    const e = servicio.editar('JDS-1', { name: 'X' } as never);
+    const e = firstValueFrom(servicio.editar('JDS-1', { name: 'X' } as never));
     const put = ctrl.expectOne('/api/v1/admin/products/JDS-1');
     expect(put.request.method).toBe('PUT');
     put.flush({});
     await e;
 
-    const d = servicio.eliminar('JDS-1');
+    const d = firstValueFrom(servicio.eliminar('JDS-1'));
     const del = ctrl.expectOne('/api/v1/admin/products/JDS-1');
     expect(del.request.method).toBe('DELETE');
     del.flush(null, { status: 204, statusText: 'No Content' });
@@ -46,19 +47,19 @@ describe('ProductosAdminService', () => {
   });
 
   it('convierte los errores de la API en mensaje en español', async () => {
-    const p = servicio.ver('NO');
+    const p = firstValueFrom(servicio.ver('NO'));
     ctrl.expectOne('/api/v1/admin/products/NO').flush({ code: 'not_found', message: 'No encontrado.' }, { status: 404, statusText: 'Not Found' });
     await expect(p).rejects.toMatchObject({ message: 'No encontrado.' });
   });
 
   it('pide el código siguiente', async () => {
-    const p = servicio.siguienteSku();
+    const p = firstValueFrom(servicio.siguienteSku());
     ctrl.expectOne('/api/v1/admin/products/next-sku').flush({ sku: 'JDS-004' });
     expect(await p).toBe('JDS-004');
   });
 
   it('pide a Laravel el cálculo del descuento', async () => {
-    const p = servicio.previsualizarPrecio(2150, 12.5);
+    const p = firstValueFrom(servicio.previsualizarPrecio(2150, 12.5));
     const req = ctrl.expectOne(r => r.url === '/api/v1/admin/products/price-preview');
     expect(req.request.params.get('base_price_cents')).toBe('2150');
     expect(req.request.params.get('discount_percent')).toBe('12.5');

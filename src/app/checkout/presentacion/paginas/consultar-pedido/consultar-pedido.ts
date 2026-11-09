@@ -1,4 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
@@ -14,6 +16,7 @@ import { TIENDA, enlaceWhatsapp } from '../../../../core/configuracion/tienda';
 })
 export class ConsultarPedido {
   private servicio = inject(ConsultaPedidoService);
+  private destroyRef = inject(DestroyRef);
 
   numero = '';
   correo = '';
@@ -28,7 +31,7 @@ export class ConsultarPedido {
     inject(Meta).updateTag({ name: 'robots', content: 'noindex, follow' });
   }
 
-  async enviar(evento: Event): Promise<void> {
+  enviar(evento: Event): void {
     evento.preventDefault();
     this.respuesta.set('');
     const numero = this.numero.trim();
@@ -38,12 +41,12 @@ export class ConsultarPedido {
 
     this.error.set('');
     this.enviando.set(true);
-    try {
-      this.respuesta.set((await this.servicio.reenviarEnlace(numero, correo)).message);
-    } catch {
-      this.error.set('No pudimos enviar la solicitud. Inténtalo de nuevo en unos minutos.');
-    } finally {
-      this.enviando.set(false);
-    }
+    this.servicio.reenviarEnlace(numero, correo).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.enviando.set(false)),
+    ).subscribe({
+      next: r => this.respuesta.set(r.message),
+      error: () => this.error.set('No pudimos enviar la solicitud. Inténtalo de nuevo en unos minutos.'),
+    });
   }
 }

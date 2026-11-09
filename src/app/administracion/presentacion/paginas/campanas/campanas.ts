@@ -1,4 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize, forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
@@ -56,6 +58,7 @@ export class AdminCampanas implements OnInit {
   private categoriasApi = inject(CategoriasAdminService);
   private productosApi = inject(ProductosAdminService);
   private avisos = inject(AvisosService);
+  private destroyRef = inject(DestroyRef);
 
   readonly meses = MESES;
   readonly dias = DIAS;
@@ -83,21 +86,22 @@ export class AdminCampanas implements OnInit {
   }
 
   ngOnInit(): void {
-    void this.cargar();
+    this.cargar();
   }
 
-  async cargar(): Promise<void> {
+  cargar(): void {
     this.cargando.set(true);
-    try {
-      const [campanas, categorias, productos] = await Promise.all([this.servicio.listar(), this.categoriasApi.listar(), this.productosApi.listar()]);
-      this.campanas.set(campanas);
-      this.categorias.set(categorias);
-      this.productos.set(productos);
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    } finally {
-      this.cargando.set(false);
-    }
+    forkJoin({ campanas: this.servicio.listar(), categorias: this.categoriasApi.listar(), productos: this.productosApi.listar() }).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.cargando.set(false)),
+    ).subscribe({
+      next: r => {
+        this.campanas.set(r.campanas);
+        this.categorias.set(r.categorias);
+        this.productos.set(r.productos);
+      },
+      error: (e: ErrorApi) => this.error.set(e.message),
+    });
   }
 
   nueva(): void {
@@ -149,7 +153,7 @@ export class AdminCampanas implements OnInit {
     return this.productos().find(p => p.sku === sku)?.name ?? sku;
   }
 
-  async guardar(evento: Event): Promise<void> {
+  guardar(evento: Event): void {
     evento.preventDefault();
     if (this.guardando() || this.editando() === null) return;
     this.error.set('');
@@ -168,24 +172,21 @@ export class AdminCampanas implements OnInit {
       seo_description: this.form.seo_description.trim() || null,
       products: this.elegidos(),
     };
-    try {
-      const slug = this.editando()!;
-      if (slug === '') {
-        await this.servicio.crear(datos); // la dirección la genera Laravel a partir del nombre
-        this.avisos.exito('Campaña creada.');
-      } else {
-        await this.servicio.editar(slug, datos);
-        this.avisos.exito('Cambios guardados.');
-      }
-      this.editando.set(null);
-      await this.cargar();
-    } catch (e) {
-      const err = e as ErrorApi;
-      this.error.set(err.message);
-      this.detalle.set(Object.values(err.errors ?? {}).flat());
-    } finally {
-      this.guardando.set(false);
-    }
+    const slug = this.editando()!;
+    const nueva = slug === '';
+    // La dirección de una campaña nueva la genera Laravel a partir del nombre.
+    const peticion = nueva ? this.servicio.crear(datos) : this.servicio.editar(slug, datos);
+    peticion.pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.guardando.set(false))).subscribe({
+      next: () => {
+        this.avisos.exito(nueva ? 'Campaña creada.' : 'Cambios guardados.');
+        this.editando.set(null);
+        this.cargar();
+      },
+      error: (err: ErrorApi) => {
+        this.error.set(err.message);
+        this.detalle.set(Object.values(err.errors ?? {}).flat());
+      },
+    });
   }
 
   /** La dirección que se mostrará: la guardada al editar, o la vista previa del nombre al crear. */
@@ -198,15 +199,15 @@ export class AdminCampanas implements OnInit {
     this.porEliminar.set(slug);
   }
 
-  async eliminar(slug: string): Promise<void> {
+  eliminar(slug: string): void {
     this.porEliminar.set(null);
-    try {
-      await this.servicio.eliminar(slug);
-      this.avisos.exito('Campaña eliminada.');
-      await this.cargar();
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    }
+    this.servicio.eliminar(slug).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.avisos.exito('Campaña eliminada.');
+        this.cargar();
+      },
+      error: (e: ErrorApi) => this.error.set(e.message),
+    });
   }
 
   private limpiar(): void {

@@ -1,4 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize, from, switchMap, tap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -18,6 +20,7 @@ export class CrearCuenta {
   private sesion = inject(SesionService);
   private router = inject(Router);
   private ruta = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   name = '';
   email = '';
@@ -34,7 +37,7 @@ export class CrearCuenta {
     inject(Meta).updateTag({ name: 'robots', content: 'noindex, nofollow' });
   }
 
-  async crear(evento: Event): Promise<void> {
+  crear(evento: Event): void {
     evento.preventDefault();
     if (this.enviando()) return;
     this.error.set('');
@@ -43,23 +46,24 @@ export class CrearCuenta {
     this.errores.set(errores);
     if (Object.keys(errores).length) return; // campos vacíos o inválidos: no se llama a la API
     this.enviando.set(true);
-    try {
-      await this.sesion.crearCuenta({
-        name: this.name.trim(),
-        email: this.email.trim(),
-        password: this.password,
-        password_confirmation: this.confirmacion,
-      });
-      this.password = this.confirmacion = '';
-      if (!(await this.router.navigateByUrl(destinoSeguro(this.ruta.snapshot.queryParamMap.get('returnUrl'), this.sesion.usuario()!.role)))) {
-        this.error.set('Tu cuenta se creó, pero no pudimos abrir la pantalla. Recarga la página e ingresa.');
-      }
-    } catch (e) {
-      const err = e as Partial<ErrorApi>;
-      this.error.set(err.message || 'No pudimos crear la cuenta. Inténtalo de nuevo.');
-      this.detalle.set(Object.values(err.errors ?? {}).flat());
-    } finally {
-      this.enviando.set(false);
-    }
+    this.sesion.crearCuenta({
+      name: this.name.trim(),
+      email: this.email.trim(),
+      password: this.password,
+      password_confirmation: this.confirmacion,
+    }).pipe(
+      tap(() => this.password = this.confirmacion = ''),
+      switchMap(() => from(this.router.navigateByUrl(destinoSeguro(this.ruta.snapshot.queryParamMap.get('returnUrl'), this.sesion.usuario()!.role)))),
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.enviando.set(false)),
+    ).subscribe({
+      next: abierta => {
+        if (!abierta) this.error.set('Tu cuenta se creó, pero no pudimos abrir la pantalla. Recarga la página e ingresa.');
+      },
+      error: (e: Partial<ErrorApi>) => {
+        this.error.set(e.message || 'No pudimos crear la cuenta. Inténtalo de nuevo.');
+        this.detalle.set(Object.values(e.errors ?? {}).flat());
+      },
+    });
   }
 }

@@ -1,3 +1,4 @@
+import { firstValueFrom } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -15,14 +16,14 @@ describe('ImagenesAdminService', () => {
   });
 
   it('lista las imágenes de un producto', async () => {
-    const p = servicio.listar('products', 'PRO-1');
+    const p = firstValueFrom(servicio.listar('products', 'PRO-1'));
     ctrl.expectOne('/api/v1/admin/products/PRO-1/media').flush({ data: [{ id: 1 }] });
     expect((await p).length).toBe(1);
   });
 
   it('sube el archivo como formulario con tipo y descripción', async () => {
     const archivo = new File(['x'], 'a.png', { type: 'image/png' });
-    const p = servicio.subir('categories', 'familia', archivo, 'hero', ' Banner ');
+    const p = firstValueFrom(servicio.subir('categories', 'familia', archivo, 'hero', ' Banner '));
     const req = ctrl.expectOne('/api/v1/admin/categories/familia/media');
     expect(req.request.method).toBe('POST');
     const cuerpo = req.request.body as FormData;
@@ -34,7 +35,7 @@ describe('ImagenesAdminService', () => {
   });
 
   it('muestra el mensaje de Laravel cuando el archivo no sirve', async () => {
-    const p = servicio.subir('products', 'PRO-1', new File(['x'], 'a.png', { type: 'image/png' }), 'front', '');
+    const p = firstValueFrom(servicio.subir('products', 'PRO-1', new File(['x'], 'a.png', { type: 'image/png' }), 'front', ''));
     ctrl.expectOne('/api/v1/admin/products/PRO-1/media').flush(
       { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { image: ['El archivo no es una imagen válida. Usa JPG, PNG o WebP.'] } },
       { status: 422, statusText: 'Unprocessable' },
@@ -43,12 +44,12 @@ describe('ImagenesAdminService', () => {
   });
 
   it('edita y elimina por id', async () => {
-    const e = servicio.editar(7, { alt: 'x' });
+    const e = firstValueFrom(servicio.editar(7, { alt: 'x' }));
     const put = ctrl.expectOne('/api/v1/admin/media/7');
     expect(put.request.method).toBe('PUT');
     put.flush({ id: 7 });
     await e;
-    const d = servicio.eliminar(7);
+    const d = firstValueFrom(servicio.eliminar(7));
     const del = ctrl.expectOne('/api/v1/admin/media/7');
     expect(del.request.method).toBe('DELETE');
     del.flush(null, { status: 204, statusText: 'No Content' });

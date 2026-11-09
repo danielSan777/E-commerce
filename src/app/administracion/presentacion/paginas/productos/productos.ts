@@ -1,4 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subscription, finalize } from 'rxjs';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
@@ -20,6 +22,9 @@ import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 export class AdminProductos implements OnInit {
   private productosApi = inject(ProductosAdminService);
   private categoriasApi = inject(CategoriasAdminService);
+  private destroyRef = inject(DestroyRef);
+  /** Búsqueda en curso: si se pide otra, la anterior se cancela para que no pise a la nueva. */
+  private busqueda?: Subscription;
 
   productos = signal<ProductoAdmin[]>([]);
   categorias = signal<CategoriaAdmin[]>([]);
@@ -40,32 +45,35 @@ export class AdminProductos implements OnInit {
   }
 
   ngOnInit(): void {
-    void this.cargarCategorias();
-    void this.cargar();
+    this.cargarCategorias();
+    this.cargar();
   }
 
-  private async cargarCategorias(): Promise<void> {
-    try {
-      this.categorias.set(await this.categoriasApi.listar());
-    } catch { /* el filtro queda sin opciones; el listado igual funciona */ }
+  private cargarCategorias(): void {
+    // Si falla, el filtro queda sin opciones; el listado igual funciona.
+    this.categoriasApi.listar().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: lista => this.categorias.set(lista),
+      error: () => undefined,
+    });
   }
 
-  async cargar(): Promise<void> {
+  cargar(): void {
+    this.busqueda?.unsubscribe();
     this.cargando.set(true);
     this.error.set('');
-    try {
-      this.productos.set(await this.productosApi.listar(this.categoria, this.texto));
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    } finally {
-      this.cargando.set(false);
-    }
+    this.busqueda = this.productosApi.listar(this.categoria, this.texto).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.cargando.set(false)),
+    ).subscribe({
+      next: lista => this.productos.set(lista),
+      error: (e: ErrorApi) => this.error.set(e.message),
+    });
   }
 
   buscar(evento: Event): void {
     evento.preventDefault();
     this.aviso.set('');
-    void this.cargar();
+    this.cargar();
   }
 
   pedirEliminar(sku: string): void {
@@ -73,15 +81,15 @@ export class AdminProductos implements OnInit {
     this.porEliminar.set(sku);
   }
 
-  async eliminar(sku: string): Promise<void> {
+  eliminar(sku: string): void {
     this.porEliminar.set(null);
-    try {
-      await this.productosApi.eliminar(sku);
-      this.aviso.set('Producto eliminado.');
-      this.avisos.exito('Producto eliminado.');
-      await this.cargar();
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    }
+    this.productosApi.eliminar(sku).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.aviso.set('Producto eliminado.');
+        this.avisos.exito('Producto eliminado.');
+        this.cargar();
+      },
+      error: (e: ErrorApi) => this.error.set(e.message),
+    });
   }
 }

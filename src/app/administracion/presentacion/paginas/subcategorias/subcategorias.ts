@@ -1,4 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
@@ -35,6 +37,7 @@ export class AdminSubcategorias implements OnInit {
   detalle = signal<string[]>([]);
   aviso = signal('');
   private avisos = inject(AvisosService);
+  private destroyRef = inject(DestroyRef);
   bloqueada = signal<{ slug: string; message: string; products: NonNullable<ErrorApi['products']> } | null>(null);
 
   constructor() {
@@ -43,18 +46,15 @@ export class AdminSubcategorias implements OnInit {
   }
 
   ngOnInit(): void {
-    void this.cargar();
+    this.cargar();
   }
 
-  async cargar(): Promise<void> {
+  cargar(): void {
     this.cargando.set(true);
-    try {
-      this.lista.set(await this.servicio.listar(this.categoria));
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    } finally {
-      this.cargando.set(false);
-    }
+    this.servicio.listar(this.categoria).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
+      next: lista => this.lista.set(lista),
+      error: (e: ErrorApi) => this.error.set(e.message),
+    });
   }
 
   nueva(): void {
@@ -80,33 +80,29 @@ export class AdminSubcategorias implements OnInit {
     return this.editando() === '' ? generarSlug(this.form.name) : this.slugActual;
   }
 
-  async guardar(evento: Event): Promise<void> {
+  guardar(evento: Event): void {
     evento.preventDefault();
     if (this.guardando() || this.editando() === null) return;
     this.error.set('');
     this.detalle.set([]);
     this.guardando.set(true);
     const datos = { name: this.form.name.trim(), sort_order: Number(this.form.sort_order), is_active: this.form.is_active };
-    try {
-      const slug = this.editando()!;
-      if (slug === '') {
-        await this.servicio.crear(this.categoria, datos);
-        this.aviso.set('Subcategoría creada.');
-        this.avisos.exito('Subcategoría creada.');
-      } else {
-        await this.servicio.editar(this.categoria, slug, datos);
-        this.aviso.set('Cambios guardados.');
-        this.avisos.exito('Cambios guardados.');
-      }
-      this.editando.set(null);
-      await this.cargar();
-    } catch (e) {
-      const err = e as ErrorApi;
-      this.error.set(err.message);
-      this.detalle.set(Object.values(err.errors ?? {}).flat());
-    } finally {
-      this.guardando.set(false);
-    }
+    const slug = this.editando()!;
+    const nueva = slug === '';
+    const peticion = nueva ? this.servicio.crear(this.categoria, datos) : this.servicio.editar(this.categoria, slug, datos);
+    peticion.pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.guardando.set(false))).subscribe({
+      next: () => {
+        const mensaje = nueva ? 'Subcategoría creada.' : 'Cambios guardados.';
+        this.aviso.set(mensaje);
+        this.avisos.exito(mensaje);
+        this.editando.set(null);
+        this.cargar();
+      },
+      error: (err: ErrorApi) => {
+        this.error.set(err.message);
+        this.detalle.set(Object.values(err.errors ?? {}).flat());
+      },
+    });
   }
 
   pedirEliminar(slug: string): void {
@@ -114,21 +110,22 @@ export class AdminSubcategorias implements OnInit {
     this.porEliminar.set(slug);
   }
 
-  async eliminar(slug: string): Promise<void> {
+  eliminar(slug: string): void {
     this.porEliminar.set(null);
-    try {
-      await this.servicio.eliminar(this.categoria, slug);
-      this.aviso.set('Subcategoría eliminada.');
-      this.avisos.exito('Subcategoría eliminada.');
-      await this.cargar();
-    } catch (e) {
-      const err = e as ErrorApi;
-      if (err.code === 'subcategory_has_products') {
-        this.bloqueada.set({ slug, message: err.message, products: err.products ?? [] });
-      } else {
-        this.error.set(err.message);
-      }
-    }
+    this.servicio.eliminar(this.categoria, slug).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.aviso.set('Subcategoría eliminada.');
+        this.avisos.exito('Subcategoría eliminada.');
+        this.cargar();
+      },
+      error: (err: ErrorApi) => {
+        if (err.code === 'subcategory_has_products') {
+          this.bloqueada.set({ slug, message: err.message, products: err.products ?? [] });
+        } else {
+          this.error.set(err.message);
+        }
+      },
+    });
   }
 
   private limpiar(): void {

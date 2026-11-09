@@ -1,4 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
@@ -42,6 +44,7 @@ export class AdminCategorias implements OnInit {
   detalle = signal<string[]>([]);
   aviso = signal('');
   private avisos = inject(AvisosService);
+  private destroyRef = inject(DestroyRef);
   /** Respuesta 409: la categoría tiene productos y no se borró. */
   bloqueada = signal<{ slug: string; message: string; products: NonNullable<ErrorApi['products']> } | null>(null);
 
@@ -51,18 +54,15 @@ export class AdminCategorias implements OnInit {
   }
 
   ngOnInit(): void {
-    void this.cargar();
+    this.cargar();
   }
 
-  async cargar(): Promise<void> {
+  cargar(): void {
     this.cargando.set(true);
-    try {
-      this.categorias.set(await this.servicio.listar());
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    } finally {
-      this.cargando.set(false);
-    }
+    this.servicio.listar().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
+      next: lista => this.categorias.set(lista),
+      error: (e: ErrorApi) => this.error.set(e.message),
+    });
   }
 
   nueva(): void {
@@ -84,7 +84,7 @@ export class AdminCategorias implements OnInit {
     this.limpiar();
   }
 
-  async guardar(evento: Event): Promise<void> {
+  guardar(evento: Event): void {
     evento.preventDefault();
     if (this.guardando() || this.editando() === null) return;
     this.error.set('');
@@ -94,26 +94,23 @@ export class AdminCategorias implements OnInit {
       name: this.form.name.trim(), headline: this.form.headline.trim() || null,
       intro_html: this.form.intro.trim() || null, seo_title: this.form.seo_title.trim() || null, seo_description: this.form.seo_description.trim() || null,
       sort_order: Number(this.form.sort_order), is_active: this.form.is_active };
-    try {
-      const slug = this.editando()!;
-      if (slug === '') {
-        await this.servicio.crear(base); // el slug lo genera Laravel a partir del nombre
-        this.aviso.set('Categoría creada.');
-        this.avisos.exito('Categoría creada.');
-      } else {
-        await this.servicio.editar(slug, base);
-        this.aviso.set('Cambios guardados.');
-        this.avisos.exito('Cambios guardados.');
-      }
-      this.editando.set(null);
-      await this.cargar();
-    } catch (e) {
-      const err = e as ErrorApi;
-      this.error.set(err.message);
-      this.detalle.set(Object.values(err.errors ?? {}).flat());
-    } finally {
-      this.guardando.set(false);
-    }
+    const slug = this.editando()!;
+    const nuevaCategoria = slug === '';
+    // El slug de una categoría nueva lo genera Laravel a partir del nombre.
+    const peticion = nuevaCategoria ? this.servicio.crear(base) : this.servicio.editar(slug, base);
+    peticion.pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.guardando.set(false))).subscribe({
+      next: () => {
+        const mensaje = nuevaCategoria ? 'Categoría creada.' : 'Cambios guardados.';
+        this.aviso.set(mensaje);
+        this.avisos.exito(mensaje);
+        this.editando.set(null);
+        this.cargar();
+      },
+      error: (err: ErrorApi) => {
+        this.error.set(err.message);
+        this.detalle.set(Object.values(err.errors ?? {}).flat());
+      },
+    });
   }
 
   /** Cómo se vería en Google si se deja vacío: "Nombre | Jardín de Sele". */
@@ -134,21 +131,22 @@ export class AdminCategorias implements OnInit {
     this.porEliminar.set(slug);
   }
 
-  async eliminar(slug: string): Promise<void> {
+  eliminar(slug: string): void {
     this.porEliminar.set(null);
-    try {
-      await this.servicio.eliminar(slug);
-      this.aviso.set('Categoría eliminada.');
-      this.avisos.exito('Categoría eliminada.');
-      await this.cargar();
-    } catch (e) {
-      const err = e as ErrorApi;
-      if (err.code === 'category_has_products') {
-        this.bloqueada.set({ slug, message: err.message, products: err.products ?? [] });
-      } else {
-        this.error.set(err.message);
-      }
-    }
+    this.servicio.eliminar(slug).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.aviso.set('Categoría eliminada.');
+        this.avisos.exito('Categoría eliminada.');
+        this.cargar();
+      },
+      error: (err: ErrorApi) => {
+        if (err.code === 'category_has_products') {
+          this.bloqueada.set({ slug, message: err.message, products: err.products ?? [] });
+        } else {
+          this.error.set(err.message);
+        }
+      },
+    });
   }
 
   private limpiar(): void {
