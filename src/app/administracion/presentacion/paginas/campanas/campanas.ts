@@ -192,7 +192,7 @@ export class AdminCampanas implements OnInit {
     this.error.set('');
     this.detalle.set([]);
     this.intento.set(true);
-    if (Object.keys(this.errores()).length) return; // algo está mal en el formulario: no se llama a la API
+    if (Object.keys(this.errores()).length) return this.avisos.faltanDatos(); // algo está mal en el formulario: no se llama a la API
     this.guardando.set(true);
     const datos = {
       name: this.form.name.trim(),

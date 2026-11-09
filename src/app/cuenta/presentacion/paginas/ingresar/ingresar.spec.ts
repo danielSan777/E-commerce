@@ -1,3 +1,4 @@
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -104,6 +105,7 @@ describe('Ingresar', () => {
     expect(texto).toContain('Escribe tu correo.');
     expect(texto).toContain('Escribe tu contraseña.');
     expect(fixture.nativeElement.querySelector('#email').getAttribute('aria-invalid')).toBe('true');
+    expect(TestBed.inject(AvisosService).lista().at(-1)?.texto).toContain('Faltan datos o hay datos incorrectos');
   });
 
   it('con un correo mal escrito avisa y no llama a la API', async () => {

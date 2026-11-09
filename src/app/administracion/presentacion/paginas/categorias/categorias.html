@@ -23,7 +23,8 @@
       <h2>{{ editando() === '' ? 'Nueva categoría' : 'Editar categoría' }}</h2>
 
       <label for="name">Nombre</label>
-      <input id="name" name="name" [(ngModel)]="form.name" required />
+      <input id="name" name="name" [(ngModel)]="form.name" required [attr.aria-invalid]="errores()['name'] ? true : null" />
+      @if (errores()['name']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
 
       <label for="slug">Dirección en la web (se genera sola)</label>
       <input id="slug" type="text" [value]="slugMostrado() ? '/' + slugMostrado() : ''" readonly tabindex="-1"
@@ -31,11 +32,13 @@
       <small id="ayuda-slug" class="ayuda">Se arma con el nombre: sin tildes, en minúsculas y con "-" en lugar de espacios. No se puede cambiar después.</small>
 
       <label for="headline">Frase bajo el nombre (opcional)</label>
-      <input id="headline" name="headline" [(ngModel)]="form.headline" aria-describedby="ayuda-headline" />
+      <input id="headline" name="headline" [(ngModel)]="form.headline" aria-describedby="ayuda-headline" [attr.aria-invalid]="errores()['headline'] ? true : null" />
+      @if (errores()['headline']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
       <small id="ayuda-headline" class="ayuda">Texto corto que aparece debajo del nombre en el banner de la categoría. Ejemplo: "Un detalle para quien ama lo que hace".</small>
 
       <label for="sort_order">Posición en el menú</label>
-      <input id="sort_order" name="sort_order" type="number" min="0" [(ngModel)]="form.sort_order" aria-describedby="ayuda-orden" />
+      <input id="sort_order" name="sort_order" type="number" min="0" [(ngModel)]="form.sort_order" aria-describedby="ayuda-orden" [attr.aria-invalid]="errores()['sort_order'] ? true : null" />
+      @if (errores()['sort_order']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
       <small id="ayuda-orden" class="ayuda">1 sale primero, 2 después, y así. Define el orden en que se muestran las categorías.</small>
 
       <label for="intro">Introducción de la categoría (opcional)</label>

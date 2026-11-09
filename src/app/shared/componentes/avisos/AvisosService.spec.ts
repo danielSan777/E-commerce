@@ -33,4 +33,18 @@ describe('AvisosService', () => {
     vi.advanceTimersByTime(3000);
     expect(s.lista()).toEqual([]);
   });
+
+  it('faltanDatos muestra el aviso general y lleva al primer campo marcado en rojo', () => {
+    const s = TestBed.inject(AvisosService);
+    const campo = document.createElement('input');
+    campo.setAttribute('aria-invalid', 'true');
+    document.body.appendChild(campo);
+
+    s.faltanDatos();
+    vi.advanceTimersByTime(0);
+
+    expect(s.lista().at(-1)).toMatchObject({ tipo: 'error', texto: 'Faltan datos o hay datos incorrectos. Revisa los campos marcados en rojo.' });
+    expect(document.activeElement).toBe(campo);
+    campo.remove();
+  });
 });

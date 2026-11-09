@@ -10,6 +10,19 @@ import { CategoriaAdmin } from '../../../dominio/interfaces/categoria-admin';
 import { generarSlug } from '../../../aplicacion/slug';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 
+/** Revisa el formulario sin llamar a la API (los límites son los mismos que valida Laravel). */
+export function validarCategoria(f: { name: string; headline: string; intro: string; seo_title: string; seo_description: string; sort_order: number | string | null }): Record<string, string> {
+  const e: Record<string, string> = {};
+  if (!f.name.trim()) e['name'] = 'Escribe el nombre de la categoría.';
+  else if (f.name.trim().length > 150) e['name'] = 'El nombre no puede pasar de 150 caracteres.';
+  if (f.headline.trim().length > 255) e['headline'] = 'La frase no puede pasar de 255 caracteres.';
+  if (f.seo_title.trim().length > 255) e['seo_title'] = 'El título para Google no puede pasar de 255 caracteres.';
+  if (f.seo_description.trim().length > 320) e['seo_description'] = 'La descripción para Google no puede pasar de 320 caracteres.';
+  const orden = Number(f.sort_order);
+  if (f.sort_order === null || f.sort_order === '' || !Number.isInteger(orden) || orden < 0 || orden > 65535) e['sort_order'] = 'Escribe la posición como un número entero, desde 0.';
+  return e;
+}
+
 interface Formulario { name: string; headline: string; intro: string; seo_title: string; seo_description: string; sort_order: number; is_active: boolean }
 
 /** Largo máximo de la descripción para Google (lo mismo que valida Laravel). */
@@ -40,6 +53,8 @@ export class AdminCategorias implements OnInit {
   /** Pidió eliminar esta categoría y falta confirmar. */
   porEliminar = signal<string | null>(null);
 
+  /** Se pulsó Guardar al menos una vez: recién entonces se marcan los campos vacíos. */
+  intento = signal(false);
   error = signal('');
   detalle = signal<string[]>([]);
   aviso = signal('');
@@ -69,6 +84,7 @@ export class AdminCategorias implements OnInit {
     this.limpiar();
     this.slugActual = '';
     this.form = { ...VACIO, sort_order: this.categorias().length + 1 };
+    this.intento.set(false);
     this.editando.set('');
   }
 
@@ -76,6 +92,7 @@ export class AdminCategorias implements OnInit {
     this.limpiar();
     this.slugActual = c.slug;
     this.form = { name: c.name, headline: c.headline ?? '', intro: c.intro_html ?? '', seo_title: c.seo_title ?? '', seo_description: c.seo_description ?? '', sort_order: c.sort_order, is_active: c.is_active };
+    this.intento.set(false);
     this.editando.set(c.slug);
   }
 
@@ -89,6 +106,8 @@ export class AdminCategorias implements OnInit {
     if (this.guardando() || this.editando() === null) return;
     this.error.set('');
     this.detalle.set([]);
+    this.intento.set(true);
+    if (Object.keys(this.errores()).length) return this.avisos.faltanDatos(); // no se llama a la API con datos incompletos
     this.guardando.set(true);
     const base = {
       name: this.form.name.trim(), headline: this.form.headline.trim() || null,
@@ -111,6 +130,11 @@ export class AdminCategorias implements OnInit {
         this.detalle.set(Object.values(err.errors ?? {}).flat());
       },
     });
+  }
+
+  /** Errores del formulario ahora mismo; se muestran después de pulsar Guardar. */
+  errores(): Record<string, string> {
+    return this.intento() ? validarCategoria(this.form) : {};
   }
 
   /** Cómo se vería en Google si se deja vacío: "Nombre | Jardín de Sele". */

@@ -10,6 +10,16 @@ import { SubcategoriaAdmin } from '../../../dominio/interfaces/categoria-admin';
 import { generarSlug } from '../../../aplicacion/slug';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 
+/** Revisa el formulario sin llamar a la API (mismos límites que Laravel). */
+export function validarSubcategoria(f: { name: string; sort_order: number | string | null }): Record<string, string> {
+  const e: Record<string, string> = {};
+  if (!f.name.trim()) e['name'] = 'Escribe el nombre de la subcategoría.';
+  else if (f.name.trim().length > 150) e['name'] = 'El nombre no puede pasar de 150 caracteres.';
+  const orden = Number(f.sort_order);
+  if (f.sort_order === null || f.sort_order === '' || !Number.isInteger(orden) || orden < 0 || orden > 65535) e['sort_order'] = 'Escribe la posición como un número entero, desde 0.';
+  return e;
+}
+
 interface Formulario { name: string; sort_order: number; is_active: boolean }
 const VACIO: Formulario = { name: '', sort_order: 0, is_active: true };
 
@@ -33,6 +43,8 @@ export class AdminSubcategorias implements OnInit {
   slugActual = '';
   porEliminar = signal<string | null>(null);
 
+  /** Se pulsó Guardar al menos una vez: recién entonces se marcan los campos vacíos. */
+  intento = signal(false);
   error = signal('');
   detalle = signal<string[]>([]);
   aviso = signal('');
@@ -60,6 +72,7 @@ export class AdminSubcategorias implements OnInit {
   nueva(): void {
     this.limpiar();
     this.slugActual = '';
+    this.intento.set(false);
     this.form = { ...VACIO, sort_order: this.lista().length + 1 };
     this.editando.set('');
   }
@@ -67,6 +80,7 @@ export class AdminSubcategorias implements OnInit {
   editar(s: SubcategoriaAdmin): void {
     this.limpiar();
     this.slugActual = s.slug;
+    this.intento.set(false);
     this.form = { name: s.name, sort_order: s.sort_order, is_active: s.is_active };
     this.editando.set(s.slug);
   }
@@ -74,6 +88,11 @@ export class AdminSubcategorias implements OnInit {
   cancelar(): void {
     this.editando.set(null);
     this.limpiar();
+  }
+
+  /** Errores del formulario ahora mismo; se muestran después de pulsar Guardar. */
+  errores(): Record<string, string> {
+    return this.intento() ? validarSubcategoria(this.form) : {};
   }
 
   slugMostrado(): string {
@@ -85,6 +104,8 @@ export class AdminSubcategorias implements OnInit {
     if (this.guardando() || this.editando() === null) return;
     this.error.set('');
     this.detalle.set([]);
+    this.intento.set(true);
+    if (Object.keys(this.errores()).length) return this.avisos.faltanDatos(); // no se llama a la API con datos incompletos
     this.guardando.set(true);
     const datos = { name: this.form.name.trim(), sort_order: Number(this.form.sort_order), is_active: this.form.is_active };
     const slug = this.editando()!;

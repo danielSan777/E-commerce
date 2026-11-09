@@ -1,3 +1,4 @@
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -70,7 +71,7 @@ describe('AdminCategorias', () => {
     const fixture = await montar();
     const c = fixture.componentInstance;
     c.nueva();
-    c.form.name = ' ';
+    c.form.name = 'Nombre que Laravel rechaza';
     const p = c.guardar(new Event('submit'));
 
     ctrl.expectOne('/api/v1/admin/categories').flush(
@@ -170,5 +171,26 @@ describe('AdminCategorias', () => {
     expect(c.tituloVistaPrevia()).toBe('Amistad | Jardín de Sele');
     c.form.seo_title = 'Regalos de amistad';
     expect(c.tituloVistaPrevia()).toBe('Regalos de amistad');
+  });
+
+  it('sin nombre o con posición inválida avisa, marca los campos y no llama a la API', async () => {
+    const fixture = await montar();
+    const avisos = TestBed.inject(AvisosService);
+    const c = fixture.componentInstance;
+    c.nueva();
+    c.form.name = '  ';
+    c.form.sort_order = -3;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[aria-invalid=true]')).toBeNull(); // antes de pulsar Guardar no se marca nada
+
+    c.guardar(new Event('submit'));
+    fixture.detectChanges();
+
+    ctrl.expectNone('/api/v1/admin/categories');
+    expect(avisos.lista().at(-1)?.texto).toContain('Faltan datos o hay datos incorrectos');
+    expect(fixture.nativeElement.querySelector('#name').getAttribute('aria-invalid')).toBe('true');
+    expect(fixture.nativeElement.textContent).toContain('Escribe el nombre de la categoría.');
+    expect(fixture.nativeElement.textContent).toContain('número entero');
+    expect(c.guardando()).toBe(false);
   });
 });

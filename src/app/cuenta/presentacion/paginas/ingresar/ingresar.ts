@@ -7,6 +7,7 @@ import { SesionService } from '../../../aplicacion/servicios/SesionService';
 import { destinoSeguro } from '../../../aplicacion/destino';
 import { Errores, validarIngreso } from '../../../aplicacion/validacion';
 import { ErrorApi } from '../../../dominio/interfaces/sesion';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { finalize, from } from 'rxjs';
 
 // Ingreso único para clientes y administradores. La validación y los mensajes vienen de Laravel;
@@ -22,6 +23,7 @@ export class Ingresar {
   private router = inject(Router);
   private ruta = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
+  private avisos = inject(AvisosService);
 
   email = '';
   password = '';
@@ -45,7 +47,7 @@ export class Ingresar {
     this.detalle.set([]);
     const errores = validarIngreso(this.email, this.password);
     this.errores.set(errores);
-    if (Object.keys(errores).length) return; // campos vacíos o inválidos: no se llama a la API
+    if (Object.keys(errores).length) return this.avisos.faltanDatos(); // campos vacíos o inválidos: no se llama a la API
     this.enviando.set(true);
     this.sesion.iniciarSesion(this.email.trim(), this.password).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {

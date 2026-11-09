@@ -1,5 +1,6 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { finalize, from, switchMap, tap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
@@ -21,6 +22,7 @@ export class CrearCuenta {
   private router = inject(Router);
   private ruta = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
+  private avisos = inject(AvisosService);
 
   name = '';
   email = '';
@@ -44,7 +46,7 @@ export class CrearCuenta {
     this.detalle.set([]);
     const errores = validarRegistro({ name: this.name, email: this.email, password: this.password, confirmacion: this.confirmacion });
     this.errores.set(errores);
-    if (Object.keys(errores).length) return; // campos vacíos o inválidos: no se llama a la API
+    if (Object.keys(errores).length) return this.avisos.faltanDatos(); // campos vacíos o inválidos: no se llama a la API
     this.enviando.set(true);
     this.sesion.crearCuenta({
       name: this.name.trim(),

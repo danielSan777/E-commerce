@@ -1,3 +1,4 @@
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -94,5 +95,20 @@ describe('AdminSubcategorias', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Ya existe una subcategoría con un nombre igual o muy parecido');
     expect(c.editando()).toBe('');
+  });
+
+  it('sin nombre avisa, marca el campo y no llama a la API', async () => {
+    const fixture = await montar();
+    const avisos = TestBed.inject(AvisosService);
+    const c = fixture.componentInstance;
+    c.nueva();
+    c.form.name = '';
+    c.guardar(new Event('submit'));
+    fixture.detectChanges();
+
+    ctrl.expectNone(BASE);
+    expect(avisos.lista().at(-1)?.texto).toContain('Faltan datos o hay datos incorrectos');
+    expect(fixture.nativeElement.querySelector('#name').getAttribute('aria-invalid')).toBe('true');
+    expect(fixture.nativeElement.textContent).toContain('Escribe el nombre de la subcategoría.');
   });
 });

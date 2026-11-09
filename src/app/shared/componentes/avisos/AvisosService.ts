@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Injectable, inject, signal } from '@angular/core';
 
 export interface Aviso { id: number; texto: string; tipo: 'exito' | 'error' }
 
@@ -8,6 +9,20 @@ export interface Aviso { id: number; texto: string; tipo: 'exito' | 'error' }
 export class AvisosService {
     readonly lista = signal<Aviso[]>([]);
     private siguiente = 1;
+    private document = inject(DOCUMENT);
+
+    /**
+     * Aviso general cuando un formulario no se puede enviar: faltan datos o hay datos incorrectos. Además lleva al primer
+     * campo marcado en rojo (`aria-invalid="true"`). Cada pantalla marca sus campos; este aviso es el mismo en todas.
+     */
+    faltanDatos(): void {
+        this.error('Faltan datos o hay datos incorrectos. Revisa los campos marcados en rojo.');
+        setTimeout(() => {
+            const campo = this.document.querySelector<HTMLElement>('[aria-invalid="true"]');
+            campo?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+            campo?.focus?.({ preventScroll: true });
+        });
+    }
 
     exito(texto: string, ms = 4500): void { this.mostrar(texto, 'exito', ms); }
     error(texto: string, ms = 8000): void { this.mostrar(texto, 'error', ms); }

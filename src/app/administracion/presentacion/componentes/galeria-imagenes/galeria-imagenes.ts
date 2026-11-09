@@ -74,9 +74,13 @@ export class GaleriaImagenes implements OnInit {
     this.error.set('');
     this.aviso.set('');
 
-    if (!this.alt.trim()) return this.error.set('Escribe la descripción de la imagen antes de subirla.');
-    if (!TIPOS_PERMITIDOS.includes(archivo.type)) return this.error.set('Elige una imagen JPG, PNG o WebP.');
-    if (archivo.size > MAX_BYTES) return this.error.set('La imagen debe pesar menos de 8 MB.');
+    const rechazo = !this.alt.trim() ? 'Escribe la descripción de la imagen antes de subirla.'
+      : !TIPOS_PERMITIDOS.includes(archivo.type) ? 'Elige una imagen JPG, PNG o WebP.'
+      : archivo.size > MAX_BYTES ? 'La imagen debe pesar menos de 8 MB.' : '';
+    if (rechazo) {
+      this.error.set(rechazo);
+      return this.avisos.error(rechazo);
+    }
 
     this.subiendo.set(true);
     this.api.subir(this.dueno(), this.clave(), archivo, this.rol, this.alt).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.subiendo.set(false))).subscribe({
@@ -94,7 +98,10 @@ export class GaleriaImagenes implements OnInit {
   guardarDatos(imagen: ImagenAdmin, alt: string, rol: string): void {
     this.error.set('');
     this.aviso.set('');
-    if (!alt.trim()) return this.error.set('La descripción de la imagen no puede quedar vacía.');
+    if (!alt.trim()) {
+      this.error.set('La descripción de la imagen no puede quedar vacía.');
+      return this.avisos.error('La descripción de la imagen no puede quedar vacía.');
+    }
     this.api.editar(imagen.id, { alt: alt.trim(), role: rol }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: guardada => {
         this.imagenes.update(l => l.map(i => (i.id === guardada.id ? guardada : i)));

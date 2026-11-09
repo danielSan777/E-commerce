@@ -194,7 +194,7 @@ export class AdminProductoForm implements OnInit {
     const descuento = leerDescuento(this.form.descuento);
     if (descuento === null) errores['descuento'] = `Escribe un descuento entre 0 y ${DESCUENTO_MAXIMO}, por ejemplo 10 o 12.5, o déjalo vacío.`;
     this.errores.set(errores);
-    if (Object.keys(errores).length) return; // no se llama a la API con datos incompletos
+    if (Object.keys(errores).length) return this.avisos.faltanDatos(); // no se llama a la API con datos incompletos
 
     const datos: DatosProducto = {
       name: this.form.name.trim(),

@@ -31,21 +31,21 @@
 
       <label for="inicio-dia">La temporada empieza</label>
       <div class="fecha" [class.invalida]="errores().inicio">
-        <select id="inicio-dia" name="inicio-dia" [(ngModel)]="form.inicio.dia" aria-label="Día de inicio">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
+        <select id="inicio-dia" [attr.aria-invalid]="errores().inicio ? true : null" name="inicio-dia" [(ngModel)]="form.inicio.dia" aria-label="Día de inicio">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
         <select name="inicio-mes" [(ngModel)]="form.inicio.mes" aria-label="Mes de inicio">@for (m of meses; track m; let i = $index) { <option [ngValue]="i + 1">{{ m }}</option> }</select>
       </div>
       @if (errores().inicio; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
 
       <label for="fin-dia">La temporada termina</label>
       <div class="fecha" [class.invalida]="errores().fin">
-        <select id="fin-dia" name="fin-dia" [(ngModel)]="form.fin.dia" aria-label="Día en que termina">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
+        <select id="fin-dia" [attr.aria-invalid]="errores().fin ? true : null" name="fin-dia" [(ngModel)]="form.fin.dia" aria-label="Día en que termina">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
         <select name="fin-mes" [(ngModel)]="form.fin.mes" aria-label="Mes en que termina">@for (m of meses; track m; let i = $index) { <option [ngValue]="i + 1">{{ m }}</option> }</select>
       </div>
       @if (errores().fin; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
 
       <label for="evento-dia">Fecha del evento</label>
       <div class="fecha" [class.invalida]="errores().evento">
-        <select id="evento-dia" name="evento-dia" [(ngModel)]="form.evento.dia" aria-label="Día del evento">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
+        <select id="evento-dia" [attr.aria-invalid]="errores().evento ? true : null" name="evento-dia" [(ngModel)]="form.evento.dia" aria-label="Día del evento">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
         <select name="evento-mes" [(ngModel)]="form.evento.mes" aria-label="Mes del evento">@for (m of meses; track m; let i = $index) { <option [ngValue]="i + 1">{{ m }}</option> }</select>
       </div>
       @if (errores().evento; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
