@@ -7,11 +7,18 @@ import { provideRouter } from '@angular/router';
 import { Inicio } from './inicio';
 
 describe('Inicio (/)', () => {
-    async function montar() {
+    const NAVIDAD = {
+        slug: 'navidad', name: 'Navidad', url: '/navidad', season_year: 2026, event_date: '2026-12-25',
+        tagline: 'Un regalo que crece', slogan: 'Regala vida', theme: { color: '#1b5e20', emoji: '🎄', cover: null },
+    };
+
+    /** `campana`: lo que Laravel responde en /campaigns/current (null = hoy no hay campaña en temporada). */
+    async function montar(campana: object | null = null) {
         TestBed.configureTestingModule({ imports: [Inicio], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
         const ctrl = TestBed.inject(HttpTestingController);
         const fixture = TestBed.createComponent(Inicio);
         ctrl.expectOne('/api/v1/categories').flush({ data: RESUMEN_CATEGORIAS_API });
+        ctrl.expectOne('/api/v1/campaigns/current').flush({ data: campana });
         ctrl.expectOne('/api/v1/products?limit=6').flush({ data: ['a', 'b', 'c', 'd', 'e', 'f'].map(s => productoListadoApi(s)) });
         await fixture.whenStable();
         return fixture.nativeElement as HTMLElement;
@@ -45,5 +52,36 @@ describe('Inicio (/)', () => {
 
         expect(html.querySelector('video')).toBeNull();
         expect(html.querySelector('img.hero-medio')).not.toBeNull();
+    });
+
+    it('sin campaña en temporada no muestra el banner', async () => {
+        const html = await montar(null);
+
+        expect(html.querySelector('.campana')).toBeNull();
+    });
+
+    it('con campaña en temporada muestra el banner con su nombre, lema, emoji, color y enlace', async () => {
+        const html = await montar(NAVIDAD);
+        const banner = html.querySelector('.campana') as HTMLElement;
+
+        expect(banner.textContent).toContain('Navidad');
+        expect(banner.textContent).toContain('🎄');
+        expect(banner.querySelector('h2')?.textContent).toContain('Un regalo que crece');
+        expect(banner.querySelector('a')?.getAttribute('href')).toBe('/navidad');
+        expect(banner.style.getPropertyValue('--campana')).toBe('#1b5e20');
+    });
+
+    it('si el color no es un #RRGGBB válido, el banner usa el color de la tienda', async () => {
+        const html = await montar({ ...NAVIDAD, theme: { color: 'url(javascript:x)', emoji: null, cover: null } });
+
+        expect((html.querySelector('.campana') as HTMLElement).style.getPropertyValue('--campana')).toBe('');
+    });
+
+    it('con portada la muestra en el banner', async () => {
+        const html = await montar({ ...NAVIDAD, theme: { color: null, emoji: null, cover: { alt: 'Pino', w: 1200, h: 1200, srcset: { '600': 'http://x/p-600.webp', '1080': 'http://x/p-1080.webp' } } } });
+
+        const img = html.querySelector('.campana-portada') as HTMLImageElement;
+        expect(img.getAttribute('src')).toBe('http://x/p-600.webp');
+        expect(img.getAttribute('alt')).toBe('Pino');
     });
 });

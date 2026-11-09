@@ -9,7 +9,7 @@ const esperar = () => new Promise<void>(r => setTimeout(r));
 
 const campana = (extra = {}) => ({
   slug: 'san-valentin', name: 'San Valentín', related_category: { slug: 'amor', name: 'Amor' },
-  start_md: '01-15', end_md: '02-14', event_md: '02-14', tagline: null, slogan: null, is_active: true,
+  start_md: '01-15', end_md: '02-14', event_md: '02-14', tagline: null, slogan: null, theme_color: null, emoji: null, cover_url: null, is_active: true,
   seo_title: null, seo_description: null, products: [{ sku: 'A-2', slug: 'b', name: 'Dos' }], state: 'upcoming', season_year: 2027, updated_at: 'x', ...extra,
 });
 const cat = (slug: string, name: string) => ({ slug, name });
@@ -88,4 +88,42 @@ describe('AdminCampanas', () => {
     expect(fixture.nativeElement.querySelector('[role=alert]').textContent).toContain('Escribe el nombre.');
     expect(c.editando()).toBe('san-valentin');
   });
+
+    it('envía el color y el emoji elegidos (o null si no se eligen)', async () => {
+        const fixture = await montar();
+        const c = fixture.componentInstance;
+        c.nueva();
+        c.form.name = 'Navidad';
+        c.form.related_category = 'amor';
+        c.form.color = '#1b5e20';
+        c.form.emoji = ' 🎄 ';
+        c.guardar(new Event('submit'));
+        const req = ctrl.expectOne('/api/v1/admin/campaigns');
+        expect(req.request.body.theme_color).toBe('#1b5e20');
+        expect(req.request.body.emoji).toBe('🎄');
+        req.flush(campana({ slug: 'navidad' }), { status: 201, statusText: 'Created' });
+        await esperar();
+        ctrl.expectOne('/api/v1/admin/campaigns').flush({ data: [] });
+        ctrl.expectOne('/api/v1/admin/categories').flush({ data: [] });
+        ctrl.expectOne(r => r.url === '/api/v1/admin/products').flush({ data: [] });
+
+        c.nueva();
+        c.form.name = 'Otra';
+        c.guardar(new Event('submit'));
+        const sin = ctrl.expectOne('/api/v1/admin/campaigns');
+        expect(sin.request.body.theme_color).toBeNull();
+        expect(sin.request.body.emoji).toBeNull();
+        sin.flush({ message: 'x' }, { status: 422, statusText: 'Unprocessable' });
+    });
+
+    it('al editar carga el diseño guardado y la vista previa usa su color', async () => {
+        const fixture = await montar();
+        const c = fixture.componentInstance;
+        c.editar({ ...c.campanas()[0], theme_color: '#1b5e20', emoji: '🎄' });
+        fixture.detectChanges();
+
+        expect(c.form.color).toBe('#1b5e20');
+        expect(c.form.emoji).toBe('🎄');
+        expect((fixture.nativeElement.querySelector('.vista-previa') as HTMLElement).style.getPropertyValue('--c')).toBe('#1b5e20');
+    });
 });

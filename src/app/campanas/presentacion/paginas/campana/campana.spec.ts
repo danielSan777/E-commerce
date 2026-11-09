@@ -75,4 +75,34 @@ describe('Campana (/san-valentin con datos de Laravel)', () => {
         expect(html.textContent).toContain('No pudimos cargar esta página');
         expect(html.textContent).not.toContain('No encontramos esta página');
     });
+
+    it('con diseño propio usa su color, su emoji y su portada', async () => {
+        const html = await montar('navidad', campanaApi('active', {
+            slug: 'navidad', name: 'Navidad',
+            theme: { color: '#1b5e20', emoji: '🎄', cover: { alt: 'Pino', w: 1, h: 1, srcset: { '600': 'http://x/p-600.webp', '1080': 'http://x/p-1080.webp' } } },
+        }));
+        const pagina = html.querySelector('.pagina') as HTMLElement;
+
+        expect(pagina.style.getPropertyValue('--jds-vino')).toBe('#1b5e20');
+        expect(html.querySelector('.hero .corazon')?.textContent).toContain('🎄');
+        expect(html.querySelector('.slogan')?.textContent).toContain('🎄');
+        const portada = html.querySelector('.hero-imagen.portada') as HTMLImageElement;
+        expect(portada.getAttribute('src')).toBe('http://x/p-1080.webp');
+        expect(portada.getAttribute('srcset')).toBe('http://x/p-600.webp 600w, http://x/p-1080.webp 1080w');
+        expect(portada.getAttribute('alt')).toBe('Pino');
+    });
+
+    it('sin diseño propio conserva los corazones y los colores de siempre', async () => {
+        const html = await montar('san-valentin', campanaApi('active'));
+
+        expect((html.querySelector('.pagina') as HTMLElement).style.getPropertyValue('--jds-vino')).toBe('');
+        expect(html.querySelector('.hero .bi-heart-fill')).not.toBeNull();
+        expect(html.querySelector('.hero-imagen.portada')).toBeNull();
+    });
+
+    it('un color que no sea #RRGGBB se ignora', async () => {
+        const html = await montar('x', campanaApi('active', { theme: { color: 'red; background:url(x)', emoji: null, cover: null } }));
+
+        expect((html.querySelector('.pagina') as HTMLElement).style.getPropertyValue('--jds-vino')).toBe('');
+    });
 });

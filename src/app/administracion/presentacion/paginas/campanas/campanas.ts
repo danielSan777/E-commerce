@@ -37,12 +37,12 @@ export function textoFechaAnual(md: string): string {
 interface Fecha { dia: number; mes: number }
 interface Formulario {
   name: string; related_category: string; inicio: Fecha; fin: Fecha; evento: Fecha;
-  tagline: string; slogan: string; seo_title: string; seo_description: string; is_active: boolean;
+  tagline: string; slogan: string; color: string; emoji: string; seo_title: string; seo_description: string; is_active: boolean;
 }
 
 const VACIO: Formulario = {
   name: '', related_category: '', inicio: { dia: 1, mes: 1 }, fin: { dia: 14, mes: 2 }, evento: { dia: 14, mes: 2 },
-  tagline: '', slogan: '', seo_title: '', seo_description: '', is_active: true,
+  tagline: '', slogan: '', color: '', emoji: '', seo_title: '', seo_description: '', is_active: true,
 };
 
 // Campañas de temporada en el panel (San Valentín, Día de la Madre…). Angular solo muestra lo que Laravel responde:
@@ -63,6 +63,12 @@ export class AdminCampanas implements OnInit {
   readonly meses = MESES;
   readonly dias = DIAS;
   readonly textoFecha = textoFechaAnual;
+  /** Color que usa la tienda cuando la campaña no tiene uno propio. */
+  readonly COLOR_DE_SIEMPRE = '#8a1c3a';
+
+  /** Color y tinte de la vista previa del formulario (igual que en la tienda). */
+  colorVistaPrevia(): string { return this.form.color || this.COLOR_DE_SIEMPRE; }
+  tinteVistaPrevia(): string { return `color-mix(in srgb, ${this.colorVistaPrevia()} 14%, white)`; }
 
   campanas = signal<CampanaAdmin[]>([]);
   categorias = signal<CategoriaAdmin[]>([]);
@@ -118,7 +124,7 @@ export class AdminCampanas implements OnInit {
     this.form = {
       name: c.name, related_category: c.related_category.slug,
       inicio: leerFechaAnual(c.start_md), fin: leerFechaAnual(c.end_md), evento: leerFechaAnual(c.event_md),
-      tagline: c.tagline ?? '', slogan: c.slogan ?? '', seo_title: c.seo_title ?? '', seo_description: c.seo_description ?? '', is_active: c.is_active,
+      tagline: c.tagline ?? '', slogan: c.slogan ?? '', color: c.theme_color ?? '', emoji: c.emoji ?? '', seo_title: c.seo_title ?? '', seo_description: c.seo_description ?? '', is_active: c.is_active,
     };
     this.elegidos.set(c.products.map(p => p.sku));
     this.editando.set(c.slug);
@@ -167,6 +173,8 @@ export class AdminCampanas implements OnInit {
       event_md: aFechaAnual(this.form.evento),
       tagline: this.form.tagline.trim() || null,
       slogan: this.form.slogan.trim() || null,
+      theme_color: this.form.color || null,
+      emoji: this.form.emoji.trim() || null,
       is_active: this.form.is_active,
       seo_title: this.form.seo_title.trim() || null,
       seo_description: this.form.seo_description.trim() || null,

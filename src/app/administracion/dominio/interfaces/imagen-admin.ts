@@ -1,4 +1,4 @@
-// Contrato: /api/v1/admin/{products|categories}/{clave}/media y /api/v1/admin/media/{id}
+// Contrato: /api/v1/admin/{products|categories|campaigns}/{clave}/media y /api/v1/admin/media/{id}
 export interface ImagenAdmin {
   id: number;
   type: 'image';
@@ -10,4 +10,4 @@ export interface ImagenAdmin {
   urls: Record<string, string>; // ancho → URL (600, 1080)
 }
 
-export type DuenoDeImagenes = 'products' | 'categories';
+export type DuenoDeImagenes = 'products' | 'categories' | 'campaigns';

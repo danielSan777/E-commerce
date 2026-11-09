@@ -1,3 +1,4 @@
+import { campanaGuard } from './campanas/aplicacion/campanaGuard';
 import { Routes } from '@angular/router';
 import { adminGuard, sesionGuard } from './administracion/aplicacion/adminAuth';
 import { MainLayout } from './core/layout/main-layout/main-layout/main-layout';
@@ -36,6 +37,11 @@ export const routes: Routes = [
         path: 'admin/campanas',
         canActivate: [adminGuard],
         loadComponent: () => import('./administracion/presentacion/paginas/campanas/campanas').then(m => m.AdminCampanas)
+    },
+    {
+        path: 'admin/campanas/:slug/imagenes',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/imagenes-campana/imagenes-campana').then(m => m.AdminImagenesCampana)
     },
     {
         path: 'admin/categorias/:slug/imagenes',
@@ -90,7 +96,6 @@ export const routes: Routes = [
             { path: 'consultar-pedido', loadComponent: () => import('./checkout/presentacion/paginas/consultar-pedido/consultar-pedido').then(m => m.ConsultarPedido) },
             { path: 'terminos-y-condiciones', loadComponent: () => import('./politicas/presentacion/paginas/politica/politica').then(m => m.Politica) },
             // Campaña de temporada (la URL no lleva año; fuera de temporada sigue respondiendo)
-            { path: 'san-valentin', data: { campana: 'san-valentin' }, loadComponent: () => import('./campanas/presentacion/paginas/campana/campana').then(m => m.Campana) },
             { path: 'catalogo/todos-productos', redirectTo: '/categorias', pathMatch: 'full' },
             // Direcciones anteriores de la pantalla principal y de sus catálogos
             { path: 'catalogo', redirectTo: '/', pathMatch: 'full' },
@@ -132,6 +137,9 @@ export const routes: Routes = [
             // Categorías y subcategorías (/amor, /profesiones-y-hobbies/salud…). La lista sale de la base de datos: una categoría
             // creada en el panel tiene su dirección sin tocar código. Va después de todas las rutas fijas; si Laravel dice que
             // no existe, la pantalla muestra el 404.
+            // Campañas de temporada (/san-valentin, /navidad…): las crea el administrador en el panel. La guarda deja pasar solo
+            // las direcciones que Laravel conoce como campaña; el resto sigue a las categorías.
+            { path: ':campana', canMatch: [campanaGuard], loadComponent: () => import('./campanas/presentacion/paginas/campana/campana').then(m => m.Campana) },
             { path: ':categoria', loadComponent: pantallaCategorias },
             { path: ':categoria/:subcategoria', loadComponent: pantallaCategorias },
 

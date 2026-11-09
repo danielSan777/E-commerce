@@ -8,6 +8,9 @@ export interface CampanaAdmin {
   event_md: string;
   tagline: string | null;
   slogan: string | null;
+  theme_color: string | null;   // "#C2185B"; null = el color de siempre
+  emoji: string | null;
+  cover_url: string | null;     // portada: la primera imagen de la campaña
   is_active: boolean;
   seo_title: string | null;
   seo_description: string | null;
@@ -25,6 +28,8 @@ export interface DatosCampana {
   event_md: string;
   tagline: string | null;
   slogan: string | null;
+  theme_color: string | null;
+  emoji: string | null;
   is_active: boolean;
   seo_title: string | null;
   seo_description: string | null;

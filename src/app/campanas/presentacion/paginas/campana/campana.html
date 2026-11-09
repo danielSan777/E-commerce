@@ -1,10 +1,15 @@
 @if (campana(); as c) {
-<div class="pagina">
+<div class="pagina" [style.--jds-vino]="color()" [style.--jds-rosa]="tinte()">
 
     <!-- Encabezado -->
     <section class="hero">
+        @if (c.theme.emoji; as e) {
+        <span class="corazon c1" aria-hidden="true">{{ e }}</span>
+        <span class="corazon c2" aria-hidden="true">{{ e }}</span>
+        } @else {
         <i class="bi bi-heart-fill corazon c1" aria-hidden="true"></i>
         <i class="bi bi-heart corazon c2" aria-hidden="true"></i>
+        }
         <div class="hero-texto">
             @if (enTemporada()) {
             <h1>{{ c.name }}</h1>
@@ -14,11 +19,13 @@
             } @else {
             <h1>{{ c.name }} {{ c.season_year }}</h1>
             <p class="lema">llegará muy pronto</p>
-            <p class="fecha">Mientras tanto, mira los regalos de amor que ya puedes pedir.</p>
+            <p class="fecha">Mientras tanto, mira los regalos de {{ c.related_category.name | lowercase }} que ya puedes pedir.</p>
             <a class="boton" [routerLink]="c.related_category.url">Ver regalos de {{ c.related_category.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
             }
         </div>
-        @if (c.products[0]; as p) { <img class="hero-imagen" [src]="p.image" alt="" width="150" height="150"> }
+        @if (portadaUrl(); as portada) {
+        <img class="hero-imagen portada" [src]="portada" [attr.srcset]="portadaSrcset()" sizes="(min-width: 768px) 220px, 130px" [alt]="c.theme.cover?.alt ?? ''" width="150" height="150">
+        } @else if (c.products[0]; as p) { <img class="hero-imagen" [src]="p.image" alt="" width="150" height="150"> }
     </section>
 
     @if (enTemporada()) {
@@ -52,7 +59,11 @@
     </section>
 
     @if (enTemporada()) {
+    @if (c.theme.emoji; as e) {
+    <p class="slogan"><span aria-hidden="true">{{ e }}</span> {{ c.slogan }} <span aria-hidden="true">{{ e }}</span></p>
+    } @else {
     <p class="slogan"><i class="bi bi-heart" aria-hidden="true"></i> {{ c.slogan }} <i class="bi bi-heart" aria-hidden="true"></i></p>
+    }
     <app-como-funciona />
     }
 
