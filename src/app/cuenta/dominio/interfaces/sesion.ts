@@ -10,14 +10,14 @@ export interface Usuario {
 export interface RespuestaSesion {
   token: string;
   token_type: 'Bearer';
-  expires_at: string; // ISO 8601
-  expires_in?: number; // segundos de vida; con esto Angular calcula el vencimiento con su propio reloj
+  expires_at: string | null; // ISO 8601. Administrador: a las 2 horas. Cliente: null (la sesión no vence)
+  expires_in?: number | null; // segundos de vida; con esto Angular calcula el vencimiento con su propio reloj
   user: Usuario;
 }
 
 export interface Sesion {
   token: string;
-  expires_at: string;
+  expires_at: string | null; // null = no vence (cliente)
   user: Usuario;
 }
 

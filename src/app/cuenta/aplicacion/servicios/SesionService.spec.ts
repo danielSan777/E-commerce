@@ -3,6 +3,7 @@ import { API_URL } from '../../../core/configuracion/api';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 import { SesionService } from './SesionService';
 
 const RESPUESTA = { token: 'abc123', token_type: 'Bearer', expires_at: new Date(Date.now() + 3600_000).toISOString(), user: { name: 'Sele', email: 'sele@jardindesele.com', role: 'admin' } };
@@ -11,7 +12,7 @@ describe('SesionService', () => {
   let http: HttpTestingController;
 
   function crear(): SesionService {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
     http = TestBed.inject(HttpTestingController);
     return TestBed.inject(SesionService);
   }
@@ -114,6 +115,53 @@ describe('SesionService', () => {
     expect(s.estaAutenticado()).toBe(false);
     expect(s.token()).toBeNull();
     expect(localStorage.getItem('jds_sesion')).toBeNull();
+  });
+
+  it('el cliente no tiene vencimiento: la sesión sigue válida aunque pase el tiempo', async () => {
+    vi.useFakeTimers();
+    try {
+      const s = crear();
+      const p = firstValueFrom(s.iniciarSesion('ana@correo.com', 'clave'));
+      http.expectOne('/api/v1/auth/login').flush({ ...RESPUESTA, expires_at: null, expires_in: null, user: { name: 'Ana', email: 'ana@correo.com', role: 'customer' } });
+      await p;
+      expect(JSON.parse(localStorage.getItem('jds_sesion')!).expires_at).toBeNull();
+
+      vi.advanceTimersByTime(400 * 24 * 3600_000);
+      expect(s.estaAutenticado()).toBe(true);
+      expect(s.token()).toBe('abc123');
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('una sesión de cliente guardada sin vencimiento se recupera al recargar', () => {
+    localStorage.setItem('jds_sesion', JSON.stringify({ ...RESPUESTA, expires_at: null, user: { name: 'Ana', email: 'a@a.com', role: 'customer' } }));
+    expect(crear().estaAutenticado()).toBe(true);
+  });
+
+  it('administrador: al cumplirse las 2 horas se cierra la sesión sola y lo manda al ingreso con aviso', async () => {
+    vi.useFakeTimers();
+    try {
+      const s = crear();
+      const ir = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const p = firstValueFrom(s.iniciarSesion('sele@jardindesele.com', 'clave'));
+      http.expectOne('/api/v1/auth/login').flush({ ...RESPUESTA, expires_in: 7200 });
+      await p;
+
+      vi.advanceTimersByTime(7200_000 - 1000);
+      expect(s.estaAutenticado()).toBe(true);
+      expect(ir).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1500);
+      expect(s.usuario()).toBeNull();
+      expect(localStorage.getItem('jds_sesion')).toBeNull();
+      expect(ir).toHaveBeenCalledWith(['/ingresar'], { queryParams: expect.objectContaining({ motivo: 'vencida' }) });
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('administrador con sesión guardada ya vencida: se recuerda que venció para avisarlo', () => {
+    localStorage.setItem('jds_sesion', JSON.stringify({ ...RESPUESTA, expires_at: new Date(Date.now() - 1000).toISOString() }));
+    const s = crear();
+    expect(s.estaAutenticado()).toBe(false);
+    expect(s.venciaEnEsteEquipo()).toBe(true);
   });
 
   it('recupera la sesión guardada al recargar la página', () => {

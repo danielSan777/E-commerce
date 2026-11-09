@@ -7,6 +7,8 @@ input { padding: .7rem .8rem; border: 1px solid #c9d2c9; border-radius: 8px; fon
 input:focus { outline: 2px solid #4c8a4c; border-color: transparent; }
 .error { background: #fdecea; color: #8a1c13; border-radius: 8px; padding: .6rem .8rem; margin-top: .5rem; }
 .error p { margin: 0; }
+.aviso { background: #fff7e0; color: #6b4a00; border-radius: 8px; padding: .6rem .8rem; margin-top: .5rem; }
+.aviso p { margin: 0; }
 .detalle { font-size: .85rem; }
 button { margin-top: 1rem; padding: .8rem; border: 0; border-radius: 8px; background: #2f6b34; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; }
 button:disabled { opacity: .6; cursor: default; }

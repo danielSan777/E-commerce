@@ -26,8 +26,9 @@ export const sesionInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((e) => {
       // Token vencido o cerrado en otro dispositivo: volver al ingreso y regresar a esta pantalla después.
       if (e?.status === 401 && !req.url.endsWith('/logout') && !req.url.endsWith('/logout-all')) {
+        const eraAdministrador = sesion.esAdministrador();
         sesion.olvidar();
-        router.navigate(['/ingresar'], { queryParams: { returnUrl: router.url } });
+        router.navigate(['/ingresar'], { queryParams: { returnUrl: router.url, ...(eraAdministrador ? { motivo: 'vencida' } : {}) } });
       }
       return throwError(() => e);
     }),
@@ -44,6 +45,9 @@ export const sesionGuard: CanActivateFn = (_ruta, estado) => {
 export const adminGuard: CanActivateFn = (_ruta, estado) => {
   const sesion = inject(SesionService);
   const router = inject(Router);
-  if (!sesion.estaAutenticado()) return router.createUrlTree(['/ingresar'], { queryParams: { returnUrl: estado.url } });
+  if (!sesion.estaAutenticado()) {
+    // Si había una sesión guardada y ya venció, se avisa por qué volvió al ingreso.
+    return router.createUrlTree(['/ingresar'], { queryParams: { returnUrl: estado.url, ...(sesion.venciaEnEsteEquipo() ? { motivo: 'vencida' } : {}) } });
+  }
   return sesion.esAdministrador() || router.createUrlTree(['/mi-cuenta']);
 };

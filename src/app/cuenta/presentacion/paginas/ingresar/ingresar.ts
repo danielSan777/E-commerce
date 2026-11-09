@@ -29,6 +29,8 @@ export class Ingresar {
   password = '';
   enviando = signal(false);
   error = signal('');
+  /** Aviso informativo (no es un error): la sesión de administrador terminó por tiempo. */
+  aviso = signal('');
   detalle = signal<string[]>([]);
   /** Errores por campo (vacío, formato) detectados en el navegador antes de llamar a la API. */
   errores = signal<Errores>({});
@@ -36,6 +38,7 @@ export class Ingresar {
   constructor() {
     inject(Title).setTitle('Ingresar | Jardín de Sele');
     inject(Meta).updateTag({ name: 'robots', content: 'noindex, nofollow' });
+    if (this.ruta.snapshot.queryParamMap.get('motivo') === 'vencida') this.aviso.set('Tu sesión de administrador terminó por seguridad (dura 2 horas). Ingresa de nuevo para continuar.');
     const usuario = this.sesion.usuario();
     if (usuario && this.sesion.estaAutenticado()) void this.router.navigateByUrl(this.destino(usuario.role));
   }

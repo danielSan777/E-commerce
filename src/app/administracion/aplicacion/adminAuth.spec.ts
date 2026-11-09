@@ -50,7 +50,7 @@ describe('Autenticación del panel', () => {
     ctrl.expectOne('/api/v1/admin/me').flush({ code: 'unauthenticated', message: 'x' }, { status: 401, statusText: 'Unauthorized' });
 
     expect(TestBed.inject(SesionService).estaAutenticado()).toBe(false);
-    expect(navegar).toHaveBeenCalledWith(['/ingresar'], { queryParams: { returnUrl: expect.any(String) } });
+    expect(navegar).toHaveBeenCalledWith(['/ingresar'], { queryParams: { returnUrl: expect.any(String), motivo: 'vencida' } });
   });
 
   const correr = (guarda: typeof adminGuard, url = '/admin') =>

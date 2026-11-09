@@ -11,13 +11,13 @@ const sesion = (role: 'admin' | 'customer') => ({ token: 't', token_type: 'Beare
 describe('Ingresar', () => {
   let ctrl: HttpTestingController;
 
-  async function montar(returnUrl: string | null = null) {
+  async function montar(returnUrl: string | null = null, motivo: string | null = null) {
     localStorage.clear();
     TestBed.configureTestingModule({
       imports: [Ingresar],
       providers: [
         provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => returnUrl } } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: (k: string) => (k === 'motivo' ? motivo : returnUrl) } } } },
       ],
     });
     ctrl = TestBed.inject(HttpTestingController);
@@ -30,6 +30,17 @@ describe('Ingresar', () => {
     Object.assign(fixture.componentInstance, { email, password });
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
   };
+
+  it('si la sesión de administrador venció, muestra un aviso explicando por qué', async () => {
+    const fixture = await montar(null, 'vencida');
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.aviso')?.textContent).toContain('2 horas');
+  });
+
+  it('sin motivo no muestra aviso', async () => {
+    const fixture = await montar();
+    expect(fixture.nativeElement.querySelector('.aviso')).toBeNull();
+  });
 
   it('un administrador va a su panel', async () => {
     const fixture = await montar();

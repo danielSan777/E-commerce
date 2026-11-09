@@ -802,7 +802,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 * [ ] Un único servicio `BusinessCalendar` para todo cálculo de fechas de negocio, con la zona `America/Guayaquil` por nombre.
 * [ ] Solo la carpeta `public` de Laravel es accesible desde la web.
 * [ ] Laravel confía en el proxy de Cloudflare y lee la IP real de `CF-Connecting-IP`.
-* [ ] Autenticación del panel: un solo rol Administrador, doble factor con opción de recordar el dispositivo, y botón para cerrar todas las sesiones. *(Hecho: ingreso único `/ingresar` con token Bearer, guarda de rutas por rol, "Cerrar sesión" y "Cerrar todas las sesiones". Falta el doble factor.)*
+* [ ] Autenticación del panel: un solo rol Administrador, doble factor con opción de recordar el dispositivo, y botón para cerrar todas las sesiones. *(Hecho: ingreso único `/ingresar` con token Bearer, guarda de rutas por rol, "Cerrar sesión" y "Cerrar todas las sesiones". Sesión del administrador: 2 horas desde el ingreso y luego vuelve al ingreso con aviso; la del cliente no vence. Falta el doble factor.)*
 * [ ] CSRF en todo el panel y en las acciones del cliente; todas las acciones por POST, nunca por GET.
 * [ ] Límites de intentos: login, subida de comprobantes, "Consultar mi pedido" y subida de fotos.
 * [ ] Cola con driver `database`, tablas `jobs` y `failed_jobs`.

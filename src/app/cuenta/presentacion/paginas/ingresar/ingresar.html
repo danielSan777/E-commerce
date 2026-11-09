@@ -13,6 +13,9 @@
       [attr.aria-invalid]="errores()['password'] ? true : null" />
     @if (errores()['password']) { <small class="campo-error">{{ errores()['password'] }}</small> }
 
+    @if (aviso() && !error()) {
+      <div class="aviso" role="status"><p>{{ aviso() }}</p></div>
+    }
     @if (error()) {
       <div class="error" role="alert">
         <p>{{ error() }}</p>

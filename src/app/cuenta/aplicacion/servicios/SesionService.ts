@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, Injector, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router';
 import { MonoTypeOperatorFunction, Observable, catchError, finalize, map, of, tap, throwError } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
 import { DatosRegistro, ErrorApi, RespuestaSesion, Sesion } from '../../dominio/interfaces/sesion';
@@ -36,6 +37,18 @@ export class SesionService {
   private esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
 
   private sesion = signal<Sesion | null>(this.leer());
+  private temporizador: ReturnType<typeof setTimeout> | undefined;
+  private vencioAdministrador = false;
+
+  constructor() {
+    if (!this.esNavegador) return;
+    this.programarVencimiento();
+    // Si el equipo estuvo suspendido o la pestaña dormida, el temporizador puede llegar tarde: al volver se revisa.
+    document.addEventListener('visibilitychange', () => {
+      const s = this.sesion();
+      if (document.visibilityState === 'visible' && s?.expires_at && Date.parse(s.expires_at) <= Date.now()) this.vencer();
+    });
+  }
 
   readonly usuario = computed(() => this.sesion()?.user ?? null);
   readonly esAdministrador = computed(() => this.sesion()?.user.role === 'admin');
@@ -49,10 +62,16 @@ export class SesionService {
     return this.estaAutenticado() ? this.sesion()!.token : null;
   }
 
+  /** true si la sesión de administrador que había en este equipo terminó por tiempo (para avisarlo en el ingreso). */
+  venciaEnEsteEquipo(): boolean {
+    return this.vencioAdministrador;
+  }
+
   estaAutenticado(): boolean {
     const s = this.sesion();
     if (!s) return false;
-    if (Date.parse(s.expires_at) <= Date.now()) {
+    if (s.expires_at !== null && Date.parse(s.expires_at) <= Date.now()) {
+      this.vencioAdministrador = s.user.role === 'admin';
       this.olvidar();
       return false;
     }
@@ -79,6 +98,7 @@ export class SesionService {
 
   /** La API rechazó el token (401): se descarta sin llamar a la API. */
   olvidar(): void {
+    clearTimeout(this.temporizador);
     this.sesion.set(null);
     this.borrar();
   }
@@ -87,6 +107,7 @@ export class SesionService {
     return this.http.post<RespuestaSesion>(`${this.api}/auth/${ruta}`, cuerpo).pipe(
       // El vencimiento se calcula con el reloj de este navegador (no depende de que coincida con el del servidor).
       tap(r => this.guardar({ token: r.token, expires_at: this.vencimiento(r), user: r.user })),
+      tap(() => this.programarVencimiento()),
       map(() => undefined),
       conErrorApi(),
     );
@@ -96,10 +117,31 @@ export class SesionService {
    * Vencimiento calculado con el reloj de este navegador. Si el servidor no manda `expires_in` y su fecha ya pasó
    * (reloj desfasado o configuración vieja), se asume 1 hora: Laravel sigue siendo quien rechaza un token vencido (401).
    */
-  private vencimiento(r: RespuestaSesion): string {
+  private vencimiento(r: RespuestaSesion): string | null {
+    if (r.expires_at === null) return null; // cliente: la sesión no vence
     if (typeof r.expires_in === 'number' && r.expires_in > 0) return new Date(Date.now() + r.expires_in * 1000).toISOString();
     const delServidor = Date.parse(r.expires_at);
-    return delServidor > Date.now() ? r.expires_at : new Date(Date.now() + 3600_000).toISOString();
+    return delServidor > Date.now() ? r.expires_at : new Date(Date.now() + 2 * 3600_000).toISOString();
+  }
+
+  /** Mientras la sesión tenga vencimiento (administrador) se programa su fin, aunque la persona no haga nada en la pantalla. */
+  private programarVencimiento(): void {
+    clearTimeout(this.temporizador);
+    const vence = this.sesion()?.expires_at;
+    if (!vence) return;
+    const falta = Math.max(0, Date.parse(vence) - Date.now());
+    this.temporizador = setTimeout(() => this.vencer(), Math.min(falta, 2 ** 31 - 1));
+  }
+
+  /** Terminó el tiempo: el administrador vuelve al ingreso con un aviso; el cliente no pasa por aquí (su sesión no vence). */
+  private vencer(): void {
+    const eraAdministrador = this.esAdministrador();
+    this.vencioAdministrador = eraAdministrador;
+    this.olvidar();
+    if (!eraAdministrador) return;
+    const router = this.injector.get(Router);
+    if (router.url.startsWith('/ingresar')) return;
+    void router.navigate(['/ingresar'], { queryParams: { motivo: 'vencida', returnUrl: router.url } });
   }
 
   private avisar(ruta: 'logout' | 'logout-all'): Observable<void> {
@@ -120,6 +162,7 @@ export class SesionService {
   }
 
   private guardar(s: Sesion): void {
+    this.vencioAdministrador = false;
     this.sesion.set(s);
     if (!this.esNavegador) return;
     try { localStorage.setItem(CLAVE, JSON.stringify(s)); } catch { /* almacenamiento bloqueado: la sesión vive en memoria */ }
@@ -134,7 +177,7 @@ export class SesionService {
     if (!this.esNavegador) return null;
     try {
       const s = JSON.parse(localStorage.getItem(CLAVE) ?? 'null') as Sesion | null;
-      return s && typeof s.token === 'string' && typeof s.expires_at === 'string' && s.user && typeof s.user.role === 'string' ? s : null;
+      return s && typeof s.token === 'string' && (s.expires_at === null || typeof s.expires_at === 'string') && s.user && typeof s.user.role === 'string' ? s : null;
     } catch {
       return null;
     }
