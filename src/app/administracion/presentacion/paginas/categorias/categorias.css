@@ -1,0 +1,4 @@
+@import '../../estilos/admin-tema.css';
+
+.google { display: flex; flex-direction: column; gap: .4rem; border: 1px dashed var(--borde); border-radius: 12px; padding: .75rem 1rem 1rem; margin: .5rem 0; }
+.google legend { font-weight: 700; padding: 0 .4rem; }

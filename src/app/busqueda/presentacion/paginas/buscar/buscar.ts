@@ -23,7 +23,7 @@ export class Buscar {
   resultados = computed(() => (this.termino().trim() ? this.servicio.buscar(this.termino()) : []));
   buscando = computed(() => !!this.termino().trim());
   sinResultados = computed(() => this.buscando() && this.resultados().length === 0);
-  favoritos = this.servicio.favoritos();
+  favoritos = computed(() => this.servicio.favoritos());
 
   enlaceWhatsapp = computed(() =>
     enlaceWhatsapp(`Hola 🌿 Busqué "${this.termino().trim()}" en la tienda y no lo encontré. ¿Me pueden ayudar?`));

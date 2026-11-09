@@ -1,3 +1,4 @@
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ConsultarPedido } from './consultar-pedido';
@@ -16,12 +17,14 @@ describe('ConsultarPedido', () => {
         const c = f.componentInstance;
 
         c.numero = ''; c.correo = 'a@b.com';
-        await c.enviar(new Event('submit'));
-        expect(c.error()).toContain('número de pedido');
+        c.enviar(new Event('submit'));
+        expect(c.errores().numero).toContain('número de pedido');
+        expect(TestBed.inject(AvisosService).lista().at(-1)?.texto).toContain('Faltan datos o hay datos incorrectos');
 
         c.numero = 'JDS-1'; c.correo = 'correo-malo';
-        await c.enviar(new Event('submit'));
-        expect(c.error()).toContain('correo válido');
+        c.enviar(new Event('submit'));
+        expect(c.errores().correo).toContain('correo válido');
+        expect(c.errores().numero).toBeUndefined();
         expect(c.respuesta()).toBe('');
     });
 

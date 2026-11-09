@@ -1,14 +1,17 @@
 import { Component, PLATFORM_ID, computed, inject } from '@angular/core';
 import { CurrencyPipe, isPlatformBrowser } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
+import { CampanaService } from '../../../../campanas/aplicacion/servicios/CampanaService';
 import { CategoriaService } from '../../../../categorias/aplicacion/servicios/CategoriaService';
 import { PromesaService } from '../../../../checkout/aplicacion/servicios/PromesaService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { enlaceWhatsapp } from '../../../../core/configuracion/tienda';
 
-// Página principal (/), de arriba hacia abajo en el celular: video, promesa, categorías, favoritos,
-// cómo funciona y confianza. Testimonios y campaña de temporada llegan cuando Josué entregue sus datos.
+// Página principal (/), de arriba hacia abajo en el celular: video, promesa, campaña en temporada (si hay), categorías, favoritos,
+// cómo funciona y confianza. Testimonios llegan cuando Josué entregue sus datos.
 @Component({
   selector: 'app-inicio',
   imports: [CurrencyPipe, RouterLink],
@@ -32,8 +35,15 @@ export class Inicio {
     { icono: 'bi-geo-alt', texto: 'Hecho en Guayaquil' },
   ];
 
-  readonly categorias = inject(CategoriaService).categorias();
-  readonly favoritos = inject(CategoriaService).favoritos();
+  private catalogo = inject(CategoriaService);
+  readonly categorias = toSignal(this.catalogo.categorias().pipe(catchError(() => of([]))), { initialValue: [] });
+  readonly favoritos = toSignal(this.catalogo.favoritos().pipe(catchError(() => of([]))), { initialValue: [] });
+  // Campaña en temporada hoy (la decide Laravel con la fecha de Guayaquil): null = no se muestra el banner.
+  readonly campana = toSignal(inject(CampanaService).vigente().pipe(catchError(() => of(null))), { initialValue: null });
+  /** Color de la campaña si es un #RRGGBB válido; si no, el banner usa el color de la tienda. */
+  readonly colorCampana = computed(() => { const c = this.campana()?.theme.color; return c && /^#[0-9a-f]{6}$/i.test(c) ? c : null; });
+  readonly tinteCampana = computed(() => { const c = this.colorCampana(); return c ? `color-mix(in srgb, ${c} 14%, white)` : null; });
+  readonly portadaCampana = computed(() => { const s = this.campana()?.theme.cover?.srcset; return s ? (s['600'] ?? Object.values(s)[0] ?? null) : null; });
   readonly promesa = inject(PromesaService).promesa();
   readonly macetasEnvioGratis = inject(EnvioGratisService).MACETAS_PARA_ENVIO_GRATIS;
   readonly enlaceAyuda = enlaceWhatsapp();

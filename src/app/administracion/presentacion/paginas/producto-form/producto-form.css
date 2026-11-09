@@ -1,0 +1,6 @@
+@import '../../estilos/admin-tema.css';
+.calculo { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; padding: .6rem .8rem; background: #d1fae5; border-radius: 10px; color: #064e3b; }
+.calculo s { color: var(--suave); margin-left: .35rem; }
+
+.google { display: flex; flex-direction: column; gap: .4rem; border: 1px dashed var(--borde); border-radius: 12px; padding: .75rem 1rem 1rem; margin: .5rem 0; }
+.google legend { font-weight: 700; padding: 0 .4rem; }

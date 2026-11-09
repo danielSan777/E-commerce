@@ -4,14 +4,14 @@
     <nav class="migas" aria-label="breadcrumb">
         <a routerLink="/">Inicio</a><span>/</span>
         <a href="#" (click)="volverAtras($event)">{{ textoListado }}</a><span>/</span>
-        <span class="actual">{{ p.nombre }}</span>
+        <span class="actual">{{ p.name }}</span>
     </nav>
 
     <div class="detalle-grid">
         <!-- ============ IMAGEN ============ -->
         <div class="galeria-bloque">
             <div class="galeria">
-                <img [src]="imagenActiva()" [alt]="p.nombre" />
+                <img [src]="imagenActiva()" [alt]="p.name" />
                 <button type="button" class="btn-ampliar" (click)="verImagen.set(true)" aria-label="Ver imagen completa">
                     <i class="bi bi-arrows-fullscreen"></i>
                 </button>
@@ -30,23 +30,29 @@
 
         <!-- ============ INFORMACIÓN ============ -->
         <div class="info">
-            <h1 class="titulo">{{ p.nombre }}</h1>
+            <h1 class="titulo">{{ p.name }}</h1>
 
             <div class="precios">
-                <span class="precio">{{ formato(p.precio) }} {{ codigoMoneda }}</span>
+                <span class="precio">{{ formato(p.price.final_cents) }} {{ codigoMoneda }}</span>
+                @if (p.price.discount_cents) {
+                <s class="precio-anterior">{{ formato(p.price.base_cents) }}</s>
+                @if (p.price.badge) { <span class="insignia">{{ p.price.badge }}</span> }
+                }
             </div>
 
-            @if (!p.disponible) {
+            @if (!p.available) {
             <p class="aviso-agotado"><i class="bi bi-exclamation-circle"></i> Producto agotado por el momento</p>
             }
 
             <!-- Qué incluye · tamaño · material -->
+            @if (p.includes.length) {
             <h2 class="sub-titulo">Qué incluye</h2>
             <ul class="incluye">
-                @for (x of INCLUYE; track x) { <li><i class="bi bi-check2" aria-hidden="true"></i> {{ x }}</li> }
+                @for (x of p.includes; track x) { <li><i class="bi bi-check2" aria-hidden="true"></i> {{ x }}</li> }
             </ul>
-            <p class="dato-producto"><i class="bi bi-rulers" aria-hidden="true"></i> {{ TAMANO_TEXTO }}</p>
-            <p class="dato-producto"><i class="bi bi-printer" aria-hidden="true"></i> {{ MATERIAL_TEXTO }}</p>
+            }
+            @if (p.size_text) { <p class="dato-producto"><i class="bi bi-rulers" aria-hidden="true"></i> {{ p.size_text }}</p> }
+            @if (p.material_text) { <p class="dato-producto"><i class="bi bi-printer" aria-hidden="true"></i> {{ p.material_text }}</p> }
 
             <!-- Línea de envío -->
             <p class="linea-envio"><i class="bi bi-truck" aria-hidden="true"></i> {{ lineaEnvio() }}</p>
@@ -76,7 +82,7 @@
 
             <!-- Acciones -->
             <div class="acciones">
-                <button type="button" class="btn-comprar" [disabled]="!p.disponible" (click)="abrirPersonalizador()">
+                <button type="button" class="btn-comprar" [disabled]="!p.available" (click)="abrirPersonalizador()">
                     <i class="bi bi-magic"></i>Personalizar esta maceta
                 </button>
                 <button type="button" class="btn-compartir" (click)="compartirAbierto.set(true)">
@@ -88,9 +94,9 @@
             }
 
             <!-- Descripción -->
-            @if (p.descripcion) {
+            @if (p.description_html) {
             <h2 class="sub-titulo">Descripción</h2>
-            <p class="descripcion">{{ p.descripcion }}</p>
+            <p class="descripcion">{{ p.description_html }}</p>
             }
         </div>
     </div>
@@ -99,9 +105,9 @@
     <div class="barra-fija">
         <div class="barra-precio">
             <small>Precio</small>
-            <strong>{{ formato(p.precio) }}</strong>
+            <strong>{{ formato(p.price.final_cents) }}</strong>
         </div>
-        <button type="button" class="btn-comprar" [disabled]="!p.disponible" (click)="abrirPersonalizador()">
+        <button type="button" class="btn-comprar" [disabled]="!p.available" (click)="abrirPersonalizador()">
             <i class="bi bi-magic"></i>Personalizar
         </button>
     </div>
@@ -142,11 +148,15 @@
         <button type="button" class="modal-cerrar claro" (click)="verImagen.set(false)" aria-label="Cerrar">
             <i class="bi bi-x-lg"></i>
         </button>
-        <img class="imagen-grande" [src]="imagenActiva()" [alt]="p.nombre" (click)="$event.stopPropagation()" />
+        <img class="imagen-grande" [src]="imagenActiva()" [alt]="p.name" (click)="$event.stopPropagation()" />
     </div>
     }
-    } @else {
+    } @else if (fallo()) {
+    <p class="estado" role="alert">No pudimos cargar este producto. Inténtalo de nuevo en unos minutos.</p>
+    } @else if (producto() === null) {
     <app-no-encontrada />
+    } @else {
+    <p class="estado">Cargando…</p>
     }
 </section>
 <!-- Personalizador a pantalla completa -->

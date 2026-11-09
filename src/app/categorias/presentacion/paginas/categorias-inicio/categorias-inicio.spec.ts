@@ -1,11 +1,16 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { API_URL } from '../../../../core/configuracion/api';
+import { RESUMEN_CATEGORIAS_API } from '../../../../testing/catalogo-api';
 import { provideRouter } from '@angular/router';
 import { CategoriasInicio } from './categorias-inicio';
 
 describe('CategoriasInicio (/categorias)', () => {
     async function montar() {
-        TestBed.configureTestingModule({ imports: [CategoriasInicio], providers: [provideRouter([])] });
+        TestBed.configureTestingModule({ imports: [CategoriasInicio], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
         const fixture = TestBed.createComponent(CategoriasInicio);
+        TestBed.inject(HttpTestingController).expectOne('/api/v1/categories').flush({ data: RESUMEN_CATEGORIAS_API });
         await fixture.whenStable();
         return fixture.nativeElement as HTMLElement;
     }

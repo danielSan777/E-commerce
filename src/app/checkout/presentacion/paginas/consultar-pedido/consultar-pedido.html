@@ -4,10 +4,12 @@
 
     <form class="formulario" (submit)="enviar($event)" novalidate>
         <label for="numero">Número de pedido</label>
-        <input id="numero" name="numero" type="text" autocomplete="off" [(ngModel)]="numero" placeholder="Ej.: JDS-1042">
+        <input id="numero" name="numero" type="text" autocomplete="off" [(ngModel)]="numero" placeholder="Ej.: JDS-1042" [attr.aria-invalid]="errores().numero ? true : null">
+        @if (errores().numero; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
 
         <label for="correo">Correo electrónico</label>
-        <input id="correo" name="correo" type="email" autocomplete="email" [(ngModel)]="correo" placeholder="tucorreo@ejemplo.com">
+        <input id="correo" name="correo" type="email" autocomplete="email" [(ngModel)]="correo" placeholder="tucorreo@ejemplo.com" [attr.aria-invalid]="errores().correo ? true : null">
+        @if (errores().correo; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
 
         @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
         <button type="submit" [disabled]="enviando()">{{ enviando() ? 'Enviando…' : 'Enviarme el enlace' }}</button>

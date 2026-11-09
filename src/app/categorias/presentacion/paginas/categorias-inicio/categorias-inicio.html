@@ -10,7 +10,7 @@
             <p>Encuentra la categoría ideal para sorprender.</p>
         </div>
         <div class="banner-imagenes" aria-hidden="true">
-            @for (t of tarjetas.slice(0, 3); track t.slug) { <img [src]="t.image" alt="" width="120" height="120"> }
+            @for (t of tarjetas().slice(0, 3); track t.slug) { <img [src]="t.image" alt="" width="120" height="120"> }
         </div>
     </section>
 
@@ -18,7 +18,7 @@
     <p class="subtitulo">Elige cómo quieres empezar a explorar.</p>
 
     <ul class="tarjetas">
-        @for (t of tarjetas; track t.slug) {
+        @for (t of tarjetas(); track t.slug) {
         <li>
             <a class="tarjeta" [routerLink]="t.url">
                 <span class="foto"><img [src]="t.image" [alt]="t.name" loading="lazy" width="320" height="240"></span>

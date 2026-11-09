@@ -1,0 +1,60 @@
+<section class="galeria">
+  <h2>Imágenes</h2>
+  <p class="ayuda">Solo una imagen puede ser la principal. Si ya hay una, el tipo "Principal" queda bloqueado: para cambiarla, cambia primero el tipo de la actual. JPG, PNG o WebP, de hasta 8 MB y mínimo 300 × 300 píxeles. Laravel las convierte a WebP y crea las versiones para la web.</p>
+
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+
+  <div class="subir">
+    <h3>Subir una imagen nueva</h3>
+    <label for="rol-imagen">Tipo de imagen</label>
+    <select id="rol-imagen" [(ngModel)]="rol" name="rol">
+      @for (r of roles; track r.valor) { <option [value]="r.valor" [disabled]="r.valor === 'front' && principalId() !== null">{{ r.texto }}{{ r.valor === 'front' && principalId() !== null ? ' (ya hay una)' : '' }}</option> }
+    </select>
+
+    <label for="alt-imagen">Descripción de la imagen (obligatoria)</label>
+    <input id="alt-imagen" name="alt" maxlength="200" required placeholder="Describe lo que se ve en la foto" [(ngModel)]="alt" [attr.aria-invalid]="falta() ? true : null" aria-describedby="alt-ayuda" />
+    @if (falta()) {
+      <small id="alt-ayuda" class="campo-error" role="alert">Escribe una descripción antes de subir una imagen.</small>
+    } @else {
+      <small id="alt-ayuda" class="ayuda">Ayuda a Google y a las personas con lector de pantalla.</small>
+    }
+
+    <label class="boton primario" [class.desactivado]="subiendo() || falta()">
+      {{ subiendo() ? 'Subiendo…' : 'Elegir y subir imagen' }}
+      <input type="file" accept="image/jpeg,image/png,image/webp" hidden [disabled]="subiendo() || falta()" (change)="elegir($event)" />
+    </label>
+  </div>
+
+  @if (cargando()) {
+    <p>Cargando imágenes…</p>
+  } @else {
+    <h3>Imágenes subidas</h3>
+    <p class="ayuda">Si cambias el tipo o la descripción de una imagen, pulsa "Guardar" debajo de ella.</p>
+    <ul class="imagenes">
+      @for (i of imagenes(); track i.id) {
+        <li>
+          <img [src]="miniatura(i)" [alt]="i.alt || 'Imagen del catálogo'" loading="lazy" />
+          <label class="etiqueta">Tipo
+          <select #rolImg [value]="i.role" aria-label="Tipo de imagen">
+            @for (r of roles; track r.valor) { <option [value]="r.valor" [selected]="r.valor === i.role" [disabled]="r.valor === 'front' && principalId() !== null && principalId() !== i.id">{{ r.texto }}{{ r.valor === 'front' && principalId() !== null && principalId() !== i.id ? ' (ya hay una)' : '' }}</option> }
+          </select>
+          </label>
+          <label class="etiqueta">Descripción
+          <input #altImg [value]="i.alt ?? ''" maxlength="200" placeholder="Describe lo que se ve" aria-label="Descripción de la imagen" />
+          </label>
+          <div class="acciones">
+            <button type="button" (click)="guardarDatos(i, altImg.value, rolImg.value)">Guardar</button>
+            @if (porEliminar() === i.id) {
+              <button type="button" class="peligro" (click)="eliminar(i.id)">Sí, eliminar</button>
+              <button type="button" (click)="porEliminar.set(null)">No</button>
+            } @else {
+              <button type="button" class="peligro" (click)="porEliminar.set(i.id)">Eliminar</button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li class="vacio">Todavía no hay imágenes.</li>
+      }
+    </ul>
+  }
+</section>

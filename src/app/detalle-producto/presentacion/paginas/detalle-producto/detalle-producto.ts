@@ -1,10 +1,12 @@
-import { Component, OnDestroy, PLATFORM_ID, afterNextRender, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, PLATFORM_ID, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, RouterLink } from '@angular/router';
-import { filter, map } from 'rxjs';
-import { Producto } from '../../../../all-productos/dominio/muestra_producto';
-import { productos } from '../../../../all-productos/dominio/muestra_producto';
+import { catchError, filter, map, of, switchMap, tap } from 'rxjs';
+import { ProductoFicha } from '../../../dominio/interfaces/producto-ficha';
+import { ProductoService } from '../../../aplicacion/servicios/ProductoService';
+import { IMAGEN_PENDIENTE } from '../../../../categorias/aplicacion/servicios/CategoriaService';
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
@@ -41,24 +43,35 @@ export class DetalleProducto implements OnDestroy {
   rutaListado = 'todos-productos';
   textoListado = 'Productos';
 
-  // Textos de la ficha. Son los valores de ejemplo del contrato del Paso 0; con backend llegan en cada producto.
-  readonly INCLUYE = ['Plantita natural', 'Dedicatoria personalizada', 'Funda kraft'];
-  readonly TAMANO_TEXTO = 'Base 14 × 7 cm';
-  readonly MATERIAL_TEXTO = 'Impresa en 3D con PLA Plus';
   // =======================
+  private productosApi = inject(ProductoService);
+  private titulo = inject(Title);
+  private meta = inject(Meta);
   private router = inject(Router);
   // Nombre del producto que viene en la ruta (ej: /productos/Abogada)
   private parametros = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
   nombre = computed(() => this.parametros().get('producto'));
 
-  producto = computed<Producto | undefined>(() =>
-    productos.find(p => p.slug === this.nombre())
+  /** true si la API no respondió (distinto de "no existe": eso es un 404). */
+  fallo = signal(false);
+
+  /** undefined = cargando · null = no existe · ficha = lo que Laravel entregó. */
+  producto = toSignal<ProductoFicha | null | undefined>(
+    toObservable(this.nombre).pipe(
+      tap(() => this.fallo.set(false)),
+      switchMap(slug => slug ? this.productosApi.producto(slug).pipe(
+        catchError(() => { this.fallo.set(true); return of(null); }),
+      ) : of(null)),
+    ),
+    { initialValue: undefined },
   );
 
-  // Galería: imagen principal y miniaturas (si el producto trae varias fotos)
+  // Galería: las fotos del producto (la principal primero, en tamaño grande); sin fotos, una imagen provisional
   imagenes = computed(() => {
     const p = this.producto();
-    return p ? (p.imagenes?.length ? p.imagenes : [p.imagen]) : [];
+    if (!p) return [];
+    const fotos = p.media.filter(m => m.type === 'image').map(m => m.srcset?.['1080'] ?? Object.values(m.srcset ?? {}).pop()).filter((u): u is string => !!u);
+    return fotos.length ? fotos : [IMAGEN_PENDIENTE];
   });
   imagenElegida = signal('');
   imagenActiva = computed(() => this.imagenElegida() || this.imagenes()[0] || '');
@@ -66,7 +79,7 @@ export class DetalleProducto implements OnDestroy {
   // Datos del producto que se envían al carrito (nombre y precio salen del producto)
   productoCarrito = computed<ProductoCarrito | null>(() => {
     const p = this.producto();
-    return p ? { id: p.slug, nombre: p.nombre, precio: p.precio, imagen: p.imagen } : null;
+    return p ? { id: p.slug, nombre: p.name, precio: p.price.final_cents / 100, imagen: this.imagenes()[0] } : null;
   });
 
   // Promesa de entrega: la calcula Laravel (hoy, un mock del Paso 0); Angular solo muestra label y countdown_label
@@ -113,8 +126,8 @@ export class DetalleProducto implements OnDestroy {
   });
 
   enlaceFacebook = computed(() => `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(this.enlace())}`);
-  enlaceTwitter = computed(() => `https://twitter.com/intent/tweet?url=${encodeURIComponent(this.enlace())}&text=${encodeURIComponent(this.producto()?.nombre ?? '')}`);
-  enlacePinterest = computed(() => `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(this.enlace())}&description=${encodeURIComponent(this.producto()?.nombre ?? '')}`);
+  enlaceTwitter = computed(() => `https://twitter.com/intent/tweet?url=${encodeURIComponent(this.enlace())}&text=${encodeURIComponent(this.producto()?.name ?? '')}`);
+  enlacePinterest = computed(() => `https://www.pinterest.com/pin/create/button/?url=${encodeURIComponent(this.enlace())}&description=${encodeURIComponent(this.producto()?.name ?? '')}`);
 
 
   // El personalizador es la ruta hija /producto/{slug}/personalizar: la dirección dice si está abierto
@@ -131,16 +144,41 @@ export class DetalleProducto implements OnDestroy {
       if (this.esNavegador) this.document.body.style.overflow = this.personalizadorAbierto() ? 'hidden' : '';
     });
 
+    // Una vez por producto: título, descripción y vista previa para Google y WhatsApp (los textos los entrega Laravel)
+    effect(() => {
+      const p = this.producto();
+      if (!p) return;
+      this.titulo.setTitle(p.seo.title ?? `${p.name} | Jardín de Sele`);
+      const descripcion = p.seo.description ?? p.description_html ?? '';
+      this.meta.updateTag({ name: 'description', content: descripcion });
+      this.meta.updateTag({ property: 'og:title', content: p.seo.title ?? p.name });
+      this.meta.updateTag({ property: 'og:description', content: descripcion });
+      if (p.seo.og_image) this.meta.updateTag({ property: 'og:image', content: p.seo.og_image });
+      this.meta.updateTag({ property: 'og:url', content: p.seo.canonical });
+      let enlace = this.document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+      if (!enlace) {
+        enlace = this.document.createElement('link');
+        enlace.rel = 'canonical';
+        this.document.head.appendChild(enlace);
+      }
+      enlace.href = p.seo.canonical;
+    });
+
+    // La vista del producto se mide solo en el navegador, cuando la ficha ya llegó
+    effect(() => {
+      const p = this.producto();
+      if (p && this.esNavegador) untracked(() => this.analytics.track('view_item', { items: [{ item_id: p.slug, item_name: p.name }] }));
+    });
+
     afterNextRender(() => {
       this.checkout.restaurar();                                   // la ventana elegida en una visita anterior
-      const p = this.producto();
-      if (p) this.analytics.track('view_item', { items: [{ item_id: p.slug, item_name: p.nombre }] });
       this.document.body.classList.add('con-barra-ficha');         // la barra fija de la ficha ocupa el lugar de la barra del celular
     });
   }
 
-  formato(valor: number) {
-    return `${this.moneda} ${valor.toFixed(2)}`;
+  /** Muestra en dólares los centavos que entrega Laravel (solo formato: el cálculo es de Laravel). */
+  formato(centavos: number) {
+    return `${this.moneda} ${(centavos / 100).toFixed(2)}`;
   }
 
   personalizar() {

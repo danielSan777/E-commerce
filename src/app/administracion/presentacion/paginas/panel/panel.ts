@@ -1,18 +1,22 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
-import { Router } from '@angular/router';
-import { SesionAdminService } from '../../../aplicacion/servicios/SesionAdminService';
-import { ErrorApi } from '../../../dominio/interfaces/sesion';
+import { Router, RouterLink } from '@angular/router';
+import { Observable, finalize } from 'rxjs';
+import { SesionService } from '../../../../cuenta/aplicacion/servicios/SesionService';
+import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 
 // Pantalla inicial del panel. Las secciones (categorías, productos…) se agregan aquí a medida que existan sus APIs.
 @Component({
   selector: 'app-admin-panel',
+  imports: [RouterLink],
   templateUrl: './panel.html',
   styleUrl: './panel.css',
 })
 export class AdminPanel {
-  private sesion = inject(SesionAdminService);
+  private sesion = inject(SesionService);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   readonly usuario = this.sesion.usuario;
   error = signal('');
@@ -23,24 +27,23 @@ export class AdminPanel {
     inject(Meta).updateTag({ name: 'robots', content: 'noindex, nofollow' });
   }
 
-  cerrarSesion(): Promise<void> {
-    return this.salir(() => this.sesion.cerrarSesion());
+  cerrarSesion(): void {
+    this.salir(this.sesion.cerrarSesion());
   }
 
-  cerrarTodas(): Promise<void> {
-    return this.salir(() => this.sesion.cerrarTodas());
+  cerrarTodas(): void {
+    this.salir(this.sesion.cerrarTodas());
   }
 
-  private async salir(accion: () => Promise<void>): Promise<void> {
+  private salir(accion: Observable<void>): void {
     this.error.set('');
     this.ocupado.set(true);
-    try {
-      await accion();
-    } catch (e) {
-      this.error.set((e as ErrorApi).message);
-    } finally {
-      this.ocupado.set(false);
-      await this.router.navigate(['/admin/login']); // el navegador ya quedó sin token aunque la API haya fallado
-    }
+    accion.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        this.ocupado.set(false);
+        void this.router.navigate(['/ingresar']); // el navegador ya quedó sin token aunque la API haya fallado
+      }),
+    ).subscribe({ error: (e: ErrorApi) => this.error.set(e.message) });
   }
 }

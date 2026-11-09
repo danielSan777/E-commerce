@@ -1,0 +1,107 @@
+<header class="barra">
+  <strong>Categorías</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+
+  @if (bloqueada(); as b) {
+    <div class="error" role="alert">
+      <p>{{ b.message }}</p>
+      <ul>
+        @for (p of b.products; track p.sku) { <li>{{ p.name }} <small>({{ p.sku }})</small></li> }
+      </ul>
+    </div>
+  }
+
+  @if (error() && editando() === null) { <p class="error" role="alert">{{ error() }}</p> }
+
+  @if (editando() === null) {
+    <button type="button" class="primario" (click)="nueva()">Nueva categoría</button>
+  } @else {
+    <form class="formulario" (submit)="guardar($event)" novalidate>
+      <h2>{{ editando() === '' ? 'Nueva categoría' : 'Editar categoría' }}</h2>
+
+      <label for="name">Nombre</label>
+      <input id="name" name="name" [(ngModel)]="form.name" required [attr.aria-invalid]="errores()['name'] ? true : null" />
+      @if (errores()['name']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+
+      <label for="slug">Dirección en la web (se genera sola)</label>
+      <input id="slug" type="text" [value]="slugMostrado() ? '/' + slugMostrado() : ''" readonly tabindex="-1"
+        placeholder="Se genera del nombre" aria-describedby="ayuda-slug" />
+      <small id="ayuda-slug" class="ayuda">Se arma con el nombre: sin tildes, en minúsculas y con "-" en lugar de espacios. No se puede cambiar después.</small>
+
+      <label for="headline">Frase bajo el nombre (opcional)</label>
+      <input id="headline" name="headline" [(ngModel)]="form.headline" aria-describedby="ayuda-headline" [attr.aria-invalid]="errores()['headline'] ? true : null" />
+      @if (errores()['headline']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+      <small id="ayuda-headline" class="ayuda">Texto corto que aparece debajo del nombre en el banner de la categoría. Ejemplo: "Un detalle para quien ama lo que hace".</small>
+
+      <label for="sort_order">Posición en el menú</label>
+      <input id="sort_order" name="sort_order" type="number" min="0" [(ngModel)]="form.sort_order" aria-describedby="ayuda-orden" [attr.aria-invalid]="errores()['sort_order'] ? true : null" />
+      @if (errores()['sort_order']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+      <small id="ayuda-orden" class="ayuda">1 sale primero, 2 después, y así. Define el orden en que se muestran las categorías.</small>
+
+      <label for="intro">Introducción de la categoría (opcional)</label>
+      <textarea id="intro" name="intro" rows="4" [(ngModel)]="form.intro" aria-describedby="ayuda-intro"></textarea>
+      <small id="ayuda-intro" class="ayuda">Un párrafo que presenta la categoría en la tienda y ayuda a que Google la entienda. Escríbelo como texto normal, sin etiquetas.</small>
+
+      <fieldset class="google">
+        <legend>Cómo aparece en Google (opcional)</legend>
+
+        <label for="seo_title">Título para Google</label>
+        <input id="seo_title" name="seo_title" maxlength="255" [(ngModel)]="form.seo_title" aria-describedby="ayuda-seo-title" />
+        <small id="ayuda-seo-title" class="ayuda">
+          {{ form.seo_title.trim().length }} caracteres (lo ideal es hasta {{ maxTitulo }}). Si lo dejas vacío, se usará: <strong>{{ tituloVistaPrevia() || 'Nombre | Jardín de Sele' }}</strong>.
+        </small>
+
+        <label for="seo_description">Descripción para Google</label>
+        <textarea id="seo_description" name="seo_description" rows="3" [attr.maxlength]="maxDescripcion" [(ngModel)]="form.seo_description" aria-describedby="ayuda-seo-desc"></textarea>
+        <small id="ayuda-seo-desc" class="ayuda">{{ form.seo_description.length }} de {{ maxDescripcion }} caracteres. Es el texto que aparece bajo el título en los resultados de búsqueda.</small>
+      </fieldset>
+
+      <label class="casilla"><input type="checkbox" name="is_active" [(ngModel)]="form.is_active" /> Activa (visible en la tienda)</label>
+
+      @if (error()) {
+        <div class="error" role="alert">
+          <p>{{ error() }}</p>
+          @for (d of detalle(); track d) { <p class="detalle">{{ d }}</p> }
+        </div>
+      }
+
+      <div class="acciones">
+        <button type="submit" class="primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+        <button type="button" (click)="cancelar()">Cancelar</button>
+      </div>
+    </form>
+  }
+
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+    <ul class="lista">
+      @for (c of categorias(); track c.slug) {
+        <li>
+          <div class="datos">
+            <strong>{{ c.name }}</strong>
+            <small>/{{ c.slug }} · {{ c.products_count }} producto(s) · {{ c.subcategories_count }} subcategoría(s)</small>
+            @if (!c.is_active) { <span class="inactiva">Inactiva</span> }
+          </div>
+          <div class="acciones">
+            <a class="boton" [routerLink]="['/admin/categorias', c.slug, 'imagenes']">Imágenes</a>
+            <a class="boton" [routerLink]="['/admin/categorias', c.slug, 'subcategorias']">Subcategorías ({{ c.subcategories_count }})</a>
+            <button type="button" (click)="editar(c)">Editar</button>
+            @if (porEliminar() === c.slug) {
+              <span>¿Eliminar?</span>
+              <button type="button" class="peligro" (click)="eliminar(c.slug)">Sí, eliminar</button>
+              <button type="button" (click)="porEliminar.set(null)">No</button>
+            } @else {
+              <button type="button" class="peligro" (click)="pedirEliminar(c.slug)">Eliminar</button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li>Todavía no hay categorías.</li>
+      }
+    </ul>
+  }
+</main>

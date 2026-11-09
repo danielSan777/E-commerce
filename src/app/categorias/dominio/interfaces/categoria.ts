@@ -57,3 +57,10 @@ export interface CategoriaResumen {
     image: string;
     description: string;
 }
+
+// Producto de GET /api/v1/products (todos, favoritos y búsqueda): el resumen más categoría, subcategoría y palabras de búsqueda.
+export interface ProductoListado extends ProductoCategoria {
+    category: { slug: string; name: string };
+    subcategory: { slug: string; name: string } | null;
+    search_terms: string[];
+}

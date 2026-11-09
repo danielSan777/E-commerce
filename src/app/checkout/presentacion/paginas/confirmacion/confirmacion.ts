@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { PedidoPendienteService } from '../../../aplicacion/servicios/PedidoPendienteService';
 import { CUENTAS, TITULAR_TRANSFERENCIA } from '../../../dominio/interfaces/datos_transferencia';
+import { itemsConFoto, nombreArchivoFoto } from '../../../dominio/validaciones/foto_pedido';
 import {
   fechaLarga, mensajeComprobante, urlWhatsapp
 } from '../../../dominio/validaciones/mensaje_whatsapp';
@@ -35,6 +36,12 @@ export class Confirmacion {
   limite = computed(() => (this.esTransferencia() ? this.pendientes.desdePedido(this.pedido()!).deadline_label : ''));
   mensaje = computed(() => (this.pedido() ? mensajeComprobante(this.pedido()!) : ''));
   enlaceWhatsapp = computed(() => (this.pedido() ? urlWhatsapp(this.pedido()!) : ''));
+
+  // Fotos de las macetas personalizadas: se descargan para adjuntarlas en el chat de WhatsApp (el enlace solo lleva texto)
+  fotos = computed(() => {
+    const p = this.pedido();
+    return p ? itemsConFoto(p.items).map((item, i) => ({ item, nombre: nombreArchivoFoto(p.numero, item, i + 1) })) : [];
+  });
 
   // Qué se acaba de copiar (para mostrar ✓ un momento)
   copiado = signal('');

@@ -8,13 +8,13 @@
 
     @if (!buscando()) {
     <h2>Nuestros favoritos</h2>
-    <ng-container *ngTemplateOutlet="lista; context: { productos: favoritos }" />
+    <ng-container *ngTemplateOutlet="lista; context: { productos: favoritos() }" />
     } @else if (sinResultados()) {
     <div class="sin-resultados" role="status">
         <h1>No encontramos «{{ termino().trim() }}»</h1>
         <p>Mira estos favoritos mientras tanto.</p>
     </div>
-    <ng-container *ngTemplateOutlet="lista; context: { productos: favoritos }" />
+    <ng-container *ngTemplateOutlet="lista; context: { productos: favoritos() }" />
 
     <section class="ayuda">
         <h2>¿No encuentras lo que necesitas?</h2>

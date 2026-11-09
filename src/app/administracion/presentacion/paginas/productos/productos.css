@@ -1,0 +1,3 @@
+@import '../../estilos/admin-tema.css';
+.filtros { display: flex; flex-wrap: wrap; gap: .5rem; }
+.filtros input[type=search] { flex: 1 1 200px; }

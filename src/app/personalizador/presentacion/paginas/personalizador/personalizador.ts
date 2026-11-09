@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, OnDestroy, signal, ViewChild, ElementRef, HostListener,
+  Component, DestroyRef, OnInit, OnDestroy, signal, ViewChild, ElementRef, HostListener,
   computed,
   effect,
   inject,
@@ -7,6 +7,8 @@ import {
   output,
   PLATFORM_ID
 } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Accesorio, AccesorioColocado } from '../../../dominio/Accesorios';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -40,6 +42,13 @@ export interface ConfiguracionPersonalizada {
   textoMarco: string;           // frase del marco (solo si eligió el accesorio 4)
   fotoMarco: File | null;       // foto del marco (solo si eligió el accesorio 3)
   sinTarjeta: boolean;          // "No quiero dedicatoria"
+}
+
+/** Contenido de `configuracion-producto.json` (lo que guardó el editor). */
+interface ConfiguracionGuardada {
+  ubicaciones?: UbicacionGuardada[];
+  excepciones?: ExcepcionGuardada[];
+  catalogo?: Accesorio[];
 }
 
 @Component({
@@ -100,6 +109,8 @@ export class Personalizador implements OnDestroy {
   private siguienteId = 1;
 
   private platformId = inject(PLATFORM_ID);
+  private http = inject(HttpClient);
+  private destroyRef = inject(DestroyRef);
 
   private router = inject(Router);
   private rutaActiva = inject(ActivatedRoute, { optional: true });
@@ -140,18 +151,17 @@ export class Personalizador implements OnDestroy {
 
 
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    this.http.get<ConfiguracionGuardada>('/configuracion-producto.json').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: guardado => this.aplicarConfiguracion(guardado),
+      error: error => console.error('Error al cargar la configuración:', error),
+    });
+  }
+
+  private aplicarConfiguracion(guardado: ConfiguracionGuardada): void {
     try {
-      const respuesta = await fetch('/configuracion-producto.json');
-
-      if (!respuesta.ok) {
-        throw new Error('No se pudo cargar configuracion-producto.json');
-      }
-
-      const guardado = await respuesta.json();
-
       this.ubicaciones.set((guardado.ubicaciones ?? []) as UbicacionGuardada[]);
       this.excepciones.set((guardado.excepciones ?? []) as ExcepcionGuardada[]);
       // La categoria se normaliza (sin espacios y con la primera letra en mayuscula)

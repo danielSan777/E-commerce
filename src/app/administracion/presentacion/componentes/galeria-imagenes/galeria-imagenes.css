@@ -1,0 +1,27 @@
+.galeria { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #a7f3d0; }
+.ayuda { color: #475569; font-size: .85rem; }
+.aviso { background: #d1fae5; color: #064e3b; padding: .6rem .8rem; border-radius: 8px; }
+.error { background: #fee2e2; color: #b91c1c; padding: .6rem .8rem; border-radius: 8px; }
+.subir { display: grid; gap: .5rem; margin: 1rem 0; max-width: 32rem; }
+.subir select, .subir input, .imagenes select, .imagenes input { padding: .55rem .7rem; border: 1px solid #86d4b4; border-radius: 8px; font-size: 1rem; font-family: inherit; background: #fff; }
+.boton { display: inline-block; text-align: center; padding: .7rem 1rem; border-radius: 8px; border: 1px solid #047857; cursor: pointer; }
+.primario { background: #047857; color: #fff; }
+.desactivado { opacity: .6; pointer-events: none; }
+.imagenes { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; }
+.imagenes li { display: grid; gap: .5rem; padding: .75rem; border: 1px solid #a7f3d0; border-radius: 12px; background: #fff; align-content: start; }
+.imagenes img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #f1f5f4; }
+.acciones { display: flex; gap: .5rem; flex-wrap: wrap; }
+.acciones button { padding: .5rem .8rem; border-radius: 8px; border: 1px solid #86d4b4; background: #fff; cursor: pointer; }
+.acciones .peligro { border-color: #b91c1c; color: #b91c1c; }
+.vacio { color: #475569; }
+h3 { margin: 1rem 0 .25rem; font-size: 1.05rem; }
+.etiqueta { display: grid; gap: .25rem; font-size: .85rem; color: #334155; }
+.campo-error { color: #b91c1c; font-size: .85rem; }
+.subir input[aria-invalid=true] { border-color: #b91c1c; }
+
+.galeria { font-family: 'Nunito Sans', system-ui, sans-serif; }
+.galeria h2, .galeria h3 { font-family: 'Rubik', 'Nunito Sans', sans-serif; }
+.imagenes li { border-left: 5px solid #047857; box-shadow: 0 2px 8px rgba(6, 78, 59, .08); }
+.boton, .acciones button, .subir input, .subir select, .imagenes input, .imagenes select { min-height: 44px; }
+.acciones button:hover { background: #d1fae5; }
+:is(button, input, select, label):focus-visible, .boton:focus-within { outline: 3px solid #f59e0b; outline-offset: 2px; }

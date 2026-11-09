@@ -12,3 +12,6 @@ button:disabled { opacity: .6; }
 .respuesta .bi { color: var(--jds-vino); margin-right: 4px; }
 .ayuda { margin: 18px 0 8px; font-size: .9rem; }
 .volver { color: var(--jds-vino); font-weight: 700; }
+
+.campo-error { color: #b3261e; font-size: .85rem; font-weight: 600; margin-top: -2px; }
+input[aria-invalid=true] { border-color: #b3261e; }

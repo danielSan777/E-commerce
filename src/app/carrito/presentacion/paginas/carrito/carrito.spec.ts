@@ -1,7 +1,17 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
+import { API_URL } from '../../../../core/configuracion/api';
+import { productoListadoApi } from '../../../../testing/catalogo-api';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Carrito } from './carrito';
 import { CarritoService, ItemCarrito } from '../../../aplicacion/servicios/CarritoService';
+
+const PRODUCTOS = [
+  productoListadoApi('doctor', 'Doctor', { category: { slug: 'profesiones-y-hobbies', name: 'Profesiones y Hobbies' }, price: { ...productoListadoApi('x').price, final_cents: 2250 } }),
+  productoListadoApi('bob', 'Bob corazón'),
+  productoListadoApi('agotado', 'Agotado', { available: false, category: { slug: 'familia', name: 'Familia' } }),
+];
 
 describe('Carrito', () => {
   let component: Carrito;
@@ -10,16 +20,27 @@ describe('Carrito', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Carrito],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Carrito);
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/products').flush({ data: PRODUCTOS });
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('"Otras macetas" salen de los productos de Laravel: solo los disponibles, con su precio final y sus categorías', () => {
+    expect(component.macetas().map(m => m.slug)).toEqual(['doctor', 'bob']);
+    expect(component.macetas()[0]).toMatchObject({ id: 'JDS-doctor', precio: 22.5, categoria: 'profesiones-y-hobbies' });
+    expect(component.catsMacetas()).toEqual([
+      { clave: 'profesiones-y-hobbies', etiqueta: 'Profesiones y Hobbies' },
+      { clave: 'amor', etiqueta: 'Amor' },
+    ]);
+    expect(component.macetasDeCategoria().map(m => m.slug)).toEqual(['doctor']);
   });
 
   describe('complementos sin maceta e idénticas', () => {

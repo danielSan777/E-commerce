@@ -1,0 +1,119 @@
+<header class="barra">
+  <strong>{{ esNuevo ? 'Nuevo producto' : 'Editar producto' }}</strong>
+  <a routerLink="/admin/productos">← Volver a productos</a>
+</header>
+
+<main class="contenido">
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+    <form class="formulario" (submit)="guardar($event)" novalidate>
+      <label for="name">Nombre</label>
+      <input id="name" name="name" [(ngModel)]="form.name" (ngModelChange)="quitarError('name')" required [attr.aria-invalid]="errores()['name'] ? true : null" />
+      @if (errores()['name']) { <small class="campo-error">{{ errores()['name'] }}</small> }
+
+      <label for="slug">Dirección en la web (se genera sola)</label>
+      <input id="slug" type="text" [value]="slugMostrado() ? '/producto/' + slugMostrado() : ''" readonly tabindex="-1" placeholder="Se genera del nombre" />
+      <small class="ayuda">Sin tildes, en minúsculas y con "-" en lugar de espacios. No se puede cambiar después.</small>
+
+      <label for="sku">Código (SKU)</label>
+      <input id="sku" type="text" [value]="skuMostrado()" readonly tabindex="-1" [placeholder]="esNuevo ? 'Se asigna al guardar' : ''" />
+      <small class="ayuda">
+        @if (esNuevo) { Se asigna solo al guardar{{ skuMostrado() ? ' (el siguiente es ' + skuMostrado() + ')' : '' }}. }
+        No se puede escribir, cambiar ni reutilizar.
+      </small>
+
+      <label for="type">Tipo</label>
+      <select id="type" name="type" [(ngModel)]="form.type">
+        <option value="personalizable">Personalizable</option>
+        <option value="complemento">Complemento</option>
+      </select>
+
+      <label for="category">Categoría</label>
+      <select id="category" name="category" [(ngModel)]="form.category" (ngModelChange)="quitarError('category'); cambiarCategoria()" [attr.aria-invalid]="errores()['category'] ? true : null">
+        <option value="">Elige una categoría</option>
+        @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
+      </select>
+      @if (errores()['category']) { <small class="campo-error">{{ errores()['category'] }}</small> }
+
+      <label for="subcategory">Subcategoría</label>
+      <select id="subcategory" name="subcategory" [(ngModel)]="form.subcategory" (ngModelChange)="quitarError('subcategory')" [disabled]="!form.category || cargandoSubcategorias() || !subcategorias().length" [attr.aria-invalid]="errores()['subcategory'] ? true : null">
+        <option value="">{{ cargandoSubcategorias() ? 'Cargando…' : form.category ? 'Elige una subcategoría' : 'Primero elige la categoría' }}</option>
+        @for (s of subcategorias(); track s.slug) { <option [value]="s.slug">{{ s.name }}</option> }
+      </select>
+      @if (form.category && subcategoriasListas() && !subcategorias().length) {
+        <small class="campo-error">Esta categoría todavía no tiene subcategorías.
+          <a [routerLink]="['/admin/categorias', form.category, 'subcategorias']">Crear una subcategoría</a></small>
+      }
+      @if (errores()['subcategory']) { <small class="campo-error">{{ errores()['subcategory'] }}</small> }
+
+      <label for="precio">Precio de venta (USD)</label>
+      <input id="precio" name="precio" inputmode="decimal" placeholder="21.50" [(ngModel)]="form.precio" (ngModelChange)="quitarError('precio'); verPrecio()" [attr.aria-invalid]="errores()['precio'] ? true : null" />
+      @if (errores()['precio']) { <small class="campo-error">{{ errores()['precio'] }}</small> }
+
+      <label for="descuento">Descuento (%, opcional)</label>
+      <input id="descuento" name="descuento" inputmode="decimal" placeholder="10" [(ngModel)]="form.descuento" (ngModelChange)="quitarError('descuento'); verPrecio()" [attr.aria-invalid]="errores()['descuento'] ? true : null" />
+      @if (errores()['descuento']) { <small class="campo-error">{{ errores()['descuento'] }}</small> }
+      <div class="calculo" aria-live="polite">
+        @if (precioFinal(); as r) {
+          <span>Descuento: <strong>${{ dolares(r.discount_cents) }}</strong></span>
+          <span>Precio final: <strong>${{ dolares(r.final_price_cents) }}</strong> <s>${{ dolares(r.base_price_cents) }}</s></span>
+        } @else {
+          <small class="ayuda">Escribe el precio y el porcentaje para ver cuánto es el descuento en dólares.</small>
+        }
+      </div>
+
+      <label for="costo">Costo interno (USD, opcional)</label>
+      <input id="costo" name="costo" inputmode="decimal" placeholder="9.00" [(ngModel)]="form.costo" (ngModelChange)="quitarError('costo')" [attr.aria-invalid]="errores()['costo'] ? true : null" />
+      <small class="ayuda">Solo lo ves tú. Nunca se muestra en la tienda.</small>
+      @if (errores()['costo']) { <small class="campo-error">{{ errores()['costo'] }}</small> }
+
+      <label for="size_text">Tamaño (opcional)</label>
+      <input id="size_text" name="size_text" [(ngModel)]="form.size_text" />
+
+      <label for="material_text">Material (opcional)</label>
+      <input id="material_text" name="material_text" [(ngModel)]="form.material_text" />
+
+      <label for="incluye">Incluye (uno por línea, opcional)</label>
+      <textarea id="incluye" name="incluye" rows="4" [(ngModel)]="form.incluye"></textarea>
+
+      <label for="description_html">Descripción (opcional)</label>
+      <textarea id="description_html" name="description_html" rows="5" [(ngModel)]="form.description_html"></textarea>
+
+      <fieldset class="google">
+        <legend>Cómo aparece en Google (opcional)</legend>
+
+        <label for="seo_title">Título para Google</label>
+        <input id="seo_title" name="seo_title" maxlength="255" [(ngModel)]="form.seo_title" aria-describedby="ayuda-seo-title" />
+        <small id="ayuda-seo-title" class="ayuda">
+          {{ form.seo_title.trim().length }} caracteres (lo ideal es hasta {{ maxTitulo }}). Si lo dejas vacío, se usará: <strong>{{ tituloVistaPrevia() || 'Nombre | Jardín de Sele' }}</strong>.
+        </small>
+
+        <label for="seo_description">Descripción para Google</label>
+        <textarea id="seo_description" name="seo_description" rows="3" [attr.maxlength]="maxDescripcion" [(ngModel)]="form.seo_description" aria-describedby="ayuda-seo-desc"></textarea>
+        <small id="ayuda-seo-desc" class="ayuda">{{ form.seo_description.length }} de {{ maxDescripcion }} caracteres. Es el texto que aparece bajo el título en los resultados de búsqueda.</small>
+      </fieldset>
+
+      <label class="casilla"><input type="checkbox" name="is_available" [(ngModel)]="form.is_available" /> Disponible para comprar</label>
+      <label class="casilla"><input type="checkbox" name="is_active" [(ngModel)]="form.is_active" /> Activo (visible en la tienda)</label>
+
+      @if (error()) {
+        <div class="error" role="alert">
+          <p>{{ error() }}</p>
+          @for (d of detalle(); track d) { <p class="detalle">{{ d }}</p> }
+        </div>
+      }
+
+      <div class="acciones">
+        <button type="submit" class="primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+        <a class="boton" routerLink="/admin/productos">Cancelar</a>
+      </div>
+    </form>
+
+    @if (esNuevo) {
+      <p class="ayuda">Guarda el producto y luego podrás subir sus imágenes.</p>
+    } @else {
+      <app-galeria-imagenes dueno="products" [clave]="sku!" />
+    }
+  }
+</main>

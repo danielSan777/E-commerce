@@ -1,44 +1,58 @@
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { CategoriaService } from '../../../categorias/aplicacion/servicios/CategoriaService';
-import { CampanaContrato } from '../../dominio/interfaces/campana';
+import { Observable, catchError, map, of, shareReplay, tap, throwError } from 'rxjs';
+import { API_URL } from '../../../core/configuracion/api';
+import { IMAGEN_PENDIENTE } from '../../../categorias/aplicacion/servicios/CategoriaService';
+import { CampanaContrato, CampanaResumen, TemaCampana } from '../../dominio/interfaces/campana';
 
 const SITIO = 'https://jardindesele.com';
+const TEMA_VACIO: TemaCampana = { color: null, emoji: null, cover: null };
 
-// MOCK (Paso 0): devuelve la forma exacta que entregará Laravel para una campaña. Con backend, el estado
-// (en temporada o no), el año, las fechas y la selección ordenada de productos los decide el panel (Paso 9).
+// Campaña de temporada desde Laravel (GET /api/v1/campaigns/{slug}). Laravel decide si está en temporada o no, el año,
+// la fecha del evento y qué productos se muestran; Angular solo lo dibuja.
 @Injectable({ providedIn: 'root' })
 export class CampanaService {
-    private categorias = inject(CategoriaService);
+    private http = inject(HttpClient);
+    private api = inject(API_URL);
+    /** Respuestas ya pedidas: la guarda de rutas y la página piden la misma campaña, y así no se repite la petición. */
+    private pedidas = new Map<string, Observable<CampanaContrato | null>>();
 
-    // ===== MOCK EDITABLE =====
-    // 'active' muestra la campaña con sus productos; 'upcoming', el "llegará muy pronto".
-    private readonly ESTADO: CampanaContrato['state'] = 'active';
-    private readonly PRODUCTOS_ELEGIDOS = [
-        'bob-corazon-hombre', 'amigo-guitarrista', 'homero', 'doctor', 'abogada', 'enfermera',
-    ];
-    // =========================
+    /** null si la campaña no existe o está inactiva (404). Cualquier otro error se propaga. */
+    campana(slug: string): Observable<CampanaContrato | null> {
+        let pedida = this.pedidas.get(slug);
+        if (!pedida) {
+            pedida = this.pedir(slug).pipe(
+                tap({ error: () => this.pedidas.delete(slug) }),   // un fallo no se recuerda: se vuelve a intentar
+                shareReplay(1),
+            );
+            this.pedidas.set(slug, pedida);
+        }
+        return pedida;
+    }
 
-    campana(slug: string): CampanaContrato | null {
-        if (slug !== 'san-valentin') return null;
+    /** La campaña que está en temporada hoy, o null si no hay ninguna (Laravel responde siempre 200). */
+    vigente(): Observable<CampanaResumen | null> {
+        return this.http.get<{ data: CampanaResumen | null }>(`${this.api}/campaigns/current`).pipe(
+            map(r => r.data ? { ...r.data, theme: r.data.theme ?? TEMA_VACIO } : null),
+        );
+    }
 
-        const relacionados = this.categorias.categoria('amor')!.products;
-        return {
-            slug: 'san-valentin',
-            name: 'San Valentín',
-            state: this.ESTADO,
-            season_year: 2027,
-            event_date: '2027-02-14',
-            order_deadline: { date: '2027-02-09', label: 'Pide hasta el martes 9 para recibir antes del 14 de febrero' },
-            tagline: 'Un regalo con su nombre que sigue creciendo',
-            slogan: 'Las flores duran una semana. Esta maceta, años.',
-            related_category: { slug: 'amor', name: 'Amor', url: '/amor' },
-            products: this.ESTADO === 'active' ? this.categorias.productosPorSlug(this.PRODUCTOS_ELEGIDOS) : relacionados,
-            seo: {
-                title: 'San Valentín | Jardín de Sele',
-                description: 'Macetas personalizadas con su nombre para San Valentín. Un regalo que sigue creciendo.',
-                canonical: `${SITIO}/san-valentin`,
-                og_image: `${SITIO}/imagenes/amor-amistad/Bob corazón Hombre.png`,
-            },
-        };
+    private pedir(slug: string): Observable<CampanaContrato | null> {
+        return this.http.get<CampanaContrato>(`${this.api}/campaigns/${encodeURIComponent(slug)}`).pipe(
+            map(c => ({
+                ...c,
+                tagline: c.tagline ?? '',
+                slogan: c.slogan ?? '',
+                theme: c.theme ?? TEMA_VACIO,
+                products: c.products.map(p => ({ ...p, image: p.image ?? IMAGEN_PENDIENTE })),
+                seo: {
+                    title: c.seo.title ?? `${c.name} | Jardín de Sele`,
+                    description: c.seo.description ?? c.tagline ?? '',
+                    canonical: c.seo.canonical,
+                    og_image: c.seo.og_image ?? `${SITIO}/imagenes/amor.png`,
+                },
+            })),
+            catchError((e: HttpErrorResponse) => e.status === 404 ? of(null) : throwError(() => e)),
+        );
     }
 }

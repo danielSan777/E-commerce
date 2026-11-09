@@ -19,11 +19,28 @@
     <p><i class="bi bi-gift" aria-hidden="true"></i> Envío gratis llevando {{ macetasEnvioGratis }} macetas</p>
 </section>
 
+<!-- Campaña en temporada: solo aparece mientras Laravel diga que hay una; lleva el color, emoji y portada de la campaña -->
+@if (campana(); as c) {
+<section class="campana" aria-label="Campaña de temporada" [style.--campana]="colorCampana()" [style.--campana-tinte]="tinteCampana()">
+    <div class="campana-texto">
+        <p class="campana-etiqueta">@if (c.theme.emoji) { <span aria-hidden="true">{{ c.theme.emoji }}</span> } {{ c.name }}</p>
+        @if (c.tagline) { <h2>{{ c.tagline }}</h2> }
+        @if (c.slogan) { <p class="campana-frase">{{ c.slogan }}</p> }
+        <a class="boton campana-boton" [routerLink]="c.url">Ver campaña</a>
+    </div>
+    @if (portadaCampana(); as portada) {
+    <img class="campana-portada" [src]="portada" [alt]="c.theme.cover?.alt ?? ''" width="220" height="220" loading="lazy">
+    } @else if (c.theme.emoji) {
+    <span class="campana-emoji" aria-hidden="true">{{ c.theme.emoji }}</span>
+    }
+</section>
+}
+
 <!-- Las 4 categorías -->
 <section class="bloque" aria-labelledby="t-categorias">
     <h2 id="t-categorias">¿Para quién es tu regalo?</h2>
     <ul class="categorias">
-        @for (c of categorias; track c.slug) {
+        @for (c of categorias(); track c.slug) {
         <li>
             <a class="categoria" [routerLink]="c.url">
                 <img [src]="c.image" alt="" loading="lazy" width="240" height="240">
@@ -38,7 +55,7 @@
 <section class="bloque" aria-labelledby="t-favoritos">
     <h2 id="t-favoritos">Nuestros favoritos</h2>
     <ul class="favoritos">
-        @for (p of favoritos; track p.sku) {
+        @for (p of favoritos(); track p.sku) {
         <li>
             <a class="producto" [routerLink]="['/producto', p.slug]">
                 <span class="foto"><img [src]="p.image" [alt]="p.name" loading="lazy" width="320" height="320"></span>

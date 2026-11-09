@@ -1,3 +1,4 @@
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
 import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
@@ -30,6 +31,7 @@ export class EnvioFacturacion {
   private ubicaciones = inject(UbicacionesService);
   private router = inject(Router);
   private document = inject(DOCUMENT);
+  private avisos = inject(AvisosService);
 
   datos = this.checkout.datos;
   cantidadCarrito = inject(CarritoService).cantidad;
@@ -240,12 +242,7 @@ export class EnvioFacturacion {
     this.intento.set(true);
 
     if (Object.keys(this.errores()).length) {
-      // Lleva al cliente al primer campo con error
-      setTimeout(() => {
-        const campo = this.document.querySelector<HTMLElement>('[aria-invalid="true"]');
-        campo?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
-        campo?.focus({ preventScroll: true });
-      });
+      this.avisos.faltanDatos(); // aviso general y lleva al cliente al primer campo con error
       return;
     }
 
