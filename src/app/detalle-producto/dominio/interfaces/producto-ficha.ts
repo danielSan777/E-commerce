@@ -8,6 +8,8 @@ export interface MedioFicha {
   alt?: string | null;
   srcset?: Record<string, string>;   // {"600": url, "1080": url}
   url?: string;                      // solo en videos
+  poster?: string | null;            // solo en videos: imagen que se ve mientras carga
+  duration_s?: number | null;        // solo en videos
 }
 
 export interface ProductoFicha {

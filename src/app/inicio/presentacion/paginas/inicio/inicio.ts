@@ -9,12 +9,14 @@ import { CategoriaService } from '../../../../categorias/aplicacion/servicios/Ca
 import { PromesaService } from '../../../../checkout/aplicacion/servicios/PromesaService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { enlaceWhatsapp } from '../../../../core/configuracion/tienda';
+import { PortadaInicioService } from '../../../aplicacion/servicios/PortadaInicioService';
+import { VideoAuto } from '../../../../shared/directivas/video-auto';
 
 // Página principal (/), de arriba hacia abajo en el celular: video, promesa, campaña en temporada (si hay), categorías, favoritos,
 // cómo funciona y confianza. Testimonios llegan cuando Josué entregue sus datos.
 @Component({
   selector: 'app-inicio',
-  imports: [CurrencyPipe, RouterLink],
+  imports: [CurrencyPipe, RouterLink, VideoAuto],
   templateUrl: './inicio.html',
   styleUrl: './inicio.css',
 })
@@ -22,8 +24,8 @@ export class Inicio {
 
   // ===== EDITABLES =====
   readonly RUTA_CATEGORIAS = '/categorias';
-  // Video principal (H.264 sin audio). Mientras `url` sea null se muestra solo la portada.
-  readonly VIDEO = { url: null as string | null, poster: 'imagenes/doctor3D.png' };
+  // Imagen de siempre: se ve mientras el administrador no elija una portada propia (imagen o video) en el panel.
+  readonly IMAGEN_DE_SIEMPRE = 'imagenes/doctor3D.png';
   readonly PASOS = [
     { icono: 'bi-search-heart', titulo: 'Elige', texto: 'Escoge la maceta que más se parece a esa persona.' },
     { icono: 'bi-magic', titulo: 'Personaliza', texto: 'Agrega su nombre, accesorios y una dedicatoria.' },
@@ -51,7 +53,18 @@ export class Inicio {
   // Con "reducir movimiento" solo se ve la portada
   private reducirMovimiento = isPlatformBrowser(inject(PLATFORM_ID))
     && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  verVideo = computed(() => !!this.VIDEO.url && !this.reducirMovimiento);
+  // Portada elegida en el panel (imagen o video); null = se usa la imagen de siempre.
+  readonly portada = toSignal(inject(PortadaInicioService).portada(), { initialValue: null });
+  readonly videoPortada = computed(() => { const p = this.portada(); return p?.type === 'video' ? p : null; });
+  verVideo = computed(() => !!this.videoPortada() && !this.reducirMovimiento);
+  /** Imagen de la portada: la foto elegida, la portada del video, o la de siempre. */
+  readonly imagenPortada = computed(() => {
+    const p = this.portada();
+    if (p?.type === 'image') return p.srcset['1080'] ?? Object.values(p.srcset)[0] ?? this.IMAGEN_DE_SIEMPRE;
+    if (p?.type === 'video') return p.poster ?? this.IMAGEN_DE_SIEMPRE;
+    return this.IMAGEN_DE_SIEMPRE;
+  });
+  readonly altPortada = computed(() => { const p = this.portada(); return p?.type === 'image' ? (p.alt ?? '') : ''; });
 
   constructor() {
     inject(Title).setTitle('Jardín de Sele | Macetas personalizadas con plantita natural');

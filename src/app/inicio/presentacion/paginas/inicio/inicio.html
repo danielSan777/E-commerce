@@ -1,10 +1,10 @@
 <!-- Video principal con el botón a categorías -->
 <section class="hero">
     @if (verVideo()) {
-    <video class="hero-medio" [src]="VIDEO.url!" [poster]="VIDEO.poster" autoplay muted loop playsinline
+    <video class="hero-medio" appVideoAuto [src]="videoPortada()!.url" [attr.poster]="videoPortada()!.poster" muted loop playsinline
         preload="metadata" aria-hidden="true"></video>
     } @else {
-    <img class="hero-medio" [src]="VIDEO.poster" alt="" width="800" height="800" fetchpriority="high">
+    <img class="hero-medio" [src]="imagenPortada()" [alt]="altPortada()" width="800" height="800" fetchpriority="high">
     }
     <div class="hero-texto">
         <h1>Regalos que florecen</h1>

@@ -11,13 +11,13 @@ const SITIO = 'https://jardindesele.com';
 export const IMAGEN_PENDIENTE = 'imagenes/sin-imagen.svg';
 
 // Respuestas de Laravel (GET /api/v1/categories, /categories/{slug}, /products). Nombres iguales a los de la API.
-interface MedioApi { type: 'image' | 'video'; srcset?: Record<string, string>; url?: string }
+interface MedioApi { type: 'image' | 'video'; srcset?: Record<string, string>; url?: string; poster?: string | null }
 interface ResumenCategoriaApi {
     slug: string; name: string; url: string; short_description: string | null; image: string | null;
     subcategories: { slug: string; name: string; url: string }[];
 }
 interface CategoriaApi {
-    slug: string; name: string; headline: string | null; intro_html: string | null; hero: MedioApi | null;
+    slug: string; name: string; headline: string | null; intro_html: string | null; hero: MedioApi | null; hero_video?: MedioApi | null;
     price_from_cents: number | null;
     subcategories: { slug: string; name: string; url: string }[];
     active_subcategory: string | null;
@@ -125,6 +125,7 @@ export class CategoriaService {
             headline: c.headline ?? '',
             intro_html: introAHtml(c.intro_html),
             hero: foto ? { type: 'image', url: foto } : undefined,
+            video: c.hero_video?.type === 'video' && c.hero_video.url ? { url: c.hero_video.url, poster: c.hero_video.poster ?? undefined } : undefined,
             short_description: c.headline ?? '',
             price_from_cents: c.price_from_cents ?? 0,
             subcategories,

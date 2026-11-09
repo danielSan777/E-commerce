@@ -12,7 +12,9 @@
             <h2>{{ c.name }}</h2>
             <p>{{ c.headline }}</p>
         </div>
-        @if (c.hero) { <img class="banner-imagen" [src]="c.hero.url" alt="" width="160" height="160"> }
+        @if (c.video; as v) {
+        <video class="banner-video" appVideoAuto [src]="v.url" [attr.poster]="v.poster ?? c.hero?.url ?? null" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+        } @else if (c.hero) { <img class="banner-imagen" [src]="c.hero.url" alt="" width="160" height="160"> }
     </section>
 
     <h1 class="titulo"><i class="bi bi-flower1" aria-hidden="true"></i> {{ c.name }}</h1>

@@ -86,4 +86,27 @@ describe('CategoriaService (API de Laravel)', () => {
         ctrl.expectOne('/api/v1/products').flush({ data: [producto('doctor', { search_terms: ['medico'], category: { slug: 'p', name: 'Profesiones' }, subcategory: { slug: 's', name: 'Salud' } })] });
         expect((await indice)[0].textos).toEqual(['doctor', 'medico', 'Profesiones', 'Salud']);
     });
+
+    it('el video del banner (hero_video) llega al contrato; la foto del banner sigue siendo la imagen', async () => {
+        const p = firstValueFrom(servicio.categoria('amor'));
+        ctrl.expectOne('/api/v1/categories/amor').flush({
+            slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: null, products: [],
+            hero: { type: 'image', srcset: { '1080': 'http://api/media/b-1080.webp' } },
+            hero_video: { type: 'video', url: 'http://api/media/categories/amor/v.mp4', poster: 'http://api/media/categories/amor/v-portada.webp', duration_s: 40 },
+            seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null },
+        });
+        const c = await p;
+
+        expect(c?.hero).toEqual({ type: 'image', url: 'http://api/media/b-1080.webp' });
+        expect(c?.video).toEqual({ url: 'http://api/media/categories/amor/v.mp4', poster: 'http://api/media/categories/amor/v-portada.webp' });
+    });
+
+    it('sin hero_video no hay video en el contrato', async () => {
+        const p = firstValueFrom(servicio.categoria('amor'));
+        ctrl.expectOne('/api/v1/categories/amor').flush({
+            slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: null, products: [], hero: null,
+            seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null },
+        });
+        expect((await p)?.video).toBeUndefined();
+    });
 });

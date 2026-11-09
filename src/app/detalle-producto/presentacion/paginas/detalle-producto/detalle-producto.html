@@ -11,17 +11,29 @@
         <!-- ============ IMAGEN ============ -->
         <div class="galeria-bloque">
             <div class="galeria">
+                @if (verVideo() && video(); as v) {
+                <video class="galeria-video" appVideoAuto [src]="v.url" [attr.poster]="v.poster" muted loop playsinline preload="auto"
+                    [attr.aria-label]="'Video de ' + p.name"></video>
+                } @else {
                 <img [src]="imagenActiva()" [alt]="p.name" />
                 <button type="button" class="btn-ampliar" (click)="verImagen.set(true)" aria-label="Ver imagen completa">
                     <i class="bi bi-arrows-fullscreen"></i>
                 </button>
+                }
             </div>
-            @if (imagenes().length > 1) {
+            @if (imagenes().length > 1 || video()) {
             <div class="miniaturas" role="list">
                 @for (img of imagenes(); track img; let i = $index) {
-                <button type="button" role="listitem" class="miniatura" [class.activa]="img === imagenActiva()"
-                    [attr.aria-label]="'Ver foto ' + (i + 1)" (click)="imagenElegida.set(img)">
+                <button type="button" role="listitem" class="miniatura" [class.activa]="!verVideo() && img === imagenActiva()"
+                    [attr.aria-label]="'Ver foto ' + (i + 1)" (click)="imagenElegida.set(img); verVideo.set(false)">
                     <img [src]="img" alt="" />
+                </button>
+                }
+                @if (video(); as v) {
+                <button type="button" role="listitem" class="miniatura miniatura-video" [class.activa]="verVideo()"
+                    aria-label="Ver el video" (click)="verVideo.set(true)">
+                    @if (v.poster) { <img [src]="v.poster" alt="" /> }
+                    <i class="bi bi-play-circle-fill" aria-hidden="true"></i>
                 </button>
                 }
             </div>

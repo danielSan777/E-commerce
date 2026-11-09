@@ -8,6 +8,8 @@
 .banner h2 { font-family: Lobster, cursive; font-weight: 400; color: var(--jds-vino); font-size: 2rem; line-height: 1.05; margin: 0 0 6px; }
 .banner p { margin: 0; font-size: .9rem; max-width: 22ch; }
 .banner-imagen { width: 110px; height: 110px; object-fit: contain; flex: none; }
+/* Video del banner (si el administrador subió uno): horizontal, a la derecha del texto */
+.banner-video { width: min(52%, 280px); aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; flex: none; background: #e9efe9; }
 @media (min-width: 768px) { .banner-imagen { width: 160px; height: 160px; } .banner h2 { font-size: 2.8rem; } }
 
 .titulo { font-family: Georgia, 'Times New Roman', serif; color: var(--jds-vino); font-size: 1.5rem; margin: 0 0 4px; }

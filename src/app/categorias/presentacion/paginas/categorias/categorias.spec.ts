@@ -111,4 +111,27 @@ describe('Categorias (pantalla de una categoría con datos de Laravel)', () => {
         expect(html.textContent).toContain('No pudimos cargar esta página');
         expect(html.textContent).not.toContain('No encontramos esta página');
     });
+
+
+    it('si la categoría tiene video en el banner lo muestra (silenciado, en bucle) en lugar de la foto', async () => {
+        const html = await montar('amor', null, categoriaApi('amor', 'Amor', {
+            hero: { type: 'image', srcset: { '1080': 'http://api/media/b-1080.webp' } },
+            hero_video: { type: 'video', url: 'http://api/media/categories/amor/v.mp4', poster: null, duration_s: 20 },
+        }));
+        const video = html.querySelector('.banner video.banner-video') as HTMLVideoElement;
+
+        expect(video).not.toBeNull();
+        expect(video.getAttribute('src')).toBe('http://api/media/categories/amor/v.mp4');
+        expect(video.getAttribute('poster')).toBe('http://api/media/b-1080.webp'); // sin portada propia usa la foto del banner
+        expect(video.muted).toBe(true);
+        expect(video.loop).toBe(true);
+        expect(html.querySelector('.banner img.banner-imagen')).toBeNull();
+    });
+
+    it('sin video en el banner se ve la foto, como siempre', async () => {
+        const html = await montar('amor', null, categoriaApi('amor', 'Amor', { hero: { type: 'image', srcset: { '1080': 'http://api/media/b-1080.webp' } } }));
+
+        expect(html.querySelector('.banner video')).toBeNull();
+        expect(html.querySelector('.banner img.banner-imagen')?.getAttribute('src')).toBe('http://api/media/b-1080.webp');
+    });
 });

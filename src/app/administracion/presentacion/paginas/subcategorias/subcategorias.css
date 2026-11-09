@@ -1,1 +1,5 @@
 @import '../../estilos/admin-tema.css';
+
+.vista { display: block; width: 100%; max-width: 28rem; max-height: 24rem; object-fit: cover; border-radius: 12px; background: #0f172a; margin: .5rem 0; }
+.boton.primario { display: inline-block; text-align: center; padding: .7rem 1rem; border-radius: 8px; border: 1px solid #047857; background: #047857; color: #fff; cursor: pointer; }
+.desactivado { opacity: .6; pointer-events: none; }

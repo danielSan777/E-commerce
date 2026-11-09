@@ -1,4 +1,5 @@
 import { Component, DOCUMENT, afterNextRender, computed, effect, inject, signal } from '@angular/core';
+import { VideoAuto } from '../../../../shared/directivas/video-auto';
 import { CurrencyPipe } from '@angular/common';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of, switchMap, tap } from 'rxjs';
@@ -13,7 +14,7 @@ import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontra
 // cada estado tiene su URL, y cambiar de categoría o de pestaña solo cambia la URL (no recarga la página).
 @Component({
   selector: 'app-categorias',
-  imports: [CurrencyPipe, RouterLink, NoEncontrada],
+  imports: [CurrencyPipe, RouterLink, NoEncontrada, VideoAuto],
   templateUrl: './categorias.html',
   styleUrl: './categorias.css',
 })
