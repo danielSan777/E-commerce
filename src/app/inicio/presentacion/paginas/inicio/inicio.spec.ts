@@ -113,6 +113,11 @@ describe('Inicio (/)', () => {
         expect(html.querySelectorAll('.hero-puntos button')).toHaveLength(2);
     });
 
+    it('nunca hay dos medios a la vez en la portada (ni la imagen de siempre junto al video)', async () => {
+        const html = await montar(null, { type: 'video', url: 'http://api/v.mp4', poster: 'http://api/p.webp', duration_s: 5 });
+        expect(html.querySelectorAll('.hero .hero-medio')).toHaveLength(1);
+    });
+
     it('con una sola portada no hay puntos', async () => {
         const una = await montar(null, { type: 'image', alt: 'Maceta', w: 800, h: 800, srcset: { '1080': 'http://api/m-1080.webp' } });
         expect(una.querySelector('.hero-puntos')).toBeNull();

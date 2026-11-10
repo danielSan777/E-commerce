@@ -58,8 +58,8 @@ export class Inicio {
   readonly portadas = toSignal(inject(PortadaInicioService).portadas(), { initialValue: [] });
   readonly indice = signal(0);
   readonly portada = computed(() => { const l = this.portadas(); return l.length ? l[this.indice() % l.length] : null; });
-  /** Lista de un solo elemento: así Angular vuelve a crear el <video> al pasar a la siguiente portada. */
-  readonly actual = computed(() => { const p = this.portada(); return p ? [p] : []; });
+  /** Lista de un solo elemento (la portada, o la imagen de siempre): así hay un único medio en pantalla y Angular recrea el <video> al pasar a la siguiente. */
+  readonly actual = computed(() => [this.portada() ?? 'siempre']);
   readonly variasPortadas = computed(() => this.portadas().length > 1);
   readonly videoPortada = computed(() => { const p = this.portada(); return p?.type === 'video' ? p : null; });
   verVideo = computed(() => !!this.videoPortada() && !this.reducirMovimiento);

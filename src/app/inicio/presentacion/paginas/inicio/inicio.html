@@ -1,8 +1,5 @@
 <!-- Video principal con el botón a categorías -->
 <section class="hero">
-    @if (portada() === null) {
-    <img class="hero-medio" [src]="imagenPortada()" alt="" width="800" height="800" fetchpriority="high">
-    }
     @for (p of actual(); track indice()) {
     @if (verVideo()) {
     <video class="hero-medio" appVideoAuto [appVideoAutoBucle]="!variasPortadas()" [src]="videoPortada()!.url" [attr.poster]="videoPortada()!.poster"
