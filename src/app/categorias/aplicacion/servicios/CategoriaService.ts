@@ -54,8 +54,8 @@ export class CategoriaService {
     private recientes = new Map<string, { en: number; datos$: Observable<CategoriaContrato | null> }>();
 
     /** Las categorías activas, en su orden (menú, inicio y tarjetas). Se piden una sola vez. */
-    categorias(): Observable<CategoriaResumen[]> {
-        this.resumenes$ ??= this.http.get<{ data: ResumenCategoriaApi[] }>(`${this.api}/categories`).pipe(
+    categorias(enSegundoPlano = false): Observable<CategoriaResumen[]> {
+        this.resumenes$ ??= this.http.get<{ data: ResumenCategoriaApi[] }>(`${this.api}/categories`, { context: enSegundoPlano ? new HttpContext().set(SIN_CARGANDO, true) : undefined }).pipe(
             map(r => r.data.map(c => ({
                 slug: c.slug, name: c.name, url: c.url, image: c.image ?? IMAGEN_PENDIENTE, description: c.short_description ?? '',
             }))),
