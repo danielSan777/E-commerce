@@ -17,8 +17,8 @@ describe('validarVideo', () => {
   it('rechaza lo que no es MP4 y lo que pesa de más', () => {
     expect(validarVideo({ type: 'video/quicktime', size: 1000 }, 3, LIMITES_VIDEO.products)).toContain('MP4');
     expect(validarVideo({ type: 'image/png', size: 1000 }, null, LIMITES_VIDEO.products)).toContain('MP4');
-    expect(validarVideo(mp4(16), 3, LIMITES_VIDEO.products)).toContain('menos de 15 MB');
-    expect(validarVideo(mp4(16), 30, LIMITES_VIDEO.categories)).toContain('menos de 15 MB');
+    expect(validarVideo(mp4(101), 3, LIMITES_VIDEO.products)).toContain('menos de 100 MB');
+    expect(validarVideo(mp4(101), 30, LIMITES_VIDEO.categories)).toContain('menos de 100 MB');
   });
 
   it('si el navegador no pudo leer la duración, deja que decida Laravel', () => {

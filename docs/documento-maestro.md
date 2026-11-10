@@ -903,7 +903,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 **Tareas**
 
 - [ ] Al subir una foto de producto: conservar el original y generar WebP de \~600 px (galería) y \~1080 px (zoom), convertidos a sRGB.
-- [x] Al subir un video: validar MP4, duración y peso según su perfil (tabla de abajo). No se transcodifica en el servidor. *(Hecho el 9 nov, leyendo el MP4 en PHP sin FFmpeg: formato, H.264, duración y peso. Por pedido de Josué los límites son: todo video (producto, banner de categoría y página principal) dura 1 minuto como máximo; peso máximo de 15 MB (producto y categoría) y 20 MB (página principal). La portada del video es opcional.)*
+- [x] Al subir un video: validar MP4, duración y peso según su perfil (tabla de abajo). No se transcodifica en el servidor. *(Hecho el 9 nov, leyendo el MP4 en PHP sin FFmpeg: formato, H.264, duración y peso. Por pedido de Josué los límites son: todo video (producto, banner de categoría y página principal) dura 1 minuto como máximo y pesa hasta 100 MB (un minuto grabado con el celular suele pasar de 15 MB). La portada del video es opcional.)*
 - [ ] Al subir un accesorio: conservar el maestro y generar el asset grande y la miniatura de 160 px.
 - [ ] Manifiesto por producto con solo sus accesorios compatibles.
 - [ ] Nombres de archivo con hash y caché permanente para todo medio público.

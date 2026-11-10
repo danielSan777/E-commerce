@@ -237,14 +237,14 @@ describe('GaleriaImagenes', () => {
     expect(html.querySelector('.subir.video input[accept="video/mp4"]')).not.toBeNull(); // se pueden subir más videos
   });
 
-  it('no sube lo que no es MP4 ni lo que pesa de más (15 MB)', async () => {
+  it('no sube lo que no es MP4 ni lo que pesa de más (100 MB)', async () => {
     const fixture = await montar();
     const c = fixture.componentInstance;
     duracion.valor = 3;
     c.elegirVideo(evento(new File(['v'], 'v.mov', { type: 'video/quicktime' })));
     expect(c.error()).toContain('MP4');
-    c.elegirVideo(evento(mp4(16)));
-    expect(c.error()).toContain('menos de 15 MB');
+    c.elegirVideo(evento(mp4(101)));
+    expect(c.error()).toContain('menos de 100 MB');
     ctrl.verify();
   });
 

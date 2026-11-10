@@ -8,9 +8,9 @@ import { Observable } from 'rxjs';
 export interface LimiteVideo { segundos: number; bytes: number; nombre: string }
 
 export const LIMITES_VIDEO: Record<'products' | 'categories' | 'inicio', LimiteVideo> = {
-  products: { segundos: 60, bytes: 15 * 1024 * 1024, nombre: 'del producto' },
-  categories: { segundos: 60, bytes: 15 * 1024 * 1024, nombre: 'del banner de la categoría' },
-  inicio: { segundos: 60, bytes: 20 * 1024 * 1024, nombre: 'de la página principal' },
+  products: { segundos: 60, bytes: 100 * 1024 * 1024, nombre: 'del producto' },
+  categories: { segundos: 60, bytes: 100 * 1024 * 1024, nombre: 'del banner de la categoría' },
+  inicio: { segundos: 60, bytes: 100 * 1024 * 1024, nombre: 'de la página principal' },
 };
 
 /** Un video de "1 minuto" suele medir 60,02 s: se tolera un cuarto de segundo, igual que Laravel. */

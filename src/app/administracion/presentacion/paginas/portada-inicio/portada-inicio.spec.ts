@@ -85,13 +85,13 @@ describe('AdminPortadaInicio', () => {
     ctrl.verify();
   });
 
-  it('video: lo que no es MP4 o pesa más de 20 MB tampoco sale del navegador', async () => {
+  it('video: lo que no es MP4 o pesa más de 100 MB tampoco sale del navegador', async () => {
     const f = await montar();
     duracion.valor = 10;
     f.componentInstance.elegirVideo(evento(new File(['v'], 'v.webm', { type: 'video/webm' })));
     expect(f.componentInstance.error()).toContain('MP4');
-    f.componentInstance.elegirVideo(evento(mp4(25)));
-    expect(f.componentInstance.error()).toContain('menos de 20 MB');
+    f.componentInstance.elegirVideo(evento(mp4(105)));
+    expect(f.componentInstance.error()).toContain('menos de 100 MB');
     ctrl.verify();
   });
 
