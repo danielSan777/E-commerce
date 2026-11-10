@@ -41,6 +41,8 @@ export interface CategoriaContrato {
     headline: string;
     intro_html: string;
     hero?: { type: 'image' | 'video'; url: string; poster?: string };
+    video?: { url: string; poster?: string };   // el primer video del banner (máx. 1 minuto); la foto de `hero` queda como portada
+    videos?: { url: string; poster?: string }[]; // todos los videos del banner, sin límite de cantidad: se muestran uno tras otro
     short_description: string;   // una línea para las tarjetas de /categorias
     price_from_cents: number;
     subcategories: SubcategoriaContrato[];

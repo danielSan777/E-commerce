@@ -34,6 +34,11 @@ export const routes: Routes = [
         loadComponent: () => import('./administracion/presentacion/paginas/productos/productos').then(m => m.AdminProductos)
     },
     {
+        path: 'admin/inicio',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/portada-inicio/portada-inicio').then(m => m.AdminPortadaInicio)
+    },
+    {
         path: 'admin/campanas',
         canActivate: [adminGuard],
         loadComponent: () => import('./administracion/presentacion/paginas/campanas/campanas').then(m => m.AdminCampanas)

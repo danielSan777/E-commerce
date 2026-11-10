@@ -1,4 +1,4 @@
-import { Component, PLATFORM_ID, computed, inject } from '@angular/core';
+import { Component, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe, isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
@@ -9,12 +9,14 @@ import { CategoriaService } from '../../../../categorias/aplicacion/servicios/Ca
 import { PromesaService } from '../../../../checkout/aplicacion/servicios/PromesaService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { enlaceWhatsapp } from '../../../../core/configuracion/tienda';
+import { PortadaInicioService } from '../../../aplicacion/servicios/PortadaInicioService';
+import { VideoAuto } from '../../../../shared/directivas/video-auto';
 
 // Página principal (/), de arriba hacia abajo en el celular: video, promesa, campaña en temporada (si hay), categorías, favoritos,
 // cómo funciona y confianza. Testimonios llegan cuando Josué entregue sus datos.
 @Component({
   selector: 'app-inicio',
-  imports: [CurrencyPipe, RouterLink],
+  imports: [CurrencyPipe, RouterLink, VideoAuto],
   templateUrl: './inicio.html',
   styleUrl: './inicio.css',
 })
@@ -22,8 +24,8 @@ export class Inicio {
 
   // ===== EDITABLES =====
   readonly RUTA_CATEGORIAS = '/categorias';
-  // Video principal (H.264 sin audio). Mientras `url` sea null se muestra solo la portada.
-  readonly VIDEO = { url: null as string | null, poster: 'imagenes/doctor3D.png' };
+  // Imagen de siempre: se ve mientras el administrador no elija una portada propia (imagen o video) en el panel.
+  readonly IMAGEN_DE_SIEMPRE = 'imagenes/doctor3D.png';
   readonly PASOS = [
     { icono: 'bi-search-heart', titulo: 'Elige', texto: 'Escoge la maceta que más se parece a esa persona.' },
     { icono: 'bi-magic', titulo: 'Personaliza', texto: 'Agrega su nombre, accesorios y una dedicatoria.' },
@@ -51,9 +53,41 @@ export class Inicio {
   // Con "reducir movimiento" solo se ve la portada
   private reducirMovimiento = isPlatformBrowser(inject(PLATFORM_ID))
     && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  verVideo = computed(() => !!this.VIDEO.url && !this.reducirMovimiento);
+  // Portadas elegidas en el panel (imágenes y videos, sin límite); lista vacía = se usa la imagen de siempre.
+  // Con una sola, el video va en bucle; con varias se muestran una tras otra (el video al terminar, la imagen a los 6 s).
+  // null = todavía cargando: no se muestra nada (así no parpadea la imagen de siempre antes de que llegue la portada elegida)
+  private readonly portadasCargadas = toSignal(inject(PortadaInicioService).portadas(), { initialValue: null });
+  readonly portadas = computed(() => this.portadasCargadas() ?? []);
+  readonly indice = signal(0);
+  readonly portada = computed(() => { const l = this.portadas(); return l.length ? l[this.indice() % l.length] : null; });
+  /** Lista de un solo elemento (la portada, o la imagen de siempre): así hay un único medio en pantalla y Angular recrea el <video> al pasar a la siguiente. */
+  readonly actual = computed(() => this.portadasCargadas() === null ? [] : [this.portada() ?? 'siempre']);
+  readonly variasPortadas = computed(() => this.portadas().length > 1);
+  readonly videoPortada = computed(() => { const p = this.portada(); return p?.type === 'video' ? p : null; });
+  verVideo = computed(() => !!this.videoPortada() && !this.reducirMovimiento);
+  /** Imagen de la portada: la foto elegida, la portada del video, o la de siempre. */
+  readonly imagenPortada = computed(() => {
+    const p = this.portada();
+    if (p?.type === 'image') return p.srcset['1080'] ?? Object.values(p.srcset)[0] ?? this.IMAGEN_DE_SIEMPRE;
+    if (p?.type === 'video') return p.poster ?? this.IMAGEN_DE_SIEMPRE;
+    return this.IMAGEN_DE_SIEMPRE;
+  });
+  readonly altPortada = computed(() => { const p = this.portada(); return p?.type === 'image' ? (p.alt ?? '') : ''; });
+
+  siguiente(): void { this.indice.update(i => (i + 1) % Math.max(this.portadas().length, 1)); }
+  irA(i: number): void { this.indice.set(i); }
 
   constructor() {
+    // Imagen suelta (o video con "reducir movimiento"): pasa sola a la siguiente a los 6 s
+    if (isPlatformBrowser(inject(PLATFORM_ID))) {
+      effect(onCleanup => {
+        if (!this.variasPortadas()) return;
+        this.indice();
+        if (this.verVideo()) return; // el video avisa al terminar
+        const temporizador = setTimeout(() => this.siguiente(), 6000);
+        onCleanup(() => clearTimeout(temporizador));
+      });
+    }
     inject(Title).setTitle('Jardín de Sele | Macetas personalizadas con plantita natural');
     inject(Meta).updateTag({
       name: 'description',

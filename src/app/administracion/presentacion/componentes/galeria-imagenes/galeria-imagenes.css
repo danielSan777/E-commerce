@@ -25,3 +25,11 @@ h3 { margin: 1rem 0 .25rem; font-size: 1.05rem; }
 .boton, .acciones button, .subir input, .subir select, .imagenes input, .imagenes select { min-height: 44px; }
 .acciones button:hover { background: #d1fae5; }
 :is(button, input, select, label):focus-visible, .boton:focus-within { outline: 3px solid #f59e0b; outline-offset: 2px; }
+
+.imagenes video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; background: #0f172a; }
+.subir.video { padding-top: .5rem; }
+
+.portada-elegida { display: flex; gap: .75rem; align-items: center; margin: .25rem 0; }
+.portada-elegida img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid #cfe3d6; }
+.portada-elegida div { display: grid; gap: .35rem; justify-items: start; }
+.desactivado { opacity: .6; pointer-events: none; }

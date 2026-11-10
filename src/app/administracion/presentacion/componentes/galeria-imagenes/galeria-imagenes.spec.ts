@@ -1,8 +1,14 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { LectorDeVideo } from '../../../aplicacion/video';
 import { API_URL } from '../../../../core/configuracion/api';
 import { GaleriaImagenes } from './galeria-imagenes';
+
+// El navegador de pruebas no puede leer la duración de un video: se simula con la que cada prueba indique
+const duracion = { valor: 5 as number | null };
+const LECTOR = { provide: LectorDeVideo, useValue: { duracion: () => of(duracion.valor) } };
 
 const BASE = '/api/v1/admin/products/PRO-1/media';
 const img = (id: number, extra = {}) => ({ id, type: 'image', role: 'front', alt: null, sort_order: id, width: 1500, height: 1000, urls: { '600': `/media/a${id}-600.webp`, '1080': `/media/a${id}-1080.webp` }, ...extra });
@@ -12,14 +18,15 @@ const evento = (archivo: File) => ({ target: { files: [archivo], value: 'x' } })
 describe('GaleriaImagenes', () => {
   let ctrl: HttpTestingController;
 
-  async function montar(lista = [img(1)]) {
-    TestBed.configureTestingModule({ imports: [GaleriaImagenes], providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+  async function montar(lista: object[] = [img(1)], dueno: 'products' | 'categories' | 'campaigns' = 'products', clave = 'PRO-1') {
+    const base = `/api/v1/admin/${dueno}/${clave}/media`;
+    TestBed.configureTestingModule({ imports: [GaleriaImagenes], providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }, LECTOR] });
     ctrl = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(GaleriaImagenes);
-    fixture.componentRef.setInput('dueno', 'products');
-    fixture.componentRef.setInput('clave', 'PRO-1');
+    fixture.componentRef.setInput('dueno', dueno);
+    fixture.componentRef.setInput('clave', clave);
     fixture.detectChanges();
-    ctrl.expectOne(BASE).flush({ data: lista });
+    ctrl.expectOne(base).flush({ data: lista });
     await esperar();
     fixture.detectChanges();
     return fixture;
@@ -192,5 +199,128 @@ describe('GaleriaImagenes', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(archivo().disabled).toBe(true);
+  });
+
+  // ===== Video =====
+  const mp4 = (mb = 1, nombre = 'v.mp4') => { const f = new File(['v'], nombre, { type: 'video/mp4' }); Object.defineProperty(f, 'size', { value: mb * 1024 * 1024 }); return f; };
+  const video = (id: number) => ({ id, type: 'video', role: 'video', alt: null, sort_order: id, width: 720, height: 1280, duration_s: 5, urls: { url: '/media/v.mp4', poster: '/media/v-portada.webp' } });
+
+  it('producto: un video de más de un minuto se rechaza en el navegador, sin llamar a la API', async () => {
+    const fixture = await montar();
+    duracion.valor = 75;
+    fixture.componentInstance.elegirVideo(evento(mp4()));
+    expect(fixture.componentInstance.error()).toContain('un minuto');
+    expect(fixture.componentInstance.error()).toContain('dura 75 s');
+    ctrl.verify();
+  });
+
+  it('producto: acepta 1 minuto justo y lo sube a /video con su portada', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    duracion.valor = 60;
+    c.elegirPortada(evento(new File(['p'], 'p.png', { type: 'image/png' })));
+    c.elegirVideo(evento(mp4()));
+
+    const req = ctrl.expectOne('/api/v1/admin/products/PRO-1/video');
+    expect(req.request.method).toBe('POST');
+    expect(((req.request.body as FormData).get('video') as File).name).toBe('v.mp4');
+    expect(((req.request.body as FormData).get('poster') as File).name).toBe('p.png');
+    req.flush(video(7));
+    await esperar();
+    fixture.detectChanges();
+
+    expect(c.hayVideo()).toBe(true);
+    expect(c.portada()).toBeNull();
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('.imagenes video')?.getAttribute('src')).toBe('/media/v.mp4');
+    expect(html.textContent).not.toContain('Ya hay un video');
+    expect(html.querySelector('.subir.video input[accept="video/mp4"]')).not.toBeNull(); // se pueden subir más videos
+  });
+
+  it('no sube lo que no es MP4 ni lo que pesa de más (15 MB)', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    duracion.valor = 3;
+    c.elegirVideo(evento(new File(['v'], 'v.mov', { type: 'video/quicktime' })));
+    expect(c.error()).toContain('MP4');
+    c.elegirVideo(evento(mp4(16)));
+    expect(c.error()).toContain('menos de 15 MB');
+    ctrl.verify();
+  });
+
+  it('categoría: el video del banner puede durar hasta un minuto', async () => {
+    const fixture = await montar([], 'categories', 'amor');
+    const c = fixture.componentInstance;
+    duracion.valor = 75;
+    c.elegirVideo(evento(mp4(2)));
+    expect(c.error()).toContain('un minuto');
+    ctrl.verify();
+
+    duracion.valor = 45;
+    c.elegirVideo(evento(mp4(10)));
+    ctrl.expectOne('/api/v1/admin/categories/amor/video').flush(video(1));
+    await esperar();
+    expect(c.hayVideo()).toBe(true);
+  });
+
+  it('si Laravel rechaza el video, se muestra su mensaje', async () => {
+    const fixture = await montar();
+    duracion.valor = 5;
+    fixture.componentInstance.elegirVideo(evento(mp4()));
+    ctrl.expectOne('/api/v1/admin/products/PRO-1/video').flush({ code: 'validation_error', message: 'x', errors: { video: ['El video debe estar en H.264.'] } }, { status: 422, statusText: 'Unprocessable' });
+    await esperar();
+    expect(fixture.componentInstance.error()).toBe('El video debe estar en H.264.');
+    expect(fixture.componentInstance.hayVideo()).toBe(false);
+  });
+
+  it('la portada del video debe ser una imagen', async () => {
+    const fixture = await montar();
+    fixture.componentInstance.elegirPortada(evento(new File(['x'], 'p.gif', { type: 'image/gif' })));
+    expect(fixture.componentInstance.error()).toContain('portada del video');
+    expect(fixture.componentInstance.portada()).toBeNull();
+  });
+
+  it('el video ya subido se ve en la lista y se puede eliminar', async () => {
+    const fixture = await montar([img(1), video(2)]);
+    const c = fixture.componentInstance;
+    expect(c.hayVideo()).toBe(true);
+    c.eliminar(2);
+    const req = ctrl.expectOne('/api/v1/admin/media/2');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+    await esperar();
+    fixture.detectChanges();
+    expect(c.hayVideo()).toBe(false);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.subir.video input[accept="video/mp4"]')).not.toBeNull(); // se puede subir otro
+  });
+
+  it('las campañas no tienen sección de video', async () => {
+    const fixture = await montar([], 'campaigns', 'san-valentin');
+    expect(fixture.componentInstance.puedeVideo()).toBe(false);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.subir.video')).toBeNull();
+  });
+
+  it('la portada elegida se ve como foto (no solo su nombre) y se puede quitar', async () => {
+    const original = URL.createObjectURL;
+    const liberada = vi.fn();
+    URL.createObjectURL = vi.fn(() => 'blob:portada-1');
+    URL.revokeObjectURL = liberada;
+    try {
+      const fixture = await montar();
+      const c = fixture.componentInstance;
+      c.elegirPortada(evento(new File(['p'], 'CM_Punk.webp', { type: 'image/webp' })));
+      fixture.detectChanges();
+
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelector('.portada-elegida img')?.getAttribute('src')).toBe('blob:portada-1');
+      expect(html.querySelector('.portada-elegida')?.textContent).toContain('CM_Punk.webp');
+      expect(html.textContent).not.toContain('Ningún archivo');
+
+      (html.querySelector('.portada-elegida button') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(c.portada()).toBeNull();
+      expect(liberada).toHaveBeenCalledWith('blob:portada-1');
+      expect(html.querySelector('.portada-elegida')).toBeNull();
+    } finally { URL.createObjectURL = original; }
   });
 });

@@ -111,4 +111,52 @@ describe('DetalleProducto (ficha con datos de Laravel)', () => {
     f.componentInstance.calendarioAbierto.set(true);
     expect(f.componentInstance.calendarioAbierto()).toBe(true);
   });
+
+
+  it('el video del producto es una lámina más: no se carga hasta tocar su miniatura', async () => {
+    const f = await montar('doctor', { ...FICHA, media: [...FICHA.media.slice(0, 2), { type: 'video', role: 'video', url: 'http://api/media/v.mp4', poster: 'http://api/media/v-portada.webp', duration_s: 6 }] });
+    const html = f.nativeElement as HTMLElement;
+
+    expect(html.querySelector('.galeria video')).toBeNull(); // al abrir se ve la foto principal
+    const miniatura = html.querySelector('.miniatura-video') as HTMLButtonElement;
+    expect(miniatura).not.toBeNull();
+
+    miniatura.click();
+    f.detectChanges();
+    const video = html.querySelector('.galeria video') as HTMLVideoElement;
+    expect(video.getAttribute('src')).toBe('http://api/media/v.mp4');
+    expect(video.getAttribute('poster')).toBe('http://api/media/v-portada.webp');
+    expect(video.muted).toBe(true);
+    expect(video.loop).toBe(true);
+    expect(html.querySelector('.galeria .btn-ampliar')).toBeNull();
+
+    (html.querySelectorAll('.miniatura:not(.miniatura-video)')[0] as HTMLButtonElement).click(); // volver a una foto
+    f.detectChanges();
+    expect(html.querySelector('.galeria video')).toBeNull();
+    expect(html.querySelector('.galeria img')).not.toBeNull();
+  });
+
+  it('con varios videos hay una miniatura por video y cada una abre el suyo', async () => {
+    const v = (n: number) => ({ type: 'video', role: 'video', url: `http://api/media/v${n}.mp4`, poster: null, duration_s: 6 });
+    const f = await montar('doctor', { ...FICHA, media: [...FICHA.media.slice(0, 2), v(1), v(2), v(3)] });
+    const html = f.nativeElement as HTMLElement;
+    const miniaturas = html.querySelectorAll('.miniatura-video');
+    expect(miniaturas).toHaveLength(3);
+    (miniaturas[2] as HTMLButtonElement).click();
+    f.detectChanges();
+    expect((html.querySelector('.galeria video') as HTMLVideoElement).getAttribute('src')).toBe('http://api/media/v3.mp4');
+    (html.querySelectorAll('.miniatura-video')[1] as HTMLButtonElement).click();
+    f.detectChanges();
+    expect((html.querySelector('.galeria video') as HTMLVideoElement).getAttribute('src')).toBe('http://api/media/v2.mp4');
+  });
+
+  it('sin video no hay miniatura de video', async () => {
+    const f = await montar('doctor', { ...FICHA, media: FICHA.media.slice(0, 2) });
+    expect((f.nativeElement as HTMLElement).querySelector('.miniatura-video')).toBeNull();
+  });
+
+  it('un producto con solo un video (sin fotos) lo muestra como lámina junto a la imagen provisional', async () => {
+    const f = await montar('doctor', { ...FICHA, media: [{ type: 'video', role: 'video', url: 'http://api/media/v.mp4', poster: null, duration_s: 5 }] });
+    expect((f.nativeElement as HTMLElement).querySelector('.miniatura-video')).not.toBeNull();
+  });
 });

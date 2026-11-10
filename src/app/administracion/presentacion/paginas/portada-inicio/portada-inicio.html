@@ -1,0 +1,77 @@
+<header class="barra">
+  <strong>Portada de la página principal</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+<main class="contenido">
+  <p class="ayuda">Aquí eliges la imagen o el video que ven los clientes arriba de la página principal, en lugar de la foto de ejemplo. Puedes subir todas las que quieras: se muestran una tras otra (el video hasta que termina, la imagen unos segundos).</p>
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+    <h2>Portadas actuales ({{ lista().length }})</h2>
+    @for (p of lista(); track p.id; let i = $index) {
+      <div class="portada-item">
+        @if (p.type === 'video') {
+          <video class="vista" [src]="p.url" [attr.poster]="p.poster" controls muted playsinline preload="metadata"></video>
+          <p class="ayuda"><b>{{ i + 1 }}. Video</b> · {{ p.duration_s }} s</p>
+        } @else {
+          <img class="vista" [src]="imagenActual(p)" [alt]="p.alt ?? 'Portada de la página principal'" />
+          <p class="ayuda"><b>{{ i + 1 }}. Imagen</b>{{ p.alt ? ' · ' + p.alt : '' }}</p>
+        }
+        <div class="acciones">
+          @if (confirmarQuitar() === p.id) {
+            <span>¿Quitar esta portada?</span>
+            <button type="button" class="peligro" (click)="quitar(p.id!)">Sí, quitar</button>
+            <button type="button" (click)="confirmarQuitar.set('')">No</button>
+          } @else {
+            <button type="button" class="peligro" (click)="confirmarQuitar.set(p.id!)">Quitar</button>
+          }
+        </div>
+      </div>
+    } @empty {
+      <p class="ayuda">Todavía no elegiste una portada: se ve la imagen de siempre.</p>
+    }
+
+    <form class="formulario" (submit)="$event.preventDefault()" novalidate>
+      <h2>Agregar a la portada</h2>
+      <fieldset class="google">
+        <legend>¿Qué quieres subir?</legend>
+        <label class="casilla"><input type="radio" name="tipo" [checked]="tipo() === 'image'" (change)="tipo.set('image')" /> Una imagen</label>
+        <label class="casilla"><input type="radio" name="tipo" [checked]="tipo() === 'video'" (change)="tipo.set('video')" /> Un video</label>
+      </fieldset>
+
+      @if (tipo() === 'image') {
+        <label for="alt-imagen">Descripción de la imagen (obligatoria)</label>
+        <input id="alt-imagen" name="alt" maxlength="200" placeholder="Describe lo que se ve en la foto" [(ngModel)]="alt" />
+        <small class="ayuda">Ayuda a Google y a las personas con lector de pantalla. JPG, PNG o WebP, de hasta 8 MB y mínimo 300 × 300 píxeles.</small>
+        <label class="boton primario" [class.desactivado]="subiendo()">
+          {{ subiendo() ? 'Subiendo…' : 'Elegir y subir imagen' }}
+          <input type="file" accept="image/jpeg,image/png,image/webp" hidden [disabled]="subiendo()" (change)="elegirImagen($event)" />
+        </label>
+      } @else {
+        <p class="ayuda">MP4 (H.264) de hasta <b>{{ textoLimite }}</b> y 20 MB. Sin transcodificar: súbelo ya exportado. Se reproduce solo, en bucle y sin sonido.</p>
+        <span class="etiqueta">Portada del video (opcional)</span>
+        @if (portada(); as f) {
+          <div class="portada-elegida">
+            <img [src]="portadaVista()" alt="Portada elegida para el video" />
+            <div>
+              <small>{{ f.name }}</small>
+              <button type="button" (click)="quitarPortada()" [disabled]="subiendo()">Quitar</button>
+            </div>
+          </div>
+        } @else {
+          <label class="boton" [class.desactivado]="subiendo()">
+            Elegir portada
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden [disabled]="subiendo()" (change)="elegirPortada($event)" />
+          </label>
+        }
+        <small class="ayuda">Es la imagen que se ve mientras carga el video y para quienes tienen activado "reducir movimiento". Si no eliges una, se usa el primer cuadro del video.</small>
+        <label class="boton primario" [class.desactivado]="subiendo()">
+          {{ subiendo() ? 'Subiendo video…' : 'Elegir y subir video' }}
+          <input type="file" accept="video/mp4" hidden [disabled]="subiendo()" (change)="elegirVideo($event)" />
+        </label>
+      }
+    </form>
+  }
+</main>

@@ -1,4 +1,5 @@
 import { Component, OnDestroy, PLATFORM_ID, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
+import { VideoAuto } from '../../../../shared/directivas/video-auto';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
@@ -22,7 +23,7 @@ import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontra
 import { ProductoCarrito } from '../../../../carrito/aplicacion/servicios/CarritoService';
 
 @Component({
-  imports: [RouterLink, Personalizador, NoEncontrada, CalendarioVentanas],
+  imports: [RouterLink, Personalizador, NoEncontrada, CalendarioVentanas, VideoAuto],
   selector: 'app-detalle-producto',
   styleUrl: './detalle-producto.css',
   templateUrl: './detalle-producto.html',
@@ -73,6 +74,11 @@ export class DetalleProducto implements OnDestroy {
     const fotos = p.media.filter(m => m.type === 'image').map(m => m.srcset?.['1080'] ?? Object.values(m.srcset ?? {}).pop()).filter((u): u is string => !!u);
     return fotos.length ? fotos : [IMAGEN_PENDIENTE];
   });
+  // Videos del producto (sin límite de cantidad, máx. 1 minuto cada uno): láminas de la galería, al final. Solo se carga y se reproduce cuando está activa.
+  videos = computed(() => (this.producto()?.media ?? []).filter(x => x.type === 'video' && !!x.url).map(m => ({ url: m.url!, poster: m.poster ?? this.imagenes()[0] })));
+  videoElegido = signal(0);
+  video = computed(() => this.videos()[this.videoElegido()] ?? this.videos()[0] ?? null);
+  verVideo = signal(false);
   imagenElegida = signal('');
   imagenActiva = computed(() => this.imagenElegida() || this.imagenes()[0] || '');
 

@@ -638,6 +638,9 @@ button {
 .miniatura { flex: none; width: 64px; height: 64px; border: 2px solid transparent; border-radius: 8px; overflow: hidden; padding: 0; background: #f2f2f2; }
 .miniatura.activa { border-color: #3a4696; }
 .miniatura img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.miniatura-video { position: relative; }
+.miniatura-video .bi { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.6rem; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+.galeria-video { display: block; width: 100%; height: 100%; object-fit: cover; background: #f2f2f2; }
 
 /* ===== Ficha: qué incluye, envío, promesa y calendario ===== */
 .sub-titulo { margin: 18px 0 8px; font-size: 1.05rem; font-weight: 700; }

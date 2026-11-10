@@ -27,6 +27,15 @@ export class ImagenesAdminService {
     return this.http.post<ImagenAdmin>(this.url(dueno, clave), datos).pipe(conErrorApi());
   }
 
+  /** Video MP4 de un producto (máx. 6 s) o del banner de una categoría (máx. 1 minuto). `portada` es opcional. */
+  subirVideo(dueno: DuenoDeImagenes, clave: string, video: File, portada: File | null, alt = ''): Observable<ImagenAdmin> {
+    const datos = new FormData();
+    datos.append('video', video);
+    if (portada) datos.append('poster', portada);
+    if (alt.trim()) datos.append('alt', alt.trim());
+    return this.http.post<ImagenAdmin>(`${this.api}/admin/${dueno}/${encodeURIComponent(clave)}/video`, datos).pipe(conErrorApi());
+  }
+
   editar(id: number, datos: { alt?: string; role?: string }): Observable<ImagenAdmin> {
     return this.http.put<ImagenAdmin>(`${this.api}/admin/media/${id}`, datos).pipe(conErrorApi());
   }

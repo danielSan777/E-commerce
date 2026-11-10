@@ -55,4 +55,34 @@ describe('ImagenesAdminService', () => {
     del.flush(null, { status: 204, statusText: 'No Content' });
     await d;
   });
+
+  it('sube el video como formulario, con portada y descripción opcionales', async () => {
+    const video = new File(['v'], 'v.mp4', { type: 'video/mp4' });
+    const portada = new File(['p'], 'p.png', { type: 'image/png' });
+    const p = firstValueFrom(servicio.subirVideo('products', 'PRO 1', video, portada, ' Giro '));
+    const req = ctrl.expectOne('/api/v1/admin/products/PRO%201/video');
+    expect(req.request.method).toBe('POST');
+    const cuerpo = req.request.body as FormData;
+    expect((cuerpo.get('video') as File).name).toBe('v.mp4');
+    expect((cuerpo.get('poster') as File).name).toBe('p.png');
+    expect(cuerpo.get('alt')).toBe('Giro');
+    req.flush({ id: 9, type: 'video', role: 'video', urls: { url: '/media/v.mp4' } });
+    expect((await p).type).toBe('video');
+  });
+
+  it('el video sin portada ni descripción no envía esos campos', async () => {
+    const p = firstValueFrom(servicio.subirVideo('categories', 'amor', new File(['v'], 'v.mp4', { type: 'video/mp4' }), null));
+    const req = ctrl.expectOne('/api/v1/admin/categories/amor/video');
+    const cuerpo = req.request.body as FormData;
+    expect(cuerpo.has('poster')).toBe(false);
+    expect(cuerpo.has('alt')).toBe(false);
+    req.flush({ id: 1, type: 'video' });
+    await p;
+  });
+
+  it('un error de Laravel (video muy largo) llega con su mensaje en español', async () => {
+    const p = firstValueFrom(servicio.subirVideo('products', 'PRO-1', new File(['v'], 'v.mp4', { type: 'video/mp4' }), null));
+    ctrl.expectOne('/api/v1/admin/products/PRO-1/video').flush({ code: 'validation_error', message: 'x', errors: { video: ['El video del producto puede durar como máximo un minuto.'] } }, { status: 422, statusText: 'Unprocessable' });
+    await expect(p).rejects.toMatchObject({ errors: { video: ['El video del producto puede durar como máximo un minuto.'] } });
+  });
 });

@@ -1,4 +1,5 @@
 import { Component, DOCUMENT, afterNextRender, computed, effect, inject, signal } from '@angular/core';
+import { VideoAuto } from '../../../../shared/directivas/video-auto';
 import { CurrencyPipe } from '@angular/common';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of, switchMap, tap } from 'rxjs';
@@ -13,7 +14,7 @@ import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontra
 // cada estado tiene su URL, y cambiar de categoría o de pestaña solo cambia la URL (no recarga la página).
 @Component({
   selector: 'app-categorias',
-  imports: [CurrencyPipe, RouterLink, NoEncontrada],
+  imports: [CurrencyPipe, RouterLink, NoEncontrada, VideoAuto],
   templateUrl: './categorias.html',
   styleUrl: './categorias.css',
 })
@@ -33,6 +34,11 @@ export class Categorias {
 
   /** true si la API no respondió (distinto de "no existe": eso es un 404). */
   readonly fallo = signal(false);
+  /** Banner con varios videos: se muestran uno tras otro, al terminar cada uno pasa al siguiente. */
+  readonly videoIdx = signal(0);
+  readonly videosBanner = computed(() => this.categoria()?.videos ?? (this.categoria()?.video ? [this.categoria()!.video!] : []));
+  readonly videoBanner = computed(() => { const l = this.videosBanner(); return l.length ? l[this.videoIdx() % l.length] : null; });
+  siguienteVideo(): void { this.videoIdx.update(i => (i + 1) % Math.max(this.videosBanner().length, 1)); }
 
   /** undefined = cargando · null = no existe (404) · contrato = lo que Laravel entregó. */
   categoria = toSignal<CategoriaContrato | null | undefined>(
