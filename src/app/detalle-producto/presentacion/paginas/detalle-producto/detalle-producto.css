@@ -14,6 +14,7 @@ button {
 }
 
 .detalle {
+    overflow-x: clip;
     max-width: 1400px;
     margin: 0 auto;
     padding: 24px 40px 70px;
@@ -448,7 +449,7 @@ button {
     }
 
     .detalle-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr); /* minmax(0, …): la pantalla no se ensancha por las miniaturas ni por textos largos */
         gap: 26px;
     }
 
@@ -634,7 +635,12 @@ button {
 
 /* ===== Galería con miniaturas ===== */
 .galeria-bloque { display: flex; flex-direction: column; gap: 10px; }
-.miniaturas { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.galeria-bloque, .info { min-width: 0; }
+.info { overflow-wrap: anywhere; }
+.info img, .info video, .info iframe, .info table { max-width: 100%; }
+/* Fila de miniaturas (fotos y videos): se desliza con el dedo hacia los lados */
+.miniaturas { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; max-width: 100%; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; touch-action: pan-x; scrollbar-width: thin; }
+.miniatura { scroll-snap-align: start; }
 .miniatura { flex: none; width: 64px; height: 64px; border: 2px solid transparent; border-radius: 8px; overflow: hidden; padding: 0; background: #f2f2f2; }
 .miniatura.activa { border-color: #3a4696; }
 .miniatura img { width: 100%; height: 100%; object-fit: cover; display: block; }
