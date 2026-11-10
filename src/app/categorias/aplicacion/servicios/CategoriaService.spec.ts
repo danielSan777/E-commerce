@@ -112,6 +112,35 @@ describe('CategoriaService (API de Laravel)', () => {
         expect((await p)?.videos?.map(x => x.url)).toEqual(['http://api/v1.mp4', 'http://api/v2.mp4', 'http://api/v3.mp4']);
     });
 
+    it('lo ya pedido se reutiliza: volver a una subcategoría no consulta la API otra vez', async () => {
+        const cuerpo = { slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: 'a', products: [], hero: null,
+            seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null } };
+        const primera = firstValueFrom(servicio.categoria('amor', 'a'));
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=a').flush(cuerpo);
+        await primera;
+        await firstValueFrom(servicio.categoria('amor', 'a'));
+        ctrl.expectNone('/api/v1/categories/amor?subcategory=a');
+    });
+
+    it('adelantar pide en segundo plano cada subcategoría y la respuesta queda lista', async () => {
+        const cuerpo = (s: string) => ({ slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: s, products: [], hero: null,
+            seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null } });
+        servicio.adelantar('amor', ['a', 'b']);
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=a').flush(cuerpo('a'));
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=b').flush(cuerpo('b'));
+        const c = await firstValueFrom(servicio.categoria('amor', 'b'));
+        expect(c?.active_subcategory).toBe('b');
+        ctrl.verify();
+    });
+
+    it('un error de la API no se guarda: la siguiente vez vuelve a intentar', async () => {
+        const falla = firstValueFrom(servicio.categoria('amor', 'z')).catch(e => e.status);
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=z').flush({}, { status: 500, statusText: 'Error' });
+        expect(await falla).toBe(500);
+        void firstValueFrom(servicio.categoria('amor', 'z')).catch(() => undefined);
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=z').flush({}, { status: 500, statusText: 'Error' });
+    });
+
     it('sin hero_video no hay video en el contrato', async () => {
         const p = firstValueFrom(servicio.categoria('amor'));
         ctrl.expectOne('/api/v1/categories/amor').flush({

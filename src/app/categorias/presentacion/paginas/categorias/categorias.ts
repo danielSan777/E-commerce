@@ -1,4 +1,4 @@
-import { Component, DOCUMENT, afterNextRender, computed, effect, inject, signal } from '@angular/core';
+import { Component, DOCUMENT, afterNextRender, computed, effect, inject, Injector, signal } from '@angular/core';
 import { VideoAuto } from '../../../../shared/directivas/video-auto';
 import { CurrencyPipe } from '@angular/common';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -20,6 +20,7 @@ import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontra
 })
 export class Categorias {
   private route = inject(ActivatedRoute);
+  private injector = inject(Injector);
   private servicio = inject(CategoriaService);
   private document = inject(DOCUMENT);
   private titulo = inject(Title);
@@ -85,6 +86,14 @@ export class Categorias {
   constructor() {
     afterNextRender(() => setTimeout(() => this.revisarFlechas(this.document.querySelector('nav.pestanas'))));
     // SEO por estado: título, descripción, imagen para compartir y canonical (sin UTMs)
+    // Con la categoría ya en pantalla, adelanta las demás subcategorías en segundo plano (solo en el navegador)
+    afterNextRender(() => {
+      effect(() => {
+        const c = this.categoria();
+        if (c?.slug && c.subcategories.length) this.servicio.adelantar(c.slug, c.subcategories.map(s => s.slug));
+      }, { injector: this.injector });
+    });
+
     effect(() => {
       const c = this.categoria();
       if (!c) return;
