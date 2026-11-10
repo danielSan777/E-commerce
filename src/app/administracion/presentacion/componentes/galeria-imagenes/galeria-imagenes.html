@@ -32,10 +32,21 @@
 <p class="ayuda">Ya hay un video. Para cambiarlo, elimínalo (más abajo) y sube otro.</p>
 } @else {
 <p class="ayuda">MP4 (H.264) de hasta <b>{{ textoLimiteVideo() }}</b> y 15 MB. Sin transcodificar: súbelo ya exportado. Se reproduce solo, en bucle y sin sonido.</p>
-<label class="etiqueta">Portada del video (opcional)
-<input type="file" accept="image/jpeg,image/png,image/webp" (change)="elegirPortada($event)" [disabled]="subiendoVideo()" />
+<span class="etiqueta">Portada del video (opcional)</span>
+@if (portada(); as p) {
+<div class="portada-elegida">
+<img [src]="portadaVista()" alt="Portada elegida para el video" />
+<div>
+<small>{{ p.name }}</small>
+<button type="button" (click)="quitarPortada()" [disabled]="subiendoVideo()">Quitar</button>
+</div>
+</div>
+} @else {
+<label class="boton" [class.desactivado]="subiendoVideo()">
+Elegir portada
+<input type="file" accept="image/jpeg,image/png,image/webp" hidden [disabled]="subiendoVideo()" (change)="elegirPortada($event)" />
 </label>
-@if (portada(); as p) { <small class="ayuda">Portada elegida: {{ p.name }}</small> }
+}
 <small class="ayuda">Es la imagen que se ve mientras carga el video. Si no eliges una, se usa el primer cuadro del video.</small>
 <label class="boton primario" [class.desactivado]="subiendoVideo()">
 {{ subiendoVideo() ? 'Subiendo video…' : 'Elegir y subir video' }}

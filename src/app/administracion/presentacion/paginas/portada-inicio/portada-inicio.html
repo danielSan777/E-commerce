@@ -49,9 +49,21 @@
         </label>
       } @else {
         <p class="ayuda">MP4 (H.264) de hasta <b>{{ textoLimite }}</b> y 20 MB. Sin transcodificar: súbelo ya exportado. Se reproduce solo, en bucle y sin sonido.</p>
-        <label for="portada-video">Portada del video (opcional)</label>
-        <input id="portada-video" type="file" accept="image/jpeg,image/png,image/webp" [disabled]="subiendo()" (change)="elegirPortada($event)" />
-        @if (portada(); as f) { <small class="ayuda">Portada elegida: {{ f.name }}</small> }
+        <span class="etiqueta">Portada del video (opcional)</span>
+        @if (portada(); as f) {
+          <div class="portada-elegida">
+            <img [src]="portadaVista()" alt="Portada elegida para el video" />
+            <div>
+              <small>{{ f.name }}</small>
+              <button type="button" (click)="quitarPortada()" [disabled]="subiendo()">Quitar</button>
+            </div>
+          </div>
+        } @else {
+          <label class="boton" [class.desactivado]="subiendo()">
+            Elegir portada
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden [disabled]="subiendo()" (change)="elegirPortada($event)" />
+          </label>
+        }
         <small class="ayuda">Es la imagen que se ve mientras carga el video y para quienes tienen activado "reducir movimiento". Si no eliges una, se usa el primer cuadro del video.</small>
         <label class="boton primario" [class.desactivado]="subiendo()">
           {{ subiendo() ? 'Subiendo video…' : 'Elegir y subir video' }}

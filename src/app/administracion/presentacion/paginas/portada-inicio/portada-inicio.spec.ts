@@ -143,4 +143,26 @@ describe('AdminPortadaInicio', () => {
     expect(html(f).textContent).toContain('¿Quitar la portada?');
     ctrl.verify(); // todavía no se borró nada
   });
+
+  it('la portada elegida para el video se ve como foto y se puede quitar', async () => {
+    const original = globalThis.URL.createObjectURL;
+    globalThis.URL.createObjectURL = vi.fn(() => 'blob:portada-1');
+    globalThis.URL.revokeObjectURL = vi.fn();
+    try {
+      const f = await montar();
+      f.componentInstance.tipo.set('video');
+      f.detectChanges();
+      f.componentInstance.elegirPortada(evento(new File(['p'], 'CM_Punk.webp', { type: 'image/webp' })));
+      f.detectChanges();
+
+      expect(html(f).querySelector('.portada-elegida img')?.getAttribute('src')).toBe('blob:portada-1');
+      expect(html(f).querySelector('.portada-elegida')?.textContent).toContain('CM_Punk.webp');
+      expect(html(f).textContent).not.toContain('Ningún archivo');
+
+      (html(f).querySelector('.portada-elegida button') as HTMLButtonElement).click();
+      f.detectChanges();
+      expect(f.componentInstance.portada()).toBeNull();
+      expect(html(f).querySelector('.portada-elegida')).toBeNull();
+    } finally { globalThis.URL.createObjectURL = original; }
+  });
 });

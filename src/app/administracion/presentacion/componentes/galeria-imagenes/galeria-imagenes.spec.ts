@@ -299,4 +299,28 @@ describe('GaleriaImagenes', () => {
     expect(fixture.componentInstance.puedeVideo()).toBe(false);
     expect((fixture.nativeElement as HTMLElement).querySelector('.subir.video')).toBeNull();
   });
+
+  it('la portada elegida se ve como foto (no solo su nombre) y se puede quitar', async () => {
+    const original = URL.createObjectURL;
+    const liberada = vi.fn();
+    URL.createObjectURL = vi.fn(() => 'blob:portada-1');
+    URL.revokeObjectURL = liberada;
+    try {
+      const fixture = await montar();
+      const c = fixture.componentInstance;
+      c.elegirPortada(evento(new File(['p'], 'CM_Punk.webp', { type: 'image/webp' })));
+      fixture.detectChanges();
+
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelector('.portada-elegida img')?.getAttribute('src')).toBe('blob:portada-1');
+      expect(html.querySelector('.portada-elegida')?.textContent).toContain('CM_Punk.webp');
+      expect(html.textContent).not.toContain('Ningún archivo');
+
+      (html.querySelector('.portada-elegida button') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(c.portada()).toBeNull();
+      expect(liberada).toHaveBeenCalledWith('blob:portada-1');
+      expect(html.querySelector('.portada-elegida')).toBeNull();
+    } finally { URL.createObjectURL = original; }
+  });
 });

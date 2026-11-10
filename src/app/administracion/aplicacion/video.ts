@@ -34,6 +34,15 @@ export function validarVideo(archivo: { type: string; size: number }, duracion: 
   return '';
 }
 
+/** Dirección temporal para mostrar un archivo elegido antes de subirlo. Vacía si el navegador no puede crearla. Hay que liberarla con `liberarVista`. */
+export function crearVista(archivo: File): string {
+  return typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(archivo) : '';
+}
+
+export function liberarVista(url: string): void {
+  if (url && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(url);
+}
+
 /** Lee la duración (en segundos) con el propio navegador; emite null si no puede leerla (por ejemplo, un códec que no reconoce). */
 export function leerDuracion(archivo: File): Observable<number | null> {
   return new Observable<number | null>(suscriptor => {

@@ -8,7 +8,7 @@ import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 import { PortadaInicio } from '../../../../inicio/dominio/interfaces/portada';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { PortadaInicioAdminService } from '../../../aplicacion/servicios/PortadaInicioAdminService';
-import { LIMITES_VIDEO, LectorDeVideo, textoLimite, validarVideo } from '../../../aplicacion/video';
+import { LIMITES_VIDEO, LectorDeVideo, crearVista, liberarVista, textoLimite, validarVideo } from '../../../aplicacion/video';
 
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_IMAGEN = 8 * 1024 * 1024;
@@ -37,11 +37,14 @@ export class AdminPortadaInicio implements OnInit {
   confirmarQuitar = signal(false);
   tipo = signal<'image' | 'video'>('image');
   portada = signal<File | null>(null);
+  /** Dirección temporal para ver la portada elegida antes de subir el video. */
+  portadaVista = signal('');
   alt = '';
 
   constructor() {
     inject(Title).setTitle('Portada de inicio | Panel de Jardín de Sele');
     inject(Meta).updateTag({ name: 'robots', content: 'noindex, nofollow' });
+    this.destroyRef.onDestroy(() => liberarVista(this.portadaVista()));
   }
 
   ngOnInit(): void {
@@ -61,7 +64,17 @@ export class AdminPortadaInicio implements OnInit {
     campo.value = '';
     if (archivo && !TIPOS_IMAGEN.includes(archivo.type)) return this.rechazar('La portada del video debe ser una imagen JPG, PNG o WebP.');
     this.error.set('');
+    this.fijarPortada(archivo);
+  }
+
+  quitarPortada(): void {
+    this.fijarPortada(null);
+  }
+
+  private fijarPortada(archivo: File | null): void {
+    liberarVista(this.portadaVista());
     this.portada.set(archivo);
+    this.portadaVista.set(archivo ? crearVista(archivo) : '');
   }
 
   elegirImagen(evento: Event): void {
@@ -120,7 +133,7 @@ export class AdminPortadaInicio implements OnInit {
 
   private listo(p: PortadaInicio, mensaje: string): void {
     this.actual.set(p);
-    this.portada.set(null);
+    this.fijarPortada(null);
     this.alt = '';
     this.avisos.exito(mensaje);
   }

@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { ImagenesAdminService } from '../../../aplicacion/servicios/ImagenesAdminService';
 import { DuenoDeImagenes, ImagenAdmin } from '../../../dominio/interfaces/imagen-admin';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
-import { LIMITES_VIDEO, LectorDeVideo, LimiteVideo, textoLimite, validarVideo } from '../../../aplicacion/video';
+import { LIMITES_VIDEO, LectorDeVideo, LimiteVideo, crearVista, liberarVista, textoLimite, validarVideo } from '../../../aplicacion/video';
 
 const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -50,7 +50,13 @@ export class GaleriaImagenes implements OnInit {
   alt = '';
   /** Portada opcional del video (imagen del primer cuadro). Sin ella, la tienda muestra el primer cuadro del propio video. */
   portada = signal<File | null>(null);
+  /** Dirección temporal para ver la portada elegida antes de subir el video. */
+  portadaVista = signal('');
   subiendoVideo = signal(false);
+
+  constructor() {
+    this.destroyRef.onDestroy(() => liberarVista(this.portadaVista()));
+  }
 
   /** Los videos solo existen en productos y categorías; cada uno admite un único video. */
   readonly puedeVideo = computed(() => this.dueno() === 'products' || this.dueno() === 'categories');
@@ -154,7 +160,17 @@ export class GaleriaImagenes implements OnInit {
       return this.avisos.error('La portada del video debe ser una imagen JPG, PNG o WebP.');
     }
     this.error.set('');
+    this.fijarPortada(archivo);
+  }
+
+  quitarPortada(): void {
+    this.fijarPortada(null);
+  }
+
+  private fijarPortada(archivo: File | null): void {
+    liberarVista(this.portadaVista());
     this.portada.set(archivo);
+    this.portadaVista.set(archivo ? crearVista(archivo) : '');
   }
 
   /** Revisa tipo, peso y duración en el navegador y, si todo está bien, lo sube. La validación real la hace Laravel. */
@@ -183,7 +199,7 @@ export class GaleriaImagenes implements OnInit {
     ).subscribe({
       next: nuevo => {
         this.imagenes.update(l => [...l, nuevo]);
-        this.portada.set(null);
+        this.fijarPortada(null);
         this.aviso.set('Video subido.');
         this.avisos.exito('Video subido.');
       },

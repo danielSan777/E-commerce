@@ -3,3 +3,7 @@
 .vista { display: block; width: 100%; max-width: 28rem; max-height: 24rem; object-fit: cover; border-radius: 12px; background: #0f172a; margin: .5rem 0; }
 .boton.primario { display: inline-block; text-align: center; padding: .7rem 1rem; border-radius: 8px; border: 1px solid #047857; background: #047857; color: #fff; cursor: pointer; }
 .desactivado { opacity: .6; pointer-events: none; }
+
+.portada-elegida { display: flex; gap: .75rem; align-items: center; margin: .25rem 0; }
+.portada-elegida img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid #cfe3d6; }
+.portada-elegida div { display: grid; gap: .35rem; justify-items: start; }
