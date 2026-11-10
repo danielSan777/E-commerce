@@ -551,7 +551,8 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 **Página principal** (de arriba hacia abajo en el celular)
 
 - [x] Barra superior: logo, lupa, carrito y menú. *(Hecho en la barra existente, con la lupa hacia `/buscar`.)*
-- [ ] Video principal (la esposa de Josué mostrando las macetas) con el botón "Encuentra tu detalle perfecto", que abre `/categorias`. *(Parcial: botón listo y Josué ya elige desde el panel (`/admin/inicio`) todas las imágenes y videos que quiera (cada video de hasta 1 minuto) que reemplazan a la foto de ejemplo y se muestran uno tras otro (`GET /api/v1/home/hero`); ; falta subir el video real de la esposa de Josué.)*
+- [ ] Video principal (la esposa de Josué mostrando las macetas) con el botón "Encuentra tu detalle perfecto", que abre `/categorias`. *(Parcial: botón listo y Josué ya elige desde el panel (`/admin/inicio`) todas las imágenes y videos que quiera (cada video de hasta 1 minuto) que reemplazan a la foto de ejemplo y se muestran uno tras otro (`GET /api/v1/home/hero`); falta subir el video real de la esposa de Josué.)*
+  - Nota (10 nov): el encabezado de la página `/categorias` (título, subtítulo y su imagen o video) también se edita desde el panel en `/admin/categorias-inicio` (`GET /api/v1/categories-page`).
 - [x] Franja de promesa: "Pide hoy y recíbelo entre … y …" (desde la promesa vigente) y "Envío gratis llevando 2 macetas". *(Hecho con el mock de `PromesaService` y el número de macetas de `EnvioGratisService`.)*
 - [ ] Campaña activa (por ejemplo, San Valentín), solo en temporada.
 - [x] Las 4 categorías en tarjetas con foto. *(Hecho.)*

@@ -1,12 +1,14 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, of, shareReplay, throwError } from 'rxjs';
+import { Observable, catchError, map, of, shareReplay, tap, throwError } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
+import { SIN_CARGANDO } from '../../../shared/interceptores/cargandoInterceptor';
 import {
     CategoriaContrato, CategoriaResumen, ProductoCategoria, ProductoListado, SubcategoriaContrato,
 } from '../../dominio/interfaces/categoria';
 
 const SITIO = 'https://jardindesele.com';
+const VIGENCIA_MS = 2 * 60 * 1000;
 /** Foto que se muestra mientras un producto o una categoría todavía no tiene imagen subida. */
 export const IMAGEN_PENDIENTE = 'imagenes/sin-imagen.svg';
 
@@ -49,13 +51,17 @@ export class CategoriaService {
     private api = inject(API_URL);
 
     private resumenes$?: Observable<CategoriaResumen[]>;
+    private slugs: Set<string> | null = null;
+    private valores = new Map<string, { en: number; valor: CategoriaContrato | null }>();
+    private recientes = new Map<string, { en: number; datos$: Observable<CategoriaContrato | null> }>();
 
     /** Las categorías activas, en su orden (menú, inicio y tarjetas). Se piden una sola vez. */
-    categorias(): Observable<CategoriaResumen[]> {
-        this.resumenes$ ??= this.http.get<{ data: ResumenCategoriaApi[] }>(`${this.api}/categories`).pipe(
+    categorias(enSegundoPlano = false): Observable<CategoriaResumen[]> {
+        this.resumenes$ ??= this.http.get<{ data: ResumenCategoriaApi[] }>(`${this.api}/categories`, { context: enSegundoPlano ? new HttpContext().set(SIN_CARGANDO, true) : undefined }).pipe(
             map(r => r.data.map(c => ({
                 slug: c.slug, name: c.name, url: c.url, image: c.image ?? IMAGEN_PENDIENTE, description: c.short_description ?? '',
             }))),
+            tap(lista => this.slugs = new Set(lista.map(c => c.slug))),
             // Si la API falla no se guarda el error: la siguiente visita lo vuelve a intentar.
             catchError(e => { this.resumenes$ = undefined; return throwError(() => e); }),
             shareReplay(1),
@@ -67,14 +73,43 @@ export class CategoriaService {
      * Sin slug (`/categorias`): todos los productos. Con categoría o subcategoría que no existe: null (404).
      * Cualquier otro error de la API se propaga.
      */
-    categoria(slug: string | null, subcategoria: string | null = null): Observable<CategoriaContrato | null> {
+    categoria(slug: string | null, subcategoria: string | null = null, enSegundoPlano = false): Observable<CategoriaContrato | null> {
         if (!slug) return this.todos();
 
+        // Lo ya pedido se reutiliza por 2 minutos: volver a una subcategoría es instantáneo y no consulta la API.
+        const clave = `${slug}|${subcategoria ?? ''}`;
+        const guardado = this.recientes.get(clave);
+        if (guardado && Date.now() - guardado.en < VIGENCIA_MS) return guardado.datos$;
+
         const consulta = subcategoria ? `?subcategory=${encodeURIComponent(subcategoria)}` : '';
-        return this.http.get<CategoriaApi>(`${this.api}/categories/${encodeURIComponent(slug)}${consulta}`).pipe(
+        const contexto = enSegundoPlano ? new HttpContext().set(SIN_CARGANDO, true) : undefined;
+        const datos$ = this.http.get<CategoriaApi>(`${this.api}/categories/${encodeURIComponent(slug)}${consulta}`, { context: contexto }).pipe(
             map(c => this.aContrato(c)),
             catchError((e: HttpErrorResponse) => e.status === 404 ? of(null) : throwError(() => e)),
+            tap(valor => this.valores.set(clave, { en: Date.now(), valor })),
+            // Si la API falla no se guarda el error: la siguiente visita lo vuelve a intentar.
+            catchError(e => { this.recientes.delete(clave); return throwError(() => e); }),
+            shareReplay(1),
         );
+        this.recientes.set(clave, { en: Date.now(), datos$ });
+        return datos$;
+    }
+
+    /** ¿Esta dirección de un tramo es una categoría? true/false si ya se conocen las categorías; null si todavía no. */
+    esCategoria(slug: string): boolean | null {
+        return this.slugs ? this.slugs.has(slug) : null;
+    }
+
+    /** La categoría o subcategoría ya descargada (y vigente), para mostrarla en el mismo instante, sin esperar. undefined si no la hay. */
+    enCache(slug: string | null, subcategoria: string | null = null): CategoriaContrato | null | undefined {
+        if (!slug) return undefined;
+        const v = this.valores.get(`${slug}|${subcategoria ?? ''}`);
+        return v && Date.now() - v.en < VIGENCIA_MS ? v.valor : undefined;
+    }
+
+    /** Adelanta en segundo plano las demás subcategorías de una categoría, para que al tocar una pestaña ya esté lista. */
+    adelantar(slug: string, subcategorias: string[]): void {
+        subcategorias.forEach(sub => this.categoria(slug, sub, true).subscribe({ error: () => undefined }));
     }
 
     /** Productos activos, los más nuevos primero (`limite` opcional). */

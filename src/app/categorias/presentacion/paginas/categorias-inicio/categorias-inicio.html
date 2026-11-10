@@ -6,12 +6,24 @@
     <!-- Banner -->
     <section class="banner">
         <div class="banner-texto">
-            <h1>Explora nuestros regalos</h1>
-            <p>Encuentra la categoría ideal para sorprender.</p>
+            @if (cargado()) {
+            <h1>{{ titulo() }}</h1>
+            <p>{{ subtituloBanner() }}</p>
+            }
         </div>
+        @if (cargado() && !medio()) {
         <div class="banner-imagenes" aria-hidden="true">
             @for (t of tarjetas().slice(0, 3); track t.slug) { <img [src]="t.image" alt="" width="120" height="120"> }
         </div>
+        }
+        @for (m of actual(); track indice()) {
+        @if (m.type === 'video') {
+        <video class="banner-video" appVideoAuto [appVideoAutoBucle]="!varios()" [src]="m.url" [attr.poster]="m.poster" muted playsinline preload="metadata"
+            aria-hidden="true" (ended)="siguiente()"></video>
+        } @else {
+        <img class="banner-imagen" [src]="imagenDe(m)" [alt]="m.alt ?? ''" width="160" height="160">
+        }
+        }
     </section>
 
     <h2 class="titulo"><i class="bi bi-flower1" aria-hidden="true"></i> Categorías</h2>

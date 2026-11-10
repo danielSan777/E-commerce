@@ -5,6 +5,7 @@ import { Avisos } from './shared/componentes/avisos/avisos';
 import { Cargando } from './shared/componentes/cargando/cargando';
 import { AnalyticsService } from './core/seguimiento/AnalyticsService';
 import { AtribucionService } from './core/seguimiento/AtribucionService';
+import { PrecargaService } from './core/precarga/PrecargaService';
 
 @Component({
   imports: [RouterOutlet, Avisos, Cargando],
@@ -18,8 +19,10 @@ export class App {
   constructor() {
     const analytics = inject(AnalyticsService);
     const atribucion = inject(AtribucionService);
+    const precarga = inject(PrecargaService);
     afterNextRender(() => {
       atribucion.capturar();
+      precarga.iniciar();
       document.addEventListener('click', e => this.clicDelegado(e, analytics));
     });
     // page_view en cada ruta, excepto la del pedido con token (privada: no carga trackers)

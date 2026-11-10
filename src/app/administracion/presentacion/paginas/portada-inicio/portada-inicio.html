@@ -1,9 +1,22 @@
 <header class="barra">
-  <strong>Portada de la página principal</strong>
+  <strong>{{ nombre }}</strong>
   <a routerLink="/admin">← Volver al panel</a>
 </header>
 <main class="contenido">
+  @if (seccion === 'categorias') {
+    <p class="ayuda">Aquí cambias el encabezado de la página «Categorías»: su título, su subtítulo y la imagen o el video de la derecha. Mientras no subas nada, se ven las fotos de las categorías de siempre.</p>
+    <form class="formulario" (ngSubmit)="guardarTexto()">
+      <h2>Textos</h2>
+      <label for="titulo-cat">Título</label>
+      <input id="titulo-cat" name="titulo" [(ngModel)]="titulo" maxlength="80" placeholder="Explora nuestros regalos" />
+      <label for="subtitulo-cat">Subtítulo</label>
+      <input id="subtitulo-cat" name="subtitulo" [(ngModel)]="subtitulo" maxlength="160" placeholder="Encuentra la categoría ideal para sorprender." />
+      <small class="ayuda">Si los dejas vacíos, se usan los textos de siempre.</small>
+      <button type="submit" class="boton primario" [disabled]="guardandoTexto()">{{ guardandoTexto() ? 'Guardando…' : 'Guardar textos' }}</button>
+    </form>
+  } @else {
   <p class="ayuda">Aquí eliges la imagen o el video que ven los clientes arriba de la página principal, en lugar de la foto de ejemplo. Puedes subir todas las que quieras: se muestran una tras otra (el video hasta que termina, la imagen unos segundos).</p>
+  }
   @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
 
   @if (cargando()) {

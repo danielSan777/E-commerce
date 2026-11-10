@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { CanMatchFn } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
+import { CategoriaService } from '../../categorias/aplicacion/servicios/CategoriaService';
 import { CampanaService } from './servicios/CampanaService';
 
 /**
@@ -9,6 +10,8 @@ import { CampanaService } from './servicios/CampanaService';
  */
 export const campanaGuard: CanMatchFn = (_ruta, segmentos) => {
     if (segmentos.length !== 1) return false;
+    // Si ya se conocen las categorías y esta dirección es una de ellas, no hay nada que preguntarle a Laravel: entra al instante.
+    if (inject(CategoriaService).esCategoria(segmentos[0].path)) return false;
     return inject(CampanaService).campana(segmentos[0].path).pipe(
         map(c => c !== null),
         catchError(() => of(false)),

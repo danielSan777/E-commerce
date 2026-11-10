@@ -1,4 +1,4 @@
-import { Component, DOCUMENT, afterNextRender, computed, effect, inject, signal } from '@angular/core';
+import { Component, DOCUMENT, afterNextRender, computed, effect, inject, Injector, signal } from '@angular/core';
 import { VideoAuto } from '../../../../shared/directivas/video-auto';
 import { CurrencyPipe } from '@angular/common';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -20,6 +20,7 @@ import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontra
 })
 export class Categorias {
   private route = inject(ActivatedRoute);
+  private injector = inject(Injector);
   private servicio = inject(CategoriaService);
   private document = inject(DOCUMENT);
   private titulo = inject(Title);
@@ -41,14 +42,15 @@ export class Categorias {
   siguienteVideo(): void { this.videoIdx.update(i => (i + 1) % Math.max(this.videosBanner().length, 1)); }
 
   /** undefined = cargando · null = no existe (404) · contrato = lo que Laravel entregó. */
-  categoria = toSignal<CategoriaContrato | null | undefined>(
+  categoria = toSignal<CategoriaContrato | null | undefined, CategoriaContrato | null | undefined>(
     toObservable(computed(() => [this.datos()['categoria'] ?? this.parametros().get('categoria'), this.parametros().get('subcategoria')] as const)).pipe(
       tap(() => this.fallo.set(false)),
       switchMap(([categoria, subcategoria]) => this.servicio.categoria(categoria, subcategoria).pipe(
         catchError(() => { this.fallo.set(true); return of(null); }),
       )),
     ),
-    { initialValue: undefined },
+    // Si la categoría ya se descargó (precarga o visita anterior), se muestra en el primer pintado, sin pasar por "Cargando…"
+    { initialValue: this.servicio.enCache(this.route.snapshot.data['categoria'] ?? this.route.snapshot.paramMap.get('categoria'), this.route.snapshot.paramMap.get('subcategoria')) },
   );
 
   // Flechas de las pestañas: avisan que hay más subcategorías hacia los lados
@@ -85,6 +87,14 @@ export class Categorias {
   constructor() {
     afterNextRender(() => setTimeout(() => this.revisarFlechas(this.document.querySelector('nav.pestanas'))));
     // SEO por estado: título, descripción, imagen para compartir y canonical (sin UTMs)
+    // Con la categoría ya en pantalla, adelanta las demás subcategorías en segundo plano (solo en el navegador)
+    afterNextRender(() => {
+      effect(() => {
+        const c = this.categoria();
+        if (c?.slug && c.subcategories.length) this.servicio.adelantar(c.slug, c.subcategories.map(s => s.slug));
+      }, { injector: this.injector });
+    });
+
     effect(() => {
       const c = this.categoria();
       if (!c) return;
