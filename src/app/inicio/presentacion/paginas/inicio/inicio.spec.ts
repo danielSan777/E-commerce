@@ -118,6 +118,18 @@ describe('Inicio (/)', () => {
         expect(html.querySelectorAll('.hero .hero-medio')).toHaveLength(1);
     });
 
+    it('mientras carga la portada no se muestra la imagen de siempre (evita el parpadeo del doctor)', async () => {
+        TestBed.configureTestingModule({ imports: [Inicio], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+        const fixture = TestBed.createComponent(Inicio);
+        fixture.detectChanges();
+        expect((fixture.nativeElement as HTMLElement).querySelector('.hero-medio')).toBeNull();
+        const ctrl = TestBed.inject(HttpTestingController);
+        ctrl.expectOne('/api/v1/home/hero').flush({ data: { type: 'video', url: 'http://api/v.mp4', poster: null, duration_s: 5 }, items: [{ type: 'video', url: 'http://api/v.mp4', poster: null, duration_s: 5 }] });
+        fixture.detectChanges();
+        expect((fixture.nativeElement as HTMLElement).querySelectorAll('.hero-medio')).toHaveLength(1);
+        expect((fixture.nativeElement as HTMLElement).querySelector('img.hero-medio')).toBeNull();
+    });
+
     it('con una sola portada no hay puntos', async () => {
         const una = await montar(null, { type: 'image', alt: 'Maceta', w: 800, h: 800, srcset: { '1080': 'http://api/m-1080.webp' } });
         expect(una.querySelector('.hero-puntos')).toBeNull();

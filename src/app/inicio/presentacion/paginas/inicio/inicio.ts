@@ -55,11 +55,13 @@ export class Inicio {
     && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   // Portadas elegidas en el panel (imágenes y videos, sin límite); lista vacía = se usa la imagen de siempre.
   // Con una sola, el video va en bucle; con varias se muestran una tras otra (el video al terminar, la imagen a los 6 s).
-  readonly portadas = toSignal(inject(PortadaInicioService).portadas(), { initialValue: [] });
+  // null = todavía cargando: no se muestra nada (así no parpadea la imagen de siempre antes de que llegue la portada elegida)
+  private readonly portadasCargadas = toSignal(inject(PortadaInicioService).portadas(), { initialValue: null });
+  readonly portadas = computed(() => this.portadasCargadas() ?? []);
   readonly indice = signal(0);
   readonly portada = computed(() => { const l = this.portadas(); return l.length ? l[this.indice() % l.length] : null; });
   /** Lista de un solo elemento (la portada, o la imagen de siempre): así hay un único medio en pantalla y Angular recrea el <video> al pasar a la siguiente. */
-  readonly actual = computed(() => [this.portada() ?? 'siempre']);
+  readonly actual = computed(() => this.portadasCargadas() === null ? [] : [this.portada() ?? 'siempre']);
   readonly variasPortadas = computed(() => this.portadas().length > 1);
   readonly videoPortada = computed(() => { const p = this.portada(); return p?.type === 'video' ? p : null; });
   verVideo = computed(() => !!this.videoPortada() && !this.reducirMovimiento);
