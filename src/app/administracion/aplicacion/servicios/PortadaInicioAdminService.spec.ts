@@ -17,13 +17,13 @@ describe('PortadaInicioAdminService', () => {
   });
   afterEach(() => ctrl.verify());
 
-  it('obtiene la portada actual (o null si no hay)', async () => {
-    const a = firstValueFrom(servicio.obtener());
-    ctrl.expectOne(URL).flush({ data: null });
-    expect(await a).toBeNull();
-    const b = firstValueFrom(servicio.obtener());
-    ctrl.expectOne(URL).flush({ data: { type: 'video', url: '/media/home/v.mp4', poster: null, duration_s: 30 } });
-    expect(await b).toMatchObject({ type: 'video', duration_s: 30 });
+  it('lista las portadas actuales (vacía si no hay)', async () => {
+    const a = firstValueFrom(servicio.lista());
+    ctrl.expectOne(URL).flush({ data: [] });
+    expect(await a).toEqual([]);
+    const b = firstValueFrom(servicio.lista());
+    ctrl.expectOne(URL).flush({ data: [{ id: 'a1', type: 'video', url: '/media/home/v.mp4', poster: null, duration_s: 30 }] });
+    expect(await b).toMatchObject([{ id: 'a1', type: 'video', duration_s: 30 }]);
   });
 
   it('sube una imagen con su descripción', async () => {
@@ -47,9 +47,9 @@ describe('PortadaInicioAdminService', () => {
     expect((await p).type).toBe('video');
   });
 
-  it('quita la portada con DELETE', async () => {
-    const p = firstValueFrom(servicio.quitar());
-    const req = ctrl.expectOne(URL);
+  it('quita una portada con DELETE usando su id', async () => {
+    const p = firstValueFrom(servicio.quitar('a1'));
+    const req = ctrl.expectOne(`${URL}/a1`);
     expect(req.request.method).toBe('DELETE');
     req.flush(null, { status: 204, statusText: 'No Content' });
     await p;

@@ -12,8 +12,11 @@
             <h2>{{ c.name }}</h2>
             <p>{{ c.headline }}</p>
         </div>
-        @if (c.video; as v) {
-        <video class="banner-video" appVideoAuto [src]="v.url" [attr.poster]="v.poster ?? c.hero?.url ?? null" muted loop playsinline preload="metadata" aria-hidden="true"></video>
+        @if (videoBanner()) {
+        @for (v of [videoBanner()!]; track videoIdx()) {
+        <video class="banner-video" appVideoAuto [appVideoAutoBucle]="videosBanner().length < 2" [src]="v.url" [attr.poster]="v.poster ?? c.hero?.url ?? null"
+            muted playsinline preload="metadata" aria-hidden="true" (ended)="siguienteVideo()"></video>
+        }
         } @else if (c.hero) { <img class="banner-imagen" [src]="c.hero.url" alt="" width="160" height="160"> }
     </section>
 

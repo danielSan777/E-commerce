@@ -1,4 +1,4 @@
-import { DestroyRef, Directive, ElementRef, PLATFORM_ID, inject } from '@angular/core';
+import { DestroyRef, Directive, ElementRef, PLATFORM_ID, effect, inject, input } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
 // Video decorativo: silenciado, en bucle, `playsinline`. Se reproduce SOLO mientras está a la vista y la pestaña está visible
@@ -7,6 +7,8 @@ import { isPlatformBrowser } from '@angular/common';
 @Directive({ selector: 'video[appVideoAuto]' })
 export class VideoAuto {
   private static activo: HTMLVideoElement | null = null;
+  /** false cuando hay varios videos seguidos: así el video termina y la tienda pasa al siguiente. */
+  readonly bucle = input(true, { alias: 'appVideoAutoBucle' });
 
   constructor() {
     const el: HTMLVideoElement = inject(ElementRef<HTMLVideoElement>).nativeElement;
@@ -15,7 +17,8 @@ export class VideoAuto {
 
     // El navegador solo permite el autoplay si está silenciado (el atributo `muted` no siempre llega a la propiedad)
     el.muted = true;
-    el.loop = true;
+    effect(() => { el.loop = this.bucle(); });
+    el.loop = this.bucle();
     el.playsInline = true;
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
 

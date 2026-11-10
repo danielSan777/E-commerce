@@ -10,7 +10,9 @@ export class PortadaInicioService {
   private http = inject(HttpClient);
   private api = inject(API_URL);
 
-  portada(): Observable<PortadaInicio | null> {
-    return this.http.get<{ data: PortadaInicio | null }>(`${this.api}/home/hero`).pipe(map(r => r.data ?? null), catchError(() => of(null)));
+  /** Las portadas en el orden en que se agregaron; lista vacía si no hay o la API falla. */
+  portadas(): Observable<PortadaInicio[]> {
+    return this.http.get<{ data: PortadaInicio | null; items?: PortadaInicio[] }>(`${this.api}/home/hero`).pipe(
+      map(r => r.items ?? (r.data ? [r.data] : [])), catchError(() => of([])));
   }
 }

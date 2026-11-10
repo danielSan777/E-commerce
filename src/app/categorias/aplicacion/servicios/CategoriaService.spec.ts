@@ -101,6 +101,17 @@ describe('CategoriaService (API de Laravel)', () => {
         expect(c?.video).toEqual({ url: 'http://api/media/categories/amor/v.mp4', poster: 'http://api/media/categories/amor/v-portada.webp' });
     });
 
+    it('hero_videos llega como lista completa al contrato', async () => {
+        const p = firstValueFrom(servicio.categoria('amor'));
+        const v = (n: number) => ({ type: 'video', url: `http://api/v${n}.mp4`, poster: null, duration_s: 5 });
+        ctrl.expectOne('/api/v1/categories/amor').flush({
+            slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: null, products: [],
+            hero: null, hero_video: v(1), hero_videos: [v(1), v(2), v(3)],
+            seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null },
+        });
+        expect((await p)?.videos?.map(x => x.url)).toEqual(['http://api/v1.mp4', 'http://api/v2.mp4', 'http://api/v3.mp4']);
+    });
+
     it('sin hero_video no hay video en el contrato', async () => {
         const p = firstValueFrom(servicio.categoria('amor'));
         ctrl.expectOne('/api/v1/categories/amor').flush({

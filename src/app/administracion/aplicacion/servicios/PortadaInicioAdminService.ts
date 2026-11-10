@@ -5,14 +5,14 @@ import { API_URL } from '../../../core/configuracion/api';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
 import { PortadaInicio } from '../../../inicio/dominio/interfaces/portada';
 
-// Portada de la página principal. Laravel valida el archivo (imagen, o video MP4 H.264 de máx. 1 minuto); aquí solo se envía y se muestra.
+// Portada de la página principal: lista sin límite de imágenes y videos. Laravel valida el archivo (imagen, o video MP4 H.264 de máx. 1 minuto); aquí solo se envía y se muestra.
 @Injectable({ providedIn: 'root' })
 export class PortadaInicioAdminService {
   private http = inject(HttpClient);
   private url = `${inject(API_URL)}/admin/home/hero`;
 
-  obtener(): Observable<PortadaInicio | null> {
-    return this.http.get<{ data: PortadaInicio | null }>(this.url).pipe(map(r => r.data ?? null), conErrorApi());
+  lista(): Observable<PortadaInicio[]> {
+    return this.http.get<{ data: PortadaInicio[] }>(this.url).pipe(map(r => r.data ?? []), conErrorApi());
   }
 
   subirImagen(archivo: File, alt: string): Observable<PortadaInicio> {
@@ -30,7 +30,7 @@ export class PortadaInicioAdminService {
     return this.http.post<{ data: PortadaInicio }>(this.url, datos).pipe(map(r => r.data), conErrorApi());
   }
 
-  quitar(): Observable<void> {
-    return this.http.delete<void>(this.url).pipe(conErrorApi());
+  quitar(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${encodeURIComponent(id)}`).pipe(conErrorApi());
   }
 }

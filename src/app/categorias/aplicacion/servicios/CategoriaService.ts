@@ -17,7 +17,7 @@ interface ResumenCategoriaApi {
     subcategories: { slug: string; name: string; url: string }[];
 }
 interface CategoriaApi {
-    slug: string; name: string; headline: string | null; intro_html: string | null; hero: MedioApi | null; hero_video?: MedioApi | null;
+    slug: string; name: string; headline: string | null; intro_html: string | null; hero: MedioApi | null; hero_video?: MedioApi | null; hero_videos?: MedioApi[];
     price_from_cents: number | null;
     subcategories: { slug: string; name: string; url: string }[];
     active_subcategory: string | null;
@@ -125,6 +125,7 @@ export class CategoriaService {
             headline: c.headline ?? '',
             intro_html: introAHtml(c.intro_html),
             hero: foto ? { type: 'image', url: foto } : undefined,
+            videos: (c.hero_videos ?? (c.hero_video ? [c.hero_video] : [])).filter(v => v.type === 'video' && !!v.url).map(v => ({ url: v.url!, poster: v.poster ?? undefined })),
             video: c.hero_video?.type === 'video' && c.hero_video.url ? { url: c.hero_video.url, poster: c.hero_video.poster ?? undefined } : undefined,
             short_description: c.headline ?? '',
             price_from_cents: c.price_from_cents ?? 0,

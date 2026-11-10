@@ -28,10 +28,8 @@
   @if (puedeVideo()) {
 <div class="subir video">
 <h3>Video</h3>
-@if (hayVideo()) {
-<p class="ayuda">Ya hay un video. Para cambiarlo, elimínalo (más abajo) y sube otro.</p>
-} @else {
-<p class="ayuda">MP4 (H.264) de hasta <b>{{ textoLimiteVideo() }}</b> y 15 MB. Sin transcodificar: súbelo ya exportado. Se reproduce solo, en bucle y sin sonido.</p>
+@if (true) {
+<p class="ayuda">MP4 (H.264) de hasta <b>{{ textoLimiteVideo() }}</b> y 15 MB. Sin transcodificar: súbelo ya exportado. Puedes subir todos los videos que quieras (uno por vez); cada uno tiene su portada. Se reproducen solos y sin sonido.</p>
 <span class="etiqueta">Portada del video (opcional)</span>
 @if (portada(); as p) {
 <div class="portada-elegida">

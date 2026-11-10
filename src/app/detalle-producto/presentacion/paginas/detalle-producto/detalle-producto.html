@@ -11,9 +11,11 @@
         <!-- ============ IMAGEN ============ -->
         <div class="galeria-bloque">
             <div class="galeria">
-                @if (verVideo() && video(); as v) {
+                @if (verVideo() && video()) {
+                @for (v of [video()!]; track v.url) {
                 <video class="galeria-video" appVideoAuto [src]="v.url" [attr.poster]="v.poster" muted loop playsinline preload="auto"
                     [attr.aria-label]="'Video de ' + p.name"></video>
+                }
                 } @else {
                 <img [src]="imagenActiva()" [alt]="p.name" />
                 <button type="button" class="btn-ampliar" (click)="verImagen.set(true)" aria-label="Ver imagen completa">
@@ -21,7 +23,7 @@
                 </button>
                 }
             </div>
-            @if (imagenes().length > 1 || video()) {
+            @if (imagenes().length > 1 || videos().length) {
             <div class="miniaturas" role="list">
                 @for (img of imagenes(); track img; let i = $index) {
                 <button type="button" role="listitem" class="miniatura" [class.activa]="!verVideo() && img === imagenActiva()"
@@ -29,9 +31,9 @@
                     <img [src]="img" alt="" />
                 </button>
                 }
-                @if (video(); as v) {
-                <button type="button" role="listitem" class="miniatura miniatura-video" [class.activa]="verVideo()"
-                    aria-label="Ver el video" (click)="verVideo.set(true)">
+                @for (v of videos(); track v.url; let k = $index) {
+                <button type="button" role="listitem" class="miniatura miniatura-video" [class.activa]="verVideo() && videoElegido() === k"
+                    [attr.aria-label]="videos().length > 1 ? 'Ver el video ' + (k + 1) : 'Ver el video'" (click)="videoElegido.set(k); verVideo.set(true)">
                     @if (v.poster) { <img [src]="v.poster" alt="" /> }
                     <i class="bi bi-play-circle-fill" aria-hidden="true"></i>
                 </button>

@@ -16,21 +16,29 @@ describe('PortadaInicioService', () => {
   });
   afterEach(() => ctrl.verify());
 
-  it('devuelve la portada que eligió el administrador', async () => {
-    const p = firstValueFrom(servicio.portada());
+  it('devuelve la lista de portadas que eligió el administrador, en orden', async () => {
+    const p = firstValueFrom(servicio.portadas());
+    const a = { type: 'video', url: '/v.mp4', poster: null, duration_s: 9 };
+    const b = { type: 'image', alt: 'x', srcset: { '1080': '/m.webp' } };
+    ctrl.expectOne('/api/v1/home/hero').flush({ data: a, items: [a, b] });
+    expect(await p).toMatchObject([{ type: 'video' }, { type: 'image' }]);
+  });
+
+  it('con una API anterior (solo data) sigue funcionando', async () => {
+    const p = firstValueFrom(servicio.portadas());
     ctrl.expectOne('/api/v1/home/hero').flush({ data: { type: 'video', url: '/v.mp4', poster: null, duration_s: 9 } });
-    expect(await p).toMatchObject({ type: 'video', url: '/v.mp4' });
+    expect(await p).toHaveLength(1);
   });
 
-  it('sin portada devuelve null', async () => {
-    const p = firstValueFrom(servicio.portada());
-    ctrl.expectOne('/api/v1/home/hero').flush({ data: null });
-    expect(await p).toBeNull();
+  it('sin portada devuelve lista vacía', async () => {
+    const p = firstValueFrom(servicio.portadas());
+    ctrl.expectOne('/api/v1/home/hero').flush({ data: null, items: [] });
+    expect(await p).toEqual([]);
   });
 
-  it('si la API falla, la tienda no se rompe: devuelve null y usa su imagen de siempre', async () => {
-    const p = firstValueFrom(servicio.portada());
+  it('si la API falla, la tienda no se rompe: lista vacía y usa su imagen de siempre', async () => {
+    const p = firstValueFrom(servicio.portadas());
     ctrl.expectOne('/api/v1/home/hero').flush({ message: 'x' }, { status: 500, statusText: 'Error' });
-    expect(await p).toBeNull();
+    expect(await p).toEqual([]);
   });
 });

@@ -1,10 +1,22 @@
 <!-- Video principal con el botón a categorías -->
 <section class="hero">
+    @if (portada() === null) {
+    <img class="hero-medio" [src]="imagenPortada()" alt="" width="800" height="800" fetchpriority="high">
+    }
+    @for (p of actual(); track indice()) {
     @if (verVideo()) {
-    <video class="hero-medio" appVideoAuto [src]="videoPortada()!.url" [attr.poster]="videoPortada()!.poster" muted loop playsinline
-        preload="metadata" aria-hidden="true"></video>
+    <video class="hero-medio" appVideoAuto [appVideoAutoBucle]="!variasPortadas()" [src]="videoPortada()!.url" [attr.poster]="videoPortada()!.poster"
+        muted playsinline preload="metadata" aria-hidden="true" (ended)="siguiente()"></video>
     } @else {
     <img class="hero-medio" [src]="imagenPortada()" [alt]="altPortada()" width="800" height="800" fetchpriority="high">
+    }
+    }
+    @if (variasPortadas()) {
+    <div class="hero-puntos" role="group" aria-label="Portadas">
+        @for (q of portadas(); track $index) {
+        <button type="button" [class.activo]="$index === indice()" [attr.aria-label]="'Ver portada ' + ($index + 1)" [attr.aria-current]="$index === indice()" (click)="irA($index)"></button>
+        }
+    </div>
     }
     <div class="hero-texto">
         <h1>Regalos que florecen</h1>

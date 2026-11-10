@@ -128,6 +128,20 @@ describe('Categorias (pantalla de una categoría con datos de Laravel)', () => {
         expect(html.querySelector('.banner img.banner-imagen')).toBeNull();
     });
 
+    it('con varios videos en el banner no van en bucle y al terminar pasa al siguiente', async () => {
+        const v = (n: number) => ({ type: 'video', url: `http://api/media/categories/amor/v${n}.mp4`, poster: null, duration_s: 20 });
+        const html = await montar('amor', null, categoriaApi('amor', 'Amor', { hero: null, hero_video: v(1), hero_videos: [v(1), v(2)] }));
+        const video = () => html.querySelector('.banner video.banner-video') as HTMLVideoElement;
+        expect(video().getAttribute('src')).toBe('http://api/media/categories/amor/v1.mp4');
+        expect(video().loop).toBe(false);
+        video().dispatchEvent(new Event('ended'));
+        TestBed.tick();
+        expect(video().getAttribute('src')).toBe('http://api/media/categories/amor/v2.mp4');
+        video().dispatchEvent(new Event('ended'));
+        TestBed.tick();
+        expect(video().getAttribute('src')).toBe('http://api/media/categories/amor/v1.mp4');
+    });
+
     it('sin video en el banner se ve la foto, como siempre', async () => {
         const html = await montar('amor', null, categoriaApi('amor', 'Amor', { hero: { type: 'image', srcset: { '1080': 'http://api/media/b-1080.webp' } } }));
 

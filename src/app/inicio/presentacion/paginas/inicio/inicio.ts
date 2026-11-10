@@ -1,4 +1,4 @@
-import { Component, PLATFORM_ID, computed, inject } from '@angular/core';
+import { Component, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe, isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
@@ -53,8 +53,14 @@ export class Inicio {
   // Con "reducir movimiento" solo se ve la portada
   private reducirMovimiento = isPlatformBrowser(inject(PLATFORM_ID))
     && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  // Portada elegida en el panel (imagen o video); null = se usa la imagen de siempre.
-  readonly portada = toSignal(inject(PortadaInicioService).portada(), { initialValue: null });
+  // Portadas elegidas en el panel (imágenes y videos, sin límite); lista vacía = se usa la imagen de siempre.
+  // Con una sola, el video va en bucle; con varias se muestran una tras otra (el video al terminar, la imagen a los 6 s).
+  readonly portadas = toSignal(inject(PortadaInicioService).portadas(), { initialValue: [] });
+  readonly indice = signal(0);
+  readonly portada = computed(() => { const l = this.portadas(); return l.length ? l[this.indice() % l.length] : null; });
+  /** Lista de un solo elemento: así Angular vuelve a crear el <video> al pasar a la siguiente portada. */
+  readonly actual = computed(() => { const p = this.portada(); return p ? [p] : []; });
+  readonly variasPortadas = computed(() => this.portadas().length > 1);
   readonly videoPortada = computed(() => { const p = this.portada(); return p?.type === 'video' ? p : null; });
   verVideo = computed(() => !!this.videoPortada() && !this.reducirMovimiento);
   /** Imagen de la portada: la foto elegida, la portada del video, o la de siempre. */
@@ -66,7 +72,20 @@ export class Inicio {
   });
   readonly altPortada = computed(() => { const p = this.portada(); return p?.type === 'image' ? (p.alt ?? '') : ''; });
 
+  siguiente(): void { this.indice.update(i => (i + 1) % Math.max(this.portadas().length, 1)); }
+  irA(i: number): void { this.indice.set(i); }
+
   constructor() {
+    // Imagen suelta (o video con "reducir movimiento"): pasa sola a la siguiente a los 6 s
+    if (isPlatformBrowser(inject(PLATFORM_ID))) {
+      effect(onCleanup => {
+        if (!this.variasPortadas()) return;
+        this.indice();
+        if (this.verVideo()) return; // el video avisa al terminar
+        const temporizador = setTimeout(() => this.siguiente(), 6000);
+        onCleanup(() => clearTimeout(temporizador));
+      });
+    }
     inject(Title).setTitle('Jardín de Sele | Macetas personalizadas con plantita natural');
     inject(Meta).updateTag({
       name: 'description',

@@ -233,8 +233,8 @@ describe('GaleriaImagenes', () => {
     expect(c.portada()).toBeNull();
     const html = fixture.nativeElement as HTMLElement;
     expect(html.querySelector('.imagenes video')?.getAttribute('src')).toBe('/media/v.mp4');
-    expect(html.textContent).toContain('Ya hay un video');
-    expect(html.querySelector('.subir.video input[accept="video/mp4"]')).toBeNull(); // solo un video por producto
+    expect(html.textContent).not.toContain('Ya hay un video');
+    expect(html.querySelector('.subir.video input[accept="video/mp4"]')).not.toBeNull(); // se pueden subir más videos
   });
 
   it('no sube lo que no es MP4 ni lo que pesa de más (15 MB)', async () => {

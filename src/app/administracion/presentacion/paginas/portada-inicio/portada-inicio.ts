@@ -13,7 +13,7 @@ import { LIMITES_VIDEO, LectorDeVideo, crearVista, liberarVista, textoLimite, va
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_IMAGEN = 8 * 1024 * 1024;
 
-// Portada de la página principal: imagen o video que reemplaza a la foto de ejemplo. Subir otra reemplaza la actual.
+// Portada de la página principal: lista SIN límite de imágenes y videos que reemplaza a la foto de ejemplo; la tienda los muestra uno tras otro.
 // La revisión de tipo, peso y duración en el navegador es solo comodidad: la validación real la hace Laravel.
 @Component({
   selector: 'app-admin-portada-inicio',
@@ -30,11 +30,12 @@ export class AdminPortadaInicio implements OnInit {
   readonly limite = LIMITES_VIDEO.inicio;
   readonly textoLimite = textoLimite(LIMITES_VIDEO.inicio);
 
-  actual = signal<PortadaInicio | null>(null);
+  lista = signal<PortadaInicio[]>([]);
   cargando = signal(true);
   subiendo = signal(false);
   error = signal('');
-  confirmarQuitar = signal(false);
+  /** id de la portada que está pidiendo confirmación para quitarse. */
+  confirmarQuitar = signal('');
   tipo = signal<'image' | 'video'>('image');
   portada = signal<File | null>(null);
   /** Dirección temporal para ver la portada elegida antes de subir el video. */
@@ -48,8 +49,8 @@ export class AdminPortadaInicio implements OnInit {
   }
 
   ngOnInit(): void {
-    this.api.obtener().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
-      next: p => this.actual.set(p),
+    this.api.lista().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
+      next: l => this.lista.set(l),
       error: (e: ErrorApi) => this.error.set(e.message),
     });
   }
@@ -90,7 +91,7 @@ export class AdminPortadaInicio implements OnInit {
 
     this.subiendo.set(true);
     this.api.subirImagen(archivo, this.alt).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.subiendo.set(false))).subscribe({
-      next: p => this.listo(p, 'Portada actualizada.'),
+      next: p => this.listo(p, 'Imagen agregada a la portada.'),
       error: (e: ErrorApi) => this.rechazar(Object.values(e.errors ?? {}).flat()[0] ?? e.message),
     });
   }
@@ -114,25 +115,25 @@ export class AdminPortadaInicio implements OnInit {
       takeUntilDestroyed(this.destroyRef),
       finalize(() => this.subiendo.set(false)),
     ).subscribe({
-      next: p => this.listo(p, 'Portada actualizada.'),
+      next: p => this.listo(p, 'Video agregado a la portada.'),
       error: (e: ErrorApi | Error) => this.rechazar('errors' in e ? (Object.values(e.errors ?? {}).flat()[0] ?? e.message) : e.message),
     });
   }
 
-  quitar(): void {
-    this.confirmarQuitar.set(false);
+  quitar(id: string): void {
+    this.confirmarQuitar.set('');
     this.error.set('');
-    this.api.quitar().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.quitar(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.actual.set(null);
-        this.avisos.exito('Portada quitada. Se vuelve a ver la imagen de siempre.');
+        this.lista.update(l => l.filter(p => p.id !== id));
+        this.avisos.exito(this.lista().length ? 'Portada quitada.' : 'Portada quitada. Se vuelve a ver la imagen de siempre.');
       },
       error: (e: ErrorApi) => this.rechazar(e.message),
     });
   }
 
   private listo(p: PortadaInicio, mensaje: string): void {
-    this.actual.set(p);
+    this.lista.update(l => [...l, p]);
     this.fijarPortada(null);
     this.alt = '';
     this.avisos.exito(mensaje);

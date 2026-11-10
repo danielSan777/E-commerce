@@ -34,6 +34,11 @@ export class Categorias {
 
   /** true si la API no respondió (distinto de "no existe": eso es un 404). */
   readonly fallo = signal(false);
+  /** Banner con varios videos: se muestran uno tras otro, al terminar cada uno pasa al siguiente. */
+  readonly videoIdx = signal(0);
+  readonly videosBanner = computed(() => this.categoria()?.videos ?? (this.categoria()?.video ? [this.categoria()!.video!] : []));
+  readonly videoBanner = computed(() => { const l = this.videosBanner(); return l.length ? l[this.videoIdx() % l.length] : null; });
+  siguienteVideo(): void { this.videoIdx.update(i => (i + 1) % Math.max(this.videosBanner().length, 1)); }
 
   /** undefined = cargando · null = no existe (404) · contrato = lo que Laravel entregó. */
   categoria = toSignal<CategoriaContrato | null | undefined>(

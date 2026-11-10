@@ -13,13 +13,14 @@ describe('Inicio (/)', () => {
     };
 
     /** `campana`: lo que Laravel responde en /campaigns/current (null = hoy no hay campaña en temporada). */
-    async function montar(campana: object | null = null, portada: object | null = null) {
+    async function montar(campana: object | null = null, portada: object | object[] | null = null) {
         TestBed.configureTestingModule({ imports: [Inicio], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
         const ctrl = TestBed.inject(HttpTestingController);
         const fixture = TestBed.createComponent(Inicio);
         ctrl.expectOne('/api/v1/categories').flush({ data: RESUMEN_CATEGORIAS_API });
         ctrl.expectOne('/api/v1/campaigns/current').flush({ data: campana });
-        ctrl.expectOne('/api/v1/home/hero').flush({ data: portada });
+        const items = Array.isArray(portada) ? portada : portada ? [portada] : [];
+        ctrl.expectOne('/api/v1/home/hero').flush({ data: items[0] ?? null, items });
         ctrl.expectOne('/api/v1/products?limit=6').flush({ data: ['a', 'b', 'c', 'd', 'e', 'f'].map(s => productoListadoApi(s)) });
         await fixture.whenStable();
         return fixture.nativeElement as HTMLElement;
@@ -83,6 +84,38 @@ describe('Inicio (/)', () => {
         expect(html.querySelector('img.hero-medio')).toBeNull();
         // el botón y el texto siguen encima del video
         expect(html.querySelector('.hero a.boton')?.textContent).toContain('Encuentra tu detalle perfecto');
+    });
+
+    it('con varios videos no van en bucle: al terminar uno pasa al siguiente y hay puntos para elegir', async () => {
+        const v = (n: number) => ({ type: 'video', url: `http://api/media/home/v${n}.mp4`, poster: null, duration_s: 10 });
+        const html = await montar(null, [v(1), v(2), v(3)]);
+        const video = () => html.querySelector('.hero video.hero-medio') as HTMLVideoElement;
+        expect(video().getAttribute('src')).toBe('http://api/media/home/v1.mp4');
+        expect(video().loop).toBe(false);
+        expect(html.querySelectorAll('.hero-puntos button')).toHaveLength(3);
+
+        video().dispatchEvent(new Event('ended'));
+        TestBed.tick();
+        expect(video().getAttribute('src')).toBe('http://api/media/home/v2.mp4');
+
+        (html.querySelectorAll('.hero-puntos button')[2] as HTMLButtonElement).click();
+        TestBed.tick();
+        expect(video().getAttribute('src')).toBe('http://api/media/home/v3.mp4');
+        video().dispatchEvent(new Event('ended')); // después del último vuelve al primero
+        TestBed.tick();
+        expect(video().getAttribute('src')).toBe('http://api/media/home/v1.mp4');
+    });
+
+    it('mezcla imágenes y videos en el orden del panel; con una sola no hay puntos', async () => {
+        const foto = { type: 'image', alt: 'Maceta', w: 800, h: 800, srcset: { '600': 'http://api/m-600.webp', '1080': 'http://api/m-1080.webp' } };
+        const html = await montar(null, [foto, { type: 'video', url: 'http://api/v.mp4', poster: null, duration_s: 5 }]);
+        expect((html.querySelector('img.hero-medio') as HTMLImageElement).getAttribute('src')).toBe('http://api/m-1080.webp');
+        expect(html.querySelectorAll('.hero-puntos button')).toHaveLength(2);
+    });
+
+    it('con una sola portada no hay puntos', async () => {
+        const una = await montar(null, { type: 'image', alt: 'Maceta', w: 800, h: 800, srcset: { '1080': 'http://api/m-1080.webp' } });
+        expect(una.querySelector('.hero-puntos')).toBeNull();
     });
 
     it('sin campaña en temporada no muestra el banner', async () => {

@@ -15,18 +15,18 @@ const URL = '/api/v1/admin/home/hero';
 const esperar = () => new Promise<void>(r => setTimeout(r));
 const evento = (archivo: File) => ({ target: { files: [archivo], value: 'x' } }) as unknown as Event;
 const mp4 = (mb = 1) => { const f = new File(['v'], 'v.mp4', { type: 'video/mp4' }); Object.defineProperty(f, 'size', { value: mb * 1024 * 1024 }); return f; };
-const IMAGEN = { type: 'image', alt: 'Macetas', w: 1500, h: 1000, srcset: { '600': '/m-600.webp', '1080': '/m-1080.webp' } };
-const VIDEO = { type: 'video', url: '/media/home/v.mp4', poster: '/media/home/v-portada.webp', duration_s: 30 };
+const IMAGEN = { id: 'i1', type: 'image', alt: 'Macetas', w: 1500, h: 1000, srcset: { '600': '/m-600.webp', '1080': '/m-1080.webp' } };
+const VIDEO = { id: 'v1', type: 'video', url: '/media/home/v.mp4', poster: '/media/home/v-portada.webp', duration_s: 30 };
 
 describe('AdminPortadaInicio', () => {
   let ctrl: HttpTestingController;
 
-  async function montar(actual: object | null = null) {
+  async function montar(lista: object[] = []) {
     TestBed.configureTestingModule({ imports: [AdminPortadaInicio], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }, LECTOR] });
     ctrl = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(AdminPortadaInicio);
     fixture.detectChanges();
-    ctrl.expectOne(URL).flush({ data: actual });
+    ctrl.expectOne(URL).flush({ data: lista });
     await esperar();
     fixture.detectChanges();
     return fixture;
@@ -40,13 +40,13 @@ describe('AdminPortadaInicio', () => {
   });
 
   it('muestra la imagen actual', async () => {
-    const f = await montar(IMAGEN);
+    const f = await montar([IMAGEN]);
     expect(html(f).querySelector('img.vista')?.getAttribute('src')).toBe('/m-1080.webp');
-    expect(html(f).textContent).toContain('Cambiar la portada');
+    expect(html(f).textContent).toContain('Agregar a la portada');
   });
 
   it('muestra el video actual con su duración', async () => {
-    const f = await montar(VIDEO);
+    const f = await montar([VIDEO]);
     expect(html(f).querySelector('video.vista')?.getAttribute('src')).toBe('/media/home/v.mp4');
     expect(html(f).textContent).toContain('30 s');
   });
@@ -73,7 +73,7 @@ describe('AdminPortadaInicio', () => {
     req.flush({ data: IMAGEN }, { status: 201, statusText: 'Created' });
     await esperar();
     f.detectChanges();
-    expect(c.actual()?.type).toBe('image');
+    expect(c.lista()).toHaveLength(1);
     expect(c.alt).toBe('');
   });
 
@@ -95,8 +95,8 @@ describe('AdminPortadaInicio', () => {
     ctrl.verify();
   });
 
-  it('video: se sube con su portada y reemplaza a la imagen actual', async () => {
-    const f = await montar(IMAGEN);
+  it('video: se sube con su portada y se suma a la lista (no reemplaza)', async () => {
+    const f = await montar([IMAGEN]);
     const c = f.componentInstance;
     duracion.valor = 59;
     c.elegirPortada(evento(new File(['p'], 'p.jpg', { type: 'image/jpeg' })));
@@ -106,41 +106,52 @@ describe('AdminPortadaInicio', () => {
     req.flush({ data: VIDEO }, { status: 201, statusText: 'Created' });
     await esperar();
     f.detectChanges();
-    expect(c.actual()?.type).toBe('video');
+    expect(c.lista().map(p => p.type)).toEqual(['image', 'video']);
     expect(c.portada()).toBeNull();
     expect(html(f).querySelector('video.vista')).not.toBeNull();
   });
 
-  it('si Laravel rechaza el video muestra su mensaje y la portada actual no cambia', async () => {
-    const f = await montar(IMAGEN);
+  it('si Laravel rechaza el video muestra su mensaje y la lista no cambia', async () => {
+    const f = await montar([IMAGEN]);
     duracion.valor = 20;
     f.componentInstance.elegirVideo(evento(mp4()));
     ctrl.expectOne(URL).flush({ code: 'validation_error', message: 'x', errors: { video: ['El video debe estar en H.264.'] } }, { status: 422, statusText: 'Unprocessable' });
     await esperar();
     expect(f.componentInstance.error()).toBe('El video debe estar en H.264.');
-    expect(f.componentInstance.actual()?.type).toBe('image');
+    expect(f.componentInstance.lista()).toHaveLength(1);
   });
 
-  it('quitar pide confirmación y vuelve a la imagen de siempre', async () => {
-    const f = await montar(VIDEO);
+  it('quitar pide confirmación, borra solo esa portada y con la lista vacía vuelve a la imagen de siempre', async () => {
+    const f = await montar([VIDEO]);
     const c = f.componentInstance;
-    c.confirmarQuitar.set(true);
-    c.quitar();
-    const req = ctrl.expectOne(URL);
+    c.confirmarQuitar.set('v1');
+    c.quitar('v1');
+    const req = ctrl.expectOne(`${URL}/v1`);
     expect(req.request.method).toBe('DELETE');
     req.flush(null, { status: 204, statusText: 'No Content' });
     await esperar();
     f.detectChanges();
-    expect(c.actual()).toBeNull();
-    expect(c.confirmarQuitar()).toBe(false);
+    expect(c.lista()).toEqual([]);
+    expect(c.confirmarQuitar()).toBe('');
+  });
+
+  it('muestra varias portadas numeradas y quita una sin tocar las demás', async () => {
+    const f = await montar([IMAGEN, VIDEO, { ...VIDEO, id: 'v2' }]);
+    expect(html(f).querySelectorAll('.portada-item')).toHaveLength(3);
+    expect(html(f).textContent).toContain('Portadas actuales (3)');
+    f.componentInstance.quitar('v1');
+    ctrl.expectOne(`${URL}/v1`).flush(null, { status: 204, statusText: 'No Content' });
+    await esperar();
+    f.detectChanges();
+    expect(f.componentInstance.lista().map(p => p.id)).toEqual(['i1', 'v2']);
   });
 
   it('el botón de quitar no actúa hasta confirmar', async () => {
-    const f = await montar(IMAGEN);
+    const f = await montar([IMAGEN]);
     const boton = html(f).querySelector('.acciones .peligro') as HTMLButtonElement;
     boton.click();
     f.detectChanges();
-    expect(html(f).textContent).toContain('¿Quitar la portada?');
+    expect(html(f).textContent).toContain('¿Quitar esta portada?');
     ctrl.verify(); // todavía no se borró nada
   });
 

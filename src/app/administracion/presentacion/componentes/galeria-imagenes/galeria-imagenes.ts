@@ -58,7 +58,7 @@ export class GaleriaImagenes implements OnInit {
     this.destroyRef.onDestroy(() => liberarVista(this.portadaVista()));
   }
 
-  /** Los videos solo existen en productos y categorías; cada uno admite un único video. */
+  /** Los videos solo existen en productos y categorías, y se pueden subir sin límite de cantidad. */
   readonly puedeVideo = computed(() => this.dueno() === 'products' || this.dueno() === 'categories');
   readonly limiteVideo = computed<LimiteVideo>(() => (this.dueno() === 'products' ? LIMITES_VIDEO.products : LIMITES_VIDEO.categories));
   readonly textoLimiteVideo = computed(() => textoLimite(this.limiteVideo()));
