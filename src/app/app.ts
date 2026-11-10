@@ -2,11 +2,12 @@ import { Component, afterNextRender, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { Avisos } from './shared/componentes/avisos/avisos';
+import { Cargando } from './shared/componentes/cargando/cargando';
 import { AnalyticsService } from './core/seguimiento/AnalyticsService';
 import { AtribucionService } from './core/seguimiento/AtribucionService';
 
 @Component({
-  imports: [RouterOutlet, Avisos],
+  imports: [RouterOutlet, Avisos, Cargando],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
