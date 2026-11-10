@@ -2,12 +2,12 @@ import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize, switchMap } from 'rxjs';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 import { PortadaInicio } from '../../../../inicio/dominio/interfaces/portada';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
-import { PortadaInicioAdminService } from '../../../aplicacion/servicios/PortadaInicioAdminService';
+import { PortadaInicioAdminService, SeccionPortada } from '../../../aplicacion/servicios/PortadaInicioAdminService';
 import { LIMITES_VIDEO, LectorDeVideo, crearVista, liberarVista, textoLimite, validarVideo } from '../../../aplicacion/video';
 
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp'];
@@ -26,6 +26,12 @@ export class AdminPortadaInicio implements OnInit {
   private lector = inject(LectorDeVideo);
   private avisos = inject(AvisosService);
   private destroyRef = inject(DestroyRef);
+  /** 'inicio' (página principal) o 'categorias' (encabezado de /categorias): la ruta lo indica. */
+  readonly seccion: SeccionPortada = inject(ActivatedRoute).snapshot.data['seccion'] === 'categorias' ? 'categorias' : 'inicio';
+  readonly nombre = this.seccion === 'categorias' ? 'Encabezado de la página de categorías' : 'Portada de la página principal';
+  titulo = '';
+  subtitulo = '';
+  guardandoTexto = signal(false);
 
   readonly limite = LIMITES_VIDEO.inicio;
   readonly textoLimite = textoLimite(LIMITES_VIDEO.inicio);
@@ -43,15 +49,30 @@ export class AdminPortadaInicio implements OnInit {
   alt = '';
 
   constructor() {
-    inject(Title).setTitle('Portada de inicio | Panel de Jardín de Sele');
+    inject(Title).setTitle(`${this.nombre} | Panel de Jardín de Sele`);
     inject(Meta).updateTag({ name: 'robots', content: 'noindex, nofollow' });
     this.destroyRef.onDestroy(() => liberarVista(this.portadaVista()));
   }
 
   ngOnInit(): void {
-    this.api.lista().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
+    this.api.lista(this.seccion).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
       next: l => this.lista.set(l),
       error: (e: ErrorApi) => this.error.set(e.message),
+    });
+    if (this.seccion === 'categorias') {
+      this.api.texto().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: t => { this.titulo = t.title ?? ''; this.subtitulo = t.subtitle ?? ''; },
+        error: (e: ErrorApi) => this.error.set(e.message),
+      });
+    }
+  }
+
+  guardarTexto(): void {
+    this.error.set('');
+    this.guardandoTexto.set(true);
+    this.api.guardarTexto(this.titulo, this.subtitulo).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.guardandoTexto.set(false))).subscribe({
+      next: t => { this.titulo = t.title ?? ''; this.subtitulo = t.subtitle ?? ''; this.avisos.exito('Textos guardados.'); },
+      error: (e: ErrorApi) => this.rechazar(Object.values(e.errors ?? {}).flat()[0] ?? e.message),
     });
   }
 
@@ -90,7 +111,7 @@ export class AdminPortadaInicio implements OnInit {
     if (motivo) return this.rechazar(motivo);
 
     this.subiendo.set(true);
-    this.api.subirImagen(archivo, this.alt).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.subiendo.set(false))).subscribe({
+    this.api.subirImagen(archivo, this.alt, this.seccion).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.subiendo.set(false))).subscribe({
       next: p => this.listo(p, 'Imagen agregada a la portada.'),
       error: (e: ErrorApi) => this.rechazar(Object.values(e.errors ?? {}).flat()[0] ?? e.message),
     });
@@ -110,7 +131,7 @@ export class AdminPortadaInicio implements OnInit {
       switchMap(duracion => {
         const motivo = validarVideo(archivo, duracion, this.limite);
         if (motivo) throw new Error(motivo);
-        return this.api.subirVideo(archivo, this.portada(), this.alt);
+        return this.api.subirVideo(archivo, this.portada(), this.alt, this.seccion);
       }),
       takeUntilDestroyed(this.destroyRef),
       finalize(() => this.subiendo.set(false)),
@@ -123,10 +144,10 @@ export class AdminPortadaInicio implements OnInit {
   quitar(id: string): void {
     this.confirmarQuitar.set('');
     this.error.set('');
-    this.api.quitar(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.quitar(id, this.seccion).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.lista.update(l => l.filter(p => p.id !== id));
-        this.avisos.exito(this.lista().length ? 'Portada quitada.' : 'Portada quitada. Se vuelve a ver la imagen de siempre.');
+        this.avisos.exito(this.lista().length ? 'Portada quitada.' : this.seccion === 'categorias' ? 'Quitado. Se vuelven a ver las fotos de las categorías.' : 'Portada quitada. Se vuelve a ver la imagen de siempre.');
       },
       error: (e: ErrorApi) => this.rechazar(e.message),
     });

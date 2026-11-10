@@ -41,4 +41,16 @@ describe('PortadaInicioService', () => {
     ctrl.expectOne('/api/v1/home/hero').flush({ message: 'x' }, { status: 500, statusText: 'Error' });
     expect(await p).toEqual([]);
   });
+
+  it('encabezado de categorías: textos e items del panel', async () => {
+    const p = firstValueFrom(servicio.encabezadoCategorias());
+    ctrl.expectOne('/api/v1/categories-page').flush({ title: 'Hola', subtitle: null, items: [{ type: 'video', url: '/v.mp4', poster: null, duration_s: 4 }] });
+    expect(await p).toMatchObject({ title: 'Hola', subtitle: null, items: [{ type: 'video' }] });
+  });
+
+  it('encabezado de categorías: si la API falla usa lo de siempre', async () => {
+    const p = firstValueFrom(servicio.encabezadoCategorias());
+    ctrl.expectOne('/api/v1/categories-page').flush({}, { status: 500, statusText: 'Error' });
+    expect(await p).toEqual({ title: null, subtitle: null, items: [] });
+  });
 });

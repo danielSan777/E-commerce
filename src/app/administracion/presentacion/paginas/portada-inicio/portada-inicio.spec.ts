@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { LectorDeVideo } from '../../../aplicacion/video';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { API_URL } from '../../../../core/configuracion/api';
 import { AdminPortadaInicio } from './portada-inicio';
 
@@ -175,5 +175,27 @@ describe('AdminPortadaInicio', () => {
       expect(f.componentInstance.portada()).toBeNull();
       expect(html(f).querySelector('.portada-elegida')).toBeNull();
     } finally { globalThis.URL.createObjectURL = original; }
+  });
+
+  it('en la sección de categorías usa su ruta, muestra los textos y los guarda', async () => {
+    TestBed.configureTestingModule({ imports: [AdminPortadaInicio], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }, LECTOR,
+      { provide: ActivatedRoute, useValue: { snapshot: { data: { seccion: 'categorias' } } } }] });
+    ctrl = TestBed.inject(HttpTestingController);
+    const f = TestBed.createComponent(AdminPortadaInicio);
+    f.detectChanges();
+    ctrl.expectOne('/api/v1/admin/categories-page/hero').flush({ data: [VIDEO] });
+    ctrl.expectOne('/api/v1/admin/categories-page/text').flush({ data: { title: 'Hola', subtitle: null } });
+    await esperar();
+    f.detectChanges();
+    expect(html(f).textContent).toContain('Encabezado de la página de categorías');
+    expect((html(f).querySelector('#titulo-cat') as HTMLInputElement).value).toBe('Hola');
+
+    f.componentInstance.titulo = 'Nuevo';
+    f.componentInstance.guardarTexto();
+    const req = ctrl.expectOne('/api/v1/admin/categories-page/text');
+    expect(req.request.body).toEqual({ title: 'Nuevo', subtitle: '' });
+    req.flush({ data: { title: 'Nuevo', subtitle: null } });
+    f.componentInstance.quitar('v1');
+    ctrl.expectOne('/api/v1/admin/categories-page/hero/v1').flush(null, { status: 204, statusText: 'No Content' });
   });
 });

@@ -7,11 +7,14 @@ import { provideRouter } from '@angular/router';
 import { CategoriasInicio } from './categorias-inicio';
 
 describe('CategoriasInicio (/categorias)', () => {
-    async function montar() {
+    async function montar(encabezado: object = { title: null, subtitle: null, items: [] }) {
         TestBed.configureTestingModule({ imports: [CategoriasInicio], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
         const fixture = TestBed.createComponent(CategoriasInicio);
-        TestBed.inject(HttpTestingController).expectOne('/api/v1/categories').flush({ data: RESUMEN_CATEGORIAS_API });
+        const ctrl = TestBed.inject(HttpTestingController);
+        ctrl.expectOne('/api/v1/categories').flush({ data: RESUMEN_CATEGORIAS_API });
+        ctrl.expectOne('/api/v1/categories-page').flush(encabezado);
         await fixture.whenStable();
+        fixture.detectChanges();
         return fixture.nativeElement as HTMLElement;
     }
 
@@ -38,5 +41,40 @@ describe('CategoriasInicio (/categorias)', () => {
         expect(html.textContent).toContain('Hecho en Guayaquil');
         expect(html.textContent).toContain('Envíos por Servientrega');
         expect(html.textContent).toContain('Pago seguro');
+    });
+
+    it('sin nada elegido en el panel se ven los textos y las fotos de las categorías de siempre', async () => {
+        const html = await montar();
+        expect(html.querySelector('h1')?.textContent).toContain('Explora nuestros regalos');
+        expect(html.querySelectorAll('.banner-imagenes img').length).toBe(3);
+        expect(html.querySelector('.banner-video')).toBeNull();
+    });
+
+    it('muestra el título, el subtítulo y la imagen que eligió el administrador', async () => {
+        const html = await montar({ title: 'Mira estos regalos', subtitle: 'Elige uno', items: [{ type: 'image', alt: 'Regalos', srcset: { '1080': 'http://api/r-1080.webp' } }] });
+        expect(html.querySelector('h1')?.textContent).toBe('Mira estos regalos');
+        expect(html.querySelector('.banner p')?.textContent).toBe('Elige uno');
+        expect((html.querySelector('img.banner-imagen') as HTMLImageElement).getAttribute('src')).toBe('http://api/r-1080.webp');
+        expect(html.querySelector('.banner-imagenes')).toBeNull(); // ya no salen las fotos de las categorías
+    });
+
+    it('con varios videos no van en bucle: al terminar uno pasa al siguiente', async () => {
+        const v = (n: number) => ({ type: 'video', url: `http://api/v${n}.mp4`, poster: null, duration_s: 9 });
+        const fixture = (await montar({ title: null, subtitle: null, items: [v(1), v(2)] }));
+        const video = () => fixture.querySelector('video.banner-video') as HTMLVideoElement;
+        expect(video().getAttribute('src')).toBe('http://api/v1.mp4');
+        expect(video().loop).toBe(false);
+        video().dispatchEvent(new Event('ended'));
+        TestBed.tick();
+        expect(video().getAttribute('src')).toBe('http://api/v2.mp4');
+    });
+
+    it('mientras carga el encabezado no se ven los textos ni las fotos de siempre (sin parpadeo)', () => {
+        TestBed.configureTestingModule({ imports: [CategoriasInicio], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+        const fixture = TestBed.createComponent(CategoriasInicio);
+        fixture.detectChanges();
+        const html = fixture.nativeElement as HTMLElement;
+        expect(html.querySelector('h1')).toBeNull();
+        expect(html.querySelector('.banner-imagenes')).toBeNull();
     });
 });

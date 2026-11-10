@@ -54,4 +54,19 @@ describe('PortadaInicioAdminService', () => {
     req.flush(null, { status: 204, statusText: 'No Content' });
     await p;
   });
+
+  it('la sección categorías usa su propia ruta para listar, quitar y guardar textos', async () => {
+    const a = firstValueFrom(servicio.lista('categorias'));
+    ctrl.expectOne('/api/v1/admin/categories-page/hero').flush({ data: [] });
+    expect(await a).toEqual([]);
+    const b = firstValueFrom(servicio.quitar('x1', 'categorias'));
+    ctrl.expectOne('/api/v1/admin/categories-page/hero/x1').flush(null, { status: 204, statusText: 'No Content' });
+    await b;
+    const c = firstValueFrom(servicio.guardarTexto('  Hola ', 'Sub'));
+    const req = ctrl.expectOne('/api/v1/admin/categories-page/text');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual({ title: 'Hola', subtitle: 'Sub' });
+    req.flush({ data: { title: 'Hola', subtitle: 'Sub' } });
+    expect(await c).toEqual({ title: 'Hola', subtitle: 'Sub' });
+  });
 });
