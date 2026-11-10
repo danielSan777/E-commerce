@@ -21,7 +21,7 @@ export const ROLES_IMAGEN: { valor: string; texto: string }[] = [
 ];
 
 // Galería de imágenes de un producto o una categoría: subir, ver, cambiar descripción/tipo y eliminar. También sube su video
-// (producto: máx. 6 s; banner de categoría: máx. 1 minuto).
+// (máx. 1 minuto).
 // La revisión rápida de tipo y peso es solo comodidad: la validación real la hace Laravel.
 @Component({
   selector: 'app-galeria-imagenes',

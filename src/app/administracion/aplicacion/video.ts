@@ -3,17 +3,17 @@ import { Observable } from 'rxjs';
 
 // Revisión rápida de un video ANTES de subirlo, para no hacer una petición de balde. Es solo comodidad:
 // la validación real (formato MP4, H.264, duración y peso) la hace Laravel leyendo el archivo.
-// Los límites repiten los de Laravel (ProcesadorDeVideos): producto 6 s, banner de categoría y portada de inicio 1 minuto.
+// Los límites repiten los de Laravel (ProcesadorDeVideos): todo video dura 1 minuto como máximo.
 
 export interface LimiteVideo { segundos: number; bytes: number; nombre: string }
 
 export const LIMITES_VIDEO: Record<'products' | 'categories' | 'inicio', LimiteVideo> = {
-  products: { segundos: 6, bytes: 2 * 1024 * 1024, nombre: 'del producto' },
+  products: { segundos: 60, bytes: 15 * 1024 * 1024, nombre: 'del producto' },
   categories: { segundos: 60, bytes: 15 * 1024 * 1024, nombre: 'del banner de la categoría' },
   inicio: { segundos: 60, bytes: 20 * 1024 * 1024, nombre: 'de la página principal' },
 };
 
-/** Un video de "6 s" suele medir 6,02 s: se tolera un cuarto de segundo, igual que Laravel. */
+/** Un video de "1 minuto" suele medir 60,02 s: se tolera un cuarto de segundo, igual que Laravel. */
 export const TOLERANCIA_S = 0.25;
 
 export function textoLimite(l: LimiteVideo): string {

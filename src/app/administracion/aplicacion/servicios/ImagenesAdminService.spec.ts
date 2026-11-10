@@ -82,7 +82,7 @@ describe('ImagenesAdminService', () => {
 
   it('un error de Laravel (video muy largo) llega con su mensaje en español', async () => {
     const p = firstValueFrom(servicio.subirVideo('products', 'PRO-1', new File(['v'], 'v.mp4', { type: 'video/mp4' }), null));
-    ctrl.expectOne('/api/v1/admin/products/PRO-1/video').flush({ code: 'validation_error', message: 'x', errors: { video: ['El video del producto puede durar como máximo 6 segundos.'] } }, { status: 422, statusText: 'Unprocessable' });
-    await expect(p).rejects.toMatchObject({ errors: { video: ['El video del producto puede durar como máximo 6 segundos.'] } });
+    ctrl.expectOne('/api/v1/admin/products/PRO-1/video').flush({ code: 'validation_error', message: 'x', errors: { video: ['El video del producto puede durar como máximo un minuto.'] } }, { status: 422, statusText: 'Unprocessable' });
+    await expect(p).rejects.toMatchObject({ errors: { video: ['El video del producto puede durar como máximo un minuto.'] } });
   });
 });

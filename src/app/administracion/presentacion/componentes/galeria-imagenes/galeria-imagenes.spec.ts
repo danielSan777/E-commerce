@@ -205,19 +205,19 @@ describe('GaleriaImagenes', () => {
   const mp4 = (mb = 1, nombre = 'v.mp4') => { const f = new File(['v'], nombre, { type: 'video/mp4' }); Object.defineProperty(f, 'size', { value: mb * 1024 * 1024 }); return f; };
   const video = (id: number) => ({ id, type: 'video', role: 'video', alt: null, sort_order: id, width: 720, height: 1280, duration_s: 5, urls: { url: '/media/v.mp4', poster: '/media/v-portada.webp' } });
 
-  it('producto: un video de más de 6 segundos se rechaza en el navegador, sin llamar a la API', async () => {
+  it('producto: un video de más de un minuto se rechaza en el navegador, sin llamar a la API', async () => {
     const fixture = await montar();
-    duracion.valor = 8;
+    duracion.valor = 75;
     fixture.componentInstance.elegirVideo(evento(mp4()));
-    expect(fixture.componentInstance.error()).toContain('máximo 6 segundos');
-    expect(fixture.componentInstance.error()).toContain('dura 8 s');
+    expect(fixture.componentInstance.error()).toContain('un minuto');
+    expect(fixture.componentInstance.error()).toContain('dura 75 s');
     ctrl.verify();
   });
 
-  it('producto: acepta 6 segundos justos y lo sube a /video con su portada', async () => {
+  it('producto: acepta 1 minuto justo y lo sube a /video con su portada', async () => {
     const fixture = await montar();
     const c = fixture.componentInstance;
-    duracion.valor = 6;
+    duracion.valor = 60;
     c.elegirPortada(evento(new File(['p'], 'p.png', { type: 'image/png' })));
     c.elegirVideo(evento(mp4()));
 
@@ -237,14 +237,14 @@ describe('GaleriaImagenes', () => {
     expect(html.querySelector('.subir.video input[accept="video/mp4"]')).toBeNull(); // solo un video por producto
   });
 
-  it('no sube lo que no es MP4 ni lo que pesa de más (producto: 2 MB)', async () => {
+  it('no sube lo que no es MP4 ni lo que pesa de más (15 MB)', async () => {
     const fixture = await montar();
     const c = fixture.componentInstance;
     duracion.valor = 3;
     c.elegirVideo(evento(new File(['v'], 'v.mov', { type: 'video/quicktime' })));
     expect(c.error()).toContain('MP4');
-    c.elegirVideo(evento(mp4(3)));
-    expect(c.error()).toContain('menos de 2 MB');
+    c.elegirVideo(evento(mp4(16)));
+    expect(c.error()).toContain('menos de 15 MB');
     ctrl.verify();
   });
 
