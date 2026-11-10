@@ -141,6 +141,23 @@ describe('CategoriaService (API de Laravel)', () => {
         ctrl.expectOne('/api/v1/categories/amor?subcategory=z').flush({}, { status: 500, statusText: 'Error' });
     });
 
+    it('enCache entrega al instante lo ya descargado y esCategoria sabe cuáles son las categorías', async () => {
+        expect(servicio.enCache('amor')).toBeUndefined();
+        expect(servicio.esCategoria('amor')).toBeNull();
+        const lista = firstValueFrom(servicio.categorias());
+        ctrl.expectOne('/api/v1/categories').flush({ data: [{ slug: 'amor', name: 'Amor', url: '/amor', short_description: null, image: null, subcategories: [] }] });
+        await lista;
+        expect(servicio.esCategoria('amor')).toBe(true);
+        expect(servicio.esCategoria('navidad')).toBe(false);
+
+        const c = firstValueFrom(servicio.categoria('amor'));
+        ctrl.expectOne('/api/v1/categories/amor').flush({ slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: null, products: [], hero: null,
+            seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null } });
+        await c;
+        expect(servicio.enCache('amor')?.slug).toBe('amor');
+        expect(servicio.enCache('amor', 'otra')).toBeUndefined();
+    });
+
     it('sin hero_video no hay video en el contrato', async () => {
         const p = firstValueFrom(servicio.categoria('amor'));
         ctrl.expectOne('/api/v1/categories/amor').flush({

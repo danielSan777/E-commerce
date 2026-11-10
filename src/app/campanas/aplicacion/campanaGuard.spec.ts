@@ -44,3 +44,23 @@ describe('campanaGuard (¿esta dirección es una campaña?)', () => {
         ctrl.expectNone(() => true);
     });
 });
+
+describe('campanaGuard con las categorías ya conocidas', () => {
+    it('una dirección que es categoría entra al instante, sin preguntarle a Laravel por una campaña', async () => {
+        TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+        const { CategoriaService } = await import('../../categorias/aplicacion/servicios/CategoriaService');
+        const { RESUMEN_CATEGORIAS_API } = await import('../../testing/catalogo-api');
+        const ctrl = TestBed.inject(HttpTestingController);
+        const p = firstValueFrom(TestBed.inject(CategoriaService).categorias());
+        ctrl.expectOne('/api/v1/categories').flush({ data: RESUMEN_CATEGORIAS_API });
+        await p;
+
+        const r = TestBed.runInInjectionContext(() => campanaGuard({} as never, [new UrlSegment('amor', {})], {} as never));
+        expect(r).toBe(false);
+        ctrl.expectNone('/api/v1/campaigns/amor');
+        // una dirección que no es categoría sí se le pregunta a Laravel
+        const q = TestBed.runInInjectionContext(() => campanaGuard({} as never, [new UrlSegment('navidad', {})], {} as never)) as Observable<boolean>;
+        void firstValueFrom(q);
+        ctrl.expectOne('/api/v1/campaigns/navidad');
+    });
+});

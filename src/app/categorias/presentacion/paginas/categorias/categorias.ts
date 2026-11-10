@@ -42,14 +42,15 @@ export class Categorias {
   siguienteVideo(): void { this.videoIdx.update(i => (i + 1) % Math.max(this.videosBanner().length, 1)); }
 
   /** undefined = cargando · null = no existe (404) · contrato = lo que Laravel entregó. */
-  categoria = toSignal<CategoriaContrato | null | undefined>(
+  categoria = toSignal<CategoriaContrato | null | undefined, CategoriaContrato | null | undefined>(
     toObservable(computed(() => [this.datos()['categoria'] ?? this.parametros().get('categoria'), this.parametros().get('subcategoria')] as const)).pipe(
       tap(() => this.fallo.set(false)),
       switchMap(([categoria, subcategoria]) => this.servicio.categoria(categoria, subcategoria).pipe(
         catchError(() => { this.fallo.set(true); return of(null); }),
       )),
     ),
-    { initialValue: undefined },
+    // Si la categoría ya se descargó (precarga o visita anterior), se muestra en el primer pintado, sin pasar por "Cargando…"
+    { initialValue: this.servicio.enCache(this.route.snapshot.data['categoria'] ?? this.route.snapshot.paramMap.get('categoria'), this.route.snapshot.paramMap.get('subcategoria')) },
   );
 
   // Flechas de las pestañas: avisan que hay más subcategorías hacia los lados
