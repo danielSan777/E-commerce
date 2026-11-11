@@ -53,11 +53,19 @@ describe('Campana (/san-valentin con datos de Laravel)', () => {
         expect(html.querySelector('.fecha')?.textContent).toContain('Pide hasta el martes 9');
     });
 
-    it('fuera de temporada no dibuja nada (la guarda de rutas lleva al público a la página principal)', async () => {
-        const html = await montar('san-valentin', campanaApi('upcoming'));
+    it('fuera de temporada, aunque ya pasó la fecha del mensaje, sigue mostrando el mensaje de cierre sin productos', async () => {
+        const html = await montar('san-valentin', campanaApi('upcoming', { closing_message: 'San Valentín regresará pronto' }));
 
-        expect(html.querySelector('h1')).toBeNull();
+        expect(html.querySelector('h2')?.textContent).toContain('San Valentín regresará pronto');
+        expect(html.querySelector('.cierre-pagina a.boton')?.getAttribute('href')).toBe('/categorias');
         expect(html.querySelector('.producto')).toBeNull();
+    });
+
+    it('si el administrador no escribió mensaje, dice que la campaña no está disponible por ahora', async () => {
+        const html = await montar('san-valentin', campanaApi('upcoming', { closing_message: null }));
+
+        expect(html.querySelector('h2')?.textContent).toContain('San Valentín no está disponible por ahora.');
+        expect(html.textContent).toContain('Explorar las categorías');
     });
 
     it('al terminar la campaña muestra el mensaje de cierre y un botón a todas las categorías', async () => {

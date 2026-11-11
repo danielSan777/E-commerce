@@ -48,8 +48,9 @@ export class Campana {
   readonly esVistaPrevia = computed(() => { const c = this.campana(); return !!c && this.servicio.esVistaPrevia(c.slug); });
   /** Solo se dibuja en temporada o en vista previa: el servidor no sabe quién es y deja la página vacía hasta que el navegador decide. */
   readonly mostrar = computed(() => this.enTemporada());
-  /** Terminó la campaña pero el administrador eligió seguir mostrando su mensaje de cierre hasta una fecha. */
-  readonly despidiendose = computed(() => { const c = this.campana(); return c?.state === 'closing' && !!c.closing_message; });
+  /** Fuera de temporada (y sin ser vista previa del administrador): la página dice que la campaña terminó y muestra el mensaje del administrador. */
+  readonly terminada = computed(() => { const c = this.campana(); return !!c && c.state !== 'active'; });
+  readonly mensajeDeCierre = computed(() => { const c = this.campana(); return c ? (c.closing_message || `${c.name} no está disponible por ahora.`) : ''; });
 
   // Diseño propio de la campaña: el color reemplaza al vino/rosa de siempre (solo si es un #RRGGBB válido).
   color = computed(() => { const c = this.campana()?.theme.color; return c && /^#[0-9a-f]{6}$/i.test(c) ? c : null; });

@@ -1,8 +1,8 @@
 @if (campana(); as c) {
-@if (despidiendose()) {
+@if (terminada()) {
 <div class="cierre-pagina" [style.--jds-vino]="color()">
     <app-campana-banner [nombre]="c.name" [emoji]="c.theme.emoji" [color]="c.theme.color" [foto]="portadaUrl()" [fotoAlt]="c.theme.cover?.alt ?? null"
-        [video]="c.theme.video?.url ?? null" [videoPortada]="c.theme.video?.poster ?? null" [cierre]="c.closing_message" />
+        [video]="c.theme.video?.url ?? null" [videoPortada]="c.theme.video?.poster ?? null" [cierre]="mensajeDeCierre()" />
     <a class="boton grande" routerLink="/categorias">Explorar las categorías <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
 </div>
 } @else if (mostrar()) {
