@@ -2,7 +2,6 @@
 export interface CampanaAdmin {
   slug: string;
   name: string;
-  related_category: { slug: string; name: string };
   start_md: string;   // "MM-DD": se repite cada año
   end_md: string;
   event_md: string;
@@ -25,7 +24,6 @@ export interface CampanaAdmin {
 
 export interface DatosCampana {
   name: string;
-  related_category: string;   // slug
   start_md: string;
   end_md: string;
   event_md: string;

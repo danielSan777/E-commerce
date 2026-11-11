@@ -35,7 +35,6 @@ export interface CampanaContrato {
     tagline: string;                      // "Un regalo con su nombre que sigue creciendo"
     slogan: string;                       // frase del banner de en medio
     theme: TemaCampana;
-    related_category: { slug: string; name: string; url: string };
     products: ProductoCategoria[];        // en temporada: los elegidos por Josué; fuera: los relacionados
     seo: SeoContrato;
 }

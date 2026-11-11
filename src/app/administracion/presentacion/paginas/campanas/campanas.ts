@@ -7,10 +7,8 @@ import { RouterLink } from '@angular/router';
 import { CampanaBanner } from '../../../../campanas/presentacion/componentes/campana-banner/campana-banner';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { CampanasAdminService } from '../../../aplicacion/servicios/CampanasAdminService';
-import { CategoriasAdminService } from '../../../aplicacion/servicios/CategoriasAdminService';
 import { ProductosAdminService } from '../../../aplicacion/servicios/ProductosAdminService';
 import { CampanaAdmin } from '../../../dominio/interfaces/campana-admin';
-import { CategoriaAdmin } from '../../../dominio/interfaces/categoria-admin';
 import { ProductoAdmin } from '../../../dominio/interfaces/producto-admin';
 import { generarSlug } from '../../../aplicacion/slug';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
@@ -40,7 +38,7 @@ interface Fecha { dia: number; mes: number }
 /** Días de cada mes (febrero con 29: la fecha se repite todos los años, incluidos los bisiestos). */
 const DIAS_DEL_MES = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-export type ErroresCampana = Partial<Record<'name' | 'related_category' | 'inicio' | 'fin' | 'evento' | 'cierre' | 'color', string>>;
+export type ErroresCampana = Partial<Record<'name' | 'inicio' | 'fin' | 'evento' | 'cierre' | 'color', string>>;
 
 /** Revisa el formulario en Angular, sin llamar a la API: nombre, categoría y que las tres fechas tengan sentido. */
 /** Código Hex escrito a mano ("C2185B", "#c2185b" o "#c15") → "#c2185b"; null si no es un color válido. */
@@ -50,10 +48,9 @@ export function normalizarHex(texto: string): string | null {
   return /^[0-9a-f]{6}$/.test(t) ? '#' + t : null;
 }
 
-export function validarCampana(f: { name: string; related_category: string; inicio: Fecha; fin: Fecha; evento: Fecha; closing_message?: string; cierra?: Fecha }): ErroresCampana {
+export function validarCampana(f: { name: string; inicio: Fecha; fin: Fecha; evento: Fecha; closing_message?: string; cierra?: Fecha }): ErroresCampana {
   const e: ErroresCampana = {};
   if (!f.name.trim()) e.name = 'Escribe el nombre de la campaña.';
-  if (!f.related_category) e.related_category = 'Elige la categoría relacionada.';
 
   const existe = (x: Fecha) => x.dia <= DIAS_DEL_MES[x.mes - 1];
   const nombre = (x: Fecha) => `${x.dia} de ${MESES[x.mes - 1]}`;
@@ -92,12 +89,12 @@ export function despedidaValida(inicio: string, fin: string, hasta: string): boo
 }
 
 interface Formulario {
-  name: string; related_category: string; inicio: Fecha; fin: Fecha; evento: Fecha;
+  name: string; inicio: Fecha; fin: Fecha; evento: Fecha;
   tagline: string; slogan: string; color: string; emoji: string; closing_message: string; cierra: Fecha; seo_title: string; seo_description: string; is_active: boolean;
 }
 
 const VACIO: Formulario = {
-  name: '', related_category: '', inicio: { dia: 1, mes: 1 }, fin: { dia: 14, mes: 2 }, evento: { dia: 14, mes: 2 },
+  name: '', inicio: { dia: 1, mes: 1 }, fin: { dia: 14, mes: 2 }, evento: { dia: 14, mes: 2 },
   tagline: '', slogan: '', color: '', emoji: '', closing_message: '', cierra: { dia: 14, mes: 3 }, seo_title: '', seo_description: '', is_active: true,
 };
 
@@ -111,7 +108,6 @@ const VACIO: Formulario = {
 })
 export class AdminCampanas implements OnInit {
   private servicio = inject(CampanasAdminService);
-  private categoriasApi = inject(CategoriasAdminService);
   private productosApi = inject(ProductosAdminService);
   private avisos = inject(AvisosService);
   private destroyRef = inject(DestroyRef);
@@ -147,7 +143,6 @@ export class AdminCampanas implements OnInit {
   tinteVistaPrevia(): string { return `color-mix(in srgb, ${this.colorVistaPrevia()} 14%, white)`; }
 
   campanas = signal<CampanaAdmin[]>([]);
-  categorias = signal<CategoriaAdmin[]>([]);
   productos = signal<ProductoAdmin[]>([]);
   cargando = signal(true);
   guardando = signal(false);
@@ -180,13 +175,12 @@ export class AdminCampanas implements OnInit {
 
   cargar(): void {
     this.cargando.set(true);
-    forkJoin({ campanas: this.servicio.listar(), categorias: this.categoriasApi.listar(), productos: this.productosApi.listar() }).pipe(
+    forkJoin({ campanas: this.servicio.listar(), productos: this.productosApi.listar() }).pipe(
       takeUntilDestroyed(this.destroyRef),
       finalize(() => this.cargando.set(false)),
     ).subscribe({
       next: r => {
         this.campanas.set(r.campanas);
-        this.categorias.set(r.categorias);
         this.productos.set(r.productos);
       },
       error: (e: ErrorApi) => this.error.set(e.message),
@@ -209,7 +203,7 @@ export class AdminCampanas implements OnInit {
     this.limpiar();
     this.slugActual = c.slug;
     this.form = {
-      name: c.name, related_category: c.related_category.slug,
+      name: c.name,
       inicio: leerFechaAnual(c.start_md), fin: leerFechaAnual(c.end_md), evento: leerFechaAnual(c.event_md),
       tagline: c.tagline ?? '', slogan: c.slogan ?? '', color: c.theme_color ?? '', emoji: c.emoji ?? '', closing_message: c.closing_message ?? '', cierra: c.closing_until_md ? leerFechaAnual(c.closing_until_md) : structuredClone(VACIO.cierra), seo_title: c.seo_title ?? '', seo_description: c.seo_description ?? '', is_active: c.is_active,
     };
@@ -259,7 +253,6 @@ export class AdminCampanas implements OnInit {
     this.guardando.set(true);
     const datos = {
       name: this.form.name.trim(),
-      related_category: this.form.related_category,
       start_md: aFechaAnual(this.form.inicio),
       end_md: aFechaAnual(this.form.fin),
       event_md: aFechaAnual(this.form.evento),
@@ -296,7 +289,7 @@ export class AdminCampanas implements OnInit {
     const e = validarCampana(this.form);
     const escrito = this.hexTexto();
     if (escrito?.trim() && !normalizarHex(escrito)) e.color = 'El color debe ser un código Hex como #C2185B (6 letras o números).';
-    if (!this.intento()) { delete e.name; delete e.related_category; }
+    if (!this.intento()) { delete e.name; }
     return e;
   }
 

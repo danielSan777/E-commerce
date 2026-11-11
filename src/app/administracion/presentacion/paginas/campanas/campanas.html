@@ -24,14 +24,6 @@
         <small class="ayuda" role="status">La dirección nueva será <strong>/{{ slugMostrado() }}</strong>. La anterior (<strong>/{{ slugActual }}</strong>) seguirá funcionando y llevará a la nueva.</small>
       }
 
-      <label for="categoria">Categoría relacionada</label>
-      <select id="categoria" name="categoria" [(ngModel)]="form.related_category" [attr.aria-invalid]="errores().related_category ? true : null" aria-describedby="ayuda-categoria err-categoria">
-        <option value="">Elige una categoría</option>
-        @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
-      </select>
-      @if (errores().related_category; as m) { <small id="err-categoria" class="campo-error" role="alert">{{ m }}</small> }
-      <small id="ayuda-categoria" class="ayuda">Fuera de temporada, la campaña muestra los regalos de esta categoría.</small>
-
       <label for="inicio-dia">La temporada empieza</label>
       <div class="fecha" [class.invalida]="errores().inicio">
         <select id="inicio-dia" [attr.aria-invalid]="errores().inicio ? true : null" name="inicio-dia" [(ngModel)]="form.inicio.dia" aria-label="Día de inicio">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>

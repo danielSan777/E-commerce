@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of, switchMap, tap } from 'rxjs';
-import { CurrencyPipe, LowerCasePipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CampanaContrato } from '../../../dominio/interfaces/campana';
@@ -17,7 +17,7 @@ import { VideoAuto } from '../../../../shared/directivas/video-auto';
 // fuera de temporada la URL sigue respondiendo con "llegará muy pronto" (Paso 6).
 @Component({
   selector: 'app-campana',
-  imports: [CurrencyPipe, LowerCasePipe, RouterLink, ComoFunciona, NoEncontrada, VideoAuto, CampanaBanner],
+  imports: [CurrencyPipe, RouterLink, ComoFunciona, NoEncontrada, VideoAuto, CampanaBanner],
   templateUrl: './campana.html',
   styleUrl: './campana.css',
 })

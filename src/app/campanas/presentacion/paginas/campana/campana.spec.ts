@@ -11,7 +11,6 @@ const esperar = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
 const campanaApi = (state: 'active' | 'upcoming', extra = {}) => ({
     slug: 'san-valentin', name: 'San Valentín', state, season_year: state === 'active' ? 2027 : 2028, event_date: '2027-02-14',
     order_deadline: null, tagline: 'Un regalo con su nombre que sigue creciendo', slogan: 'Las flores duran una semana. Esta maceta, años.',
-    related_category: { slug: 'amor', name: 'Amor', url: '/amor' },
     products: ['bob', 'homero', 'doctor'].map(s => productoListadoApi(s)),
     seo: { title: null, description: null, canonical: 'https://jardindesele.com/san-valentin', og_image: null }, ...extra,
 });
@@ -45,7 +44,7 @@ describe('Campana (/san-valentin con datos de Laravel)', () => {
         expect(html.querySelectorAll('.producto').length).toBe(3);
         expect(html.querySelector('.personalizar')?.getAttribute('href')).toBe('/producto/bob/personalizar');
         expect(html.textContent).toContain('Las flores duran una semana. Esta maceta, años.');
-        expect(html.textContent).toContain('Ver más regalos de Amor');
+        expect(html.textContent).toContain('Explorar las categorías');
     });
 
     it('si Laravel informa la fecha límite, se muestra', async () => {
