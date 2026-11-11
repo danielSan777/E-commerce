@@ -54,13 +54,35 @@ describe('Campana (/san-valentin con datos de Laravel)', () => {
         expect(html.querySelector('.fecha')?.textContent).toContain('Pide hasta el martes 9');
     });
 
-    it('fuera de temporada responde con "San Valentín 2028 llegará muy pronto" y regalos de Amor', async () => {
+    it('fuera de temporada no dibuja nada (la guarda de rutas lleva al público a la página principal)', async () => {
         const html = await montar('san-valentin', campanaApi('upcoming'));
 
-        expect(html.querySelector('h1')?.textContent).toContain('San Valentín 2028');
-        expect(html.textContent).toContain('llegará muy pronto');
-        expect(html.querySelector('.hero a.boton')?.getAttribute('href')).toBe('/amor');
-        expect(html.querySelector('.promesa')).toBeNull();
+        expect(html.querySelector('h1')).toBeNull();
+        expect(html.querySelector('.producto')).toBeNull();
+    });
+
+    it('la vista previa del administrador muestra la página y avisa que el público no la ve', async () => {
+        TestBed.configureTestingModule({
+            imports: [Campana],
+            providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' },
+                { provide: ActivatedRoute, useValue: { snapshot: { data: { campana: 'san-valentin' } } } }],
+        });
+        const ctrl = TestBed.inject(HttpTestingController);
+        const { CampanaService } = await import('../../../aplicacion/servicios/CampanaService');
+        const previa = TestBed.inject(CampanaService).vistaPrevia('san-valentin');
+        const hecho = new Promise(r => previa.subscribe(r));
+        ctrl.expectOne('/api/v1/admin/campaigns/san-valentin/preview').flush(campanaApi('active'));
+        await hecho;
+
+        const fixture = TestBed.createComponent(Campana);
+        fixture.detectChanges();
+        await esperar();
+        fixture.detectChanges();
+        const html = fixture.nativeElement as HTMLElement;
+
+        ctrl.expectNone('/api/v1/campaigns/san-valentin');
+        expect(html.querySelectorAll('.producto').length).toBe(3);
+        expect(html.querySelector('.vista-previa')?.textContent).toContain('Vista previa del administrador');
     });
 
     it('una campaña que Laravel no encuentra muestra el 404', async () => {

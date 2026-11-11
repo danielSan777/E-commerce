@@ -43,6 +43,10 @@ export class Campana {
     { initialValue: undefined },
   );
   enTemporada = computed(() => this.campana()?.state === 'active');
+  /** El administrador la ve antes de publicarla: se avisa que el público no puede entrar. */
+  readonly esVistaPrevia = computed(() => { const c = this.campana(); return !!c && this.servicio.esVistaPrevia(c.slug); });
+  /** Solo se dibuja en temporada o en vista previa: el servidor no sabe quién es y deja la página vacía hasta que el navegador decide. */
+  readonly mostrar = computed(() => this.enTemporada());
 
   // Diseño propio de la campaña: el color reemplaza al vino/rosa de siempre (solo si es un #RRGGBB válido).
   color = computed(() => { const c = this.campana()?.theme.color; return c && /^#[0-9a-f]{6}$/i.test(c) ? c : null; });

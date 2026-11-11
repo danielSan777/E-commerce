@@ -1,5 +1,9 @@
 @if (campana(); as c) {
+@if (mostrar()) {
 <div class="pagina" [style.--jds-vino]="color()" [style.--jds-rosa]="tinte()">
+    @if (esVistaPrevia()) {
+    <p class="vista-previa" role="status"><i class="bi bi-eye" aria-hidden="true"></i> Vista previa del administrador: el público todavía no puede ver esta página.</p>
+    }
 
     <!-- Encabezado -->
     <section class="hero">
@@ -71,6 +75,7 @@
 
     <a class="boton grande" [routerLink]="c.related_category.url">Ver más regalos de {{ c.related_category.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
 </div>
+}
 } @else if (fallo()) {
 <p class="estado" role="alert">No pudimos cargar esta página. Inténtalo de nuevo en unos minutos.</p>
 } @else if (campana() === null) {

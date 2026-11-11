@@ -5,6 +5,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { Router, UrlSegment, UrlTree, provideRouter } from '@angular/router';
 import { API_URL } from '../../core/configuracion/api';
 import { campanaGuard } from './campanaGuard';
+import { SesionService } from '../../cuenta/aplicacion/servicios/SesionService';
 
 describe('campanaGuard (¿esta dirección es una campaña?)', () => {
     let ctrl: HttpTestingController;
@@ -34,6 +35,26 @@ describe('campanaGuard (¿esta dirección es una campaña?)', () => {
             expect(r instanceof UrlTree).toBe(true);
             expect(TestBed.inject(Router).serializeUrl(r as UrlTree)).toBe('/');
         }
+    });
+
+    it('el administrador entra a una campaña fuera de temporada con la vista previa de Laravel', async () => {
+        TestBed.inject(SesionService)['guardar']({ token: 't', user: { id: 1, name: 'A', email: 'a@a.com', role: 'admin' } } as never);
+        const p = firstValueFrom(preguntar('san-valentin-previa') as Observable<boolean | UrlTree>);
+        ctrl.expectOne('/api/v1/campaigns/san-valentin-previa').flush({ slug: 'san-valentin-previa', name: 'SV', state: 'upcoming', products: [], seo: {}, related_category: {} });
+        await Promise.resolve();
+        ctrl.expectOne('/api/v1/admin/campaigns/san-valentin-previa/preview').flush({ slug: 'san-valentin-previa', name: 'SV', state: 'active', products: [], seo: {}, related_category: {} });
+
+        expect(await p).toBe(true);
+    });
+
+    it('el administrador también entra a una campaña inactiva (el público recibe 404)', async () => {
+        TestBed.inject(SesionService)['guardar']({ token: 't', user: { id: 1, name: 'A', email: 'a@a.com', role: 'admin' } } as never);
+        const p = firstValueFrom(preguntar('san-valentin-inactiva') as Observable<boolean | UrlTree>);
+        ctrl.expectOne('/api/v1/campaigns/san-valentin-inactiva').flush({ code: 'not_found', message: 'x' }, { status: 404, statusText: 'Not Found' });
+        await Promise.resolve();
+        ctrl.expectOne('/api/v1/admin/campaigns/san-valentin-inactiva/preview').flush({ slug: 'san-valentin-inactiva', name: 'SV', state: 'active', products: [], seo: {}, related_category: {} });
+
+        expect(await p).toBe(true);
     });
 
     it('si Laravel responde 404, la ruta no coincide y el router sigue con las categorías', async () => {

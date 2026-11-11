@@ -179,7 +179,7 @@
             @if (c.cover_url) { <img class="miniatura" [src]="c.cover_url" alt="Portada" width="60" height="60"> }
           </div>
           <div class="acciones">
-            <a class="boton" [href]="'/' + c.slug" target="_blank" rel="noopener">Ver en la tienda</a>
+            <a class="boton" [href]="'/' + c.slug" target="_blank" rel="noopener">Ver página completa</a>
             <a class="boton" [routerLink]="['/admin/campanas', c.slug, 'imagenes']">Portada</a>
             <button type="button" (click)="editar(c)">Editar</button>
             @if (porEliminar() === c.slug) {

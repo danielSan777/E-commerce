@@ -41,3 +41,5 @@
 .slogan .bi { color: color-mix(in srgb, var(--jds-vino) 55%, #fff); }
 
 .estado { text-align: center; padding: 60px 16px; color: #555; }
+
+.vista-previa { margin: 0 0 12px; padding: 10px 14px; background: #fff3cd; border: 1px solid #e0b84a; border-radius: 12px; color: #664d03; font-weight: 700; text-align: center; }
