@@ -18,12 +18,14 @@
             <a class="boton" href="#regalos">Ver regalos <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
             } @else {
             <h1>{{ c.name }} {{ c.season_year }}</h1>
-            <p class="lema">llegará muy pronto</p>
+            <p class="lema">{{ c.state === 'closing' && c.closing_message ? c.closing_message : 'llegará muy pronto' }}</p>
             <p class="fecha">Mientras tanto, mira los regalos de {{ c.related_category.name | lowercase }} que ya puedes pedir.</p>
             <a class="boton" [routerLink]="c.related_category.url">Ver regalos de {{ c.related_category.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
             }
         </div>
-        @if (portadaUrl(); as portada) {
+        @if (c.theme.video; as v) {
+        <video class="hero-imagen portada" appVideoAuto [src]="v.url" [attr.poster]="v.poster" muted playsinline preload="metadata" aria-hidden="true"></video>
+        } @else if (portadaUrl(); as portada) {
         <img class="hero-imagen portada" [src]="portada" [attr.srcset]="portadaSrcset()" sizes="(min-width: 768px) 220px, 130px" [alt]="c.theme.cover?.alt ?? ''" width="150" height="150">
         } @else if (c.products[0]; as p) { <img class="hero-imagen" [src]="p.image" alt="" width="150" height="150"> }
     </section>

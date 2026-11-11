@@ -9,7 +9,7 @@ const esperar = () => new Promise<void>(r => setTimeout(r));
 
 const campana = (extra = {}) => ({
   slug: 'san-valentin', name: 'San Valentín', related_category: { slug: 'amor', name: 'Amor' },
-  start_md: '01-15', end_md: '02-14', event_md: '02-14', tagline: null, slogan: null, theme_color: null, emoji: null, cover_url: null, is_active: true,
+  start_md: '01-15', end_md: '02-14', event_md: '02-14', tagline: null, slogan: null, theme_color: null, emoji: null, cover_url: null, video_url: null, closing_message: null, closing_until_md: null, is_active: true,
   seo_title: null, seo_description: null, products: [{ sku: 'A-2', slug: 'b', name: 'Dos' }], state: 'upcoming', season_year: 2027, updated_at: 'x', ...extra,
 });
 const cat = (slug: string, name: string) => ({ slug, name });
@@ -44,6 +44,22 @@ describe('validarCampana (sin llamar a la API)', () => {
   it('rechaza días que no existen (31 de febrero) pero acepta el 29 de febrero', () => {
     expect(validarCampana({ ...ok, fin: { dia: 31, mes: 2 } }).fin).toContain('no existe');
     expect(validarCampana({ ...ok, inicio: { dia: 29, mes: 2 }, fin: { dia: 1, mes: 3 }, evento: { dia: 1, mes: 3 } })).toEqual({});
+  });
+
+  it('el mensaje de cierre pide una fecha después del fin y antes del siguiente inicio', () => {
+    const base = { ...ok, inicio: { dia: 15, mes: 1 }, fin: { dia: 14, mes: 2 }, evento: { dia: 14, mes: 2 }, closing_message: 'San Valentín regresará pronto' };
+    expect(validarCampana({ ...base, cierra: { dia: 14, mes: 3 } }).cierre).toBeUndefined();
+    expect(validarCampana({ ...base, cierra: { dia: 14, mes: 2 } }).cierre).toContain('después de que termina');
+    expect(validarCampana({ ...base, cierra: { dia: 1, mes: 2 } }).cierre).toContain('después de que termina');
+    expect(validarCampana({ ...base, cierra: { dia: 31, mes: 4 } }).cierre).toContain('no existe');
+  });
+
+  it('sin mensaje de cierre no se revisa la fecha', () => {
+    expect(validarCampana({ ...ok, closing_message: ' ', cierra: { dia: 1, mes: 11 } }).cierre).toBeUndefined();
+  });
+
+  it('el cierre puede cruzar el año (Navidad hasta el 10 de enero)', () => {
+    expect(validarCampana({ ...ok, closing_message: 'x', cierra: { dia: 10, mes: 1 } }).cierre).toBeUndefined();
   });
 
   it('pide nombre y categoría', () => {
@@ -155,7 +171,7 @@ describe('AdminCampanas', () => {
 
         expect(c.form.color).toBe('#1b5e20');
         expect(c.form.emoji).toBe('🎄');
-        expect((fixture.nativeElement.querySelector('.vista-previa') as HTMLElement).style.getPropertyValue('--c')).toBe('#1b5e20');
+        expect((fixture.nativeElement.querySelector('.vista-previa .campana') as HTMLElement).style.getPropertyValue('--campana')).toBe('#1b5e20');
     });
 
   it('con fechas al revés muestra el aviso al instante y no llama a la API al guardar', async () => {
@@ -190,5 +206,43 @@ describe('AdminCampanas', () => {
     ctrl.expectNone('/api/v1/admin/campaigns');
     expect(fixture.nativeElement.querySelector('#err-name').textContent).toContain('Escribe el nombre');
     expect(fixture.nativeElement.querySelector('#err-categoria').textContent).toContain('Elige la categoría');
+  });
+
+  it('al guardar envía el mensaje de cierre con su fecha límite (o nulos si está vacío)', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.nueva();
+    c.form.name = 'Otra';
+    c.form.related_category = 'amor';
+    c.form.closing_message = '  Otra regresará pronto ';
+    c.form.cierra = { dia: 10, mes: 3 };
+    c.guardar(new Event('submit'));
+    const r = ctrl.expectOne('/api/v1/admin/campaigns');
+    expect(r.request.body.closing_message).toBe('Otra regresará pronto');
+    expect(r.request.body.closing_until_md).toBe('03-10');
+    r.flush({ message: 'x' }, { status: 422, statusText: 'Unprocessable' });
+
+    c.form.closing_message = '';
+    c.guardar(new Event('submit'));
+    const sin = ctrl.expectOne('/api/v1/admin/campaigns');
+    expect(sin.request.body.closing_message).toBeNull();
+    expect(sin.request.body.closing_until_md).toBeNull();
+    sin.flush({ message: 'x' }, { status: 422, statusText: 'Unprocessable' });
+  });
+
+  it('la vista previa muestra la foto o el video de la campaña y el mensaje de cierre', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.editar({ ...c.campanas()[0], video_url: 'http://x/v.mp4', closing_message: 'San Valentín regresará pronto', closing_until_md: '03-10' });
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+
+    expect(html.querySelector('.vista-previa video.campana-portada')?.getAttribute('src')).toBe('http://x/v.mp4');
+    expect(html.querySelector('.vista-previa .boton')).not.toBeNull();
+
+    c.vistaCierre.set(true);
+    fixture.detectChanges();
+    expect(html.querySelector('.vista-previa h2')?.textContent).toContain('San Valentín regresará pronto');
+    expect(html.querySelector('.vista-previa .boton')).toBeNull();
   });
 });

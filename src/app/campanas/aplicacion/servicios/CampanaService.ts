@@ -6,7 +6,7 @@ import { IMAGEN_PENDIENTE } from '../../../categorias/aplicacion/servicios/Categ
 import { CampanaContrato, CampanaResumen, TemaCampana } from '../../dominio/interfaces/campana';
 
 const SITIO = 'https://jardindesele.com';
-const TEMA_VACIO: TemaCampana = { color: null, emoji: null, cover: null };
+const TEMA_VACIO: TemaCampana = { color: null, emoji: null, cover: null, video: null };
 
 // Campaña de temporada desde Laravel (GET /api/v1/campaigns/{slug}). Laravel decide si está en temporada o no, el año,
 // la fecha del evento y qué productos se muestran; Angular solo lo dibuja.

@@ -79,7 +79,7 @@ describe('Campana (/san-valentin con datos de Laravel)', () => {
     it('con diseño propio usa su color, su emoji y su portada', async () => {
         const html = await montar('navidad', campanaApi('active', {
             slug: 'navidad', name: 'Navidad',
-            theme: { color: '#1b5e20', emoji: '🎄', cover: { alt: 'Pino', w: 1, h: 1, srcset: { '600': 'http://x/p-600.webp', '1080': 'http://x/p-1080.webp' } } },
+            theme: { color: '#1b5e20', emoji: '🎄', cover: { alt: 'Pino', w: 1, h: 1, srcset: { '600': 'http://x/p-600.webp', '1080': 'http://x/p-1080.webp' } }, video: null },
         }));
         const pagina = html.querySelector('.pagina') as HTMLElement;
 
@@ -101,7 +101,7 @@ describe('Campana (/san-valentin con datos de Laravel)', () => {
     });
 
     it('un color que no sea #RRGGBB se ignora', async () => {
-        const html = await montar('x', campanaApi('active', { theme: { color: 'red; background:url(x)', emoji: null, cover: null } }));
+        const html = await montar('x', campanaApi('active', { theme: { color: 'red; background:url(x)', emoji: null, cover: null, video: null } }));
 
         expect((html.querySelector('.pagina') as HTMLElement).style.getPropertyValue('--jds-vino')).toBe('');
     });

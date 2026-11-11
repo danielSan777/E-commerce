@@ -10,12 +10,13 @@ import { PromesaService } from '../../../../checkout/aplicacion/servicios/Promes
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { ComoFunciona } from '../../../../shared/componentes/como-funciona/como-funciona';
 import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
+import { VideoAuto } from '../../../../shared/directivas/video-auto';
 
 // Plantilla de campañas de temporada (/san-valentin, /navidad…), cada una con su color, emoji y portada. En temporada muestra los productos elegidos y la fecha límite;
 // fuera de temporada la URL sigue respondiendo con "llegará muy pronto" (Paso 6).
 @Component({
   selector: 'app-campana',
-  imports: [CurrencyPipe, LowerCasePipe, RouterLink, ComoFunciona, NoEncontrada],
+  imports: [CurrencyPipe, LowerCasePipe, RouterLink, ComoFunciona, NoEncontrada, VideoAuto],
   templateUrl: './campana.html',
   styleUrl: './campana.css',
 })

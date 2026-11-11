@@ -294,10 +294,11 @@ describe('GaleriaImagenes', () => {
     expect((fixture.nativeElement as HTMLElement).querySelector('.subir.video input[accept="video/mp4"]')).not.toBeNull(); // se puede subir otro
   });
 
-  it('las campañas no tienen sección de video', async () => {
+  it('las campañas también aceptan video de portada (hasta 1 minuto)', async () => {
     const fixture = await montar([], 'campaigns', 'san-valentin');
-    expect(fixture.componentInstance.puedeVideo()).toBe(false);
-    expect((fixture.nativeElement as HTMLElement).querySelector('.subir.video')).toBeNull();
+    expect(fixture.componentInstance.puedeVideo()).toBe(true);
+    expect(fixture.componentInstance.limiteVideo().segundos).toBe(60);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.subir.video')).not.toBeNull();
   });
 
   it('la portada elegida se ve como foto (no solo su nombre) y se puede quitar', async () => {

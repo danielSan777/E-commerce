@@ -6,13 +6,16 @@ import { ProductoCategoria, SeoContrato } from '../../../categorias/dominio/inte
 export interface TemaCampana {
     color: string | null;                 // "#C2185B"
     emoji: string | null;                 // "🎄"
-    cover: { alt: string | null; w: number | null; h: number | null; srcset: Record<string, string> } | null;   // portada
+    cover: { alt: string | null; w: number | null; h: number | null; srcset: Record<string, string> } | null;   // portada (foto)
+    video: { url: string; poster: string | null; duration_s: number | null } | null;                              // portada (video de hasta 1 minuto)
 }
 
 /** Resumen de la campaña en temporada (GET /campaigns/current) para el banner de la página principal. */
 export interface CampanaResumen {
     slug: string;
     name: string;
+    state: 'active' | 'closing';          // en temporada | despidiéndose (se muestra el mensaje de cierre)
+    closing_message: string | null;       // "San Valentín regresará pronto": solo cuando state es 'closing'
     url: string;                          // "/navidad"
     season_year: number;
     event_date: string;
@@ -24,7 +27,8 @@ export interface CampanaResumen {
 export interface CampanaContrato {
     slug: string;
     name: string;
-    state: 'active' | 'upcoming';         // en temporada | fuera de temporada
+    state: 'active' | 'closing' | 'upcoming';   // en temporada | despidiéndose | fuera de temporada
+    closing_message: string | null;
     season_year: number;
     event_date: string;                   // YYYY-MM-DD
     order_deadline: { date: string; label: string } | null;   // Laravel la informa cuando exista el calendario operativo (Paso 9)

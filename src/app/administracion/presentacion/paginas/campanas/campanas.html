@@ -58,6 +58,40 @@
       <input id="slogan" name="slogan" [(ngModel)]="form.slogan" placeholder="Las flores duran una semana. Esta maceta, años." />
 
       <fieldset class="google">
+        <legend>Al terminar la campaña (opcional)</legend>
+        <label for="closing_message">Mensaje de cierre</label>
+        <input id="closing_message" name="closing_message" maxlength="160" [(ngModel)]="form.closing_message" placeholder="San Valentín regresará pronto" aria-describedby="ayuda-cierre" />
+        <small id="ayuda-cierre" class="ayuda">{{ form.closing_message.length }} de 160. Se muestra en la página principal en lugar de la campaña, cuando la temporada ya terminó.</small>
+
+        @if (form.closing_message.trim()) {
+          <label for="cierra-dia">Mostrar el mensaje hasta</label>
+          <div class="fecha" [class.invalida]="errores().cierre">
+            <select id="cierra-dia" name="cierra-dia" [(ngModel)]="form.cierra.dia" [attr.aria-invalid]="errores().cierre ? true : null" aria-label="Día hasta el que se muestra el mensaje">@for (d of dias; track d) { <option [ngValue]="d">{{ d }}</option> }</select>
+            <select name="cierra-mes" [(ngModel)]="form.cierra.mes" aria-label="Mes hasta el que se muestra el mensaje">@for (m of meses; track m; let i = $index) { <option [ngValue]="i + 1">{{ m }}</option> }</select>
+          </div>
+          @if (errores().cierre; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+          <small class="ayuda">Pasada esa fecha no se muestra nada hasta que vuelva la temporada.</small>
+        }
+      </fieldset>
+
+      <section class="vista-previa" aria-label="Vista previa de la campaña">
+        <h3>Así se verá en la página principal</h3>
+        <div class="alternar" role="group" aria-label="Qué mostrar en la vista previa">
+          <button type="button" [class.activo]="!vistaCierre()" (click)="vistaCierre.set(false)">En temporada</button>
+          <button type="button" [class.activo]="vistaCierre()" [disabled]="!form.closing_message.trim()" (click)="vistaCierre.set(true)">Al terminar</button>
+        </div>
+        <app-campana-banner [nombre]="form.name.trim() || 'Nombre de la campaña'" [lema]="form.tagline.trim() || null" [frase]="form.slogan.trim() || null"
+          [emoji]="form.emoji.trim() || null" [color]="form.color || null" [foto]="portadaFoto()" [video]="portadaVideo()"
+          [cierre]="vistaCierre() && form.closing_message.trim() ? form.closing_message.trim() : null" />
+        @if (editando() === '') {
+          <small class="ayuda">La foto o el video de portada se suben después de guardar la campaña, con el botón «Portada».</small>
+        } @else if (!portadaFoto() && !portadaVideo()) {
+          <small class="ayuda">Todavía no tiene foto ni video: se muestra el emoji. Súbelos con el botón «Portada» de la lista (la foto o el video de hasta 1 minuto).</small>
+        }
+        <small class="ayuda">Esta vista no cambia nada en la tienda: la campaña solo se ve ahí cuando está activa y en temporada.</small>
+      </section>
+
+      <fieldset class="google">
         <legend>Diseño de la campaña (opcional)</legend>
 
         <label for="color">Color principal</label>
@@ -75,13 +109,6 @@
           @if (editando() !== '') { sube la imagen desde la lista, con el botón "Portada". }
           @else { guarda primero la campaña y luego sube su imagen con el botón "Portada". }
         </p>
-
-        <div class="vista-previa" [style.--c]="colorVistaPrevia()" [style.--t]="tinteVistaPrevia()" aria-label="Así se verá el banner">
-          <small>Así se verá el banner</small>
-          <p class="etiqueta">@if (form.emoji.trim()) { <span aria-hidden="true">{{ form.emoji }}</span> } {{ form.name || 'Nombre de la campaña' }}</p>
-          <p class="titulo-previa">{{ form.tagline || 'El lema de la campaña' }}</p>
-          <span class="boton-previa">Ver campaña</span>
-        </div>
       </fieldset>
 
       <label>Productos de la campaña</label>
@@ -146,7 +173,7 @@
           <div class="datos">
             <strong>@if (c.emoji) { <span aria-hidden="true">{{ c.emoji }}</span> } {{ c.name }}</strong>
             <small>/{{ c.slug }} · {{ textoFecha(c.start_md) }} al {{ textoFecha(c.end_md) }} · evento el {{ textoFecha(c.event_md) }} · {{ c.products.length }} producto(s)</small>
-            <span class="estado" [class.activa]="c.state === 'active'">{{ c.state === 'active' ? 'En temporada ahora' : 'Fuera de temporada · llega en ' + c.season_year }}</span>
+            <span class="estado" [class.activa]="c.state === 'active'">{{ c.state === 'active' ? 'En temporada ahora' : c.state === 'closing' ? 'Mostrando el mensaje de cierre' : 'Fuera de temporada · llega en ' + c.season_year }}</span>
             @if (!c.is_active) { <span class="inactiva">Inactiva</span> }
             @if (c.theme_color) { <span class="muestra" [style.background]="c.theme_color" [attr.title]="'Color ' + c.theme_color"></span> }
             @if (c.cover_url) { <img class="miniatura" [src]="c.cover_url" alt="Portada" width="60" height="60"> }

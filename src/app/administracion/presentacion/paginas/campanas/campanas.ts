@@ -4,6 +4,7 @@ import { finalize, forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
+import { CampanaBanner } from '../../../../campanas/presentacion/componentes/campana-banner/campana-banner';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { CampanasAdminService } from '../../../aplicacion/servicios/CampanasAdminService';
 import { CategoriasAdminService } from '../../../aplicacion/servicios/CategoriasAdminService';
@@ -39,10 +40,10 @@ interface Fecha { dia: number; mes: number }
 /** Días de cada mes (febrero con 29: la fecha se repite todos los años, incluidos los bisiestos). */
 const DIAS_DEL_MES = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-export type ErroresCampana = Partial<Record<'name' | 'related_category' | 'inicio' | 'fin' | 'evento', string>>;
+export type ErroresCampana = Partial<Record<'name' | 'related_category' | 'inicio' | 'fin' | 'evento' | 'cierre', string>>;
 
 /** Revisa el formulario en Angular, sin llamar a la API: nombre, categoría y que las tres fechas tengan sentido. */
-export function validarCampana(f: { name: string; related_category: string; inicio: Fecha; fin: Fecha; evento: Fecha }): ErroresCampana {
+export function validarCampana(f: { name: string; related_category: string; inicio: Fecha; fin: Fecha; evento: Fecha; closing_message?: string; cierra?: Fecha }): ErroresCampana {
   const e: ErroresCampana = {};
   if (!f.name.trim()) e.name = 'Escribe el nombre de la campaña.';
   if (!f.related_category) e.related_category = 'Elige la categoría relacionada.';
@@ -56,23 +57,47 @@ export function validarCampana(f: { name: string; related_category: string; inic
   // Las fechas son "MM-DD": comparadas como texto quedan en orden de calendario.
   if (!e.inicio && !e.fin && aFechaAnual(f.fin) < aFechaAnual(f.inicio)) e.fin = 'La temporada no puede terminar antes de empezar.';
   if (!e.inicio && !e.evento && aFechaAnual(f.evento) < aFechaAnual(f.inicio)) e.evento = 'El evento no puede ser antes de que empiece la temporada.';
+
+  // Mensaje de cierre: la fecha límite va después de que termina la temporada y antes de que empiece la siguiente (puede cruzar el año).
+  if (f.closing_message?.trim() && f.cierra && !e.inicio && !e.fin) {
+    if (!existe(f.cierra)) e.cierre = `El ${nombre(f.cierra)} no existe. Elige otro día.`;
+    else if (!despedidaValida(aFechaAnual(f.inicio), aFechaAnual(f.fin), aFechaAnual(f.cierra))) e.cierre = 'Elige una fecha después de que termina la temporada y antes de que empiece la siguiente.';
+  }
   return e;
 }
+
+/** Día del año de un "MM-DD" (con 2028, bisiesto, para que el 29 de febrero exista). */
+function diaDelAnio(md: string): number {
+  const [m, d] = md.split('-').map(Number);
+  return DIAS_DEL_MES.slice(0, m - 1).reduce((a, b) => a + b, 0) + d;
+}
+
+/** Días que hay que avanzar (dando la vuelta al año si hace falta) para ir de `a` a `b`. */
+function diasHasta(a: string, b: string): number {
+  return (diaDelAnio(b) - diaDelAnio(a) + 366) % 366;
+}
+
+/** Misma regla que Laravel (TemporadaDeCampana::despedidaValida): al menos 1 día después del fin y antes del próximo inicio. */
+export function despedidaValida(inicio: string, fin: string, hasta: string): boolean {
+  const d = diasHasta(fin, hasta);
+  return d >= 1 && d < diasHasta(fin, inicio);
+}
+
 interface Formulario {
   name: string; related_category: string; inicio: Fecha; fin: Fecha; evento: Fecha;
-  tagline: string; slogan: string; color: string; emoji: string; seo_title: string; seo_description: string; is_active: boolean;
+  tagline: string; slogan: string; color: string; emoji: string; closing_message: string; cierra: Fecha; seo_title: string; seo_description: string; is_active: boolean;
 }
 
 const VACIO: Formulario = {
   name: '', related_category: '', inicio: { dia: 1, mes: 1 }, fin: { dia: 14, mes: 2 }, evento: { dia: 14, mes: 2 },
-  tagline: '', slogan: '', color: '', emoji: '', seo_title: '', seo_description: '', is_active: true,
+  tagline: '', slogan: '', color: '', emoji: '', closing_message: '', cierra: { dia: 14, mes: 3 }, seo_title: '', seo_description: '', is_active: true,
 };
 
 // Campañas de temporada en el panel (San Valentín, Día de la Madre…). Angular solo muestra lo que Laravel responde:
 // si la campaña está en temporada y de qué año lo calcula Laravel con la fecha de hoy.
 @Component({
   selector: 'app-admin-campanas',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, CampanaBanner],
   templateUrl: './campanas.html',
   styleUrl: './campanas.css',
 })
@@ -105,6 +130,11 @@ export class AdminCampanas implements OnInit {
   /** SKU de los productos elegidos, en el orden en que se mostrarán. */
   elegidos = signal<string[]>([]);
   porEliminar = signal<string | null>(null);
+  /** Foto y video de portada que ya tiene la campaña que se edita (para la vista previa). */
+  portadaFoto = signal<string | null>(null);
+  portadaVideo = signal<string | null>(null);
+  /** La vista previa muestra el banner en temporada (false) o el mensaje de cierre (true). */
+  vistaCierre = signal(false);
   /** Se pulsó Guardar al menos una vez: recién entonces se marcan los campos vacíos. */
   intento = signal(false);
 
@@ -139,6 +169,9 @@ export class AdminCampanas implements OnInit {
     this.limpiar();
     this.slugActual = '';
     this.form = structuredClone(VACIO);
+    this.portadaFoto.set(null);
+    this.portadaVideo.set(null);
+    this.vistaCierre.set(false);
     this.elegidos.set([]);
     this.intento.set(false);
     this.editando.set('');
@@ -150,8 +183,10 @@ export class AdminCampanas implements OnInit {
     this.form = {
       name: c.name, related_category: c.related_category.slug,
       inicio: leerFechaAnual(c.start_md), fin: leerFechaAnual(c.end_md), evento: leerFechaAnual(c.event_md),
-      tagline: c.tagline ?? '', slogan: c.slogan ?? '', color: c.theme_color ?? '', emoji: c.emoji ?? '', seo_title: c.seo_title ?? '', seo_description: c.seo_description ?? '', is_active: c.is_active,
+      tagline: c.tagline ?? '', slogan: c.slogan ?? '', color: c.theme_color ?? '', emoji: c.emoji ?? '', closing_message: c.closing_message ?? '', cierra: c.closing_until_md ? leerFechaAnual(c.closing_until_md) : structuredClone(VACIO.cierra), seo_title: c.seo_title ?? '', seo_description: c.seo_description ?? '', is_active: c.is_active,
     };
+    this.portadaFoto.set(c.cover_url);
+    this.portadaVideo.set(c.video_url);
     this.elegidos.set(c.products.map(p => p.sku));
     this.intento.set(false);
     this.editando.set(c.slug);
@@ -204,6 +239,8 @@ export class AdminCampanas implements OnInit {
       slogan: this.form.slogan.trim() || null,
       theme_color: this.form.color || null,
       emoji: this.form.emoji.trim() || null,
+      closing_message: this.form.closing_message.trim() || null,
+      closing_until_md: this.form.closing_message.trim() ? aFechaAnual(this.form.cierra) : null,
       is_active: this.form.is_active,
       seo_title: this.form.seo_title.trim() || null,
       seo_description: this.form.seo_description.trim() || null,
