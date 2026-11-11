@@ -7,10 +7,11 @@ import {
   output,
   PLATFORM_ID
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Accesorio, AccesorioColocado } from '../../../dominio/Accesorios';
+import { Accesorio, AccesorioColocado, ComportamientoAccesorio } from '../../../dominio/Accesorios';
+import { ConfiguracionGuardada } from '../../../dominio/configurador';
+import { ConfiguradorService } from '../../../aplicacion/servicios/ConfiguradorService';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TextoPlaca } from '../../../../shared/componentes/texto-placa/texto-placa';
 import { COLOR_DORADO_PLACA, PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE, tamanoLetra } from '../../../dominio/placa';
@@ -44,13 +45,6 @@ export interface ConfiguracionPersonalizada {
   sinTarjeta: boolean;          // "No quiero dedicatoria"
 }
 
-/** Contenido de `configuracion-producto.json` (lo que guardó el editor). */
-interface ConfiguracionGuardada {
-  ubicaciones?: UbicacionGuardada[];
-  excepciones?: ExcepcionGuardada[];
-  catalogo?: Accesorio[];
-}
-
 @Component({
   imports: [FormsModule,
     TextoPlaca,
@@ -77,8 +71,13 @@ export class Personalizador implements OnDestroy {
   colorSeleccionado = 'negro';   // color de los lentes (accesorio 1)
   colorGafas = 'negro';          // color de las gafas (accesorio 5)
 
-  private readonly ID_LENTES = 1;
-  private readonly ID_GAFAS = 5;
+  // Los lentes y las gafas se reconocen por el comportamiento que el administrador les marca (no por su número)
+  private get ID_LENTES(): number { return this.idDe('lentes'); }
+  private get ID_GAFAS(): number { return this.idDe('gafas'); }
+
+  private idDe(comportamiento: ComportamientoAccesorio): number {
+    return this.catalogo().find(a => a.comportamiento === comportamiento)?.id ?? -1;
+  }
 
   // Colores disponibles (los lentes usan negro y cafe; las gafas tambien dorado)
   private readonly COLORES: Record<string, string> = {
@@ -101,6 +100,11 @@ export class Personalizador implements OnDestroy {
 
   nombreCliente = signal('');
 
+  // true si no se pudo leer la configuración del producto (Laravel no respondió)
+  errorConfiguracion = signal(false);
+  // true cuando el producto no tiene ningún accesorio configurado todavía
+  sinConfiguracion = signal(false);
+
   // true cuando el accesorio de texto está agregado al visor
   hayTexto = computed(() =>
     this.accesoriosSeleccionados().some(a => a.tipo === 'texto')
@@ -109,7 +113,7 @@ export class Personalizador implements OnDestroy {
   private siguienteId = 1;
 
   private platformId = inject(PLATFORM_ID);
-  private http = inject(HttpClient);
+  private configurador = inject(ConfiguradorService);
   private destroyRef = inject(DestroyRef);
 
   private router = inject(Router);
@@ -154,14 +158,19 @@ export class Personalizador implements OnDestroy {
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    this.http.get<ConfiguracionGuardada>('/configuracion-producto.json').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    // Todo sale de Laravel: la configuración propia del producto o, si no la tiene, la de su categoría
+    const slug = this.producto()?.id;
+    if (slug === undefined || slug === null || slug === 'detalle') return;
+
+    this.configurador.configuracion(String(slug)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: guardado => this.aplicarConfiguracion(guardado),
-      error: error => console.error('Error al cargar la configuración:', error),
+      error: () => this.errorConfiguracion.set(true),
     });
   }
 
   private aplicarConfiguracion(guardado: ConfiguracionGuardada): void {
     try {
+      this.sinConfiguracion.set(!guardado.configurado || !(guardado.catalogo ?? []).length);
       this.ubicaciones.set((guardado.ubicaciones ?? []) as UbicacionGuardada[]);
       this.excepciones.set((guardado.excepciones ?? []) as ExcepcionGuardada[]);
       // La categoria se normaliza (sin espacios y con la primera letra en mayuscula)
@@ -310,8 +319,8 @@ export class Personalizador implements OnDestroy {
   }
 
   // ----- Accesorios que no se pueden elegir juntos: el 3 y el 4 -----
-  private readonly ID_MARCO_FOTO = 3;   // marco con foto
-  private readonly ID_MARCO_FRASE = 4;  // marco con frase
+  private get ID_MARCO_FOTO(): number { return this.idDe('marco_foto'); }    // marco con foto
+  private get ID_MARCO_FRASE(): number { return this.idDe('marco_frase'); }  // marco con frase
 
   private companeroExcluyente(id: number): number | null {
     if (id === this.ID_MARCO_FOTO) return this.ID_MARCO_FRASE;
@@ -1194,13 +1203,19 @@ export class Personalizador implements OnDestroy {
     try { localStorage.removeItem(this.claveBorrador()); } catch { /* nada */ }
   }
 
+  /** Las imágenes de accesorios llegan como URL completa; las de la tienda (maceta) son rutas de la carpeta pública. */
+  private urlDeImagen(src: string): string {
+    return /^(https?:|data:|blob:|\/)/.test(src) ? src : '/' + src;
+  }
+
   // ----- Foto de la maceta ya personalizada (para el carrito) -----
   private cargarImagen(src: string): Promise<HTMLImageElement | null> {
     return new Promise(resolve => {
       const img = new Image();
+      img.crossOrigin = 'anonymous';   // las imágenes vienen de la API (otro dominio): sin esto el canvas no deja exportar la foto
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
-      img.src = /^(https?:|data:|blob:|\/)/.test(src) ? src : '/' + src;
+      img.src = this.urlDeImagen(src);
     });
   }
 
@@ -1646,7 +1661,8 @@ export class Personalizador implements OnDestroy {
       console.error('No se pudo cargar la imagen de los lentes o las gafas');
     };
 
-    imagenNueva.src = '/' + imagen.replace(/^\//, '');
+    imagenNueva.crossOrigin = 'anonymous';
+    imagenNueva.src = this.urlDeImagen(imagen);
   }
 
   // Color (en hexadecimal) que le toca a lentes o gafas

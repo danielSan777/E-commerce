@@ -8,6 +8,11 @@
         </span>
     </div>
     }
+    @if (errorConfiguracion()) {
+    <div class="alert alert-warning" role="alert">No pudimos cargar los accesorios de este producto. Recarga la página en unos segundos.</div>
+    } @else if (sinConfiguracion()) {
+    <div class="alert alert-info" role="status">Este producto todavía no tiene accesorios configurados.</div>
+    }
     <div class="row g-3 g-lg-4">
 
         <!-- ================= PRODUCTO ================= -->
