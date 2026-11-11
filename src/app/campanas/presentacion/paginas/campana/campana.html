@@ -1,5 +1,11 @@
 @if (campana(); as c) {
-@if (mostrar()) {
+@if (despidiendose()) {
+<div class="cierre-pagina" [style.--jds-vino]="color()">
+    <app-campana-banner [nombre]="c.name" [emoji]="c.theme.emoji" [color]="c.theme.color" [foto]="portadaUrl()" [fotoAlt]="c.theme.cover?.alt ?? null"
+        [video]="c.theme.video?.url ?? null" [videoPortada]="c.theme.video?.poster ?? null" [cierre]="c.closing_message" />
+    <a class="boton grande" routerLink="/categorias">Explorar las categorías <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+</div>
+} @else if (mostrar()) {
 <div class="pagina" [style.--jds-vino]="color()" [style.--jds-rosa]="tinte()">
     @if (esVistaPrevia()) {
     <p class="vista-previa" role="status"><i class="bi bi-eye" aria-hidden="true"></i> Vista previa del administrador: el público todavía no puede ver esta página.</p>
@@ -15,17 +21,10 @@
         <i class="bi bi-heart corazon c2" aria-hidden="true"></i>
         }
         <div class="hero-texto">
-            @if (enTemporada()) {
             <h1>{{ c.name }}</h1>
             <p class="lema">{{ c.tagline }}</p>
             @if (c.order_deadline) { <p class="fecha"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ c.order_deadline.label }}</p> }
             <a class="boton" href="#regalos">Ver regalos <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
-            } @else {
-            <h1>{{ c.name }} {{ c.season_year }}</h1>
-            <p class="lema">{{ c.state === 'closing' && c.closing_message ? c.closing_message : 'llegará muy pronto' }}</p>
-            <p class="fecha">Mientras tanto, mira los regalos de {{ c.related_category.name | lowercase }} que ya puedes pedir.</p>
-            <a class="boton" [routerLink]="c.related_category.url">Ver regalos de {{ c.related_category.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
-            }
         </div>
         @if (c.theme.video; as v) {
         <video class="hero-imagen portada" appVideoAuto [src]="v.url" [attr.poster]="v.poster" muted playsinline preload="metadata" aria-hidden="true"></video>
@@ -43,8 +42,7 @@
     }
 
     <!-- Productos -->
-    <section id="regalos" [attr.aria-label]="enTemporada() ? 'Regalos de ' + c.name : 'Regalos relacionados'">
-        @if (!enTemporada()) { <h2 class="titulo">Regalos de {{ c.related_category.name }}</h2> }
+    <section id="regalos" [attr.aria-label]="'Regalos de ' + c.name">
         <ul class="grilla">
             @for (p of c.products; track p.sku) {
             <li>
@@ -73,7 +71,7 @@
     <app-como-funciona />
     }
 
-    <a class="boton grande" [routerLink]="c.related_category.url">Ver más regalos de {{ c.related_category.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+    <a class="boton grande" routerLink="/categorias">Explorar las categorías <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
 </div>
 }
 } @else if (fallo()) {

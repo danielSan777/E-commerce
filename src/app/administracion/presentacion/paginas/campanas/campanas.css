@@ -26,3 +26,5 @@
 .vista-previa h3 { margin: 0 0 8px; font-size: 1rem; }
 .vista-previa .alternar { display: flex; gap: 8px; margin-bottom: 8px; }
 .vista-previa .alternar .activo { background: #175437; color: #fff; }
+
+.color-hex { flex: 0 1 9rem; min-width: 7rem; font-family: ui-monospace, monospace; text-transform: uppercase; }

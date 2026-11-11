@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of, switchMap, tap } from 'rxjs';
-import { CurrencyPipe, LowerCasePipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CampanaContrato } from '../../../dominio/interfaces/campana';
@@ -10,13 +10,14 @@ import { PromesaService } from '../../../../checkout/aplicacion/servicios/Promes
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { ComoFunciona } from '../../../../shared/componentes/como-funciona/como-funciona';
 import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
+import { CampanaBanner } from '../../componentes/campana-banner/campana-banner';
 import { VideoAuto } from '../../../../shared/directivas/video-auto';
 
 // Plantilla de campañas de temporada (/san-valentin, /navidad…), cada una con su color, emoji y portada. En temporada muestra los productos elegidos y la fecha límite;
 // fuera de temporada la URL sigue respondiendo con "llegará muy pronto" (Paso 6).
 @Component({
   selector: 'app-campana',
-  imports: [CurrencyPipe, LowerCasePipe, RouterLink, ComoFunciona, NoEncontrada, VideoAuto],
+  imports: [CurrencyPipe, RouterLink, ComoFunciona, NoEncontrada, VideoAuto, CampanaBanner],
   templateUrl: './campana.html',
   styleUrl: './campana.css',
 })
@@ -47,6 +48,8 @@ export class Campana {
   readonly esVistaPrevia = computed(() => { const c = this.campana(); return !!c && this.servicio.esVistaPrevia(c.slug); });
   /** Solo se dibuja en temporada o en vista previa: el servidor no sabe quién es y deja la página vacía hasta que el navegador decide. */
   readonly mostrar = computed(() => this.enTemporada());
+  /** Terminó la campaña pero el administrador eligió seguir mostrando su mensaje de cierre hasta una fecha. */
+  readonly despidiendose = computed(() => { const c = this.campana(); return c?.state === 'closing' && !!c.closing_message; });
 
   // Diseño propio de la campaña: el color reemplaza al vino/rosa de siempre (solo si es un #RRGGBB válido).
   color = computed(() => { const c = this.campana()?.theme.color; return c && /^#[0-9a-f]{6}$/i.test(c) ? c : null; });
