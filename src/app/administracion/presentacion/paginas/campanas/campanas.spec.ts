@@ -276,4 +276,17 @@ describe('AdminCampanas', () => {
     expect(c.form.color).toBe('');
     expect(c.errores().color).toBeUndefined();
   });
+
+  it('los colores sugeridos muestran su Hex y al pulsarlos cambian el color', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.nueva();
+    fixture.detectChanges();
+    const botones = (fixture.nativeElement as HTMLElement).querySelectorAll('.paleta .muestra');
+
+    expect(botones.length).toBe(c.PALETA.length);
+    expect(botones[0].textContent).toContain('#C2185B');
+    (botones[1] as HTMLButtonElement).click();
+    expect(c.form.color).toBe('#8a1c3a');
+  });
 });

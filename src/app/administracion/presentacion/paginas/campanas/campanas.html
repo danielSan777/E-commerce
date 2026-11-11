@@ -102,6 +102,13 @@
           <button type="button" (click)="quitarColor()" [disabled]="!form.color && !hexTexto()">Usar el color de siempre</button>
         </div>
         @if (errores().color; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+        <div class="paleta" role="group" aria-label="Colores sugeridos">
+          @for (hex of PALETA; track hex) {
+            <button type="button" class="muestra" [class.elegida]="form.color.toLowerCase() === hex.toLowerCase()" [style.--muestra]="hex" (click)="elegirColor(hex.toLowerCase())" [attr.aria-label]="'Usar el color ' + hex">
+              <span class="cuadro"></span><span class="codigo">{{ hex }}</span>
+            </button>
+          }
+        </div>
         <small id="ayuda-color" class="ayuda">Se usa en los botones, títulos y fondos de la campaña. Elige con la paleta o escribe el código Hex (por ejemplo #C2185B). Elige un color oscuro: las letras de los botones son blancas.</small>
 
         <label for="emoji">Emoji (opcional)</label>

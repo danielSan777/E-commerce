@@ -28,3 +28,8 @@
 .vista-previa .alternar .activo { background: #175437; color: #fff; }
 
 .color-hex { flex: 0 1 9rem; min-width: 7rem; font-family: ui-monospace, monospace; text-transform: uppercase; }
+
+.paleta { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.muestra { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 10px; font-family: ui-monospace, monospace; font-size: .8rem; }
+.muestra .cuadro { width: 1.2rem; height: 1.2rem; border-radius: 50%; background: var(--muestra); border: 1px solid #0003; }
+.muestra.elegida { outline: 2px solid #175437; }

@@ -123,6 +123,9 @@ export class AdminCampanas implements OnInit {
   readonly COLOR_DE_SIEMPRE = '#8a1c3a';
 
   /** Color y tinte de la vista previa del formulario (igual que en la tienda). */
+  /** Colores oscuros sugeridos (las letras de los botones son blancas), con su código Hex a la vista. */
+  readonly PALETA = ['#C2185B', '#8A1C3A', '#B71C1C', '#D84315', '#E65100', '#F9A825', '#2E7D32', '#175437', '#00695C', '#1565C0', '#283593', '#6A1B9A'];
+
   /** Lo que el administrador está escribiendo en el campo Hex (null = mostrar el color elegido). */
   hexTexto = signal<string | null>(null);
 
