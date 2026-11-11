@@ -26,8 +26,15 @@ describe('campanaGuard (¿esta dirección es una campaña?)', () => {
         expect(await p).toBe(true);
     });
 
-    it('si la campaña no está en temporada (terminada o por llegar), lleva a la página principal', async () => {
-        for (const estado of ['closing', 'upcoming']) {
+    it('al terminar la campaña deja entrar mientras se muestre su mensaje de cierre', async () => {
+        const p = firstValueFrom(preguntar('san-valentin-cierre') as Observable<boolean | UrlTree>);
+        ctrl.expectOne('/api/v1/campaigns/san-valentin-cierre').flush({ slug: 'san-valentin-cierre', name: 'SV', state: 'closing', closing_message: 'San Valentín regresará pronto', products: [], seo: {}, related_category: {} });
+
+        expect(await p).toBe(true);
+    });
+
+    it('si la campaña aún no empieza, o ya pasó la fecha del mensaje, lleva a la página principal', async () => {
+        for (const estado of ['upcoming']) {
             const p = firstValueFrom(preguntar(`san-valentin-${estado}`) as Observable<boolean | UrlTree>);
             ctrl.expectOne(`/api/v1/campaigns/san-valentin-${estado}`).flush({ slug: 'san-valentin', name: 'San Valentín', state: estado, products: [], seo: {}, related_category: {} });
             const r = await p;

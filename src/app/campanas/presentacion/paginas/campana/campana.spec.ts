@@ -61,6 +61,15 @@ describe('Campana (/san-valentin con datos de Laravel)', () => {
         expect(html.querySelector('.producto')).toBeNull();
     });
 
+    it('al terminar la campaña muestra el mensaje de cierre y un botón a todas las categorías', async () => {
+        const html = await montar('san-valentin', campanaApi('active', { state: 'closing', closing_message: 'San Valentín regresará pronto' }));
+
+        expect(html.querySelector('h2')?.textContent).toContain('San Valentín regresará pronto');
+        expect(html.querySelector('.cierre-pagina a.boton')?.getAttribute('href')).toBe('/categorias');
+        expect(html.textContent).toContain('Explorar las categorías');
+        expect(html.querySelector('.producto')).toBeNull();
+    });
+
     it('la vista previa del administrador muestra la página y avisa que el público no la ve', async () => {
         TestBed.configureTestingModule({
             imports: [Campana],

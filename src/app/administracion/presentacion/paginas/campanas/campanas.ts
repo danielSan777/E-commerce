@@ -40,9 +40,16 @@ interface Fecha { dia: number; mes: number }
 /** Días de cada mes (febrero con 29: la fecha se repite todos los años, incluidos los bisiestos). */
 const DIAS_DEL_MES = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-export type ErroresCampana = Partial<Record<'name' | 'related_category' | 'inicio' | 'fin' | 'evento' | 'cierre', string>>;
+export type ErroresCampana = Partial<Record<'name' | 'related_category' | 'inicio' | 'fin' | 'evento' | 'cierre' | 'color', string>>;
 
 /** Revisa el formulario en Angular, sin llamar a la API: nombre, categoría y que las tres fechas tengan sentido. */
+/** Código Hex escrito a mano ("C2185B", "#c2185b" o "#c15") → "#c2185b"; null si no es un color válido. */
+export function normalizarHex(texto: string): string | null {
+  const t = texto.trim().replace(/^#/, '').toLowerCase();
+  if (/^[0-9a-f]{3}$/.test(t)) return '#' + [...t].map(c => c + c).join('');
+  return /^[0-9a-f]{6}$/.test(t) ? '#' + t : null;
+}
+
 export function validarCampana(f: { name: string; related_category: string; inicio: Fecha; fin: Fecha; evento: Fecha; closing_message?: string; cierra?: Fecha }): ErroresCampana {
   const e: ErroresCampana = {};
   if (!f.name.trim()) e.name = 'Escribe el nombre de la campaña.';
@@ -116,6 +123,26 @@ export class AdminCampanas implements OnInit {
   readonly COLOR_DE_SIEMPRE = '#8a1c3a';
 
   /** Color y tinte de la vista previa del formulario (igual que en la tienda). */
+  /** Lo que el administrador está escribiendo en el campo Hex (null = mostrar el color elegido). */
+  hexTexto = signal<string | null>(null);
+
+  escribirHex(texto: string): void {
+    this.hexTexto.set(texto);
+    if (!texto.trim()) { this.form.color = ''; return; }
+    const hex = normalizarHex(texto);
+    if (hex) this.form.color = hex;
+  }
+
+  elegirColor(hex: string): void {
+    this.hexTexto.set(null);
+    this.form.color = hex;
+  }
+
+  quitarColor(): void {
+    this.hexTexto.set(null);
+    this.form.color = '';
+  }
+
   colorVistaPrevia(): string { return this.form.color || this.COLOR_DE_SIEMPRE; }
   tinteVistaPrevia(): string { return `color-mix(in srgb, ${this.colorVistaPrevia()} 14%, white)`; }
 
@@ -267,6 +294,8 @@ export class AdminCampanas implements OnInit {
   /** Errores del formulario ahora mismo. Las fechas se avisan al instante; nombre y categoría, después de pulsar Guardar. */
   errores(): ErroresCampana {
     const e = validarCampana(this.form);
+    const escrito = this.hexTexto();
+    if (escrito?.trim() && !normalizarHex(escrito)) e.color = 'El color debe ser un código Hex como #C2185B (6 letras o números).';
     if (!this.intento()) { delete e.name; delete e.related_category; }
     return e;
   }

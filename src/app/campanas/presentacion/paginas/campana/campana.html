@@ -1,5 +1,11 @@
 @if (campana(); as c) {
-@if (mostrar()) {
+@if (despidiendose()) {
+<div class="cierre-pagina" [style.--jds-vino]="color()">
+    <app-campana-banner [nombre]="c.name" [emoji]="c.theme.emoji" [color]="c.theme.color" [foto]="portadaUrl()" [fotoAlt]="c.theme.cover?.alt ?? null"
+        [video]="c.theme.video?.url ?? null" [videoPortada]="c.theme.video?.poster ?? null" [cierre]="c.closing_message" />
+    <a class="boton grande" routerLink="/categorias">Explorar las categorías <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+</div>
+} @else if (mostrar()) {
 <div class="pagina" [style.--jds-vino]="color()" [style.--jds-rosa]="tinte()">
     @if (esVistaPrevia()) {
     <p class="vista-previa" role="status"><i class="bi bi-eye" aria-hidden="true"></i> Vista previa del administrador: el público todavía no puede ver esta página.</p>

@@ -96,10 +96,13 @@
 
         <label for="color">Color principal</label>
         <div class="fecha">
-          <input id="color" name="color" type="color" class="selector-color" [value]="colorVistaPrevia()" (input)="form.color = $any($event.target).value" aria-describedby="ayuda-color" />
-          <button type="button" (click)="form.color = ''" [disabled]="!form.color">Usar el color de siempre</button>
+          <input id="color" name="color" type="color" class="selector-color" [value]="colorVistaPrevia()" (input)="elegirColor($any($event.target).value)" aria-describedby="ayuda-color" aria-label="Elegir el color con la paleta" />
+          <input id="color-hex" name="color-hex" class="color-hex" maxlength="7" placeholder="#C2185B" autocomplete="off" spellcheck="false" [value]="hexTexto() ?? form.color"
+            (input)="escribirHex($any($event.target).value)" (blur)="!errores().color && hexTexto.set(null)" [attr.aria-invalid]="errores().color ? true : null" aria-label="Código Hex del color" />
+          <button type="button" (click)="quitarColor()" [disabled]="!form.color && !hexTexto()">Usar el color de siempre</button>
         </div>
-        <small id="ayuda-color" class="ayuda">Se usa en los botones, títulos y fondos de la campaña. Elige un color oscuro: las letras de los botones son blancas.</small>
+        @if (errores().color; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+        <small id="ayuda-color" class="ayuda">Se usa en los botones, títulos y fondos de la campaña. Elige con la paleta o escribe el código Hex (por ejemplo #C2185B). Elige un color oscuro: las letras de los botones son blancas.</small>
 
         <label for="emoji">Emoji (opcional)</label>
         <input id="emoji" name="emoji" maxlength="16" [(ngModel)]="form.emoji" placeholder="🎄" aria-describedby="ayuda-emoji" />

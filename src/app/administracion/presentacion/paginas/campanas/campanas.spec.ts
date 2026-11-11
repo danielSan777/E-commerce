@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { API_URL } from '../../../../core/configuracion/api';
-import { AdminCampanas, aFechaAnual, leerFechaAnual, textoFechaAnual, validarCampana } from './campanas';
+import { AdminCampanas, aFechaAnual, leerFechaAnual, normalizarHex, textoFechaAnual, validarCampana } from './campanas';
 
 const esperar = () => new Promise<void>(r => setTimeout(r));
 
@@ -250,5 +250,30 @@ describe('AdminCampanas', () => {
     fixture.detectChanges();
     expect(html.querySelector('.vista-previa h2')?.textContent).toContain('San Valentín regresará pronto');
     expect(html.querySelector('.vista-previa .boton')).toBeNull();
+  });
+
+  it('normaliza los códigos Hex escritos a mano', () => {
+    expect(normalizarHex('#C2185B')).toBe('#c2185b');
+    expect(normalizarHex(' c2185b ')).toBe('#c2185b');
+    expect(normalizarHex('#c15')).toBe('#cc1155');
+    expect(normalizarHex('#c2185')).toBeNull();
+    expect(normalizarHex('rojo')).toBeNull();
+  });
+
+  it('al escribir un Hex válido cambia el color; uno incompleto avisa y no lo cambia', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.nueva();
+    c.escribirHex('1B5E20');
+    expect(c.form.color).toBe('#1b5e20');
+    expect(c.errores().color).toBeUndefined();
+
+    c.escribirHex('#1B5E');
+    expect(c.form.color).toBe('#1b5e20');
+    expect(c.errores().color).toContain('código Hex');
+
+    c.escribirHex('');
+    expect(c.form.color).toBe('');
+    expect(c.errores().color).toBeUndefined();
   });
 });
