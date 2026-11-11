@@ -33,14 +33,12 @@ describe('campanaGuard (¿esta dirección es una campaña?)', () => {
         expect(await p).toBe(true);
     });
 
-    it('si la campaña aún no empieza, o ya pasó la fecha del mensaje, lleva a la página principal', async () => {
-        for (const estado of ['upcoming']) {
+    it('la página de una campaña terminada sigue existiendo para el público (aunque ya pasó la fecha del mensaje)', async () => {
+        for (const estado of ['closing', 'upcoming']) {
             const p = firstValueFrom(preguntar(`san-valentin-${estado}`) as Observable<boolean | UrlTree>);
-            ctrl.expectOne(`/api/v1/campaigns/san-valentin-${estado}`).flush({ slug: `san-valentin-${estado}`, name: 'San Valentín', state: estado, products: [], seo: {} });
-            const r = await p;
+            ctrl.expectOne(`/api/v1/campaigns/san-valentin-${estado}`).flush({ slug: `san-valentin-${estado}`, name: 'San Valentín', state: estado, closing_message: null, products: [], seo: {} });
 
-            expect(r instanceof UrlTree).toBe(true);
-            expect(TestBed.inject(Router).serializeUrl(r as UrlTree)).toBe('/');
+            expect(await p).toBe(true);
         }
     });
 
