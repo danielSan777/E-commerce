@@ -54,6 +54,12 @@ describe('validarCampana (sin llamar a la API)', () => {
     expect(validarCampana({ ...base, cierra: { dia: 31, mes: 4 } }).cierre).toContain('no existe');
   });
 
+  it('una temporada de un solo día acepta cualquier fecha posterior (10 de noviembre → hasta el 12)', () => {
+    const dia = { dia: 10, mes: 11 };
+    expect(validarCampana({ ...ok, inicio: dia, fin: dia, evento: dia, closing_message: 'x', cierra: { dia: 12, mes: 11 } }).cierre).toBeUndefined();
+    expect(validarCampana({ ...ok, inicio: dia, fin: dia, evento: dia, closing_message: 'x', cierra: dia }).cierre).toContain('después de que termina');
+  });
+
   it('sin mensaje de cierre no se revisa la fecha', () => {
     expect(validarCampana({ ...ok, closing_message: ' ', cierra: { dia: 1, mes: 11 } }).cierre).toBeUndefined();
   });

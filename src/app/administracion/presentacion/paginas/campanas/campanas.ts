@@ -80,7 +80,8 @@ function diasHasta(a: string, b: string): number {
 /** Misma regla que Laravel (TemporadaDeCampana::despedidaValida): al menos 1 día después del fin y antes del próximo inicio. */
 export function despedidaValida(inicio: string, fin: string, hasta: string): boolean {
   const d = diasHasta(fin, hasta);
-  return d >= 1 && d < diasHasta(fin, inicio);
+  // Si la temporada dura un solo día (inicio = fin), la siguiente empieza dentro de un año completo.
+  return d >= 1 && d < (diasHasta(fin, inicio) || 366);
 }
 
 interface Formulario {
