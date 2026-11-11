@@ -19,7 +19,10 @@
 
       <label for="slug">Dirección en la web (se genera sola)</label>
       <input id="slug" type="text" [value]="slugMostrado() ? '/' + slugMostrado() : ''" readonly tabindex="-1" placeholder="Se genera del nombre" aria-describedby="ayuda-slug" />
-      <small id="ayuda-slug" class="ayuda">Sin tilde, en minúsculas y con "-" en lugar de espacios. No lleva el año y no se puede cambiar después.</small>
+      <small id="ayuda-slug" class="ayuda">Sin tilde, en minúsculas y con "-" en lugar de espacios. Cambia solo si cambias el nombre (por ejemplo, de «San Valentín 2026» a «San Valentín 2027»).</small>
+      @if (cambiaDireccion()) {
+        <small class="ayuda" role="status">La dirección nueva será <strong>/{{ slugMostrado() }}</strong>. La anterior (<strong>/{{ slugActual }}</strong>) seguirá funcionando y llevará a la nueva.</small>
+      }
 
       <label for="categoria">Categoría relacionada</label>
       <select id="categoria" name="categoria" [(ngModel)]="form.related_category" [attr.aria-invalid]="errores().related_category ? true : null" aria-describedby="ayuda-categoria err-categoria">

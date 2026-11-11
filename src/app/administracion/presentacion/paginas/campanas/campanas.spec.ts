@@ -276,4 +276,17 @@ describe('AdminCampanas', () => {
     expect(c.form.color).toBe('');
     expect(c.errores().color).toBeUndefined();
   });
+
+  it('al cambiar el nombre al editar avisa que la dirección nueva sustituye a la anterior', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.editar({ ...c.campanas()[0], slug: 'san-valentin', name: 'San Valentín' });
+    expect(c.cambiaDireccion()).toBe(false);
+
+    c.form.name = 'San Valentín 2027';
+    fixture.detectChanges();
+    expect(c.slugMostrado()).toBe('san-valentin-2027');
+    expect(c.cambiaDireccion()).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('/san-valentin-2027');
+  });
 });

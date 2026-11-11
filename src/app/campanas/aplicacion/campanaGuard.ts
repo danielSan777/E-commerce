@@ -11,6 +11,7 @@ import { CampanaService } from './servicios/CampanaService';
  * coincide y el router sigue con las categorías. Quién la ve:
  *  - el público, mientras la campaña está en temporada (la página completa) o en su despedida (el mensaje de cierre con un botón a las categorías);
  *    antes de empezar, pasada la fecha del mensaje o si está inactiva va a la página principal;
+ *  - una dirección anterior (la campaña cambió de nombre) lleva a la actual;
  *  - el administrador, siempre: ve la página completa como quedará en temporada (vista previa de Laravel).
  * La sesión vive en el navegador, así que el servidor deja pasar y el navegador decide (la página no muestra nada hasta entonces).
  */
@@ -27,6 +28,7 @@ export const campanaGuard: CanMatchFn = (_ruta, segmentos) => {
 
     return servicio.campana(slug).pipe(
         switchMap(c => {
+            if (c && c.slug !== slug) return of(router.createUrlTree(['/', c.slug]));   // dirección anterior (le cambiaron el nombre): va a la actual
             if (c?.state === 'active' || (c?.state === 'closing' && c.closing_message)) return of(true);   // en temporada, o despidiéndose con su mensaje
             if (!esNavegador) return of(c !== null);                 // servidor: sin sesión, decide el navegador
             if (!sesion.esAdministrador()) return of(c === null ? false : alInicio);

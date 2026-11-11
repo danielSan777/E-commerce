@@ -893,7 +893,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 
 **Pruebas.** Crear, duplicar, editar, desactivar y reactivar un producto. Agotar un accesorio y verlo desaparecer del personalizador. Edición masiva sobre una subcategoría. Buscar "médico" y encontrar Doctor. Campaña en temporada, antes de empezar y después de terminar (muestra el año siguiente). Recargar la ficha y ver en el HTML del servidor el nombre y el precio.
 
-**NO CAMBIAR.** Selector 2D con slots + overrides. Un solo panel Administrador. SKU estable compartido en todos los sistemas. Campañas con URL permanente; fuera de temporada la URL lleva a la página principal.
+**NO CAMBIAR.** Selector 2D con slots + overrides. Un solo panel Administrador. SKU estable compartido en todos los sistemas. Campañas con URL que sale del nombre (al cambiar el nombre la dirección anterior sigue funcionando y redirige a la nueva); fuera de temporada la URL lleva a la página principal.
 
 ## Paso 6 — Medios y assets del configurador
 

@@ -302,7 +302,12 @@ export class AdminCampanas implements OnInit {
 
   /** La dirección que se mostrará: la guardada al editar, o la vista previa del nombre al crear. */
   slugMostrado(): string {
-    return this.editando() === '' ? generarSlug(this.form.name) : this.slugActual;
+    return generarSlug(this.form.name) || this.slugActual;
+  }
+
+  /** Al editar, si el nuevo nombre da otra dirección: la anterior seguirá funcionando y llevará a la nueva. */
+  cambiaDireccion(): boolean {
+    return this.editando() !== '' && this.slugActual !== '' && !!generarSlug(this.form.name) && generarSlug(this.form.name) !== this.slugActual;
   }
 
   pedirEliminar(slug: string): void {
