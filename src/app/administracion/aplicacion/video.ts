@@ -7,9 +7,10 @@ import { Observable } from 'rxjs';
 
 export interface LimiteVideo { segundos: number; bytes: number; nombre: string }
 
-export const LIMITES_VIDEO: Record<'products' | 'categories' | 'inicio', LimiteVideo> = {
+export const LIMITES_VIDEO: Record<'products' | 'categories' | 'campaigns' | 'inicio', LimiteVideo> = {
   products: { segundos: 60, bytes: 100 * 1024 * 1024, nombre: 'del producto' },
   categories: { segundos: 60, bytes: 100 * 1024 * 1024, nombre: 'del banner de la categoría' },
+  campaigns: { segundos: 60, bytes: 100 * 1024 * 1024, nombre: 'de la campaña' },
   inicio: { segundos: 60, bytes: 100 * 1024 * 1024, nombre: 'de la página principal' },
 };
 

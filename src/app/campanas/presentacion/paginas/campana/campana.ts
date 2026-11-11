@@ -10,12 +10,13 @@ import { PromesaService } from '../../../../checkout/aplicacion/servicios/Promes
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { ComoFunciona } from '../../../../shared/componentes/como-funciona/como-funciona';
 import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
+import { VideoAuto } from '../../../../shared/directivas/video-auto';
 
 // Plantilla de campañas de temporada (/san-valentin, /navidad…), cada una con su color, emoji y portada. En temporada muestra los productos elegidos y la fecha límite;
 // fuera de temporada la URL sigue respondiendo con "llegará muy pronto" (Paso 6).
 @Component({
   selector: 'app-campana',
-  imports: [CurrencyPipe, LowerCasePipe, RouterLink, ComoFunciona, NoEncontrada],
+  imports: [CurrencyPipe, LowerCasePipe, RouterLink, ComoFunciona, NoEncontrada, VideoAuto],
   templateUrl: './campana.html',
   styleUrl: './campana.css',
 })
@@ -42,6 +43,10 @@ export class Campana {
     { initialValue: undefined },
   );
   enTemporada = computed(() => this.campana()?.state === 'active');
+  /** El administrador la ve antes de publicarla: se avisa que el público no puede entrar. */
+  readonly esVistaPrevia = computed(() => { const c = this.campana(); return !!c && this.servicio.esVistaPrevia(c.slug); });
+  /** Solo se dibuja en temporada o en vista previa: el servidor no sabe quién es y deja la página vacía hasta que el navegador decide. */
+  readonly mostrar = computed(() => this.enTemporada());
 
   // Diseño propio de la campaña: el color reemplaza al vino/rosa de siempre (solo si es un #RRGGBB válido).
   color = computed(() => { const c = this.campana()?.theme.color; return c && /^#[0-9a-f]{6}$/i.test(c) ? c : null; });

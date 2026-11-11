@@ -1,0 +1,20 @@
+<section class="campana" [class.con-medio]="video() || foto()" [class.cierre]="cierre()" aria-label="Campaña de temporada" [style.--campana]="colorValido()" [style.--campana-tinte]="tinte()">
+    <div class="campana-texto">
+        <p class="campana-etiqueta">@if (emoji()) {<span aria-hidden="true">{{ emoji() }}</span>} {{ nombre() }}</p>
+        @if (cierre(); as mensaje) {
+            <h2>{{ mensaje }}</h2>
+        } @else {
+            @if (lema()) { <h2>{{ lema() }}</h2> }
+            @if (frase()) { <p class="campana-frase">{{ frase() }}</p> }
+            @if (enlace(); as ruta) { <a class="boton campana-boton" [routerLink]="ruta">Ver campaña</a> }
+            @else { <span class="boton campana-boton">Ver campaña</span> }
+        }
+    </div>
+    @if (video(); as url) {
+        <video class="campana-portada" appVideoAuto [src]="url" [attr.poster]="videoPortada()" muted playsinline preload="metadata" aria-hidden="true"></video>
+    } @else if (foto(); as url) {
+        <img class="campana-portada" [src]="url" [alt]="fotoAlt() ?? ''" width="400" height="400" loading="lazy">
+    } @else if (emoji()) {
+        <span class="campana-emoji" aria-hidden="true">{{ emoji() }}</span>
+    }
+</section>

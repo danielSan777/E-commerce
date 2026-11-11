@@ -1,5 +1,9 @@
 @if (campana(); as c) {
+@if (mostrar()) {
 <div class="pagina" [style.--jds-vino]="color()" [style.--jds-rosa]="tinte()">
+    @if (esVistaPrevia()) {
+    <p class="vista-previa" role="status"><i class="bi bi-eye" aria-hidden="true"></i> Vista previa del administrador: el público todavía no puede ver esta página.</p>
+    }
 
     <!-- Encabezado -->
     <section class="hero">
@@ -18,12 +22,14 @@
             <a class="boton" href="#regalos">Ver regalos <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
             } @else {
             <h1>{{ c.name }} {{ c.season_year }}</h1>
-            <p class="lema">llegará muy pronto</p>
+            <p class="lema">{{ c.state === 'closing' && c.closing_message ? c.closing_message : 'llegará muy pronto' }}</p>
             <p class="fecha">Mientras tanto, mira los regalos de {{ c.related_category.name | lowercase }} que ya puedes pedir.</p>
             <a class="boton" [routerLink]="c.related_category.url">Ver regalos de {{ c.related_category.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
             }
         </div>
-        @if (portadaUrl(); as portada) {
+        @if (c.theme.video; as v) {
+        <video class="hero-imagen portada" appVideoAuto [src]="v.url" [attr.poster]="v.poster" muted playsinline preload="metadata" aria-hidden="true"></video>
+        } @else if (portadaUrl(); as portada) {
         <img class="hero-imagen portada" [src]="portada" [attr.srcset]="portadaSrcset()" sizes="(min-width: 768px) 220px, 130px" [alt]="c.theme.cover?.alt ?? ''" width="150" height="150">
         } @else if (c.products[0]; as p) { <img class="hero-imagen" [src]="p.image" alt="" width="150" height="150"> }
     </section>
@@ -69,6 +75,7 @@
 
     <a class="boton grande" [routerLink]="c.related_category.url">Ver más regalos de {{ c.related_category.name }} <i class="bi bi-chevron-right" aria-hidden="true"></i></a>
 </div>
+}
 } @else if (fallo()) {
 <p class="estado" role="alert">No pudimos cargar esta página. Inténtalo de nuevo en unos minutos.</p>
 } @else if (campana() === null) {

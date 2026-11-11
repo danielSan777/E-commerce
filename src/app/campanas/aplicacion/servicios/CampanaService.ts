@@ -6,7 +6,7 @@ import { IMAGEN_PENDIENTE } from '../../../categorias/aplicacion/servicios/Categ
 import { CampanaContrato, CampanaResumen, TemaCampana } from '../../dominio/interfaces/campana';
 
 const SITIO = 'https://jardindesele.com';
-const TEMA_VACIO: TemaCampana = { color: null, emoji: null, cover: null };
+const TEMA_VACIO: TemaCampana = { color: null, emoji: null, cover: null, video: null };
 
 // Campaña de temporada desde Laravel (GET /api/v1/campaigns/{slug}). Laravel decide si está en temporada o no, el año,
 // la fecha del evento y qué productos se muestran; Angular solo lo dibuja.
@@ -15,6 +15,7 @@ export class CampanaService {
     private http = inject(HttpClient);
     private api = inject(API_URL);
     /** Respuestas ya pedidas: la guarda de rutas y la página piden la misma campaña, y así no se repite la petición. */
+    private previas = new Set<string>();
     private pedidas = new Map<string, Observable<CampanaContrato | null>>();
 
     /** null si la campaña no existe o está inactiva (404). Cualquier otro error se propaga. */
@@ -37,9 +38,32 @@ export class CampanaService {
         );
     }
 
+    /**
+     * Vista previa del administrador (GET /admin/campaigns/{slug}/preview): la campaña completa como se verá en temporada,
+     * aunque esté inactiva o fuera de fechas. Queda guardada para que la página la use en lugar de la pública.
+     */
+    vistaPrevia(slug: string): Observable<CampanaContrato | null> {
+        return this.http.get<CampanaContrato>(`${this.api}/admin/campaigns/${encodeURIComponent(slug)}/preview`).pipe(
+            map(c => this.armar(c)),
+            tap(c => { this.pedidas.set(slug, of(c)); this.previas.add(slug); }),
+            catchError((e: HttpErrorResponse) => e.status === 404 ? of(null) : throwError(() => e)),
+        );
+    }
+
+    /** ¿La página de esta campaña se muestra como vista previa del administrador (no la ve el público)? */
+    esVistaPrevia(slug: string): boolean {
+        return this.previas.has(slug);
+    }
+
     private pedir(slug: string): Observable<CampanaContrato | null> {
         return this.http.get<CampanaContrato>(`${this.api}/campaigns/${encodeURIComponent(slug)}`).pipe(
-            map(c => ({
+            map(c => this.armar(c)),
+            catchError((e: HttpErrorResponse) => e.status === 404 ? of(null) : throwError(() => e)),
+        );
+    }
+
+    private armar(c: CampanaContrato): CampanaContrato {
+        return ({
                 ...c,
                 tagline: c.tagline ?? '',
                 slogan: c.slogan ?? '',
@@ -51,8 +75,6 @@ export class CampanaService {
                     canonical: c.seo.canonical,
                     og_image: c.seo.og_image ?? `${SITIO}/imagenes/amor.png`,
                 },
-            })),
-            catchError((e: HttpErrorResponse) => e.status === 404 ? of(null) : throwError(() => e)),
-        );
+            });
     }
 }

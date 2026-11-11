@@ -8,8 +8,8 @@ import { Inicio } from './inicio';
 
 describe('Inicio (/)', () => {
     const NAVIDAD = {
-        slug: 'navidad', name: 'Navidad', url: '/navidad', season_year: 2026, event_date: '2026-12-25',
-        tagline: 'Un regalo que crece', slogan: 'Regala vida', theme: { color: '#1b5e20', emoji: '🎄', cover: null },
+        slug: 'navidad', name: 'Navidad', state: 'active', closing_message: null, url: '/navidad', season_year: 2026, event_date: '2026-12-25',
+        tagline: 'Un regalo que crece', slogan: 'Regala vida', theme: { color: '#1b5e20', emoji: '🎄', cover: null, video: null },
     };
 
     /** `campana`: lo que Laravel responde en /campaigns/current (null = hoy no hay campaña en temporada). */
@@ -153,16 +153,33 @@ describe('Inicio (/)', () => {
     });
 
     it('si el color no es un #RRGGBB válido, el banner usa el color de la tienda', async () => {
-        const html = await montar({ ...NAVIDAD, theme: { color: 'url(javascript:x)', emoji: null, cover: null } });
+        const html = await montar({ ...NAVIDAD, theme: { color: 'url(javascript:x)', emoji: null, cover: null, video: null } });
 
         expect((html.querySelector('.campana') as HTMLElement).style.getPropertyValue('--campana')).toBe('');
     });
 
     it('con portada la muestra en el banner', async () => {
-        const html = await montar({ ...NAVIDAD, theme: { color: null, emoji: null, cover: { alt: 'Pino', w: 1200, h: 1200, srcset: { '600': 'http://x/p-600.webp', '1080': 'http://x/p-1080.webp' } } } });
+        const html = await montar({ ...NAVIDAD, theme: { color: null, emoji: null, cover: { alt: 'Pino', w: 1200, h: 1200, srcset: { '600': 'http://x/p-600.webp', '1080': 'http://x/p-1080.webp' } }, video: null } });
 
         const img = html.querySelector('.campana-portada') as HTMLImageElement;
         expect(img.getAttribute('src')).toBe('http://x/p-600.webp');
         expect(img.getAttribute('alt')).toBe('Pino');
+    });
+
+    it('con video de portada muestra el video en el banner', async () => {
+        const html = await montar({ ...NAVIDAD, theme: { color: null, emoji: null, cover: null, video: { url: 'http://x/v.mp4', poster: 'http://x/p.webp', duration_s: 30 } } });
+
+        const video = html.querySelector('.campana video.campana-portada') as HTMLVideoElement;
+        expect(video.getAttribute('src')).toBe('http://x/v.mp4');
+        expect(html.querySelector('.campana img.campana-portada')).toBeNull();
+    });
+
+    it('al terminar la campaña muestra el mensaje de cierre y no el botón', async () => {
+        const html = await montar({ ...NAVIDAD, state: 'closing', closing_message: 'Navidad regresará pronto', tagline: null, slogan: null });
+        const banner = html.querySelector('.campana') as HTMLElement;
+
+        expect(banner.querySelector('h2')?.textContent).toContain('Navidad regresará pronto');
+        expect(banner.querySelector('a')).toBeNull();
+        expect(banner.classList).toContain('cierre');
     });
 });

@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
+import { CampanaBanner } from '../../../../campanas/presentacion/componentes/campana-banner/campana-banner';
 import { CampanaService } from '../../../../campanas/aplicacion/servicios/CampanaService';
 import { CategoriaService } from '../../../../categorias/aplicacion/servicios/CategoriaService';
 import { PromesaService } from '../../../../checkout/aplicacion/servicios/PromesaService';
@@ -16,7 +17,7 @@ import { VideoAuto } from '../../../../shared/directivas/video-auto';
 // cómo funciona y confianza. Testimonios llegan cuando Josué entregue sus datos.
 @Component({
   selector: 'app-inicio',
-  imports: [CurrencyPipe, RouterLink, VideoAuto],
+  imports: [CurrencyPipe, RouterLink, VideoAuto, CampanaBanner],
   templateUrl: './inicio.html',
   styleUrl: './inicio.css',
 })
@@ -43,8 +44,6 @@ export class Inicio {
   // Campaña en temporada hoy (la decide Laravel con la fecha de Guayaquil): null = no se muestra el banner.
   readonly campana = toSignal(inject(CampanaService).vigente().pipe(catchError(() => of(null))), { initialValue: null });
   /** Color de la campaña si es un #RRGGBB válido; si no, el banner usa el color de la tienda. */
-  readonly colorCampana = computed(() => { const c = this.campana()?.theme.color; return c && /^#[0-9a-f]{6}$/i.test(c) ? c : null; });
-  readonly tinteCampana = computed(() => { const c = this.colorCampana(); return c ? `color-mix(in srgb, ${c} 14%, white)` : null; });
   readonly portadaCampana = computed(() => { const s = this.campana()?.theme.cover?.srcset; return s ? (s['600'] ?? Object.values(s)[0] ?? null) : null; });
   readonly promesa = inject(PromesaService).promesa();
   readonly macetasEnvioGratis = inject(EnvioGratisService).MACETAS_PARA_ENVIO_GRATIS;

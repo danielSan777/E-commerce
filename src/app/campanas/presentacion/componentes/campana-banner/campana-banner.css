@@ -1,0 +1,20 @@
+:host { display: block; }
+/* Alto: el doble del banner anterior (≈ 230 px → 460 px en computador, ≈ 160 px → 320 px en celular). */
+.campana { --c: var(--campana, #8a1c3a); --t: var(--campana-tinte, #fde8ee); display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  box-sizing: border-box; min-height: 320px; max-width: 1100px; margin: 16px auto 0; padding: 22px 20px; background: var(--t); border: 2px solid var(--c); border-radius: 20px; }
+@media (max-width: 1130px) { .campana { margin-left: 14px; margin-right: 14px; } }
+.campana-texto { flex: 1; min-width: 0; text-align: left; }
+.campana-etiqueta { margin: 0 0 6px; font-weight: 700; color: var(--c); text-transform: uppercase; letter-spacing: .06em; font-size: .9rem; }
+.campana h2 { font-family: Lobster, Georgia, serif; font-weight: 400; color: var(--c); font-size: 2rem; line-height: 1.1; margin: 0 0 10px; }
+.campana-frase { margin: 0 0 16px; font-size: 1rem; }
+.boton { display: inline-block; background: var(--c); color: #fff; text-decoration: none; font-weight: 700; padding: 12px 22px; border-radius: 999px; }
+.campana-portada { width: 140px; height: 250px; object-fit: cover; border-radius: 16px; flex: none; background: #0001; }
+.campana-emoji { font-size: 6rem; line-height: 1; flex: none; }
+.cierre h2 { font-size: 2.2rem; }
+@media (min-width: 768px) {
+  .campana { min-height: 460px; padding: 28px 36px; gap: 32px; }
+  .campana h2 { font-size: 3rem; }
+  .cierre h2 { font-size: 3.4rem; }
+  .campana-portada { width: 46%; height: 400px; }
+  .campana-emoji { font-size: 12rem; }
+}
