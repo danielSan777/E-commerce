@@ -1,0 +1,206 @@
+<header class="barra">
+  <strong>Accesorios y ubicaciones</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+
+  <nav><a routerLink="/admin/configurador">Ir al configurador →</a></nav>
+
+  @if (error()) {
+    <div class="error" role="alert">
+      <p>{{ error() }}</p>
+      @for (d of detalle(); track d) { <p class="detalle">{{ d }}</p> }
+    </div>
+  }
+
+  @if (cargando()) {
+    <p>Cargando…</p>
+  } @else {
+
+  <!-- ============ CATEGORÍAS DE ACCESORIOS ============ -->
+  <section class="bloque" aria-labelledby="t-categorias">
+    <h2 id="t-categorias">Categorías de accesorios</h2>
+    <p class="ayuda">Agrupan los accesorios (Moda, Objetos, Animales…). Cada ubicación puede admitir solo algunas.</p>
+
+    <form class="formulario fila" (submit)="$event.preventDefault(); guardarCategoria()">
+      <div class="campo">
+        <label for="cat-nombre">{{ editandoCategoria() === null ? 'Nueva categoría' : 'Editar categoría' }}</label>
+        <input id="cat-nombre" name="cat-nombre" [(ngModel)]="formCategoria.name" required maxlength="100" />
+      </div>
+      <div class="campo corto">
+        <label for="cat-orden">Orden</label>
+        <input id="cat-orden" name="cat-orden" type="number" min="0" [(ngModel)]="formCategoria.sort_order" />
+      </div>
+      <button type="submit" class="primario" [disabled]="guardando()">{{ editandoCategoria() === null ? 'Crear' : 'Guardar' }}</button>
+      @if (editandoCategoria() !== null) { <button type="button" (click)="cancelarCategoria()">Cancelar</button> }
+    </form>
+
+    <ul class="lista">
+      @for (c of categorias(); track c.id) {
+        <li>
+          <div class="datos"><strong>{{ c.name }}</strong><small>{{ c.accessories_count }} accesorio(s) · orden {{ c.sort_order }}</small></div>
+          <div class="acciones">
+            @if (porEliminar() === 'categoria:' + c.id) {
+              <span>¿Eliminar?</span>
+              <button type="button" class="peligro" (click)="eliminarCategoria(c.id)">Sí, eliminar</button>
+              <button type="button" (click)="cancelarEliminar()">No</button>
+            } @else {
+              <button type="button" (click)="editarCategoria(c)">Editar</button>
+              <button type="button" class="peligro" (click)="confirmarEliminar('categoria:' + c.id)">Eliminar</button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li>Todavía no hay categorías de accesorios.</li>
+      }
+    </ul>
+  </section>
+
+  <!-- ============ ACCESORIOS ============ -->
+  <section class="bloque" aria-labelledby="t-accesorios">
+    <h2 id="t-accesorios">Accesorios</h2>
+
+    @if (editandoAccesorio() === null) {
+      <button type="button" class="primario" (click)="nuevoAccesorio()" [disabled]="categorias().length === 0">Nuevo accesorio</button>
+      @if (categorias().length === 0) { <small class="ayuda">Crea primero una categoría de accesorios.</small> }
+    } @else {
+      <form class="formulario" (submit)="$event.preventDefault(); guardarAccesorio()">
+        <h3>{{ editandoAccesorio() === '' ? 'Nuevo accesorio' : 'Editar accesorio' }}</h3>
+
+        <label for="a-nombre">Nombre</label>
+        <input id="a-nombre" name="a-nombre" [(ngModel)]="formAccesorio.name" required maxlength="150" />
+
+        <label for="a-categoria">Categoría</label>
+        <select id="a-categoria" name="a-categoria" [(ngModel)]="formAccesorio.accessory_category_id">
+          @for (c of categorias(); track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }
+        </select>
+
+        <label for="a-tipo">Tipo</label>
+        <select id="a-tipo" name="a-tipo" [(ngModel)]="formAccesorio.type">
+          <option value="imagen">Imagen</option>
+          <option value="texto">Texto (el cliente escribe su nombre)</option>
+        </select>
+
+        @if (formAccesorio.type === 'texto') {
+          <label for="a-texto">Texto de ejemplo</label>
+          <input id="a-texto" name="a-texto" [(ngModel)]="formAccesorio.default_text" maxlength="150" />
+        } @else {
+          <label for="a-imagen">Imagen (PNG, JPG o WebP; con fondo transparente se ve mejor)</label>
+          <input id="a-imagen" name="a-imagen" type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirImagen($event)" />
+          <label for="a-alt">Texto alternativo de la imagen (lo que se ve en ella)</label>
+          <input id="a-alt" name="a-alt" [(ngModel)]="formAccesorio.alt" maxlength="200" />
+          <small class="ayuda">Obligatorio al subir una imagen. Si no eliges una nueva, se conserva la actual.</small>
+        }
+
+        <label for="a-comportamiento">Comportamiento especial</label>
+        <select id="a-comportamiento" name="a-comportamiento" [(ngModel)]="formAccesorio.behavior">
+          <option value="">Ninguno</option>
+          @for (c of comportamientos; track c.valor) { <option [value]="c.valor">{{ c.nombre }}</option> }
+        </select>
+        <small class="ayuda">Solo un accesorio puede tener cada comportamiento. Así el personalizador reconoce los lentes, las gafas y los marcos.</small>
+
+        <label for="a-orden">Orden</label>
+        <input id="a-orden" name="a-orden" type="number" min="0" [(ngModel)]="formAccesorio.sort_order" />
+
+        <label class="casilla"><input type="checkbox" name="a-activo" [(ngModel)]="formAccesorio.is_active" /> Activo (se ofrece al cliente)</label>
+
+        <div class="acciones">
+          <button type="submit" class="primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+          <button type="button" (click)="cancelarAccesorio()">Cancelar</button>
+        </div>
+      </form>
+    }
+
+    <ul class="lista">
+      @for (a of accesorios(); track a.id) {
+        <li [class.apagado]="!a.is_active">
+          <div class="con-miniatura">
+            @if (a.thumb) { <img [src]="a.thumb" [alt]="a.alt || a.name" class="miniatura" /> }
+            @else { <span class="miniatura sin">{{ a.type === 'texto' ? 'Aa' : '—' }}</span> }
+            <div class="datos">
+              <strong>{{ a.name }}</strong>
+              <small>{{ a.category }} · {{ a.type === 'texto' ? 'texto' : 'imagen' }}@if (a.behavior) { · {{ nombreComportamiento(a.behavior) }} }</small>
+              @if (!a.is_active) { <span class="inactiva">Inactivo</span> }
+            </div>
+          </div>
+          <div class="acciones">
+            @if (porEliminar() === 'accesorio:' + a.id) {
+              <span>¿Eliminar?</span>
+              <button type="button" class="peligro" (click)="eliminarAccesorio(a.id)">Sí, eliminar</button>
+              <button type="button" (click)="cancelarEliminar()">No</button>
+            } @else {
+              <button type="button" (click)="editarAccesorio(a)">Editar</button>
+              <button type="button" class="peligro" (click)="confirmarEliminar('accesorio:' + a.id)">Eliminar</button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li>Todavía no hay accesorios.</li>
+      }
+    </ul>
+  </section>
+
+  <!-- ============ UBICACIONES ============ -->
+  <section class="bloque" aria-labelledby="t-ubicaciones">
+    <h2 id="t-ubicaciones">Ubicaciones</h2>
+    <p class="ayuda">Los lugares de la maceta donde puede ir un accesorio (cabeza, pie izquierdo…). Su posición y tamaño se definen en el configurador.</p>
+
+    @if (editandoUbicacion() === null) {
+      <button type="button" class="primario" (click)="nuevaUbicacion()">Nueva ubicación</button>
+    } @else {
+      <form class="formulario" (submit)="$event.preventDefault(); guardarUbicacion()">
+        <h3>{{ editandoUbicacion() === '' ? 'Nueva ubicación' : 'Editar ubicación' }}</h3>
+
+        <label for="u-nombre">Nombre</label>
+        <input id="u-nombre" name="u-nombre" [(ngModel)]="formUbicacion.name" required maxlength="100" />
+
+        <label for="u-orden">Orden</label>
+        <input id="u-orden" name="u-orden" type="number" min="0" [(ngModel)]="formUbicacion.sort_order" />
+
+        <fieldset>
+          <legend>Solo estas categorías (si no marcas ninguna, admite todas)</legend>
+          @for (c of categorias(); track c.id) {
+            <label class="casilla"><input type="checkbox" [name]="'perm-' + c.id" [checked]="formUbicacion.allowed.includes(c.id)"
+              (change)="alternarRegla('allowed', c.id, $any($event.target).checked)" /> {{ c.name }}</label>
+          }
+        </fieldset>
+
+        <fieldset>
+          <legend>Todas menos estas categorías</legend>
+          @for (c of categorias(); track c.id) {
+            <label class="casilla"><input type="checkbox" [name]="'excl-' + c.id" [checked]="formUbicacion.excluded.includes(c.id)"
+              (change)="alternarRegla('excluded', c.id, $any($event.target).checked)" /> {{ c.name }}</label>
+          }
+        </fieldset>
+
+        <div class="acciones">
+          <button type="submit" class="primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+          <button type="button" (click)="cancelarUbicacion()">Cancelar</button>
+        </div>
+      </form>
+    }
+
+    <ul class="lista">
+      @for (u of ubicaciones(); track u.id) {
+        <li>
+          <div class="datos"><strong>{{ u.name }}</strong><small>{{ reglas(u) }} · orden {{ u.sort_order }}</small></div>
+          <div class="acciones">
+            @if (porEliminar() === 'ubicacion:' + u.id) {
+              <span>¿Eliminar?</span>
+              <button type="button" class="peligro" (click)="eliminarUbicacion(u.id)">Sí, eliminar</button>
+              <button type="button" (click)="cancelarEliminar()">No</button>
+            } @else {
+              <button type="button" (click)="editarUbicacion(u)">Editar</button>
+              <button type="button" class="peligro" (click)="confirmarEliminar('ubicacion:' + u.id)">Eliminar</button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li>Todavía no hay ubicaciones.</li>
+      }
+    </ul>
+  </section>
+
+  }
+</main>

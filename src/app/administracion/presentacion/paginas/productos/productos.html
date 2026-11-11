@@ -31,6 +31,7 @@
           </div>
           <div class="acciones">
             <a class="boton" [routerLink]="['/admin/productos', p.sku]">Editar</a>
+            <a class="boton" routerLink="/admin/configurador" [queryParams]="{ producto: p.sku }">Configurador</a>
             @if (porEliminar() === p.sku) {
               <span>¿Eliminar?</span>
               <button type="button" class="peligro" (click)="eliminar(p.sku)">Sí, eliminar</button>

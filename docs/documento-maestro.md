@@ -228,7 +228,7 @@ Todos se editan desde el panel; ninguno va fijo en el código.
 - [ ] Definir los recursos: producto, categoría con subcategorías, campaña, precio, medios, configurador, cotización del carrito, promesa, ventanas, checkout, pedido, pedido pendiente, pago, estados, tracking y errores.
 - [ ] Definir primero checkout, pedido, pedido pendiente y pago, porque son las pantallas que siguen.
 - [ ] Unificar los datos de prueba en una sola fuente con la forma de los contratos. Hoy hay productos en `muestra_producto.ts`, `productos.ts` y `carrito.ts`, y accesorios en `configuracion-producto.json` y `carrito.ts` con nombres distintos.
-- [ ] Configuración del configurador **por producto** (hoy es una sola, `productoId: 1`), con las variantes de color como imágenes separadas.
+- [ ] Configuración del configurador **por producto** (hoy es una sola, `productoId: 1`), con las variantes de color como imágenes separadas. *(Avance del 12 nov: el personalizador ya lee de Laravel la configuración de la categoría o la propia del producto; accesorios y ubicaciones salen de la base de datos. Falta las variantes de color como imágenes separadas, por eso sigue sin marcar.)*
 - [ ] Exportar las interfaces de dominio (hoy son globales sin `export`) y resolver el choque de nombres de `Producto`.
 - [ ] Capa de servicios en Angular (`ProductApi`, `CartApi`, `PromiseApi`, `OrderApi`) que hoy lee mocks y mañana la API, sin tocar los componentes.
 
@@ -855,7 +855,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 - [ ] **Subcategorías:** nombre, slug, orden y categoría. Iniciales de Profesiones y Hobbies: Salud, Administrativos, Fuerza Pública, Cocina y Hobbies.
 - [ ] **Productos:** tipo (`personalizable` o `complemento`), SKU, slug, nombre, categoría, subcategoría, precio base, costo interno, tamaño, "qué incluye", descripción, disponibilidad, activo o inactivo, relacionados, sinónimos de búsqueda, SEO e imagen social.
 - [ ] **Accesorios y opciones:** SKU, pestaña (Hobbies, Amor, Mascotas, Marcos, Lentes/gafas), variante de color real, precio extra (0 por defecto), costo, disponibilidad (agotado) y productos compatibles.
-- [ ] **Configurador por producto:** foto base con el elemento fijo integrado, slots (posición, tamaño, rotación, espejo) y overrides por accesorio o slot, editables con formulario y vista previa; cantidad de accesorios elegibles (2 por defecto).
+- [ ] **Configurador por producto (avance del 12 nov: editor de administrador en `/admin/configurador` —ubicaciones, valores, accesorios marcados, excepciones, por categoría o propio de cada producto— y `/admin/accesorios` para crear y editar accesorios; falta vista previa con variantes de color y overrides por slot completos):** foto base con el elemento fijo integrado, slots (posición, tamaño, rotación, espejo) y overrides por accesorio o slot, editables con formulario y vista previa; cantidad de accesorios elegibles (2 por defecto).
 - [ ] Botón **"Duplicar producto"**, que copia ficha, medios y configurador para crear un modelo nuevo en minutos.
 - [ ] **Complementos:** productos tipo `complemento` con cantidad editable y, si los necesitan, campos de personalización: etiqueta, tipo (texto u opción), obligatorio, largo máximo, opciones y recargo. Todo se completa antes de pagar.
 - [ ] **Favoritos de la página principal:** selección y orden manual de 6–8 productos.

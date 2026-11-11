@@ -45,6 +45,16 @@ export const routes: Routes = [
         loadComponent: () => import('./administracion/presentacion/paginas/portada-inicio/portada-inicio').then(m => m.AdminPortadaInicio)
     },
     {
+        path: 'admin/configurador',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/configurador/configurador').then(m => m.AdminConfigurador)
+    },
+    {
+        path: 'admin/accesorios',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/accesorios/accesorios').then(m => m.AdminAccesorios)
+    },
+    {
         path: 'admin/campanas',
         canActivate: [adminGuard],
         loadComponent: () => import('./administracion/presentacion/paginas/campanas/campanas').then(m => m.AdminCampanas)

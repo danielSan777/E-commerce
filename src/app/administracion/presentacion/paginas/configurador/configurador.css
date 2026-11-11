@@ -1,0 +1,247 @@
+/* Configurador del administrador. Se conserva el aspecto del editor del prototipo (Bootstrap) y se agrega la barra del panel. */
+.barra { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem; padding: .9rem 1.25rem; background: #047857; color: #fff; box-shadow: 0 2px 10px rgba(6, 78, 59, .25); }
+.barra a { color: #fff; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+.aviso-vaciar { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+
+.zona-drop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+
+/*MACETA*/
+.visor {
+  width: 75vh;
+  height: 75vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.maceta {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+
+/*=========================*/
+/*ACCESORIO COLOCADO*/
+/*=========================*/
+
+
+.accesorio-colocado {
+  position: absolute;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+
+
+.accesorio-colocado img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  /* estira para respetar el ancho y alto de los sliders */
+  pointer-events: none;
+  user-select: none;
+}
+
+
+.preview-accesorio {
+  display: block;
+  object-fit: contain;
+  background: transparent !important;
+}
+
+.cdk-drag-preview {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+
+.preview-transparente {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  background: transparent !important;
+}
+
+.capa-accesorios {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+
+.accesorio-colocado canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.accesorio-colocado.seleccionado {
+  outline: 1px dashed #0d6efd;
+}
+
+.handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 2px solid #0d6efd;
+  border-radius: 50%;
+  z-index: 20;
+  touch-action: none;
+  pointer-events: auto;
+}
+
+.handle.nw {
+  top: -7px;
+  left: -7px;
+  cursor: nwse-resize;
+}
+
+.handle.ne {
+  top: -7px;
+  right: -7px;
+  cursor: nesw-resize;
+}
+
+.handle.sw {
+  bottom: -7px;
+  left: -7px;
+  cursor: nesw-resize;
+}
+
+.handle.se {
+  bottom: -7px;
+  right: -7px;
+  cursor: nwse-resize;
+}
+
+/* Contenedor que recibe la rotación 3D (las manijas quedan fuera) */
+.contenido-3d {
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  pointer-events: none;
+}
+
+/* Lista de accesorios por categoría (con check) */
+.lista-categoria {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.item-categoria {
+  cursor: pointer;
+  padding: 6px 8px;
+  margin-bottom: 0;
+  border-radius: 6px;
+}
+
+.item-categoria:hover {
+  background: rgba(13, 110, 253, 0.08);
+}
+
+.mini-imagen {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.mini-canvas {
+  width: 48px;
+  height: 24px;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Lista de accesorios marcados: barra de desplazamiento vertical si hay muchos */
+.lista-marcados {
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/* Campos numéricos para escribir el valor a mano (ancho, alto y giros) */
+.campo-numero {
+  max-width: 130px;
+  margin: 0 auto;
+}
+
+/* Botón "Reiniciar" debajo de Ancho y Alto */
+.btn-reset {
+  margin-top: 6px;
+  padding: 2px 12px;
+}
+
+/* Ubicaciones (cabeza, pie izquierdo, pie derecho, entre las piernas) */
+.item-ubicacion {
+  cursor: pointer;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+.item-ubicacion:hover {
+  background: rgba(13, 110, 253, 0.08);
+}
+
+.item-ubicacion.activa {
+  border-color: #0d6efd;
+  background: rgba(13, 110, 253, 0.12);
+}
+
+.numero-ubicacion {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0d6efd;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+/* Cuadro con los valores por defecto de una ubicación */
+.caja-ubicacion {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed #0d6efd;
+  background: rgba(13, 110, 253, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d6efd;
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
+/* Ubicación deshabilitada: cuadro rojo */
+.caja-ubicacion.deshabilitada {
+  border-color: #dc3545;
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
+
+/* Accesorio visto con los valores de la ubicación: solo se mira */
+.vista-previa {
+  z-index: 1;
+  pointer-events: none;
+  cursor: default;
+}

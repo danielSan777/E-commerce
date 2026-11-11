@@ -1,0 +1,543 @@
+<header class="barra">
+  <strong>Configurador</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<div class="container-fluid py-4">
+
+  <nav class="mb-3 d-flex flex-wrap gap-3">
+    <a routerLink="/admin/accesorios">Accesorios, categorías y ubicaciones</a>
+  </nav>
+
+  <!-- ALCANCE: de quién es esta configuración -->
+  <section class="card shadow-sm mb-4" aria-label="Qué se configura">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-4">
+          <label for="categoria-producto" class="form-label fw-semibold">Categoría</label>
+          <select id="categoria-producto" class="form-select" [ngModel]="categoriaSlug()" (ngModelChange)="elegirCategoria($event)">
+            <option value="">Elige una categoría</option>
+            @for (c of categoriasDeProductos(); track c.slug) {
+            <option [value]="c.slug">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+
+        @if (categoria(); as cat) {
+        <div class="col-12 col-md-5">
+          <label for="producto-config" class="form-label fw-semibold">Qué configuración editar</label>
+          <select id="producto-config" class="form-select" [ngModel]="productoSku()" (ngModelChange)="elegirProducto($event)">
+            <option value="">Toda la categoría «{{ cat.name }}»</option>
+            @for (p of cat.products; track p.sku) {
+            <option [value]="p.sku">Solo el producto: {{ p.name }}{{ p.uses_own_configurator ? ' (configuración propia)' : '' }}</option>
+            }
+          </select>
+        </div>
+        }
+      </div>
+
+      @if (categoria(); as cat) {
+      @if (!productoSku()) {
+      <p class="text-muted small mt-3 mb-0">
+        Esta configuración la usan todos los productos de «{{ cat.name }}» ({{ cat.products.length }})
+        @if (conPropia() > 0) { salvo {{ conPropia() }} que tienen la suya propia }.
+        @if (!cat.has_config) { Todavía no se ha guardado nada. }
+      </p>
+      } @else if (producto(); as p) {
+      <div class="mt-3">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="modo" id="modo-categoria" [checked]="!p.uses_own_configurator"
+            [disabled]="guardando()" (change)="cambiarModo(false)">
+          <label class="form-check-label" for="modo-categoria">Usa la misma configuración de la categoría «{{ cat.name }}»</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="modo" id="modo-propia" [checked]="p.uses_own_configurator"
+            [disabled]="guardando()" (change)="cambiarModo(true, !p.has_config)">
+          <label class="form-check-label" for="modo-propia">Tiene una configuración diferente (propia de este producto)</label>
+        </div>
+        @if (!p.uses_own_configurator) {
+        <p class="text-muted small mt-2 mb-0">
+          Para cambiar lo que ve este producto, edita la categoría o marca «configuración diferente».
+          Al marcarla se parte de una copia de la configuración de la categoría.
+          <button type="button" class="btn btn-link btn-sm p-0 align-baseline" (click)="elegirProducto('')">Editar la categoría</button>
+        </p>
+        }
+      </div>
+      }
+      }
+    </div>
+  </section>
+
+  @if (error()) {
+  <div class="alert alert-danger" role="alert">
+    <p class="mb-1">{{ error() }}</p>
+    @for (d of detalle(); track d) { <p class="mb-0 small">{{ d }}</p> }
+  </div>
+  }
+
+  @if (cargando()) {
+  <p>Cargando…</p>
+  } @else if (!categoria()) {
+  <p class="text-muted">Elige una categoría para configurar dónde van los accesorios sobre la maceta.</p>
+  } @else if (editable()) {
+
+  @if (ubicaciones().length === 0) {
+  <div class="alert alert-warning" role="alert">
+    No hay ubicaciones creadas. Créalas en <a routerLink="/admin/accesorios">Accesorios, categorías y ubicaciones</a>.
+  </div>
+  }
+
+  <div class="row g-4">
+
+    <!-- ================================= -->
+    <!-- PANEL DE ACCESORIOS -->
+    <!-- ================================= -->
+
+    <div class="col-12 col-md-3 col-lg-3">
+
+      <div class="card shadow-sm">
+
+        <div class="card-header">
+          <h5 class="mb-0">Accesorios</h5>
+        </div>
+
+        <!-- Ubicaciones: dónde se coloca el accesorio que se agregue -->
+        <div class="card-body border-bottom">
+          <label class="form-label fw-semibold">Ubicaciones (valores por defecto)</label>
+
+          @for (u of ubicaciones(); track u.id) {
+          <div class="item-ubicacion d-flex align-items-center gap-2" role="button" tabindex="0"
+            [class.activa]="ubicacionActual() === u.id" (click)="cambiarUbicacion(u.id)"
+            (keydown.enter)="cambiarUbicacion(u.id)">
+            <span class="numero-ubicacion">{{ u.id }}</span>
+            <div class="flex-grow-1">
+              <div class="fw-semibold">{{ u.nombre }}</div>
+              <small class="text-muted">{{ resumenUbicacion(u.id) }}</small>
+            </div>
+          </div>
+          }
+
+          <!-- Configuración de la ubicación activa -->
+          <div class="mt-3 pt-3 border-top">
+            <div class="fw-semibold mb-2">{{ nombreUbicacionActual() }}</div>
+
+            <label class="form-label small mb-1">Estado</label>
+            <select class="form-select form-select-sm mb-2" [ngModel]="configActual().estado"
+              (ngModelChange)="cambiarConfig('estado', $event)">
+              <option value="libre">Libre (el cliente la puede usar)</option>
+              <option value="fija">Fija (elemento que no se quita)</option>
+              <option value="deshabilitada">Deshabilitada</option>
+            </select>
+
+            @if (configActual().estado === 'fija') {
+            <label class="form-label small mb-1">Elemento fijo</label>
+            <select class="form-select form-select-sm mb-2" [ngModel]="configActual().fijoId ?? 0"
+              (ngModelChange)="cambiarConfig('fijoId', $event || null)">
+              <option [ngValue]="0">Seleccione un accesorio marcado</option>
+              @for (a of marcadosDeUbicacion(); track a.id) {
+              <option [ngValue]="a.id">{{ a.nombre }}</option>
+              }
+            </select>
+            }
+
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small mb-1">Prioridad</label>
+                <input type="number" class="form-control form-control-sm" min="1" step="1"
+                  [ngModel]="configActual().prioridad" (ngModelChange)="cambiarConfig('prioridad', +$event || 1)">
+              </div>
+              <div class="col-6">
+                <label class="form-label small mb-1">Capa</label>
+                <input type="number" class="form-control form-control-sm" min="1" step="1"
+                  [ngModel]="configActual().capa" (ngModelChange)="cambiarConfig('capa', +$event || 1)">
+              </div>
+            </div>
+            <small class="text-muted d-block mb-2">
+              Prioridad: el cliente va llenando las ubicaciones en este orden (1 = la primera). Capa mayor = más al
+              frente.
+            </small>
+
+            @if (!presetActual()) {
+            <button type="button" class="btn btn-primary btn-sm w-100" (click)="definirPreset()">
+              Definir valores de la ubicación
+            </button>
+            } @else if (!valoresGuardados()) {
+            <button type="button" class="btn btn-success btn-sm w-100" (click)="guardarValoresUbicacion()">
+              Guardar valores de la ubicación
+            </button>
+            } @else {
+            <button type="button" class="btn btn-primary btn-sm w-100" (click)="editarValores()">
+              Editar valores de la ubicación
+            </button>
+            }
+
+            @if (presetActual()) {
+            <button type="button" class="btn btn-outline-danger btn-sm w-100" (click)="quitarPreset()">
+              Quitar valores de la ubicación
+            </button>
+            }
+          </div>
+        </div>
+
+        @if (valoresGuardados()){
+        <!-- Lista desplegable de categorías + accesorios de la categoría con check -->
+        <div class="card-body border-bottom">
+
+          <label for="categoria" class="form-label fw-semibold">Categoría</label>
+          <select id="categoria" class="form-select" [ngModel]="categoriaActual()"
+            (ngModelChange)="categoriaActual.set($event)">
+            <option value="">Seleccione una categoría</option>
+            @for (categoria of categorias(); track categoria) {
+            <option [value]="categoria">{{ categoria }}</option>
+            }
+          </select>
+
+          @if (categoriaActual()) {
+          <div class="lista-categoria mt-3">
+            @for (item of accesoriosDeCategoria(); track item.id) {
+            <label class="item-categoria d-flex align-items-center gap-2">
+              <input type="checkbox" class="form-check-input mt-0" [ngModel]="estaMarcado(item.id)"
+                (ngModelChange)="alternarMarcado(item, $event)">
+
+              @if (item.tipo === 'texto') {
+              <canvas class="mini-canvas" [appTextoCanvas]="item.texto ?? ''"></canvas>
+              } @else {
+              <img class="mini-imagen" [src]="item.imagen" [alt]="item.nombre">
+              }
+
+              <span>{{ item.nombre }}</span>
+            </label>
+            }
+          </div>
+          }
+
+        </div>
+
+        }
+
+        <!-- Accesorios marcados: se arrastran al visor o se agregan al centro.
+             Este contenedor va FUERA del @if porque el visor lo necesita (#listaAccesorios) -->
+        <div class="card-body lista-marcados" cdkDropList [cdkDropListData]="accesoriosMarcados()"
+          #listaAccesorios="cdkDropList" [cdkDropListConnectedTo]="[visor]">
+
+          @if (!valoresGuardados()) {
+          <small class="text-muted">
+            @if (presetActual()) {
+            Ajusta el cuadro en el visor y pulsa "Guardar valores de la ubicación" para elegir los accesorios.
+            } @else {
+            Pulsa "Definir valores de la ubicación" para empezar.
+            }
+          </small>
+          } @else if (marcadosDeUbicacion().length === 0) {
+          <small class="text-muted">Marque accesorios de las categorías de esta ubicación para verlos aquí.</small>
+          }
+
+          @for (
+          accesorio of (valoresGuardados() ? marcadosDeUbicacion() : []);
+          track accesorio.id
+          ){
+
+
+          <div class="card mb-3" [cdkDragPreviewClass]="'preview-transparente'" (cdkDragMoved)="registrarPreview()"
+            cdkDrag [cdkDragData]="accesorio" [cdkDragDisabled]="estaColocado(accesorio.id)">
+
+            <div class="card-body text-center">
+
+              @if (accesorio.tipo === 'texto') {
+              <canvas [appTextoCanvas]="accesorio.texto ?? ''" style="width: 100%; height: 50px; display: block;"
+                [class.opacity-50]="estaColocado(accesorio.id)"></canvas>
+              } @else {
+              <img [src]="accesorio.imagen" [alt]="accesorio.nombre" class="img-fluid"
+                style="height: 80px; object-fit: contain;" [class.opacity-50]="estaColocado(accesorio.id)">
+              }
+              <div class="mt-2">
+                <span class="fw-semibold">
+                  {{ accesorio.nombre }}
+                </span>
+              </div>
+
+
+
+              <div class="d-flex flex-column gap-2">
+
+                @if (ubicacionesDe(accesorio.id)) {
+                <small class="text-muted">
+                  Excepción en: {{ ubicacionesDe(accesorio.id) }}
+                </small>
+                }
+
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="alternarVista(accesorio.id)">
+                  {{ accesorioEnVista() === accesorio.id ? 'Dejar de ver' : 'Ver en ' + nombreUbicacionActual() }}
+                </button>
+
+                @if (estaColocado(accesorio.id)) {
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="seleccionarDeLista(accesorio.id)">
+                  Ajustar excepción
+                </button>
+
+                <button type="button" class="btn btn-danger btn-sm" (click)="quitarExcepcion(accesorio.id)">
+                  Quitar excepción
+                </button>
+                } @else {
+                <button type="button" class="btn btn-primary btn-sm" (click)="crearExcepcion(accesorio)">
+                  Crear excepción
+                </button>
+                }
+
+              </div>
+
+            </div>
+
+            <!-- Preview que aparece mientras arrastras -->
+            <ng-template cdkDragPreview>
+              @if (accesorio.tipo === 'texto') {
+              <canvas [appTextoCanvas]="accesorio.texto ?? ''"
+                style="width: 100px; height: 25px; display: block;"></canvas>
+              } @else {
+              <img [src]="accesorio.imagen" [alt]="accesorio.nombre"
+                style="width: 100px; height: 50px; object-fit: contain; background: transparent;">
+              }
+            </ng-template>
+
+
+
+
+
+          </div>
+
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- VISOR -->
+    <!-- ================================= -->
+
+    <div class="col-12 col-md-9 col-lg-7">
+
+      <div class="card shadow-sm">
+
+        <div class="card-header">
+          <h5 class="mb-0">Vista del producto</h5>
+        </div>
+
+        <div class="card-body">
+
+          <div class="visor mx-auto " #visorRef>
+
+            <!-- Maceta (flujo normal, da el tamaño al visor) -->
+            <img src="/imagenes/maceta_vacia.png" class="maceta" alt="Maceta">
+
+            <!-- Zona que RECIBE los accesorios del panel (sin hijos cdkDrag) -->
+            <div class="zona-drop" cdkDropList #visor="cdkDropList" cdkDropListSortingDisabled
+              [cdkDropListConnectedTo]="[listaAccesorios]" [cdkDropListData]="accesoriosColocados()"
+              (cdkDropListDropped)="soltarAccesorio($event)">
+            </div>
+
+            <!-- Capa con los accesorios MOVIBLES (fuera del drop list) -->
+            <div class="capa-accesorios">
+              @for (accesorio of colocadosVisibles(); track accesorio.id) {
+
+              <div class="accesorio-colocado" [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
+                [style.z-index]="accesorioSeleccionadoId() === accesorio.id ? 5 : (accesorio.accesorioId === 0 ? 3 : 2)"
+                [style.opacity]="opacidad(accesorio)" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
+                (click)="alHacerClick(accesorio)" (pointerdown)="alPresionar($event, accesorio)">
+
+                <div class="contenido-3d" [style.transform]="transformar(accesorio)">
+                  @if (accesorio.accesorioId === 0) {
+                  <div class="caja-ubicacion"
+                    [class.deshabilitada]="estadoDe(accesorio.ubicacionId) === 'deshabilitada'"><span>{{
+                      accesorio.ubicacionId }}</span></div>
+                  } @else if (accesorio.tipo === 'texto') {
+                  <canvas [appTextoCanvas]="accesorio.texto ?? ''"></canvas>
+                  } @else {
+                  <img draggable="false" [src]="accesorio.imagen" [alt]="accesorio.nombre">
+                  }
+                </div>
+
+                @if (accesorioSeleccionadoId() === accesorio.id) {
+                <span class="handle nw" (pointerdown)="iniciarRedimension($event, accesorio, 'nw')"></span>
+                <span class="handle ne" (pointerdown)="iniciarRedimension($event, accesorio, 'ne')"></span>
+                <span class="handle sw" (pointerdown)="iniciarRedimension($event, accesorio, 'sw')"></span>
+                <span class="handle se" (pointerdown)="iniciarRedimension($event, accesorio, 'se')"></span>
+                }
+
+
+
+              </div>
+              }
+
+              <!-- Vista previa: el accesorio con los valores de la ubicación (no se mueve) -->
+              @if (vistaPrevia(); as v) {
+              <div class="accesorio-colocado vista-previa" [style.width.%]="v.ancho" [style.height.%]="v.alto"
+                [style.left.%]="v.x" [style.top.%]="v.y">
+                <div class="contenido-3d" [style.transform]="transformar(v)">
+                  @if (v.tipo === 'texto') {
+                  <canvas [appTextoCanvas]="v.texto ?? ''"></canvas>
+                  } @else {
+                  <img draggable="false" [src]="v.imagen" [alt]="v.nombre">
+                  }
+                </div>
+              </div>
+              }
+            </div>
+
+          </div>
+
+
+
+
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- CONFIGURACIÓN -->
+    <!-- ================================= -->
+
+
+    <!-- Controles al lado del visor -->
+    <div class="col-12 col-md-6 col-lg-2">
+      <div class="d-flex flex-column align-items-center gap-4">
+
+        <!-- Rango de ancho -->
+        <div class="text-center">
+          <label class="form-label">Ancho</label>
+
+          <input type="range" class="form-range rango-vertical" min="5" max="80" step="0.5"
+            [ngModel]="porcentajeAncho()" (ngModelChange)="cambiarAncho($event)">
+
+          <div class="input-group input-group-sm campo-numero">
+            <input type="number" class="form-control text-center" min="5" max="80" step="0.5"
+              [value]="porcentajeAncho()" (input)="editarValor($event, 'ancho')"
+              (change)="confirmarValor($event, 'ancho')">
+            <span class="input-group-text">%</span>
+          </div>
+
+          <button type="button" class="btn btn-outline-secondary btn-sm btn-reset"
+            [disabled]="accesorioSeleccionadoId() === null" (click)="reiniciarAncho()">
+            Reiniciar
+          </button>
+        </div>
+
+        <!-- Rango de alto -->
+        <div class="text-center">
+          <label class="form-label">Alto</label>
+
+          <input type="range" class="form-range rango-vertical" min="1" max="80" step="0.5" [ngModel]="porcentajeAlto()"
+            (ngModelChange)="cambiarAlto($event)">
+
+          <div class="input-group input-group-sm campo-numero">
+            <input type="number" class="form-control text-center" min="1" max="80" step="0.5" [value]="porcentajeAlto()"
+              (input)="editarValor($event, 'alto')" (change)="confirmarValor($event, 'alto')">
+            <span class="input-group-text">%</span>
+          </div>
+
+          <button type="button" class="btn btn-outline-secondary btn-sm btn-reset"
+            [disabled]="accesorioSeleccionadoId() === null" (click)="reiniciarAlto()">
+            Reiniciar
+          </button>
+        </div>
+
+        <!-- Giro izquierda / derecha -->
+        <div class="text-center w-100">
+          <label class="form-label">Giro izq/der</label>
+          <input type="range" class="form-range" min="-180" max="180" step="1" [ngModel]="rotacion().rotY"
+            (ngModelChange)="cambiarRotacion('rotY', $event)">
+          <div class="input-group input-group-sm campo-numero">
+            <input type="number" class="form-control text-center" min="-180" max="180" step="1"
+              [value]="rotacion().rotY" (input)="editarValor($event, 'rotY')" (change)="confirmarValor($event, 'rotY')">
+            <span class="input-group-text">°</span>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm btn-reset"
+            [disabled]="accesorioSeleccionadoId() === null" (click)="cambiarRotacion('rotY', 0)">
+            Reiniciar
+          </button>
+        </div>
+
+        <!-- Inclinar atrás / adelante -->
+        <div class="text-center w-100">
+          <label class="form-label">Inclinar atrás/adelante</label>
+          <input type="range" class="form-range" min="-90" max="90" step="1" [ngModel]="rotacion().rotX"
+            (ngModelChange)="cambiarRotacion('rotX', $event)">
+          <div class="input-group input-group-sm campo-numero">
+            <input type="number" class="form-control text-center" min="-90" max="90" step="1" [value]="rotacion().rotX"
+              (input)="editarValor($event, 'rotX')" (change)="confirmarValor($event, 'rotX')">
+            <span class="input-group-text">°</span>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm btn-reset"
+            [disabled]="accesorioSeleccionadoId() === null" (click)="cambiarRotacion('rotX', 0)">
+            Reiniciar
+          </button>
+        </div>
+
+        <!-- Giro plano -->
+        <div class="text-center w-100">
+          <label class="form-label">Giro plano</label>
+          <input type="range" class="form-range" min="-180" max="180" step="1" [ngModel]="rotacion().rotZ"
+            (ngModelChange)="cambiarRotacion('rotZ', $event)">
+          <div class="input-group input-group-sm campo-numero">
+            <input type="number" class="form-control text-center" min="-180" max="180" step="1"
+              [value]="rotacion().rotZ" (input)="editarValor($event, 'rotZ')" (change)="confirmarValor($event, 'rotZ')">
+            <span class="input-group-text">°</span>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm btn-reset"
+            [disabled]="accesorioSeleccionadoId() === null" (click)="cambiarRotacion('rotZ', 0)">
+            Reiniciar
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="reiniciarRotacion()">
+          Reiniciar giro
+        </button>
+
+        <!-- Modo espejo: lo de la izquierda pasa a la derecha -->
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="modoEspejo" [ngModel]="espejo()"
+            (ngModelChange)="cambiarEspejo($event)">
+          <label class="form-check-label" for="modoEspejo">Modo espejo</label>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- GUARDAR -->
+    <!-- ================================= -->
+
+    <div class="mt-4 d-flex flex-wrap gap-2 align-items-center">
+
+      <button type="button" class="btn btn-primary" [disabled]="guardando()" (click)="guardarConfiguracion()">
+        {{ guardando() ? 'Guardando…' : 'Guardar configuración' }}
+      </button>
+
+      @if (!pidiendoVaciar()) {
+      <button type="button" class="btn btn-outline-danger" [disabled]="guardando()" (click)="pidiendoVaciar.set(true)">
+        Vaciar configuración
+      </button>
+      } @else {
+      <span class="aviso-vaciar" role="alert">
+        Se quitarán los valores de todas las ubicaciones y los accesorios marcados.
+        <button type="button" class="btn btn-danger btn-sm" (click)="vaciarConfiguracion()">Sí, vaciar</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="pidiendoVaciar.set(false)">Cancelar</button>
+      </span>
+      }
+
+    </div>
+
+  
+  </div>
+
+  }
+
+</div>

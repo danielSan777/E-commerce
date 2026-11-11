@@ -1,0 +1,17 @@
+@import '../../estilos/admin-tema.css';
+
+.contenido { max-width: 900px; }
+.bloque { display: flex; flex-direction: column; gap: .75rem; }
+.bloque h2 { font-size: 1.3rem; margin: 1rem 0 0; }
+.fila { flex-direction: row; flex-wrap: wrap; align-items: flex-end; }
+.fila .campo { display: flex; flex-direction: column; flex: 1 1 14rem; }
+.fila .campo.corto { flex: 0 0 6rem; }
+fieldset { border: 1px solid var(--borde); border-radius: 10px; padding: .6rem .9rem; }
+legend { font-weight: 700; font-size: .92rem; padding: 0 .4rem; }
+.con-miniatura { display: flex; align-items: center; gap: .75rem; }
+.miniatura { width: 56px; height: 56px; object-fit: contain; background: #f1f5f4; border-radius: 8px; flex-shrink: 0; }
+.miniatura.sin { display: flex; align-items: center; justify-content: center; color: var(--suave); font-weight: 700; }
+.apagado { opacity: .65; }
+.error { background: #fee2e2; color: var(--peligro); padding: .75rem 1rem; border-radius: 10px; }
+.error p { margin: 0; }
+.detalle { font-size: .9rem; }
