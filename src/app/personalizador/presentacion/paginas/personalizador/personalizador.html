@@ -25,12 +25,12 @@
                     (dragstart)="$event.preventDefault()">
 
                     <!-- Fondo difuminado de la misma foto: rellena los lados en vez de dejarlos en blanco -->
-                    <img src="imagenes/maceta_vacia.png" class="maceta-fondo" alt="" aria-hidden="true">
+                    <img [src]="imagenBase()" class="maceta-fondo" alt="" aria-hidden="true">
 
                     <div class="visor" #visor [style.transform]="transformVisor()"
                         [style.transition]="gesto() ? 'none' : 'transform .2s ease-out'">
 
-                        <img src="imagenes/maceta_vacia.png" class="maceta">
+                        <img [src]="imagenBase()" class="maceta" crossorigin="anonymous" alt="">
 
                         @for (accesorio of accesoriosSeleccionados(); track accesorio.id){
 

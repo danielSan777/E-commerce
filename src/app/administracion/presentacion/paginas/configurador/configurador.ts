@@ -73,6 +73,51 @@ export class AdminConfigurador implements OnInit {
   /** Productos de la categoría que tienen la suya propia. */
   conPropia = computed(() => (this.categoria()?.products ?? []).filter(p => p.uses_own_configurator).length);
 
+  /** Producto elegido (de la lista de la categoría, disponible antes de cargar su configuración). */
+  productoElegido = computed(() => (this.categoria()?.products ?? []).find(p => p.sku === this.productoSku()) ?? null);
+
+  /**
+   * Foto base del visor: la imagen para personalizar del producto elegido o, con «toda la categoría», la del primer
+   * producto que ya la tenga. Si ninguno la tiene se usa la maceta genérica y se avisa.
+   */
+  imagenBase = computed(() => {
+    const productos = this.categoria()?.products ?? [];
+    const propia = this.productoElegido()?.base_image;
+    return propia ?? (this.productoSku() ? null : productos.find(p => p.base_image)?.base_image) ?? null;
+  });
+  imagenBaseVisor = computed(() => this.imagenBase() ?? '/imagenes/maceta_vacia.png');
+  subiendoImagenBase = signal(false);
+
+  subirImagenBase(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    const sku = this.productoSku();
+    if (!archivo || !sku) return;
+    this.subiendoImagenBase.set(true);
+    this.limpiarMensajes();
+    this.servicio.subirImagenBase(sku, archivo).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: p => { this.imagenBaseGuardada(p); this.avisos.exito('La imagen para personalizar se guardó correctamente.'); entrada.value = ''; },
+      error: e => { this.subiendoImagenBase.set(false); this.fallo(e); entrada.value = ''; },
+    });
+  }
+
+  quitarImagenBase(): void {
+    const sku = this.productoSku();
+    if (!sku) return;
+    this.subiendoImagenBase.set(true);
+    this.limpiarMensajes();
+    this.servicio.quitarImagenBase(sku).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: p => { this.imagenBaseGuardada(p); this.avisos.exito('Se quitó la imagen para personalizar.'); },
+      error: e => { this.subiendoImagenBase.set(false); this.fallo(e); },
+    });
+  }
+
+  private imagenBaseGuardada(p: ConfiguracionDeProductoAdmin): void {
+    this.subiendoImagenBase.set(false);
+    this.producto.update(actual => actual && actual.sku === p.sku ? { ...actual, base_image: p.base_image } : actual);
+    this.categoria.update(c => c && ({ ...c, products: c.products.map(x => x.sku === p.sku ? { ...x, base_image: p.base_image } : x) }));
+  }
+
   pidiendoVaciar = signal(false);
 
   ngOnInit(): void {

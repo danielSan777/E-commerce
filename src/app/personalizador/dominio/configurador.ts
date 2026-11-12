@@ -46,6 +46,8 @@ export interface ExcepcionApi extends GeometriaApi {
 export interface ConfiguradorApi {
     source: 'product' | 'category';
     configured: boolean;
+    /** Imagen para personalizar del producto (la sube el administrador); null si aún no tiene. */
+    base_image: string | null;
     locations: UbicacionApi[];
     accessories: AccesorioApi[];
     exceptions: ExcepcionApi[];
@@ -54,6 +56,7 @@ export interface ConfiguradorApi {
 /** Lo que usa el personalizador (los mismos nombres que tenía el archivo estático del editor). */
 export interface ConfiguracionGuardada {
     configurado?: boolean;
+    imagenBase?: string;
     ubicaciones?: UbicacionGuardada[];
     excepciones?: ExcepcionGuardada[];
     catalogo?: Accesorio[];
@@ -67,6 +70,7 @@ export function geometriaDeApi(g: GeometriaApi): Geometria {
 export function adaptarConfigurador(api: ConfiguradorApi): ConfiguracionGuardada {
     return {
         configurado: api.configured,
+        imagenBase: api.base_image ?? undefined,
         ubicaciones: api.locations.map(u => ({
             id: u.location_id,
             nombre: u.name,

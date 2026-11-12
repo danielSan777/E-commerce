@@ -77,7 +77,7 @@ export interface ConfiguracionDeCategoriaAdmin {
   slug: string;
   name: string;
   has_config: boolean;
-  products: { sku: string; name: string; uses_own_configurator: boolean }[];
+  products: { sku: string; name: string; uses_own_configurator: boolean; base_image: string | null }[];
   config: ConfigLeidaAdmin;
 }
 
@@ -90,5 +90,7 @@ export interface ConfiguracionDeProductoAdmin {
   uses_own_configurator: boolean;
   source: 'product' | 'category';
   has_config: boolean;
+  /** Imagen para personalizar de este producto; null si aún no la tiene. */
+  base_image: string | null;
   config: ConfigLeidaAdmin;
 }

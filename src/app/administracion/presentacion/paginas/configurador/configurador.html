@@ -64,6 +64,25 @@
         }
       </div>
       }
+
+      @if (productoElegido(); as pe) {
+      <div class="mt-3 pt-3 border-top">
+        <label for="imagen-base" class="form-label fw-semibold mb-1">Imagen para personalizar de «{{ pe.name }}»</label>
+        <p class="text-muted small mb-2">Es la foto sobre la que se colocan los accesorios, en este editor y en el personalizador del cliente. Cada producto tiene la suya.</p>
+        <div class="d-flex flex-wrap align-items-center gap-3">
+          @if (pe.base_image) { <img [src]="pe.base_image" [alt]="'Imagen para personalizar de ' + pe.name" style="height:90px;width:90px;object-fit:contain;background:#f1f5f4;border-radius:8px"> }
+          <input id="imagen-base" type="file" class="form-control" style="max-width:22rem" accept="image/png,image/jpeg,image/webp"
+            [disabled]="subiendoImagenBase()" (change)="subirImagenBase($event)">
+          @if (pe.base_image) {
+          <button type="button" class="btn btn-outline-danger btn-sm" [disabled]="subiendoImagenBase()" (click)="quitarImagenBase()">Quitar imagen</button>
+          }
+          @if (subiendoImagenBase()) { <span class="small text-muted">Guardando…</span> }
+        </div>
+        @if (!pe.base_image) {
+        <p class="text-warning-emphasis small mt-2 mb-0">Este producto todavía no tiene imagen para personalizar: se muestra una maceta genérica.</p>
+        }
+      </div>
+      }
       }
     </div>
   </section>
@@ -331,7 +350,7 @@
           <div class="visor mx-auto " #visorRef>
 
             <!-- Maceta (flujo normal, da el tamaño al visor) -->
-            <img src="/imagenes/maceta_vacia.png" class="maceta" alt="Maceta">
+            <img [src]="imagenBaseVisor()" class="maceta" alt="Imagen para personalizar">
 
             <!-- Zona que RECIBE los accesorios del panel (sin hijos cdkDrag) -->
             <div class="zona-drop" cdkDropList #visor="cdkDropList" cdkDropListSortingDisabled

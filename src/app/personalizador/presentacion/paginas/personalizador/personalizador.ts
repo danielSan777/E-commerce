@@ -18,6 +18,8 @@ import { COLOR_DORADO_PLACA, PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE
 import { ExcepcionGuardada, Geometria, UbicacionGuardada } from '../../../dominio/ubicaciones';
 import { contarCaracteres, recortarCaracteres, sinEmojis } from '../../../dominio/texto';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+
+const IMAGEN_BASE_GENERICA = 'imagenes/maceta_vacia.png';
 // AJUSTA la ruta según donde dejes carrito.service.ts
 import {
   CarritoService, ConfigGuardada, LineaResumen, ProductoCarrito
@@ -67,6 +69,8 @@ export class Personalizador implements OnDestroy {
 
   // Accesorios disponibles para el cliente (los marcados en el editor)
   catalogo = signal<Accesorio[]>([]);
+  /** Foto base del producto (la sube el administrador). Si aún no tiene, se usa la maceta genérica. */
+  imagenBase = signal(IMAGEN_BASE_GENERICA);
 
   colorSeleccionado = 'negro';   // color de los lentes (accesorio 1)
   colorGafas = 'negro';          // color de las gafas (accesorio 5)
@@ -170,6 +174,7 @@ export class Personalizador implements OnDestroy {
 
   private aplicarConfiguracion(guardado: ConfiguracionGuardada): void {
     try {
+      this.imagenBase.set(guardado.imagenBase || IMAGEN_BASE_GENERICA);
       this.sinConfiguracion.set(!guardado.configurado || !(guardado.catalogo ?? []).length);
       this.ubicaciones.set((guardado.ubicaciones ?? []) as UbicacionGuardada[]);
       this.excepciones.set((guardado.excepciones ?? []) as ExcepcionGuardada[]);
@@ -1276,7 +1281,7 @@ export class Personalizador implements OnDestroy {
       ctx.fillStyle = '#fff';
       ctx.fillRect(0, 0, T, T);
 
-      const base = await this.cargarImagen('imagenes/maceta_vacia.png');
+      const base = await this.cargarImagen(this.imagenBase());
       if (base) {
         // Igual que el visor: la foto difuminada rellena los lados y la foto completa va encima
         const cubrir = Math.max(T / base.width, T / base.height) * 1.15;

@@ -28,13 +28,13 @@ const configuracion = (extra = {}) => ({
 
 const categoria = (extra = {}) => ({
   scope: 'category', slug: 'profesiones', name: 'Profesiones', has_config: true,
-  products: [{ sku: 'PRO-DOCTOR', name: 'Doctor', uses_own_configurator: false }, { sku: 'PRO-ENFERMERA', name: 'Enfermera', uses_own_configurator: false }],
+  products: [{ sku: 'PRO-DOCTOR', name: 'Doctor', uses_own_configurator: false, base_image: 'https://api/doctor.webp' }, { sku: 'PRO-ENFERMERA', name: 'Enfermera', uses_own_configurator: false, base_image: null }],
   config: configuracion(), ...extra,
 });
 
 const producto = (extra = {}) => ({
   scope: 'product', sku: 'PRO-DOCTOR', name: 'Doctor', category_slug: 'profesiones', category_name: 'Profesiones',
-  uses_own_configurator: false, source: 'category', has_config: true, config: configuracion(), ...extra,
+  uses_own_configurator: false, source: 'category', has_config: true, base_image: 'https://api/doctor.webp', config: configuracion(), ...extra,
 });
 
 const esperar = () => new Promise<void>(r => setTimeout(r));
@@ -310,6 +310,85 @@ describe('AdminConfigurador', () => {
 
       expect(c.editable()).toBe(true);
       expect(c.productoSku()).toBe('');
+    });
+  });
+
+  describe('imagen para personalizar', () => {
+    it('con «toda la categoría» muestra la del primer producto que la tenga; con un producto, la suya', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      expect(c.imagenBase()).toBe('https://api/doctor.webp');
+      expect((fixture.nativeElement.querySelector('.visor .maceta') as HTMLImageElement).src).toContain('doctor.webp');
+
+      // Enfermera no tiene imagen: no se le presta la de otro producto, se avisa y se usa la genérica
+      c.elegirProducto('PRO-ENFERMERA');
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-ENFERMERA`).flush(producto({ sku: 'PRO-ENFERMERA', name: 'Enfermera', base_image: null }));
+      await esperar();
+      fixture.detectChanges();
+      expect(c.imagenBase()).toBeNull();
+      expect(c.imagenBaseVisor()).toBe('/imagenes/maceta_vacia.png');
+      expect(fixture.nativeElement.textContent).toContain('todavía no tiene imagen para personalizar');
+    });
+
+    it('sube la imagen del producto elegido con el endpoint del producto y la muestra', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      c.elegirProducto('PRO-ENFERMERA');
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-ENFERMERA`).flush(producto({ sku: 'PRO-ENFERMERA', name: 'Enfermera', base_image: null }));
+      await esperar();
+
+      const archivo = new File(['x'], 'enfermera.png', { type: 'image/png' });
+      const entrada = { files: [archivo], value: 'enfermera.png' } as unknown as HTMLInputElement;
+      c.subirImagenBase({ target: entrada } as unknown as Event);
+
+      const post = ctrl.expectOne(`${BASE}/configurator/products/PRO-ENFERMERA/base-image`);
+      expect(post.request.method).toBe('POST');
+      expect((post.request.body as FormData).get('image')).toBe(archivo);
+      post.flush(producto({ sku: 'PRO-ENFERMERA', name: 'Enfermera', base_image: 'https://api/enfermera.webp' }), { status: 201, statusText: 'Created' });
+      await esperar();
+
+      expect(c.imagenBase()).toBe('https://api/enfermera.webp');
+      expect(c.categoria()?.products.find(p => p.sku === 'PRO-ENFERMERA')?.base_image).toBe('https://api/enfermera.webp');
+      expect(avisos.lista().at(-1)?.texto).toBe('La imagen para personalizar se guardó correctamente.');
+      expect(c.subiendoImagenBase()).toBe(false);
+    });
+
+    it('quitar la imagen usa DELETE y deja al producto sin imagen', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      c.elegirProducto('PRO-DOCTOR');
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`).flush(producto());
+      await esperar();
+
+      c.quitarImagenBase();
+      const del = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/base-image`);
+      expect(del.request.method).toBe('DELETE');
+      del.flush(producto({ base_image: null }));
+      await esperar();
+
+      expect(c.imagenBase()).toBeNull();
+    });
+
+    it('si Laravel rechaza la imagen muestra su mensaje', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      c.elegirProducto('PRO-DOCTOR');
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`).flush(producto());
+      await esperar();
+
+      c.subirImagenBase({ target: { files: [new File(['x'], 'a.png')], value: 'a.png' } } as unknown as Event);
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/base-image`).flush(
+        { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { image: ['La imagen es muy pequeña. Debe medir al menos 64 × 64 píxeles.'] } },
+        { status: 422, statusText: 'Unprocessable' },
+      );
+      await esperar();
+
+      expect(c.detalle()).toContain('La imagen es muy pequeña. Debe medir al menos 64 × 64 píxeles.');
+      expect(c.subiendoImagenBase()).toBe(false);
     });
   });
 
