@@ -72,6 +72,37 @@
         La imagen se sube al editar el producto.
         <a [routerLink]="['/admin/productos', pe.sku]">Editar el producto</a>
       </p>
+      } @else {
+      <div class="mt-3 pt-3 border-top" aria-label="Encuadre de la foto">
+        <div class="fw-semibold mb-1">Encuadre de la foto de «{{ pe.name }}»</div>
+        <p class="text-muted small mb-2">
+          Los accesorios de la categoría no se mueven: se mueve la foto hasta que la maceta coincida con las cajas de las ubicaciones.
+          Sirve para pequeñas diferencias de tamaño o posición, no para otro ángulo.
+        </p>
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-4">
+            <label for="aj-escala" class="form-label small mb-0">Tamaño: {{ ajusteBase().scale }} %</label>
+            <input id="aj-escala" type="range" class="form-range" min="50" max="200" step="1" [value]="ajusteBase().scale"
+              (input)="cambiarAjuste('scale', +$any($event.target).value)">
+          </div>
+          <div class="col-6 col-md-3">
+            <label for="aj-x" class="form-label small mb-0">Izquierda / derecha: {{ ajusteBase().x }}</label>
+            <input id="aj-x" type="range" class="form-range" min="-50" max="50" step="0.5" [value]="ajusteBase().x"
+              (input)="cambiarAjuste('x', +$any($event.target).value)">
+          </div>
+          <div class="col-6 col-md-3">
+            <label for="aj-y" class="form-label small mb-0">Arriba / abajo: {{ ajusteBase().y }}</label>
+            <input id="aj-y" type="range" class="form-range" min="-50" max="50" step="0.5" [value]="ajusteBase().y"
+              (input)="cambiarAjuste('y', +$any($event.target).value)">
+          </div>
+          <div class="col-12 col-md-2 d-flex gap-2">
+            <button type="button" class="btn btn-success btn-sm" [disabled]="!ajusteSinGuardar() || guardandoAjuste()" (click)="guardarAjuste()">
+              {{ guardandoAjuste() ? 'Guardando…' : 'Guardar encuadre' }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="guardandoAjuste()" (click)="reiniciarAjuste()">Reiniciar</button>
+          </div>
+        </div>
+      </div>
       }
       } @else if (categoria() && !imagenBase()) {
       <p class="text-warning-emphasis small mt-3 mb-0">
@@ -94,6 +125,26 @@
   <p>Cargando…</p>
   } @else if (!categoria()) {
   <p class="text-muted">Elige una categoría para configurar dónde van los accesorios sobre la maceta.</p>
+  } @else if (!editable() && productoElegido()?.base_image && producto()) {
+  <section class="card shadow-sm mb-4" aria-label="Vista para encuadrar la foto">
+    <div class="card-header"><h5 class="mb-0">Así se ve «{{ productoElegido()!.name }}» con la configuración de la categoría</h5></div>
+    <div class="card-body">
+      <p class="text-muted small">Las cajas numeradas son las ubicaciones de la categoría. Mueve la foto con los deslizadores hasta que coincidan.</p>
+      <div class="visor mx-auto">
+        <img [src]="imagenBaseVisor()" class="maceta" [style.transform]="transformBase()" alt="Imagen para personalizar">
+        <div class="capa-accesorios">
+          @for (g of guiasDeUbicaciones(); track g.id) {
+          <div class="accesorio-colocado" style="pointer-events:none" [style.width.%]="g.ancho" [style.height.%]="g.alto"
+            [style.left.%]="g.x" [style.top.%]="g.y">
+            <div class="contenido-3d" [style.transform]="transformar(g)">
+              <div class="caja-ubicacion" [class.deshabilitada]="estadoDe(g.ubicacionId) === 'deshabilitada'"><span>{{ g.ubicacionId }}</span></div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
   } @else if (editable()) {
 
   @if (ubicaciones().length === 0) {
@@ -346,7 +397,7 @@
           <div class="visor mx-auto " #visorRef>
 
             <!-- Maceta (flujo normal, da el tamaño al visor) -->
-            <img [src]="imagenBaseVisor()" class="maceta" alt="Imagen para personalizar">
+            <img [src]="imagenBaseVisor()" class="maceta" [style.transform]="transformBase()" alt="Imagen para personalizar">
 
             <!-- Zona que RECIBE los accesorios del panel (sin hijos cdkDrag) -->
             <div class="zona-drop" cdkDropList #visor="cdkDropList" cdkDropListSortingDisabled

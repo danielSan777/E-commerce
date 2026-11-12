@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
 import {
-  AccesorioAdmin, CategoriaAccesorioAdmin, ConfigGuardableAdmin, ConfiguracionDeCategoriaAdmin,
+  AccesorioAdmin, AjusteImagenAdmin, CategoriaAccesorioAdmin, ConfigGuardableAdmin, ConfiguracionDeCategoriaAdmin,
   ConfiguracionDeProductoAdmin, DatosAccesorio, DatosUbicacion, UbicacionAdmin,
 } from '../../dominio/interfaces/configurador-admin';
 
@@ -63,6 +63,11 @@ export class ConfiguradorAdminService {
   }
   eliminarUbicacion(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/locations/${id}`).pipe(conErrorApi());
+  }
+
+  // ----- encuadre de la imagen para personalizar (la imagen misma se sube desde el producto)
+  ajustarImagenBase(sku: string, ajuste: AjusteImagenAdmin): Observable<ConfiguracionDeProductoAdmin> {
+    return this.http.put<ConfiguracionDeProductoAdmin>(`${this.api}/configurator/products/${encodeURIComponent(sku)}/base-adjust`, ajuste).pipe(conErrorApi());
   }
 
   // ----- configuración por categoría o por producto

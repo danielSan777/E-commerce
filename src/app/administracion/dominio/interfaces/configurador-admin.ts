@@ -66,6 +66,13 @@ export interface ConfigGuardableAdmin {
 }
 
 /** Lo que devuelve Laravel al leer una configuración (las ubicaciones traen su nombre y sus reglas de categoría). */
+/** Encuadre de la foto de un producto: escala en % (100 = igual) y desplazamiento en % del visor. */
+export interface AjusteImagenAdmin {
+  scale: number;
+  x: number;
+  y: number;
+}
+
 export interface ConfigLeidaAdmin {
   locations: UbicacionApi[];
   accessory_ids: number[];
@@ -77,7 +84,7 @@ export interface ConfiguracionDeCategoriaAdmin {
   slug: string;
   name: string;
   has_config: boolean;
-  products: { sku: string; name: string; uses_own_configurator: boolean; base_image: string | null }[];
+  products: { sku: string; name: string; uses_own_configurator: boolean; base_image: string | null; base_adjust: AjusteImagenAdmin }[];
   config: ConfigLeidaAdmin;
 }
 
@@ -92,5 +99,6 @@ export interface ConfiguracionDeProductoAdmin {
   has_config: boolean;
   /** Imagen para personalizar de este producto; null si aún no la tiene. */
   base_image: string | null;
+  base_adjust: AjusteImagenAdmin;
   config: ConfigLeidaAdmin;
 }

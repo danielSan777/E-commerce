@@ -28,13 +28,13 @@ const configuracion = (extra = {}) => ({
 
 const categoria = (extra = {}) => ({
   scope: 'category', slug: 'profesiones', name: 'Profesiones', has_config: true,
-  products: [{ sku: 'PRO-DOCTOR', name: 'Doctor', uses_own_configurator: false, base_image: 'https://api/doctor.webp' }, { sku: 'PRO-ENFERMERA', name: 'Enfermera', uses_own_configurator: false, base_image: null }],
+  products: [{ sku: 'PRO-DOCTOR', name: 'Doctor', uses_own_configurator: false, base_image: 'https://api/doctor.webp', base_adjust: { scale: 100, x: 0, y: 0 } }, { sku: 'PRO-ENFERMERA', name: 'Enfermera', uses_own_configurator: false, base_image: null, base_adjust: { scale: 100, x: 0, y: 0 } }],
   config: configuracion(), ...extra,
 });
 
 const producto = (extra = {}) => ({
   scope: 'product', sku: 'PRO-DOCTOR', name: 'Doctor', category_slug: 'profesiones', category_name: 'Profesiones',
-  uses_own_configurator: false, source: 'category', has_config: true, base_image: 'https://api/doctor.webp', config: configuracion(), ...extra,
+  uses_own_configurator: false, source: 'category', has_config: true, base_image: 'https://api/doctor.webp', base_adjust: { scale: 100, x: 0, y: 0 }, config: configuracion(), ...extra,
 });
 
 const esperar = () => new Promise<void>(r => setTimeout(r));
@@ -67,6 +67,15 @@ describe('AdminConfigurador', () => {
 
   /** Tras guardar, el editor recarga los accesorios: se contesta esa petición. */
   async function terminarGuardado() {
+    await esperar();
+    ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+    await esperar();
+  }
+
+  /** Al elegir un producto se pide su configuración y luego los accesorios (también sirven de guía si usa la de la categoría). */
+  async function elegirProductoYResponder(c: AdminConfigurador, sku: string, respuesta: object) {
+    c.elegirProducto(sku);
+    ctrl.expectOne(`${BASE}/configurator/products/${sku}`).flush(respuesta);
     await esperar();
     ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
     await esperar();
@@ -245,13 +254,15 @@ describe('AdminConfigurador', () => {
       await abrirCategoria(fixture);
       const c = fixture.componentInstance;
 
-      c.elegirProducto('PRO-DOCTOR');
-      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`).flush(producto());
-      await esperar();
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
       fixture.detectChanges();
 
       expect(c.editable()).toBe(false);
-      expect(fixture.nativeElement.querySelector('.visor')).toBeNull();
+      // No se muestra el editor, solo la vista para encuadrar la foto con las cajas de las ubicaciones
+      expect(fixture.nativeElement.textContent).not.toContain('Vista del producto');
+      expect(fixture.nativeElement.textContent).toContain('con la configuración de la categoría');
+      expect(fixture.nativeElement.querySelectorAll('.visor .caja-ubicacion').length).toBe(c.guiasDeUbicaciones().length);
+      expect(c.guiasDeUbicaciones().length).toBeGreaterThan(0);
       expect(fixture.nativeElement.textContent).toContain('Usa la misma configuración de la categoría «Profesiones»');
       expect(fixture.nativeElement.textContent).toContain('Tiene una configuración diferente');
     });
@@ -260,9 +271,7 @@ describe('AdminConfigurador', () => {
       const fixture = await montar();
       await abrirCategoria(fixture);
       const c = fixture.componentInstance;
-      c.elegirProducto('PRO-DOCTOR');
-      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`).flush(producto({ has_config: false }));
-      await esperar();
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto({ has_config: false }));
 
       c.cambiarModo(true, true);
       const modo = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/mode`);
@@ -283,11 +292,7 @@ describe('AdminConfigurador', () => {
       const fixture = await montar();
       await abrirCategoria(fixture);
       const c = fixture.componentInstance;
-      c.elegirProducto('PRO-DOCTOR');
-      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`).flush(producto({ uses_own_configurator: true, source: 'product' }));
-      await esperar();
-      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
-      await esperar();
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto({ uses_own_configurator: true, source: 'product' }));
 
       void c.guardarConfiguracion();
       const put = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`);
@@ -300,9 +305,7 @@ describe('AdminConfigurador', () => {
       const fixture = await montar();
       await abrirCategoria(fixture);
       const c = fixture.componentInstance;
-      c.elegirProducto('PRO-DOCTOR');
-      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`).flush(producto());
-      await esperar();
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
 
       c.elegirProducto('');
       ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
@@ -310,6 +313,80 @@ describe('AdminConfigurador', () => {
 
       expect(c.editable()).toBe(true);
       expect(c.productoSku()).toBe('');
+    });
+  });
+
+  describe('encuadre de la foto', () => {
+    it('mover los deslizadores cambia la foto al instante, sin tocar las cajas, y reiniciar vuelve a 100 % / 0', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+      fixture.detectChanges();
+
+      expect(c.ajusteBase()).toEqual({ scale: 100, x: 0, y: 0 });
+      expect(c.ajusteSinGuardar()).toBe(false);
+      c.cambiarAjuste('scale', 112);
+      c.cambiarAjuste('x', -4.5);
+      c.cambiarAjuste('y', 99); // fuera de rango: se corrige a 50
+      fixture.detectChanges();
+
+      expect(c.ajusteBase()).toEqual({ scale: 112, x: -4.5, y: 50 });
+      expect(c.transformBase()).toBe('translate(-4.5%, 50%) scale(1.12)');
+      expect((fixture.nativeElement.querySelector('.visor .maceta') as HTMLImageElement).style.transform).toContain('scale(1.12)');
+      expect(c.ajusteSinGuardar()).toBe(true);
+
+      c.reiniciarAjuste();
+      expect(c.ajusteBase()).toEqual({ scale: 100, x: 0, y: 0 });
+    });
+
+    it('guardar envía escala y desplazamiento al endpoint del producto y deja el encuadre guardado', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+      c.cambiarAjuste('scale', 110);
+      c.cambiarAjuste('x', 2);
+
+      c.guardarAjuste();
+      const put = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/base-adjust`);
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ scale: 110, x: 2, y: 0 });
+      put.flush(producto({ base_adjust: { scale: 110, x: 2, y: 0 } }));
+      await esperar();
+
+      expect(c.categoria()?.products.find(p => p.sku === 'PRO-DOCTOR')?.base_adjust).toEqual({ scale: 110, x: 2, y: 0 });
+      expect(c.ajusteSinGuardar()).toBe(false);
+      expect(avisos.lista().at(-1)?.texto).toBe('El encuadre de la imagen se guardó correctamente.');
+      expect(c.guardandoAjuste()).toBe(false);
+    });
+
+    it('si Laravel rechaza el encuadre muestra su mensaje', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+      c.cambiarAjuste('scale', 120);
+
+      c.guardarAjuste();
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/base-adjust`).flush(
+        { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { scale: ['La escala debe estar entre 50 % y 200 %.'] } },
+        { status: 422, statusText: 'Unprocessable' },
+      );
+      await esperar();
+
+      expect(c.detalle()).toContain('La escala debe estar entre 50 % y 200 %.');
+      expect(c.guardandoAjuste()).toBe(false);
+      expect(c.ajusteSinGuardar()).toBe(true); // lo movido no se pierde
+    });
+
+    it('con «toda la categoría» se ve el encuadre guardado del producto cuya foto se muestra y no hay deslizadores', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture, categoria({ products: [
+        { sku: 'PRO-DOCTOR', name: 'Doctor', uses_own_configurator: false, base_image: 'https://api/doctor.webp', base_adjust: { scale: 120, x: 1, y: -2 } },
+      ] }));
+      expect(fixture.componentInstance.transformBase()).toBe('translate(1%, -2%) scale(1.2)');
+      expect(fixture.nativeElement.querySelector('input[type=range]#aj-escala')).toBeNull();
     });
   });
 
@@ -323,9 +400,7 @@ describe('AdminConfigurador', () => {
       expect(fixture.nativeElement.querySelector('input[type=file]')).toBeNull(); // el configurador no sube nada
 
       // Enfermera no tiene imagen: no se le presta la de otro producto, se avisa y se usa la genérica
-      c.elegirProducto('PRO-ENFERMERA');
-      ctrl.expectOne(`${BASE}/configurator/products/PRO-ENFERMERA`).flush(producto({ sku: 'PRO-ENFERMERA', name: 'Enfermera', base_image: null }));
-      await esperar();
+      await elegirProductoYResponder(c, 'PRO-ENFERMERA', producto({ sku: 'PRO-ENFERMERA', name: 'Enfermera', base_image: null }));
       fixture.detectChanges();
       expect(c.imagenBase()).toBeNull();
       expect(c.imagenBaseVisor()).toBe('/imagenes/maceta_vacia.png');

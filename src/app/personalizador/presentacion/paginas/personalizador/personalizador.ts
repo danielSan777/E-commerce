@@ -71,6 +71,12 @@ export class Personalizador implements OnDestroy {
   catalogo = signal<Accesorio[]>([]);
   /** Foto base del producto (la sube el administrador). Si aún no tiene, se usa la maceta genérica. */
   imagenBase = signal(IMAGEN_BASE_GENERICA);
+  /** Encuadre de la foto del producto (lo define el administrador para que los accesorios caigan en su sitio). */
+  ajusteImagen = signal({ escala: 100, x: 0, y: 0 });
+  transformBase = computed(() => {
+    const a = this.ajusteImagen();
+    return `translate(${a.x}%, ${a.y}%) scale(${a.escala / 100})`;
+  });
 
   colorSeleccionado = 'negro';   // color de los lentes (accesorio 1)
   colorGafas = 'negro';          // color de las gafas (accesorio 5)
@@ -175,6 +181,7 @@ export class Personalizador implements OnDestroy {
   private aplicarConfiguracion(guardado: ConfiguracionGuardada): void {
     try {
       this.imagenBase.set(guardado.imagenBase || IMAGEN_BASE_GENERICA);
+      this.ajusteImagen.set(guardado.ajusteImagen ?? { escala: 100, x: 0, y: 0 });
       this.sinConfiguracion.set(!guardado.configurado || !(guardado.catalogo ?? []).length);
       this.ubicaciones.set((guardado.ubicaciones ?? []) as UbicacionGuardada[]);
       this.excepciones.set((guardado.excepciones ?? []) as ExcepcionGuardada[]);
@@ -1291,9 +1298,15 @@ export class Personalizador implements OnDestroy {
           base.width * cubrir, base.height * cubrir);
         ctx.restore();
 
+        // La foto completa lleva el mismo encuadre que en el visor (escala y desplazamiento alrededor del centro)
         const caber = Math.min(T / base.width, T / base.height);
-        ctx.drawImage(base, (T - base.width * caber) / 2, (T - base.height * caber) / 2,
+        const ajuste = this.ajusteImagen();
+        ctx.save();
+        ctx.translate(T / 2 + T * ajuste.x / 100, T / 2 + T * ajuste.y / 100);
+        ctx.scale(ajuste.escala / 100, ajuste.escala / 100);
+        ctx.drawImage(base, -base.width * caber / 2, -base.height * caber / 2,
           base.width * caber, base.height * caber);
+        ctx.restore();
       }
 
       // De atrás hacia adelante, según la capa de cada ubicación

@@ -30,7 +30,7 @@
                     <div class="visor" #visor [style.transform]="transformVisor()"
                         [style.transition]="gesto() ? 'none' : 'transform .2s ease-out'">
 
-                        <img [src]="imagenBase()" class="maceta" crossorigin="anonymous" alt="">
+                        <img [src]="imagenBase()" class="maceta" [style.transform]="transformBase()" crossorigin="anonymous" alt="">
 
                         @for (accesorio of accesoriosSeleccionados(); track accesorio.id){
 

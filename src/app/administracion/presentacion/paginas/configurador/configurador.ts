@@ -16,7 +16,7 @@ import {
 } from '../../../aplicacion/configurador-editor';
 import { CategoriaAdmin } from '../../../dominio/interfaces/categoria-admin';
 import {
-  ConfigGuardableAdmin, ConfigLeidaAdmin, ConfiguracionDeCategoriaAdmin, ConfiguracionDeProductoAdmin,
+  AjusteImagenAdmin, ConfigGuardableAdmin, ConfigLeidaAdmin, ConfiguracionDeCategoriaAdmin, ConfiguracionDeProductoAdmin,
 } from '../../../dominio/interfaces/configurador-admin';
 import { TextoCanvas } from '../../directivas/texto-canvas';
 
@@ -87,6 +87,53 @@ export class AdminConfigurador implements OnInit {
   });
   imagenBaseVisor = computed(() => this.imagenBase() ?? '/imagenes/maceta_vacia.png');
 
+  // ----- encuadre de la foto: se mueve la foto (no los accesorios) para que coincida con las demás de la categoría
+  /** Lo que se está moviendo con los deslizadores del producto elegido (aún sin guardar). */
+  ajusteEditado = signal<AjusteImagenAdmin | null>(null);
+  guardandoAjuste = signal(false);
+  readonly ajusteNeutro: AjusteImagenAdmin = { scale: 100, x: 0, y: 0 };
+
+  /** El encuadre que se ve: el que se está moviendo o, con «toda la categoría», el del producto cuya foto se muestra. */
+  ajusteBase = computed<AjusteImagenAdmin>(() => {
+    if (this.productoSku()) return this.ajusteEditado() ?? this.productoElegido()?.base_adjust ?? this.ajusteNeutro;
+    return (this.categoria()?.products ?? []).find(p => p.base_image)?.base_adjust ?? this.ajusteNeutro;
+  });
+  transformBase = computed(() => `translate(${this.ajusteBase().x}%, ${this.ajusteBase().y}%) scale(${this.ajusteBase().scale / 100})`);
+  ajusteGuardado = computed(() => this.productoElegido()?.base_adjust ?? this.ajusteNeutro);
+  ajusteSinGuardar = computed(() => {
+    const a = this.ajusteBase(), g = this.ajusteGuardado();
+    return a.scale !== g.scale || a.x !== g.x || a.y !== g.y;
+  });
+  /** Cajas de las ubicaciones con valores: sirven de guía para alinear la foto cuando no se edita la configuración. */
+  guiasDeUbicaciones = computed(() => this.accesoriosColocados().filter(a => a.accesorioId === 0));
+
+  cambiarAjuste(campo: keyof AjusteImagenAdmin, valor: number): void {
+    const rango = campo === 'scale' ? [50, 200] : [-50, 50];
+    const v = Math.min(rango[1], Math.max(rango[0], Number.isFinite(valor) ? valor : (campo === 'scale' ? 100 : 0)));
+    this.ajusteEditado.set({ ...this.ajusteBase(), [campo]: v });
+  }
+
+  reiniciarAjuste(): void {
+    this.ajusteEditado.set({ ...this.ajusteNeutro });
+  }
+
+  guardarAjuste(): void {
+    const sku = this.productoSku();
+    if (!sku) return;
+    this.guardandoAjuste.set(true);
+    this.limpiarMensajes();
+    this.servicio.ajustarImagenBase(sku, this.ajusteBase()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: p => {
+        this.guardandoAjuste.set(false);
+        this.producto.update(actual => actual && actual.sku === p.sku ? { ...actual, base_adjust: p.base_adjust } : actual);
+        this.categoria.update(c => c && ({ ...c, products: c.products.map(x => x.sku === p.sku ? { ...x, base_adjust: p.base_adjust } : x) }));
+        this.ajusteEditado.set(null);
+        this.avisos.exito('El encuadre de la imagen se guardó correctamente.');
+      },
+      error: e => { this.guardandoAjuste.set(false); this.fallo(e); },
+    });
+  }
+
   pidiendoVaciar = signal(false);
 
   ngOnInit(): void {
@@ -144,6 +191,7 @@ export class AdminConfigurador implements OnInit {
   /** '' = la configuración de toda la categoría. */
   elegirProducto(sku: string): void {
     this.productoSku.set(sku);
+    this.ajusteEditado.set(null);
     this.producto.set(null);
     this.limpiarMensajes();
     const cat = this.categoria();
@@ -157,8 +205,8 @@ export class AdminConfigurador implements OnInit {
     this.servicio.deProducto(sku).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: p => {
         this.producto.set(p);
-        if (p.uses_own_configurator) this.cargarAccesorios(p.config, () => this.cargando.set(false));
-        else this.cargando.set(false);
+        // Siempre se carga: con configuración de la categoría sirve de guía para encuadrar la foto de este producto
+        this.cargarAccesorios(p.config, () => this.cargando.set(false));
       },
       error: e => this.fallo(e),
     });

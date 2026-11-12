@@ -11,6 +11,7 @@ const RESPUESTA: ConfiguradorApi = {
     source: 'category',
     configured: true,
     base_image: 'https://api.test/media/personalization/pro-doctor-1080.webp',
+    base_adjust: { scale: 110, x: -2.5, y: 4 },
     locations: [
         { location_id: 7, name: 'Cabeza', allowed_categories: ['Moda'], excluded_categories: [], state: 'libre', priority: 1, layer: 2, fixed_accessory_id: null, preset: GEO },
         { location_id: 8, name: 'Pie', allowed_categories: [], excluded_categories: ['Moda'], state: 'fija', priority: 2, layer: 1, fixed_accessory_id: 20, preset: null },
@@ -44,6 +45,7 @@ describe('ConfiguradorService', () => {
         expect(resultado).toEqual({
             configurado: true,
             imagenBase: 'https://api.test/media/personalization/pro-doctor-1080.webp',
+            ajusteImagen: { escala: 110, x: -2.5, y: 4 },
             ubicaciones: [
                 { id: 7, nombre: 'Cabeza', categorias: ['Moda'], excluidas: undefined, estado: 'libre', prioridad: 1, capa: 2, fijoId: null,
                     preset: { x: 10, y: 20, ancho: 30, alto: 15, rotX: 5, rotY: -10, rotZ: 90, espejo: true } },
@@ -60,7 +62,7 @@ describe('ConfiguradorService', () => {
     it('un producto sin configuración llega con configurado = false y sin accesorios', () => {
         let resultado: { configurado?: boolean; catalogo?: unknown[] } | undefined;
         servicio.configuracion('homero').subscribe(c => (resultado = c));
-        http.expectOne('https://api.test/api/v1/products/homero/configurator').flush({ source: 'category', configured: false, base_image: null, locations: [], accessories: [], exceptions: [] });
+        http.expectOne('https://api.test/api/v1/products/homero/configurator').flush({ source: 'category', configured: false, base_image: null, base_adjust: { scale: 100, x: 0, y: 0 }, locations: [], accessories: [], exceptions: [] });
 
         expect(resultado?.configurado).toBe(false);
         expect(resultado?.catalogo).toEqual([]);
