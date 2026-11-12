@@ -62,6 +62,8 @@ export class AdminAccesorios implements OnInit {
   formAccesorio: FormAccesorio = { ...ACCESORIO_VACIO };
   editandoAccesorio = signal<number | '' | null>(null);   // null = cerrado; '' = nuevo; número = editando
   archivoImagen: File | null = null;
+  /** Lo que se ve en el formulario: la foto recién elegida o, al editar, la que ya tiene el accesorio. */
+  vistaPrevia = signal<string | null>(null);
 
   // Ubicaciones
   formUbicacion: FormUbicacion = { ...UBICACION_VACIA };
@@ -149,6 +151,7 @@ export class AdminAccesorios implements OnInit {
   nuevoAccesorio(): void {
     this.formAccesorio = { ...ACCESORIO_VACIO, accessory_category_id: this.categorias()[0]?.id ?? 0, sort_order: this.accesorios().length + 1 };
     this.archivoImagen = null;
+    this.ponerVistaPrevia(null);
     this.limpiar();
     this.editandoAccesorio.set('');
   }
@@ -159,6 +162,7 @@ export class AdminAccesorios implements OnInit {
       sort_order: a.sort_order, is_active: a.is_active, alt: a.alt ?? '',
     };
     this.archivoImagen = null;
+    this.ponerVistaPrevia(a.image ?? a.thumb ?? null);
     this.limpiar();
     this.editandoAccesorio.set(a.id);
   }
@@ -166,10 +170,18 @@ export class AdminAccesorios implements OnInit {
   cancelarAccesorio(): void {
     this.editandoAccesorio.set(null);
     this.archivoImagen = null;
+    this.ponerVistaPrevia(null);
   }
 
   elegirImagen(evento: Event): void {
     this.archivoImagen = (evento.target as HTMLInputElement).files?.[0] ?? null;
+    this.ponerVistaPrevia(this.archivoImagen ? URL.createObjectURL(this.archivoImagen) : null);
+  }
+
+  private ponerVistaPrevia(url: string | null): void {
+    const anterior = this.vistaPrevia();
+    if (anterior?.startsWith('blob:')) URL.revokeObjectURL(anterior);
+    this.vistaPrevia.set(url);
   }
 
   guardarAccesorio(): void {

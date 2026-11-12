@@ -88,6 +88,9 @@
         } @else {
           <label for="a-imagen">Imagen (PNG, JPG o WebP; con fondo transparente se ve mejor)</label>
           <input id="a-imagen" name="a-imagen" type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirImagen($event)" />
+          @if (vistaPrevia(); as foto) {
+            <div class="vista-previa"><img [src]="foto" [alt]="formAccesorio.alt || formAccesorio.name || 'Vista previa'" /></div>
+          }
           <label for="a-alt">Texto alternativo de la imagen (lo que se ve en ella)</label>
           <input id="a-alt" name="a-alt" [(ngModel)]="formAccesorio.alt" maxlength="200" />
           <small class="ayuda">Obligatorio al subir una imagen. Si no eliges una nueva, se conserva la actual.</small>
