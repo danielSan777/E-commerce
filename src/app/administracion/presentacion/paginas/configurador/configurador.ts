@@ -20,6 +20,9 @@ import {
 } from '../../../dominio/interfaces/configurador-admin';
 import { TextoCanvas } from '../../directivas/texto-canvas';
 
+// Lo último que se estuvo configurando: al volver al configurador se reabre ahí (solo navegador)
+const CLAVE_ULTIMO = 'configurador-admin-ultimo';
+
 // Valores que se pueden escribir a mano en el panel de ajustes
 type CampoEditable = 'ancho' | 'alto' | 'rotX' | 'rotY' | 'rotZ';
 
@@ -176,10 +179,37 @@ export class AdminConfigurador implements OnInit {
         error: e => this.fallo(e),
       });
     } else if (slug) {
-      this.elegirCategoria(slug);
+      this.reabrir(slug);
     } else {
-      this.cargando.set(false);
+      const ultimo = this.leerUltimo();
+      if (ultimo?.categoria) this.reabrir(ultimo.categoria); else this.cargando.set(false);
     }
+  }
+
+  /** Abre la categoría y, si lo último que se configuró en ella fue un producto, vuelve a elegirlo (carga su configuración). */
+  private reabrir(slug: string): void {
+    if (!this.categoriasDeProductos().some(c => c.slug === slug)) { this.cargando.set(false); return; }
+    const ultimo = this.leerUltimo();
+    const sku = ultimo?.categoria === slug ? ultimo.producto : '';
+    this.categoriaSlug.set(slug);
+    this.cargarCategoria(slug, () => {
+      if (sku && this.categoria()?.products.some(p => p.sku === sku)) this.elegirProducto(sku);
+    });
+  }
+
+  private leerUltimo(): { categoria: string; producto: string } | null {
+    try {
+      if (typeof localStorage === 'undefined') return null;
+      const v = JSON.parse(localStorage.getItem(CLAVE_ULTIMO) ?? 'null');
+      return v && typeof v.categoria === 'string' ? { categoria: v.categoria, producto: typeof v.producto === 'string' ? v.producto : '' } : null;
+    } catch { return null; }
+  }
+
+  private recordarUltimo(): void {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      localStorage.setItem(CLAVE_ULTIMO, JSON.stringify({ categoria: this.categoriaSlug(), producto: this.productoSku() }));
+    } catch { /* almacenamiento bloqueado: simplemente no se recuerda */ }
   }
 
   elegirCategoria(slug: string): void {
@@ -189,6 +219,7 @@ export class AdminConfigurador implements OnInit {
     this.producto.set(null);
     this.categoria.set(null);
     this.limpiarMensajes();
+    this.recordarUltimo();
     if (!slug) { this.cargando.set(false); return; }
     this.cargarCategoria(slug);
   }
@@ -210,6 +241,7 @@ export class AdminConfigurador implements OnInit {
     this.ajusteEditado.set(null);
     this.producto.set(null);
     this.limpiarMensajes();
+    this.recordarUltimo();
     const cat = this.categoria();
     if (!cat) return;
 

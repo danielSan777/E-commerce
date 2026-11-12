@@ -81,7 +81,8 @@ describe('AdminConfigurador', () => {
     await esperar();
   }
 
-  afterEach(() => ctrl.verify());
+  beforeEach(() => localStorage.removeItem('configurador-admin-ultimo'));
+  afterEach(() => { ctrl.verify(); localStorage.removeItem('configurador-admin-ultimo'); });
 
   it('sin categoria elegida pide elegir una y no muestra el editor', async () => {
     const fixture = await montar();
@@ -245,6 +246,40 @@ describe('AdminConfigurador', () => {
       c.confirmarValor(entrada, 'ancho');
       expect(c.porcentajeAncho()).toBe(80);
       expect(c.presetActual()?.ancho).toBe(80);
+    });
+  });
+
+  describe('volver al configurador', () => {
+    it('reabre el último producto configurado con su configuración propia', async () => {
+      localStorage.setItem('configurador-admin-ultimo', JSON.stringify({ categoria: 'profesiones', producto: 'PRO-DOCTOR' }));
+      TestBed.configureTestingModule({ imports: [AdminConfigurador], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+      ctrl = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(AdminConfigurador);
+      fixture.detectChanges();
+      ctrl.expectOne(`${BASE}/categories`).flush({ data: [{ slug: 'profesiones', name: 'Profesiones', sort_order: 1, is_active: true }] });
+      await esperar();
+      ctrl.expectOne(`${BASE}/configurator/categories/profesiones`).flush(categoria());
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`).flush(producto({ uses_own_configurator: true, source: 'product', config: configuracion({ accessory_ids: [21] }) }));
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      fixture.detectChanges();
+
+      const c = fixture.componentInstance;
+      expect(c.categoriaSlug()).toBe('profesiones');
+      expect(c.productoSku()).toBe('PRO-DOCTOR');
+      expect(c.editable()).toBe(true);
+      expect(c.idsMarcados()).toEqual([21]);
+    });
+
+    it('al elegir un producto lo recuerda para la próxima vez', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      await elegirProductoYResponder(fixture.componentInstance, 'PRO-DOCTOR', producto());
+      expect(JSON.parse(localStorage.getItem('configurador-admin-ultimo') ?? '{}')).toEqual({ categoria: 'profesiones', producto: 'PRO-DOCTOR' });
     });
   });
 
