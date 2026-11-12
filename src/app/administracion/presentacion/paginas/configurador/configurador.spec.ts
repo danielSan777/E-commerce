@@ -316,6 +316,70 @@ describe('AdminConfigurador', () => {
     });
   });
 
+  describe('buscar producto por nombre o código', () => {
+    const muchos = () => categoria({ products: [
+      { sku: 'JDS-012', name: 'Médico Cirujano', uses_own_configurator: false, base_image: null, base_adjust: { scale: 100, x: 0, y: 0 } },
+      { sku: 'JDS-007', name: 'Abogada', uses_own_configurator: true, base_image: null, base_adjust: { scale: 100, x: 0, y: 0 } },
+      { sku: 'JDS-003', name: 'Doctor', uses_own_configurator: false, base_image: null, base_adjust: { scale: 100, x: 0, y: 0 } },
+    ] });
+
+    it('la lista conserva el orden de Laravel (el más reciente primero) y muestra nombre y código', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture, muchos());
+      const opciones = [...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLOptionElement>('#producto-config option')].map(o => o.textContent!.trim());
+
+      expect(opciones[0]).toContain('Toda la categoría');
+      expect(opciones.slice(1)).toEqual([
+        'Solo el producto: Médico Cirujano (JDS-012)',
+        'Solo el producto: Abogada (JDS-007) · configuración propia',
+        'Solo el producto: Doctor (JDS-003)',
+      ]);
+      expect(fixture.nativeElement.textContent).toContain('Del más reciente al más antiguo.');
+    });
+
+    it('busca por nombre sin importar mayúsculas ni tildes, y por código', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture, muchos());
+      const c = fixture.componentInstance;
+
+      c.busquedaProducto.set('medico');
+      expect(c.productosFiltrados().map(p => p.sku)).toEqual(['JDS-012']);
+      c.busquedaProducto.set('ABOG');
+      expect(c.productosFiltrados().map(p => p.sku)).toEqual(['JDS-007']);
+      c.busquedaProducto.set('jds-00');
+      expect(c.productosFiltrados().map(p => p.sku)).toEqual(['JDS-007', 'JDS-003']); // mismo orden: más reciente primero
+      c.busquedaProducto.set('  ');
+      expect(c.productosFiltrados().length).toBe(3);
+
+      c.busquedaProducto.set('zzz');
+      fixture.detectChanges();
+      expect(c.productosFiltrados()).toEqual([]);
+      expect(fixture.nativeElement.textContent).toContain('Ningún producto coincide con «zzz».');
+    });
+
+    it('el producto elegido no desaparece de la lista aunque deje de coincidir con la búsqueda', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture, muchos());
+      const c = fixture.componentInstance;
+      c.productoSku.set('JDS-003');
+      c.busquedaProducto.set('abogada');
+      expect(c.productosFiltrados().map(p => p.sku)).toEqual(['JDS-007', 'JDS-003']);
+    });
+
+    it('al cambiar de categoría se borra la búsqueda', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture, muchos());
+      const c = fixture.componentInstance;
+      c.busquedaProducto.set('doc');
+      c.elegirCategoria('profesiones');
+      ctrl.expectOne(`${BASE}/configurator/categories/profesiones`).flush(muchos());
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      expect(c.busquedaProducto()).toBe('');
+    });
+  });
+
   describe('encuadre de la foto', () => {
     it('mover los deslizadores cambia la foto al instante, sin tocar las cajas, y reiniciar vuelve a 100 % / 0', async () => {
       const fixture = await montar();

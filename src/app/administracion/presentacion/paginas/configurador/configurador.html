@@ -25,13 +25,26 @@
 
         @if (categoria(); as cat) {
         <div class="col-12 col-md-5">
-          <label for="producto-config" class="form-label fw-semibold">Qué configuración editar</label>
-          <select id="producto-config" class="form-select" [ngModel]="productoSku()" (ngModelChange)="elegirProducto($event)">
+          <label for="buscar-producto" class="form-label fw-semibold">Qué configuración editar</label>
+          @if (cat.products.length > 1) {
+          <input id="buscar-producto" type="search" class="form-control mb-2" placeholder="Buscar producto por nombre o código (SKU)"
+            autocomplete="off" [ngModel]="busquedaProducto()" (ngModelChange)="busquedaProducto.set($event)">
+          }
+          <select id="producto-config" class="form-select" aria-label="Producto o categoría a configurar"
+            [ngModel]="productoSku()" (ngModelChange)="elegirProducto($event)">
             <option value="">Toda la categoría «{{ cat.name }}»</option>
-            @for (p of cat.products; track p.sku) {
-            <option [value]="p.sku">Solo el producto: {{ p.name }}{{ p.uses_own_configurator ? ' (configuración propia)' : '' }}</option>
+            @for (p of productosFiltrados(); track p.sku) {
+            <option [value]="p.sku">Solo el producto: {{ p.name }} ({{ p.sku }}){{ p.uses_own_configurator ? ' · configuración propia' : '' }}</option>
             }
           </select>
+          @if (busquedaProducto().trim()) {
+          <small class="text-muted">
+            @if (productosFiltrados().length === 0) { Ningún producto coincide con «{{ busquedaProducto() }}». }
+            @else { {{ productosFiltrados().length }} de {{ cat.products.length }} productos, del más reciente al más antiguo. }
+          </small>
+          } @else if (cat.products.length > 1) {
+          <small class="text-muted">Del más reciente al más antiguo.</small>
+          }
         </div>
         }
       </div>

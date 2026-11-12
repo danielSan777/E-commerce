@@ -70,6 +70,21 @@ export class AdminConfigurador implements OnInit {
     return !!this.producto()?.uses_own_configurator;
   });
 
+  /** Texto escrito para buscar un producto de la categoría por nombre o código (SKU). */
+  busquedaProducto = signal('');
+
+  /**
+   * Productos que coinciden con la búsqueda (sin importar mayúsculas ni tildes). Laravel ya los entrega del más
+   * reciente al más antiguo y ese orden se conserva. El producto elegido siempre se queda en la lista.
+   */
+  productosFiltrados = computed(() => {
+    const sinTildes = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const buscado = sinTildes(this.busquedaProducto());
+    const lista = this.categoria()?.products ?? [];
+    if (!buscado) return lista;
+    return lista.filter(p => p.sku === this.productoSku() || sinTildes(p.name).includes(buscado) || sinTildes(p.sku).includes(buscado));
+  });
+
   /** Productos de la categoría que tienen la suya propia. */
   conPropia = computed(() => (this.categoria()?.products ?? []).filter(p => p.uses_own_configurator).length);
 
@@ -169,6 +184,7 @@ export class AdminConfigurador implements OnInit {
 
   elegirCategoria(slug: string): void {
     this.categoriaSlug.set(slug);
+    this.busquedaProducto.set('');
     this.productoSku.set('');
     this.producto.set(null);
     this.categoria.set(null);
