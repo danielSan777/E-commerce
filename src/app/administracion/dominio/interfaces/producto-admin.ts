@@ -20,6 +20,8 @@ export interface ProductoAdmin {
   seo_description: string | null;
   is_available: boolean;
   is_active: boolean;
+  /** Imagen para personalizar (obligatoria en los personalizables); null si aún no se sube. */
+  personalization_image: string | null;
   search_synonyms: string[];
   updated_at: string;
 }

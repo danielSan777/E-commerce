@@ -109,10 +109,10 @@ describe('AdminProductoForm', () => {
     const fixture = await montar(null);
     const c = fixture.componentInstance;
     await c.guardar(new Event('submit'));
-    expect(Object.keys(c.errores()).sort()).toEqual(['category', 'name', 'precio', 'subcategory']);
+    expect(Object.keys(c.errores()).sort()).toEqual(['category', 'imagen', 'name', 'precio', 'subcategory']);
     c.quitarError('name');
     c.quitarError('precio');
-    expect(Object.keys(c.errores()).sort()).toEqual(['category', 'subcategory']);
+    expect(Object.keys(c.errores()).sort()).toEqual(['category', 'imagen', 'subcategory']);
   });
 
   it('la subcategoría es obligatoria aunque la categoría esté elegida', async () => {
@@ -145,7 +145,7 @@ describe('AdminProductoForm', () => {
     await elegirCategoria(fixture);
     const c = fixture.componentInstance;
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    Object.assign(c.form, { name: 'Doctor', subcategory: 'salud', precio: '21.50', costo: '9', descuento: '12,5', incluye: 'Maceta\n\n Planta ' });
+    Object.assign(c.form, { name: 'Doctor', type: 'complemento', subcategory: 'salud', precio: '21.50', costo: '9', descuento: '12,5', incluye: 'Maceta\n\n Planta ' });
 
     const p = c.guardar(new Event('submit'));
     const post = ctrl.expectOne('/api/v1/admin/products');
@@ -161,7 +161,7 @@ describe('AdminProductoForm', () => {
     await elegirCategoria(fixture);
     const c = fixture.componentInstance;
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    Object.assign(c.form, { name: 'Doctor', subcategory: 'salud', precio: '10' });
+    Object.assign(c.form, { name: 'Doctor', type: 'complemento', subcategory: 'salud', precio: '10' });
     const p = c.guardar(new Event('submit'));
     const post = ctrl.expectOne('/api/v1/admin/products');
     expect(post.request.body.discount_percent).toBe(0);
@@ -207,7 +207,7 @@ describe('AdminProductoForm', () => {
     const fixture = await montar('JDS-001', {
       sku: 'JDS-001', slug: 'doctor', name: 'Doctor', type: 'personalizable', category_slug: CAT.slug, subcategory_slug: 'salud',
       base_price_cents: 2150, cost_cents: null, discount_percent: 10, discount_cents: 215, final_price_cents: 1935,
-      size_text: null, material_text: null, includes: ['Maceta'], description_html: null, seo_title: 'Doctor | Regalo', seo_description: 'Maceta para doctores', is_available: true, is_active: true,
+      size_text: null, material_text: null, includes: ['Maceta'], description_html: null, seo_title: 'Doctor | Regalo', seo_description: 'Maceta para doctores', is_available: true, is_active: true, personalization_image: 'https://api/doctor.webp',
     });
     const c = fixture.componentInstance;
     expect(c.form.seo_title).toBe('Doctor | Regalo');
@@ -236,6 +236,7 @@ describe('AdminProductoForm', () => {
     await elegirCategoria(fixture);
     const c = fixture.componentInstance;
     c.form.name = 'Doctor';
+    c.form.type = 'complemento';
     c.form.precio = '21.50';
     c.form.subcategory = 'salud';
     expect(c.tituloVistaPrevia()).toBe('Doctor | Jardín de Sele');
@@ -256,7 +257,7 @@ describe('AdminProductoForm', () => {
     const fixture = await montar(null);
     await elegirCategoria(fixture);
     const c = fixture.componentInstance;
-    Object.assign(c.form, { name: 'Doctor', subcategory: 'salud', precio: '10' });
+    Object.assign(c.form, { name: 'Doctor', type: 'complemento', subcategory: 'salud', precio: '10' });
     const p = c.guardar(new Event('submit'));
     ctrl.expectOne('/api/v1/admin/products').flush(
       { code: 'validation_error', message: 'Revisa los datos.', errors: { name: ['Ya existe un producto con un nombre igual.'] } },
@@ -265,5 +266,108 @@ describe('AdminProductoForm', () => {
     await p;
     expect(c.error()).toBe('Revisa los datos.');
     expect(c.detalle()).toEqual(['Ya existe un producto con un nombre igual.']);
+  });
+
+  describe('imagen para personalizar (obligatoria)', () => {
+    const FOTO = () => new File(['x'], 'maceta.png', { type: 'image/png' });
+    const completar = (c: AdminProductoForm) => Object.assign(c.form, { name: 'Doctor', subcategory: 'salud', precio: '10' });
+    const EXISTENTE = { sku: 'JDS-001', slug: 'doctor', name: 'Doctor', type: 'personalizable', category_slug: CAT.slug, subcategory_slug: 'salud', base_price_cents: 1000, cost_cents: null, discount_percent: 0, discount_cents: 0, final_price_cents: 1000, size_text: null, material_text: null, includes: [], description_html: null, seo_title: null, seo_description: null, is_available: true, is_active: true, personalization_image: null };
+
+    it('un producto personalizable nuevo no se guarda sin la imagen, y el complemento no la pide', async () => {
+      const fixture = await montar(null);
+      await elegirCategoria(fixture);
+      const c = fixture.componentInstance;
+      completar(c);
+      await c.guardar(new Event('submit'));
+      expect(c.errores()['imagen']).toBe('Sube la imagen para personalizar: es obligatoria.');
+      ctrl.verify();
+
+      c.form.type = 'complemento';
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('#imagen-base')).toBeNull();
+    });
+
+    it('crear: se crea inactivo, se sube la imagen y solo entonces se activa', async () => {
+      const fixture = await montar(null);
+      await elegirCategoria(fixture);
+      const c = fixture.componentInstance;
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      completar(c);
+      const foto = FOTO();
+      c.elegirImagenBase({ target: { files: [foto] } } as unknown as Event);
+
+      const p = c.guardar(new Event('submit'));
+      const post = ctrl.expectOne('/api/v1/admin/products');
+      expect(post.request.method).toBe('POST');
+      expect(post.request.body.is_active).toBe(false); // todavía sin imagen: inactivo
+      post.flush({ sku: 'JDS-004' }, { status: 201, statusText: 'Created' });
+      await esperar();
+
+      const subida = ctrl.expectOne('/api/v1/admin/products/JDS-004/personalization-image');
+      expect((subida.request.body as FormData).get('image')).toBe(foto);
+      subida.flush({ personalization_image: 'https://api/p.webp' }, { status: 201, statusText: 'Created' });
+      await esperar();
+
+      const activar = ctrl.expectOne('/api/v1/admin/products/JDS-004');
+      expect(activar.request.method).toBe('PUT');
+      expect(activar.request.body.is_active).toBe(true);
+      activar.flush({});
+      await p;
+      expect(navegar).toHaveBeenCalledWith(['/admin/productos']);
+    });
+
+    it('si la imagen falla, el producto queda inactivo y se continúa en su edición', async () => {
+      const fixture = await montar(null);
+      await elegirCategoria(fixture);
+      const c = fixture.componentInstance;
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      completar(c);
+      c.elegirImagenBase({ target: { files: [FOTO()] } } as unknown as Event);
+
+      const p = c.guardar(new Event('submit'));
+      ctrl.expectOne('/api/v1/admin/products').flush({ sku: 'JDS-004' }, { status: 201, statusText: 'Created' });
+      await esperar();
+      ctrl.expectOne('/api/v1/admin/products/JDS-004/personalization-image').flush(
+        { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { image: ['La imagen es muy pequeña. Debe medir al menos 64 × 64 píxeles.'] } },
+        { status: 422, statusText: 'Unprocessable' },
+      );
+      await p;
+
+      ctrl.expectNone('/api/v1/admin/products/JDS-004'); // no se activa
+      expect(navegar).toHaveBeenCalledWith(['/admin/productos', 'JDS-004']);
+      expect(c.guardando()).toBe(false);
+    });
+
+    it('editar un producto activo que no tiene imagen exige subirla; con la imagen se sube primero y luego se guarda', async () => {
+      const fixture = await montar('JDS-001', EXISTENTE);
+      const c = fixture.componentInstance;
+      await esperar(350);
+      ctrl.match(r => r.url.endsWith('/price-preview'));
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      await c.guardar(new Event('submit'));
+      expect(c.errores()['imagen']).toBe('Sube la imagen para personalizar antes de dejar el producto activo.');
+      ctrl.expectNone('/api/v1/admin/products/JDS-001'); // no se llama a la API sin la imagen
+
+      c.elegirImagenBase({ target: { files: [FOTO()] } } as unknown as Event);
+      const p = c.guardar(new Event('submit'));
+      ctrl.expectOne('/api/v1/admin/products/JDS-001/personalization-image').flush({ personalization_image: 'https://api/p.webp' }, { status: 201, statusText: 'Created' });
+      await esperar();
+      ctrl.expectOne('/api/v1/admin/products/JDS-001').flush({});
+      await p;
+    });
+
+    it('editar un producto que ya tiene imagen la muestra y no pide subirla otra vez; inactivo sin imagen tampoco la pide', async () => {
+      const fixture = await montar('JDS-001', { ...EXISTENTE, personalization_image: 'https://api/doctor.webp' });
+      const c = fixture.componentInstance;
+      await esperar(350);
+      expect(c.vistaPreviaBase()).toBe('https://api/doctor.webp');
+      expect((fixture.nativeElement as HTMLElement).querySelector('.vista-previa img')).not.toBeNull();
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      const p = c.guardar(new Event('submit'));
+      ctrl.expectOne('/api/v1/admin/products/JDS-001').flush({});
+      await p;
+      expect(c.errores()['imagen']).toBeUndefined();
+    });
   });
 });

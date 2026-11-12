@@ -65,16 +65,6 @@ export class ConfiguradorAdminService {
     return this.http.delete<void>(`${this.api}/locations/${id}`).pipe(conErrorApi());
   }
 
-  // ----- imagen para personalizar (una por producto)
-  subirImagenBase(sku: string, archivo: File): Observable<ConfiguracionDeProductoAdmin> {
-    const datos = new FormData();
-    datos.append('image', archivo);
-    return this.http.post<ConfiguracionDeProductoAdmin>(`${this.api}/configurator/products/${encodeURIComponent(sku)}/base-image`, datos).pipe(conErrorApi());
-  }
-  quitarImagenBase(sku: string): Observable<ConfiguracionDeProductoAdmin> {
-    return this.http.delete<ConfiguracionDeProductoAdmin>(`${this.api}/configurator/products/${encodeURIComponent(sku)}/base-image`).pipe(conErrorApi());
-  }
-
   // ----- configuración por categoría o por producto
   deCategoria(slug: string): Observable<ConfiguracionDeCategoriaAdmin> {
     return this.http.get<ConfiguracionDeCategoriaAdmin>(`${this.api}/configurator/categories/${encodeURIComponent(slug)}`).pipe(conErrorApi());

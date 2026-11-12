@@ -34,6 +34,13 @@ export class ProductosAdminService {
     return this.http.put<ProductoAdmin>(this.url(sku), datos).pipe(conErrorApi());
   }
 
+  /** Imagen para personalizar del producto (reemplaza la anterior). Es obligatoria en los personalizables. */
+  subirImagenParaPersonalizar(sku: string, archivo: File): Observable<{ personalization_image: string }> {
+    const datos = new FormData();
+    datos.append('image', archivo);
+    return this.http.post<{ personalization_image: string }>(`${this.url(sku)}/personalization-image`, datos).pipe(conErrorApi());
+  }
+
   /** Código que recibiría el próximo producto (solo para mostrarlo; el definitivo se asigna al guardar). */
   siguienteSku(): Observable<string> {
     return this.http.get<{ sku: string }>(`${this.url()}/next-sku`).pipe(map(r => r.sku), conErrorApi());

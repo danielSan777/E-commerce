@@ -29,6 +29,17 @@
         <option value="complemento">Complemento</option>
       </select>
 
+      @if (pideImagenBase) {
+        <label for="imagen-base">Imagen para personalizar (obligatoria)</label>
+        <input id="imagen-base" name="imagen-base" type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirImagenBase($event)"
+          [attr.aria-invalid]="errores()['imagen'] ? true : null" />
+        @if (vistaPreviaBase(); as foto) {
+          <div class="vista-previa"><img [src]="foto" alt="Vista previa de la imagen para personalizar" /></div>
+        }
+        <small class="ayuda">Es la foto que el cliente ve en el personalizador y sobre la que se colocan los accesorios (la maceta sin accesorios; PNG, JPG o WebP). Es distinta de las fotos de la ficha del producto.</small>
+        @if (errores()['imagen']) { <small class="campo-error">{{ errores()['imagen'] }}</small> }
+      }
+
       <label for="category">Categoría</label>
       <select id="category" name="category" [(ngModel)]="form.category" (ngModelChange)="quitarError('category'); cambiarCategoria()" [attr.aria-invalid]="errores()['category'] ? true : null">
         <option value="">Elige una categoría</option>

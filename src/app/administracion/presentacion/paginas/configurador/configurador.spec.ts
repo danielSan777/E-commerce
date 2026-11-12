@@ -313,13 +313,14 @@ describe('AdminConfigurador', () => {
     });
   });
 
-  describe('imagen para personalizar', () => {
+  describe('imagen para personalizar (solo lectura: se sube desde el producto)', () => {
     it('con «toda la categoría» muestra la del primer producto que la tenga; con un producto, la suya', async () => {
       const fixture = await montar();
       await abrirCategoria(fixture);
       const c = fixture.componentInstance;
       expect(c.imagenBase()).toBe('https://api/doctor.webp');
       expect((fixture.nativeElement.querySelector('.visor .maceta') as HTMLImageElement).src).toContain('doctor.webp');
+      expect(fixture.nativeElement.querySelector('input[type=file]')).toBeNull(); // el configurador no sube nada
 
       // Enfermera no tiene imagen: no se le presta la de otro producto, se avisa y se usa la genérica
       c.elegirProducto('PRO-ENFERMERA');
@@ -328,67 +329,10 @@ describe('AdminConfigurador', () => {
       fixture.detectChanges();
       expect(c.imagenBase()).toBeNull();
       expect(c.imagenBaseVisor()).toBe('/imagenes/maceta_vacia.png');
-      expect(fixture.nativeElement.textContent).toContain('todavía no tiene imagen para personalizar');
-    });
-
-    it('sube la imagen del producto elegido con el endpoint del producto y la muestra', async () => {
-      const fixture = await montar();
-      await abrirCategoria(fixture);
-      const c = fixture.componentInstance;
-      c.elegirProducto('PRO-ENFERMERA');
-      ctrl.expectOne(`${BASE}/configurator/products/PRO-ENFERMERA`).flush(producto({ sku: 'PRO-ENFERMERA', name: 'Enfermera', base_image: null }));
-      await esperar();
-
-      const archivo = new File(['x'], 'enfermera.png', { type: 'image/png' });
-      const entrada = { files: [archivo], value: 'enfermera.png' } as unknown as HTMLInputElement;
-      c.subirImagenBase({ target: entrada } as unknown as Event);
-
-      const post = ctrl.expectOne(`${BASE}/configurator/products/PRO-ENFERMERA/base-image`);
-      expect(post.request.method).toBe('POST');
-      expect((post.request.body as FormData).get('image')).toBe(archivo);
-      post.flush(producto({ sku: 'PRO-ENFERMERA', name: 'Enfermera', base_image: 'https://api/enfermera.webp' }), { status: 201, statusText: 'Created' });
-      await esperar();
-
-      expect(c.imagenBase()).toBe('https://api/enfermera.webp');
-      expect(c.categoria()?.products.find(p => p.sku === 'PRO-ENFERMERA')?.base_image).toBe('https://api/enfermera.webp');
-      expect(avisos.lista().at(-1)?.texto).toBe('La imagen para personalizar se guardó correctamente.');
-      expect(c.subiendoImagenBase()).toBe(false);
-    });
-
-    it('quitar la imagen usa DELETE y deja al producto sin imagen', async () => {
-      const fixture = await montar();
-      await abrirCategoria(fixture);
-      const c = fixture.componentInstance;
-      c.elegirProducto('PRO-DOCTOR');
-      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`).flush(producto());
-      await esperar();
-
-      c.quitarImagenBase();
-      const del = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/base-image`);
-      expect(del.request.method).toBe('DELETE');
-      del.flush(producto({ base_image: null }));
-      await esperar();
-
-      expect(c.imagenBase()).toBeNull();
-    });
-
-    it('si Laravel rechaza la imagen muestra su mensaje', async () => {
-      const fixture = await montar();
-      await abrirCategoria(fixture);
-      const c = fixture.componentInstance;
-      c.elegirProducto('PRO-DOCTOR');
-      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`).flush(producto());
-      await esperar();
-
-      c.subirImagenBase({ target: { files: [new File(['x'], 'a.png')], value: 'a.png' } } as unknown as Event);
-      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/base-image`).flush(
-        { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { image: ['La imagen es muy pequeña. Debe medir al menos 64 × 64 píxeles.'] } },
-        { status: 422, statusText: 'Unprocessable' },
-      );
-      await esperar();
-
-      expect(c.detalle()).toContain('La imagen es muy pequeña. Debe medir al menos 64 × 64 píxeles.');
-      expect(c.subiendoImagenBase()).toBe(false);
+      const texto = fixture.nativeElement.textContent;
+      expect(texto).toContain('todavía no tiene imagen para personalizar');
+      expect(texto).toContain('La imagen se sube al editar el producto');
+      expect(fixture.nativeElement.querySelector('input[type=file]')).toBeNull();
     });
   });
 
