@@ -51,6 +51,8 @@ describe('AdminConfigurador', () => {
     fixture.detectChanges();
     ctrl.expectOne(`${BASE}/categories`).flush({ data: [{ slug: 'profesiones', name: 'Profesiones', sort_order: 1, is_active: true }] });
     await esperar();
+    ctrl.expectOne(`${BASE}/configurator/last-edit`).flush({ category_slug: null, product_sku: null });
+    await esperar();
     fixture.detectChanges();
     return fixture;
   }
@@ -81,8 +83,11 @@ describe('AdminConfigurador', () => {
     await esperar();
   }
 
-  beforeEach(() => localStorage.removeItem('configurador-admin-ultimo'));
-  afterEach(() => { ctrl.verify(); localStorage.removeItem('configurador-admin-ultimo'); });
+  // Cada vez que se elige categoría o producto se guarda en la base de datos qué se está configurando
+  afterEach(() => {
+    ctrl.match(r => r.method === 'PUT' && r.url === `${BASE}/configurator/last-edit`).forEach(r => r.flush({ category_slug: null, product_sku: null }));
+    ctrl.verify();
+  });
 
   it('sin categoria elegida pide elegir una y no muestra el editor', async () => {
     const fixture = await montar();
@@ -250,13 +255,14 @@ describe('AdminConfigurador', () => {
   });
 
   describe('volver al configurador', () => {
-    it('reabre el último producto configurado con su configuración propia', async () => {
-      localStorage.setItem('configurador-admin-ultimo', JSON.stringify({ categoria: 'profesiones', producto: 'PRO-DOCTOR' }));
+    it('reabre el último producto configurado (lo trae de la base de datos) con su configuración propia', async () => {
       TestBed.configureTestingModule({ imports: [AdminConfigurador], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
       ctrl = TestBed.inject(HttpTestingController);
       const fixture = TestBed.createComponent(AdminConfigurador);
       fixture.detectChanges();
       ctrl.expectOne(`${BASE}/categories`).flush({ data: [{ slug: 'profesiones', name: 'Profesiones', sort_order: 1, is_active: true }] });
+      await esperar();
+      ctrl.expectOne(`${BASE}/configurator/last-edit`).flush({ category_slug: 'profesiones', product_sku: 'PRO-DOCTOR' });
       await esperar();
       ctrl.expectOne(`${BASE}/configurator/categories/profesiones`).flush(categoria());
       await esperar();
@@ -275,11 +281,31 @@ describe('AdminConfigurador', () => {
       expect(c.idsMarcados()).toEqual([21]);
     });
 
-    it('al elegir un producto lo recuerda para la próxima vez', async () => {
+    it('al elegir un producto lo guarda en la base de datos para la próxima vez', async () => {
       const fixture = await montar();
       await abrirCategoria(fixture);
       await elegirProductoYResponder(fixture.componentInstance, 'PRO-DOCTOR', producto());
-      expect(JSON.parse(localStorage.getItem('configurador-admin-ultimo') ?? '{}')).toEqual({ categoria: 'profesiones', producto: 'PRO-DOCTOR' });
+
+      const peticiones = ctrl.match(r => r.method === 'PUT' && r.url === `${BASE}/configurator/last-edit`);
+      expect(peticiones.map(r => r.request.body)).toEqual([
+        { category_slug: 'profesiones', product_sku: null },
+        { category_slug: 'profesiones', product_sku: 'PRO-DOCTOR' },
+      ]);
+      peticiones.forEach(r => r.flush({ category_slug: 'profesiones', product_sku: 'PRO-DOCTOR' }));
+    });
+
+    it('si no se puede leer lo último, el configurador abre vacío sin error', async () => {
+      TestBed.configureTestingModule({ imports: [AdminConfigurador], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+      ctrl = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(AdminConfigurador);
+      fixture.detectChanges();
+      ctrl.expectOne(`${BASE}/categories`).flush({ data: [] });
+      await esperar();
+      ctrl.expectOne(`${BASE}/configurator/last-edit`).flush({ message: 'x' }, { status: 500, statusText: 'Error' });
+      await esperar();
+      fixture.detectChanges();
+      expect(fixture.componentInstance.error()).toBe('');
+      expect(fixture.componentInstance.cargando()).toBe(false);
     });
   });
 

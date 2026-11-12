@@ -88,6 +88,12 @@ export interface ConfiguracionDeCategoriaAdmin {
   config: ConfigLeidaAdmin;
 }
 
+/** Lo último que este administrador estaba configurando (guardado en la base de datos). */
+export interface UltimaEdicionAdmin {
+  category_slug: string | null;
+  product_sku: string | null;
+}
+
 export interface ConfiguracionDeProductoAdmin {
   scope: 'product';
   sku: string;

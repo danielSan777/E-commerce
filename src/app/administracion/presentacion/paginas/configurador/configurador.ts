@@ -20,9 +20,6 @@ import {
 } from '../../../dominio/interfaces/configurador-admin';
 import { TextoCanvas } from '../../directivas/texto-canvas';
 
-// Lo último que se estuvo configurando: al volver al configurador se reabre ahí (solo navegador)
-const CLAVE_ULTIMO = 'configurador-admin-ultimo';
-
 // Valores que se pueden escribir a mano en el panel de ajustes
 type CampoEditable = 'ancho' | 'alto' | 'rotX' | 'rotY' | 'rotZ';
 
@@ -178,38 +175,27 @@ export class AdminConfigurador implements OnInit {
         },
         error: e => this.fallo(e),
       });
-    } else if (slug) {
-      this.reabrir(slug);
     } else {
-      const ultimo = this.leerUltimo();
-      if (ultimo?.categoria) this.reabrir(ultimo.categoria); else this.cargando.set(false);
+      // Lo último que este administrador configuró vive en la base de datos: se reabre ahí desde cualquier equipo
+      this.servicio.ultimaEdicion().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: u => this.reabrir(slug ?? u.category_slug, slug && slug !== u.category_slug ? null : u.product_sku),
+        error: () => slug ? this.reabrir(slug, null) : this.cargando.set(false),
+      });
     }
   }
 
   /** Abre la categoría y, si lo último que se configuró en ella fue un producto, vuelve a elegirlo (carga su configuración). */
-  private reabrir(slug: string): void {
-    if (!this.categoriasDeProductos().some(c => c.slug === slug)) { this.cargando.set(false); return; }
-    const ultimo = this.leerUltimo();
-    const sku = ultimo?.categoria === slug ? ultimo.producto : '';
+  private reabrir(slug: string | null, sku: string | null): void {
+    if (!slug || !this.categoriasDeProductos().some(c => c.slug === slug)) { this.cargando.set(false); return; }
     this.categoriaSlug.set(slug);
     this.cargarCategoria(slug, () => {
       if (sku && this.categoria()?.products.some(p => p.sku === sku)) this.elegirProducto(sku);
     });
   }
 
-  private leerUltimo(): { categoria: string; producto: string } | null {
-    try {
-      if (typeof localStorage === 'undefined') return null;
-      const v = JSON.parse(localStorage.getItem(CLAVE_ULTIMO) ?? 'null');
-      return v && typeof v.categoria === 'string' ? { categoria: v.categoria, producto: typeof v.producto === 'string' ? v.producto : '' } : null;
-    } catch { return null; }
-  }
-
+  /** Guarda en la base de datos qué se está configurando. Si falla no estorba: solo no se recordará. */
   private recordarUltimo(): void {
-    try {
-      if (typeof localStorage === 'undefined') return;
-      localStorage.setItem(CLAVE_ULTIMO, JSON.stringify({ categoria: this.categoriaSlug(), producto: this.productoSku() }));
-    } catch { /* almacenamiento bloqueado: simplemente no se recuerda */ }
+    this.servicio.recordarUltimaEdicion(this.categoriaSlug(), this.productoSku()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ error: () => undefined });
   }
 
   elegirCategoria(slug: string): void {

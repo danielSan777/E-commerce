@@ -5,7 +5,7 @@ import { API_URL } from '../../../core/configuracion/api';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
 import {
   AccesorioAdmin, AjusteImagenAdmin, CategoriaAccesorioAdmin, ConfigGuardableAdmin, ConfiguracionDeCategoriaAdmin,
-  ConfiguracionDeProductoAdmin, DatosAccesorio, DatosUbicacion, UbicacionAdmin,
+  ConfiguracionDeProductoAdmin, DatosAccesorio, DatosUbicacion, UbicacionAdmin, UltimaEdicionAdmin,
 } from '../../dominio/interfaces/configurador-admin';
 
 // Configurador del panel: accesorios, ubicaciones y configuración por categoría o por producto. Todo viene de Laravel;
@@ -14,6 +14,14 @@ import {
 export class ConfiguradorAdminService {
   private http = inject(HttpClient);
   private api = `${inject(API_URL)}/admin`;
+
+  // ----- lo último que se estaba configurando (por administrador, en la base de datos)
+  ultimaEdicion(): Observable<UltimaEdicionAdmin> {
+    return this.http.get<UltimaEdicionAdmin>(`${this.api}/configurator/last-edit`).pipe(conErrorApi());
+  }
+  recordarUltimaEdicion(categoria: string, producto: string): Observable<UltimaEdicionAdmin> {
+    return this.http.put<UltimaEdicionAdmin>(`${this.api}/configurator/last-edit`, { category_slug: categoria || null, product_sku: producto || null }).pipe(conErrorApi());
+  }
 
   // ----- categorías de accesorios
   categoriasDeAccesorios(): Observable<CategoriaAccesorioAdmin[]> {
