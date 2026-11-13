@@ -254,6 +254,40 @@ describe('AdminConfigurador', () => {
     });
   });
 
+  describe('muestra de un accesorio en cada ubicación', () => {
+    it('al cargar la configuración cada ubicación con valores muestra el primer accesorio marcado que admite', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const m = fixture.componentInstance.muestrasDeUbicaciones();
+
+      // «Pie» no tiene valores (no hay cuadro) y «Cabeza» solo admite Moda: se ve Gafas, no el Regalo
+      expect(m.length).toBe(1);
+      expect(m[0]).toEqual(expect.objectContaining({ ubicacionId: 7, accesorioId: 20, imagen: 'https://api/g.webp', x: 40, y: 25 }));
+      expect(fixture.nativeElement.querySelectorAll('.visor .vista-previa img').length).toBe(1);
+    });
+
+    it('usa la excepción del accesorio en esa ubicación y respeta el elemento fijo', async () => {
+      const fixture = await montar();
+      const cfg = configuracion({
+        locations: [ubicacion(7, 'Cabeza', { preset: { ...GEO, x: 5 } }), ubicacion(8, 'Pie', { state: 'fija', fixed_accessory_id: 21, preset: GEO })],
+        exceptions: [{ accessory_id: 21, location_id: 8, ...GEO, x: 12 }],
+      });
+      await abrirCategoria(fixture, categoria({ config: cfg }));
+      const m = fixture.componentInstance.muestrasDeUbicaciones();
+
+      expect(m.find(x => x.ubicacionId === 8)).toEqual(expect.objectContaining({ accesorioId: 21, x: 12 }));
+      expect(m.find(x => x.ubicacionId === 7)).toEqual(expect.objectContaining({ accesorioId: 20, x: 5 }));
+    });
+
+    it('no muestra muestra en una ubicación deshabilitada', async () => {
+      const fixture = await montar();
+      const cfg = configuracion({ locations: [ubicacion(7, 'Cabeza', { state: 'deshabilitada', preset: GEO })] });
+      await abrirCategoria(fixture, categoria({ config: cfg }));
+
+      expect(fixture.componentInstance.muestrasDeUbicaciones()).toEqual([]);
+    });
+  });
+
   describe('volver al configurador', () => {
     it('reabre el último producto configurado (lo trae de la base de datos) con su configuración propia', async () => {
       TestBed.configureTestingModule({ imports: [AdminConfigurador], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });

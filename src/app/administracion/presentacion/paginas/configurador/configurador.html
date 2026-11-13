@@ -154,6 +154,17 @@
             </div>
           </div>
           }
+          @for (m of muestrasDeUbicaciones(); track m.id) {
+          <div class="accesorio-colocado vista-previa" [style.width.%]="m.ancho" [style.height.%]="m.alto" [style.left.%]="m.x" [style.top.%]="m.y">
+            <div class="contenido-3d" [style.transform]="transformar(m)">
+              @if (m.tipo === 'texto') {
+              <canvas [appTextoCanvas]="m.texto ?? ''"></canvas>
+              } @else {
+              <img draggable="false" [src]="m.imagen" [alt]="m.nombre">
+              }
+            </div>
+          </div>
+          }
         </div>
       </div>
     </div>
@@ -460,6 +471,17 @@
                   <canvas [appTextoCanvas]="v.texto ?? ''"></canvas>
                   } @else {
                   <img draggable="false" [src]="v.imagen" [alt]="v.nombre">
+                  }
+                </div>
+              </div>
+              }
+              @for (m of muestrasDeUbicaciones(); track m.id) {
+              <div class="accesorio-colocado vista-previa" [style.width.%]="m.ancho" [style.height.%]="m.alto" [style.left.%]="m.x" [style.top.%]="m.y">
+                <div class="contenido-3d" [style.transform]="transformar(m)">
+                  @if (m.tipo === 'texto') {
+                  <canvas [appTextoCanvas]="m.texto ?? ''"></canvas>
+                  } @else {
+                  <img draggable="false" [src]="m.imagen" [alt]="m.nombre">
                   }
                 </div>
               </div>

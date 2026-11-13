@@ -442,6 +442,41 @@ export class AdminConfigurador implements OnInit {
     };
   });
 
+  // Muestra de cada ubicación: al cargar la configuración se ve un accesorio en cada cuadro para comprobar cómo queda.
+  // Es el elemento fijo si la ubicación es fija; si no, el primer accesorio marcado que admite la ubicación.
+  // Usa la excepción del accesorio en esa ubicación si la tiene y, si no, los valores de la ubicación.
+  muestrasDeUbicaciones = computed<AccesorioColocado[]>(() => {
+    const activa = this.ubicacionActual();
+    const enVista = this.accesorioEnVista() !== null;
+    const colocados = this.accesoriosColocados();
+    const muestras: AccesorioColocado[] = [];
+
+    for (const preset of colocados.filter(a => a.accesorioId === 0 && a.ubicacionId !== undefined)) {
+      const ubicacionId = preset.ubicacionId!;
+      const config = this.configUbicaciones()[ubicacionId];
+      // La ubicación activa ya muestra el accesorio en vista; las deshabilitadas no llevan accesorios
+      if (config?.estado === 'deshabilitada' || (enVista && ubicacionId === activa)) continue;
+
+      const accesorio = config?.estado === 'fija' && config.fijoId
+        ? this.accesorios().find(a => a.id === config.fijoId)
+        : this.accesoriosMarcados().find(a => this.categoriaPermitidaEn(ubicacionId, a.categoria ?? 'Otros'));
+      if (!accesorio) continue;
+
+      const excepcion = colocados.find(a => a.accesorioId === accesorio.id && a.ubicacionId === ubicacionId);
+      muestras.push({
+        ...(excepcion ?? preset),
+        id: -1000 - ubicacionId,
+        ubicacionId,
+        accesorioId: accesorio.id,
+        nombre: accesorio.nombre,
+        imagen: accesorio.imagen,
+        tipo: accesorio.tipo ?? 'imagen',
+        texto: accesorio.texto,
+      });
+    }
+    return muestras;
+  });
+
   porcentajeAncho = signal(23.3);
   porcentajeAlto = signal(18);
 
@@ -465,7 +500,11 @@ export class AdminConfigurador implements OnInit {
   // Si la ubicación activa solo admite ciertas categorías, solo se muestran esas
   // (ubicación con "categorias": solo esas; con "excluidas": todas menos esas)
   categoriaPermitida(categoria: string): boolean {
-    const u = this.ubicaciones().find(x => x.id === this.ubicacionActual());
+    return this.categoriaPermitidaEn(this.ubicacionActual(), categoria);
+  }
+
+  categoriaPermitidaEn(ubicacionId: number | undefined, categoria: string): boolean {
+    const u = this.ubicaciones().find(x => x.id === ubicacionId);
 
     if (u?.categorias) return u.categorias.includes(categoria);
     if (u?.excluidas) return !u.excluidas.includes(categoria);
