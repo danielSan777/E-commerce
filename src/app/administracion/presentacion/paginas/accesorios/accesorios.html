@@ -87,7 +87,15 @@
           <input id="a-texto" name="a-texto" [(ngModel)]="formAccesorio.default_text" maxlength="150" />
         } @else {
           <label for="a-imagen">Imagen (PNG, JPG o WebP; con fondo transparente se ve mejor)</label>
-          <input #campoImagen id="a-imagen" name="a-imagen" type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirImagen($event)" />
+          <div class="campo-archivo">
+            <input #campoImagen id="a-imagen" name="a-imagen" type="file" class="archivo-oculto" accept="image/png,image/jpeg,image/webp" (change)="elegirImagen($event)" />
+            <label for="a-imagen" class="boton-archivo">{{ nombreArchivo() || nombreGuardado() ? 'Cambiar imagen' : 'Seleccionar archivo' }}</label>
+            <span class="nombre-archivo">
+              @if (nombreArchivo()) { {{ nombreArchivo() }} <em>(nueva, se guarda al pulsar Guardar)</em> }
+              @else if (nombreGuardado()) { {{ nombreGuardado() }} <em>(guardada)</em> }
+              @else { Ningún archivo seleccionado }
+            </span>
+          </div>
           @if (vistaPrevia(); as foto) {
             <div class="vista-previa"><img [src]="foto" [alt]="formAccesorio.alt || formAccesorio.name || 'Vista previa'" /></div>
           }

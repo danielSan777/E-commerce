@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
@@ -64,6 +64,10 @@ export class AdminAccesorios implements OnInit {
   archivoImagen: File | null = null;
   /** Lo que se ve en el formulario: la foto recién elegida o, al editar, la que ya tiene el accesorio. */
   vistaPrevia = signal<string | null>(null);
+  /** Imagen ya guardada del accesorio que se edita (null si no tiene): su nombre se muestra en lugar de «Ningún archivo seleccionado». */
+  imagenGuardada = signal<string | null>(null);
+  nombreArchivo = signal('');
+  nombreGuardado = computed(() => decodeURIComponent((this.imagenGuardada() ?? '').split('?')[0].split('/').pop() ?? ''));
   private campoImagen = viewChild<ElementRef<HTMLInputElement>>('campoImagen');
 
   // Ubicaciones
@@ -152,6 +156,7 @@ export class AdminAccesorios implements OnInit {
   nuevoAccesorio(): void {
     this.formAccesorio = { ...ACCESORIO_VACIO, accessory_category_id: this.categorias()[0]?.id ?? 0, sort_order: this.accesorios().length + 1 };
     this.vaciarArchivo();
+    this.imagenGuardada.set(null);
     this.ponerVistaPrevia(null);
     this.limpiar();
     this.editandoAccesorio.set('');
@@ -163,7 +168,8 @@ export class AdminAccesorios implements OnInit {
       sort_order: a.sort_order, is_active: a.is_active, is_exclusive: a.is_exclusive, alt: a.alt ?? '',
     };
     this.vaciarArchivo();
-    this.ponerVistaPrevia(a.image ?? a.thumb ?? null);
+    this.imagenGuardada.set(a.image ?? a.thumb ?? null);
+    this.ponerVistaPrevia(this.imagenGuardada());
     this.limpiar();
     this.editandoAccesorio.set(a.id);
   }
@@ -171,19 +177,23 @@ export class AdminAccesorios implements OnInit {
   cancelarAccesorio(): void {
     this.editandoAccesorio.set(null);
     this.vaciarArchivo();
+    this.imagenGuardada.set(null);
     this.ponerVistaPrevia(null);
   }
 
   /** Olvida el archivo elegido, también en el campo de la pantalla: así no queda un nombre viejo que parece subirse y no se sube. */
   private vaciarArchivo(): void {
     this.archivoImagen = null;
+    this.nombreArchivo.set('');
     const campo = this.campoImagen()?.nativeElement;
     if (campo) campo.value = '';
   }
 
   elegirImagen(evento: Event): void {
     this.archivoImagen = (evento.target as HTMLInputElement).files?.[0] ?? null;
-    this.ponerVistaPrevia(this.archivoImagen ? URL.createObjectURL(this.archivoImagen) : null);
+    this.nombreArchivo.set(this.archivoImagen?.name ?? '');
+    // Si se cancela la elección, vuelve a verse la imagen guardada
+    this.ponerVistaPrevia(this.archivoImagen ? URL.createObjectURL(this.archivoImagen) : this.imagenGuardada());
   }
 
   private ponerVistaPrevia(url: string | null): void {

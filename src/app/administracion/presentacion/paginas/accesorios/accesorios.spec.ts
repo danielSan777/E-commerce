@@ -62,6 +62,34 @@ describe('AdminAccesorios · imagen del accesorio', () => {
     expect(c.editandoAccesorio()).toBeNull();
   });
 
+  it('al editar muestra el nombre de la imagen guardada y, al elegir otra, el de la nueva', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.editarAccesorio(BALANZA);
+    fixture.detectChanges();
+    const texto = () => (fixture.nativeElement.querySelector('.nombre-archivo') as HTMLElement).textContent!.replace(/\s+/g, ' ');
+
+    expect(c.nombreGuardado()).toBe('5-aaa-1080.webp');
+    expect(texto()).toContain('5-aaa-1080.webp');
+    expect(texto()).not.toContain('Ningún archivo');
+
+    c.elegirImagen(eleccion(new File(['x'], 'balanza-nueva.png', { type: 'image/png' })));
+    fixture.detectChanges();
+    expect(texto()).toContain('balanza-nueva.png');
+    expect(texto()).not.toContain('5-aaa-1080.webp');
+
+    // Si se cancela la elección vuelve a verse la guardada
+    c.elegirImagen({ target: { files: [] } } as unknown as Event);
+    fixture.detectChanges();
+    expect(texto()).toContain('5-aaa-1080.webp');
+    expect(c.vistaPrevia()).toBe(BALANZA.image);
+
+    // Un accesorio nuevo no tiene archivo
+    c.nuevoAccesorio();
+    fixture.detectChanges();
+    expect(texto()).toContain('Ningún archivo seleccionado');
+  });
+
   it('si cancelas, el archivo elegido se olvida también en el campo y no se sube al editar otro accesorio', async () => {
     const fixture = await montar();
     const c = fixture.componentInstance;

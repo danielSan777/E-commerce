@@ -18,3 +18,11 @@ legend { font-weight: 700; font-size: .92rem; padding: 0 .4rem; }
 
 .vista-previa { display: flex; justify-content: center; padding: .75rem; background: #f1f5f4; border-radius: 10px; }
 .vista-previa img { max-width: 100%; max-height: 220px; object-fit: contain; }
+
+/* Campo de archivo: muestra el nombre de la imagen guardada, que el campo nativo no puede mostrar */
+.campo-archivo { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.archivo-oculto { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip-path: inset(50%); }
+.boton-archivo { margin: 0; padding: .35rem .7rem; border: 1px solid #767676; border-radius: 4px; background: #efefef; color: #111; font-weight: 400; cursor: pointer; }
+.archivo-oculto:focus-visible + .boton-archivo { outline: 2px solid #0b7a55; outline-offset: 2px; }
+.nombre-archivo { min-width: 0; overflow-wrap: anywhere; font-size: .9rem; }
+.nombre-archivo em { color: #5b6b66; font-style: normal; }
