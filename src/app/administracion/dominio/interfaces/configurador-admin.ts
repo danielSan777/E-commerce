@@ -106,5 +106,7 @@ export interface ConfiguracionDeProductoAdmin {
   /** Imagen para personalizar de este producto; null si aún no la tiene. */
   base_image: string | null;
   base_adjust: AjusteImagenAdmin;
+  /** Accesorio propio de este producto por ubicación (solo si usa la configuración de su categoría). */
+  fixed_accessories: { location_id: number; accessory_id: number }[];
   config: ConfigLeidaAdmin;
 }

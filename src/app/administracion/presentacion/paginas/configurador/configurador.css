@@ -12,9 +12,12 @@
 
 
 /*MACETA*/
+/* Cuadrado de 75vh, pero nunca más ancho que su contenedor (en el celular se adapta al ancho disponible) */
+.contenedor-visor { container-type: inline-size; }
+
 .visor {
-  width: 75vh;
-  height: 75vh;
+  width: min(75vh, 100cqw);
+  height: min(75vh, 100cqw);
   position: relative;
   overflow: hidden;
 }

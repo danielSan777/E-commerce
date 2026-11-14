@@ -149,6 +149,39 @@ export class AdminConfigurador implements OnInit {
     });
   }
 
+  // ----- accesorio propio del producto por ubicación (sobre la configuración de la categoría)
+  guardandoFijo = signal(false);
+
+  /** Ubicaciones donde la categoría ya define posición y tamaño (y no están deshabilitadas): ahí el producto puede tener el suyo. */
+  ubicacionesParaFijo = computed(() => (this.producto()?.config.locations ?? []).filter(u => u.preset && u.state !== 'deshabilitada'));
+
+  fijoDe(ubicacionId: number): number | null {
+    return this.producto()?.fixed_accessories.find(f => f.location_id === ubicacionId)?.accessory_id ?? null;
+  }
+
+  /** Accesorios activos que esa ubicación admite según sus categorías (el elegido siempre se queda en la lista). */
+  opcionesDeFijo(ubicacionId: number): Accesorio[] {
+    const elegido = this.fijoDe(ubicacionId);
+    return this.accesorios().filter(a => a.id === elegido || this.categoriaPermitidaEn(ubicacionId, a.categoria ?? 'Otros'));
+  }
+
+  elegirFijo(ubicacionId: number, lista: HTMLSelectElement): void {
+    const sku = this.productoSku();
+    if (!sku) return;
+    this.guardandoFijo.set(true);
+    this.limpiarMensajes();
+    this.servicio.accesorioFijoDelProducto(sku, ubicacionId, lista.value ? +lista.value : null).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: p => {
+        this.guardandoFijo.set(false);
+        this.producto.set(p);
+        // La ubicación pasa a verse fija con ese accesorio en el visor
+        this.cargarAccesorios(p.config);
+        this.avisos.exito(lista.value ? 'El accesorio del producto se guardó correctamente.' : 'El producto vuelve a usar lo de la categoría en esa ubicación.');
+      },
+      error: e => { this.guardandoFijo.set(false); lista.value = String(this.fijoDe(ubicacionId) ?? ''); this.fallo(e); },
+    });
+  }
+
   pidiendoVaciar = signal(false);
 
   ngOnInit(): void {
@@ -447,14 +480,15 @@ export class AdminConfigurador implements OnInit {
   // Usa la excepción del accesorio en esa ubicación si la tiene y, si no, los valores de la ubicación.
   muestrasDeUbicaciones = computed<AccesorioColocado[]>(() => {
     const activa = this.ubicacionActual();
-    const enVista = this.accesorioEnVista() !== null;
+    // Solo el editor muestra aparte el accesorio en vista de la ubicación activa; la vista de guía los muestra todos
+    const enVista = this.editable() && this.accesorioEnVista() !== null;
     const colocados = this.accesoriosColocados();
     const muestras: AccesorioColocado[] = [];
 
     for (const preset of colocados.filter(a => a.accesorioId === 0 && a.ubicacionId !== undefined)) {
       const ubicacionId = preset.ubicacionId!;
       const config = this.configUbicaciones()[ubicacionId];
-      // La ubicación activa ya muestra el accesorio en vista; las deshabilitadas no llevan accesorios
+      // En el editor la ubicación activa ya muestra el accesorio en vista; las deshabilitadas no llevan accesorios
       if (config?.estado === 'deshabilitada' || (enVista && ubicacionId === activa)) continue;
 
       const accesorio = config?.estado === 'fija' && config.fijoId

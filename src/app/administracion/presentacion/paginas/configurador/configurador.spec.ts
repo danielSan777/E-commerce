@@ -34,7 +34,7 @@ const categoria = (extra = {}) => ({
 
 const producto = (extra = {}) => ({
   scope: 'product', sku: 'PRO-DOCTOR', name: 'Doctor', category_slug: 'profesiones', category_name: 'Profesiones',
-  uses_own_configurator: false, source: 'category', has_config: true, base_image: 'https://api/doctor.webp', base_adjust: { scale: 100, x: 0, y: 0 }, config: configuracion(), ...extra,
+  uses_own_configurator: false, source: 'category', has_config: true, base_image: 'https://api/doctor.webp', base_adjust: { scale: 100, x: 0, y: 0 }, fixed_accessories: [], config: configuracion(), ...extra,
 });
 
 const esperar = () => new Promise<void>(r => setTimeout(r));
@@ -285,6 +285,75 @@ describe('AdminConfigurador', () => {
       await abrirCategoria(fixture, categoria({ config: cfg }));
 
       expect(fixture.componentInstance.muestrasDeUbicaciones()).toEqual([]);
+    });
+  });
+
+  describe('accesorio propio del producto en una ubicación', () => {
+    const lista = (valor: string) => ({ value: valor }) as HTMLSelectElement;
+
+    it('ofrece las ubicaciones que la categoría ya define y solo los accesorios que admiten', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+      fixture.detectChanges();
+
+      // «Pie» no tiene valores en la categoría: no se ofrece. «Cabeza» solo admite Moda.
+      expect(c.ubicacionesParaFijo().map(u => u.name)).toEqual(['Cabeza']);
+      expect(c.opcionesDeFijo(7).map(a => a.id)).toEqual([20]);
+      expect(fixture.nativeElement.querySelector('#fijo-7')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('#fijo-8')).toBeNull();
+    });
+
+    it('al elegirlo lo guarda en el producto y la ubicación se ve fija con ese accesorio', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+
+      c.elegirFijo(7, lista('20'));
+      const put = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/fixed-accessories/7`);
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ accessory_id: 20 });
+      put.flush(producto({
+        fixed_accessories: [{ location_id: 7, accessory_id: 20 }],
+        config: configuracion({ locations: [ubicacion(7, 'Cabeza', { state: 'fija', fixed_accessory_id: 20, preset: GEO }), ubicacion(8, 'Pie')] }),
+      }));
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+
+      expect(c.fijoDe(7)).toBe(20);
+      expect(c.guardandoFijo()).toBe(false);
+      expect(c.muestrasDeUbicaciones().find(m => m.ubicacionId === 7)?.accesorioId).toBe(20);
+
+      // «El de la categoría» lo quita
+      c.elegirFijo(7, lista(''));
+      const quitar = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/fixed-accessories/7`);
+      expect(quitar.request.body).toEqual({ accessory_id: null });
+      quitar.flush(producto());
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      expect(c.fijoDe(7)).toBeNull();
+    });
+
+    it('muestra el mensaje de Laravel si no se puede guardar y deja lo anterior', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+
+      const l = lista('20');
+      c.elegirFijo(7, l);
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/fixed-accessories/7`)
+        .flush({ code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { accessory_id: ['«Cabeza» no admite accesorios de la categoría «Objetos».'] } }, { status: 422, statusText: 'Unprocessable' });
+      await esperar();
+
+      expect(c.error()).toBe('Revisa los datos ingresados.');
+      expect(c.detalle()).toEqual(['«Cabeza» no admite accesorios de la categoría «Objetos».']);
+      expect(c.guardandoFijo()).toBe(false);
+      expect(l.value).toBe('');
     });
   });
 

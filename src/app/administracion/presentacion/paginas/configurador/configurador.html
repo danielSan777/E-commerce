@@ -75,6 +75,30 @@
           <button type="button" class="btn btn-link btn-sm p-0 align-baseline" (click)="elegirProducto('')">Editar la categoría</button>
         </p>
         }
+
+        @if (p.uses_own_configurator === false && ubicacionesParaFijo().length) {
+        <div class="mt-3 pt-3 border-top" aria-label="Accesorio propio del producto">
+          <div class="fw-semibold mb-1">Accesorio propio de «{{ p.name }}»</div>
+          <p class="text-muted small mb-2">
+            Elige qué accesorio lleva este producto en cada ubicación. La posición y el tamaño son los de la categoría;
+            si no eliges nada, se usa lo que diga la categoría.
+          </p>
+          <div class="row g-2">
+            @for (u of ubicacionesParaFijo(); track u.location_id) {
+            <div class="col-12 col-md-6 col-lg-4">
+              <label [for]="'fijo-' + u.location_id" class="form-label small mb-0">{{ u.name }}</label>
+              <select class="form-select" [id]="'fijo-' + u.location_id" [disabled]="guardandoFijo()"
+                (change)="elegirFijo(u.location_id, $any($event.target))">
+                <option value="" [selected]="fijoDe(u.location_id) === null">— El de la categoría —</option>
+                @for (a of opcionesDeFijo(u.location_id); track a.id) {
+                <option [value]="a.id" [selected]="fijoDe(u.location_id) === a.id">{{ a.nombre }}</option>
+                }
+              </select>
+            </div>
+            }
+          </div>
+        </div>
+        }
       </div>
       }
 
@@ -141,7 +165,7 @@
   } @else if (!editable() && productoElegido()?.base_image && producto()) {
   <section class="card shadow-sm mb-4" aria-label="Vista para encuadrar la foto">
     <div class="card-header"><h5 class="mb-0">Así se ve «{{ productoElegido()!.name }}» con la configuración de la categoría</h5></div>
-    <div class="card-body">
+    <div class="card-body contenedor-visor">
       <p class="text-muted small">Las cajas numeradas son las ubicaciones de la categoría. Mueve la foto con los deslizadores hasta que coincidan.</p>
       <div class="visor mx-auto">
         <img [src]="imagenBaseVisor()" class="maceta" [style.transform]="transformBase()" alt="Imagen para personalizar">
@@ -416,7 +440,7 @@
           <h5 class="mb-0">Vista del producto</h5>
         </div>
 
-        <div class="card-body">
+        <div class="card-body contenedor-visor">
 
           <div class="visor mx-auto " #visorRef>
 

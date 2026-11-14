@@ -74,6 +74,11 @@ export class ConfiguradorAdminService {
   }
 
   // ----- encuadre de la imagen para personalizar (la imagen misma se sube desde el producto)
+  /** Elige (o quita, con null) el accesorio propio del producto en una ubicación de la configuración de su categoría. */
+  accesorioFijoDelProducto(sku: string, ubicacionId: number, accesorioId: number | null): Observable<ConfiguracionDeProductoAdmin> {
+    return this.http.put<ConfiguracionDeProductoAdmin>(`${this.api}/configurator/products/${encodeURIComponent(sku)}/fixed-accessories/${ubicacionId}`, { accessory_id: accesorioId }).pipe(conErrorApi());
+  }
+
   ajustarImagenBase(sku: string, ajuste: AjusteImagenAdmin): Observable<ConfiguracionDeProductoAdmin> {
     return this.http.put<ConfiguracionDeProductoAdmin>(`${this.api}/configurator/products/${encodeURIComponent(sku)}/base-adjust`, ajuste).pipe(conErrorApi());
   }
