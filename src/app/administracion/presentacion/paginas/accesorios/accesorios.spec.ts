@@ -9,7 +9,7 @@ const BASE = '/api/v1/admin';
 const esperar = () => new Promise<void>(r => setTimeout(r, 0));
 const BALANZA = {
   id: 5, name: 'Balanza', type: 'imagen' as const, behavior: null, text: null, category_id: 1, category: 'objetos',
-  image: 'https://api/media/accessories/5-aaa-1080.webp', thumb: null, alt: 'balanza', sort_order: 1, is_active: true, is_exclusive: false,
+  image: 'https://api/media/accessories/5-aaa-1080.webp', image_name: 'balanza.png', thumb: null, alt: 'balanza', sort_order: 1, is_active: true, is_exclusive: false,
 };
 
 describe('AdminAccesorios · imagen del accesorio', () => {
@@ -69,20 +69,25 @@ describe('AdminAccesorios · imagen del accesorio', () => {
     fixture.detectChanges();
     const texto = () => (fixture.nativeElement.querySelector('.nombre-archivo') as HTMLElement).textContent!.replace(/\s+/g, ' ');
 
-    expect(c.nombreGuardado()).toBe('5-aaa-1080.webp');
-    expect(texto()).toContain('5-aaa-1080.webp');
+    expect(c.nombreGuardado()).toBe('balanza.png');
+    expect(texto()).toContain('balanza.png (guardada)');
     expect(texto()).not.toContain('Ningún archivo');
 
     c.elegirImagen(eleccion(new File(['x'], 'balanza-nueva.png', { type: 'image/png' })));
     fixture.detectChanges();
     expect(texto()).toContain('balanza-nueva.png');
-    expect(texto()).not.toContain('5-aaa-1080.webp');
+    expect(texto()).not.toContain('balanza.png (guardada)');
 
     // Si se cancela la elección vuelve a verse la guardada
     c.elegirImagen({ target: { files: [] } } as unknown as Event);
     fixture.detectChanges();
-    expect(texto()).toContain('5-aaa-1080.webp');
+    expect(texto()).toContain('balanza.png (guardada)');
     expect(c.vistaPrevia()).toBe(BALANZA.image);
+
+    // Una imagen anterior a este dato (sin nombre original) muestra el nombre del archivo guardado
+    c.editarAccesorio({ ...BALANZA, image_name: null });
+    fixture.detectChanges();
+    expect(texto()).toContain('5-aaa-1080.webp (guardada)');
 
     // Un accesorio nuevo no tiene archivo
     c.nuevoAccesorio();

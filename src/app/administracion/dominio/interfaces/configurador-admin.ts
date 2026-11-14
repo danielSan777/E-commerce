@@ -18,6 +18,8 @@ export interface AccesorioAdmin {
   category_id: number;
   category: string | null;
   image: string | null;
+  /** Nombre con el que se subió la imagen (null en imágenes anteriores a este dato). */
+  image_name: string | null;
   thumb: string | null;
   alt: string | null;
   sort_order: number;

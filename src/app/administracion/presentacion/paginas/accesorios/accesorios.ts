@@ -67,7 +67,9 @@ export class AdminAccesorios implements OnInit {
   /** Imagen ya guardada del accesorio que se edita (null si no tiene): su nombre se muestra en lugar de «Ningún archivo seleccionado». */
   imagenGuardada = signal<string | null>(null);
   nombreArchivo = signal('');
-  nombreGuardado = computed(() => decodeURIComponent((this.imagenGuardada() ?? '').split('?')[0].split('/').pop() ?? ''));
+  private nombreOriginal = signal<string | null>(null);
+  /** El nombre con el que se subió; en imágenes anteriores a ese dato, el nombre del archivo guardado. */
+  nombreGuardado = computed(() => this.nombreOriginal() ?? decodeURIComponent((this.imagenGuardada() ?? '').split('?')[0].split('/').pop() ?? ''));
   private campoImagen = viewChild<ElementRef<HTMLInputElement>>('campoImagen');
 
   // Ubicaciones
@@ -157,6 +159,7 @@ export class AdminAccesorios implements OnInit {
     this.formAccesorio = { ...ACCESORIO_VACIO, accessory_category_id: this.categorias()[0]?.id ?? 0, sort_order: this.accesorios().length + 1 };
     this.vaciarArchivo();
     this.imagenGuardada.set(null);
+    this.nombreOriginal.set(null);
     this.ponerVistaPrevia(null);
     this.limpiar();
     this.editandoAccesorio.set('');
@@ -169,6 +172,7 @@ export class AdminAccesorios implements OnInit {
     };
     this.vaciarArchivo();
     this.imagenGuardada.set(a.image ?? a.thumb ?? null);
+    this.nombreOriginal.set(a.image_name ?? null);
     this.ponerVistaPrevia(this.imagenGuardada());
     this.limpiar();
     this.editandoAccesorio.set(a.id);
@@ -178,6 +182,7 @@ export class AdminAccesorios implements OnInit {
     this.editandoAccesorio.set(null);
     this.vaciarArchivo();
     this.imagenGuardada.set(null);
+    this.nombreOriginal.set(null);
     this.ponerVistaPrevia(null);
   }
 
