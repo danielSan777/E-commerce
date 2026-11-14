@@ -87,7 +87,7 @@
           <input id="a-texto" name="a-texto" [(ngModel)]="formAccesorio.default_text" maxlength="150" />
         } @else {
           <label for="a-imagen">Imagen (PNG, JPG o WebP; con fondo transparente se ve mejor)</label>
-          <input id="a-imagen" name="a-imagen" type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirImagen($event)" />
+          <input #campoImagen id="a-imagen" name="a-imagen" type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirImagen($event)" />
           @if (vistaPrevia(); as foto) {
             <div class="vista-previa"><img [src]="foto" [alt]="formAccesorio.alt || formAccesorio.name || 'Vista previa'" /></div>
           }

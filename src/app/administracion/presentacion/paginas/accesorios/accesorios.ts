@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
@@ -64,6 +64,7 @@ export class AdminAccesorios implements OnInit {
   archivoImagen: File | null = null;
   /** Lo que se ve en el formulario: la foto recién elegida o, al editar, la que ya tiene el accesorio. */
   vistaPrevia = signal<string | null>(null);
+  private campoImagen = viewChild<ElementRef<HTMLInputElement>>('campoImagen');
 
   // Ubicaciones
   formUbicacion: FormUbicacion = { ...UBICACION_VACIA };
@@ -150,7 +151,7 @@ export class AdminAccesorios implements OnInit {
 
   nuevoAccesorio(): void {
     this.formAccesorio = { ...ACCESORIO_VACIO, accessory_category_id: this.categorias()[0]?.id ?? 0, sort_order: this.accesorios().length + 1 };
-    this.archivoImagen = null;
+    this.vaciarArchivo();
     this.ponerVistaPrevia(null);
     this.limpiar();
     this.editandoAccesorio.set('');
@@ -161,7 +162,7 @@ export class AdminAccesorios implements OnInit {
       name: a.name, accessory_category_id: a.category_id, type: a.type, behavior: a.behavior ?? '', default_text: a.text ?? '',
       sort_order: a.sort_order, is_active: a.is_active, is_exclusive: a.is_exclusive, alt: a.alt ?? '',
     };
-    this.archivoImagen = null;
+    this.vaciarArchivo();
     this.ponerVistaPrevia(a.image ?? a.thumb ?? null);
     this.limpiar();
     this.editandoAccesorio.set(a.id);
@@ -169,8 +170,15 @@ export class AdminAccesorios implements OnInit {
 
   cancelarAccesorio(): void {
     this.editandoAccesorio.set(null);
-    this.archivoImagen = null;
+    this.vaciarArchivo();
     this.ponerVistaPrevia(null);
+  }
+
+  /** Olvida el archivo elegido, también en el campo de la pantalla: así no queda un nombre viejo que parece subirse y no se sube. */
+  private vaciarArchivo(): void {
+    this.archivoImagen = null;
+    const campo = this.campoImagen()?.nativeElement;
+    if (campo) campo.value = '';
   }
 
   elegirImagen(evento: Event): void {
