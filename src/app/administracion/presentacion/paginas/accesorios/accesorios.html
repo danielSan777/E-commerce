@@ -107,6 +107,7 @@
         <input id="a-orden" name="a-orden" type="number" min="0" [(ngModel)]="formAccesorio.sort_order" />
 
         <label class="casilla"><input type="checkbox" name="a-activo" [(ngModel)]="formAccesorio.is_active" /> Activo (se ofrece al cliente)</label>
+        <label class="casilla"><input type="checkbox" name="a-exclusivo" [(ngModel)]="formAccesorio.is_exclusive" /> Exclusivo de un producto (ej. el corazón del Doctor): el cliente solo lo ve si se lo asignas como accesorio fijo de ese producto</label>
 
         <div class="acciones">
           <button type="submit" class="primario" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
@@ -125,6 +126,7 @@
               <strong>{{ a.name }}</strong>
               <small>{{ a.category }} · {{ a.type === 'texto' ? 'texto' : 'imagen' }}@if (a.behavior) { · {{ nombreComportamiento(a.behavior) }} }</small>
               @if (!a.is_active) { <span class="inactiva">Inactivo</span> }
+              @if (a.is_exclusive) { <span class="inactiva">Exclusivo de un producto</span> }
             </div>
           </div>
           <div class="acciones">

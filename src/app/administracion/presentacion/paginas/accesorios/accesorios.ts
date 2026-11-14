@@ -20,11 +20,11 @@ export const COMPORTAMIENTOS: { valor: ComportamientoAccesorioAdmin; nombre: str
 
 interface FormAccesorio {
   name: string; accessory_category_id: number; type: 'imagen' | 'texto'; behavior: ComportamientoAccesorioAdmin | ''; default_text: string;
-  sort_order: number; is_active: boolean; alt: string;
+  sort_order: number; is_active: boolean; is_exclusive: boolean; alt: string;
 }
 interface FormUbicacion { name: string; sort_order: number; allowed: number[]; excluded: number[] }
 
-const ACCESORIO_VACIO: FormAccesorio = { name: '', accessory_category_id: 0, type: 'imagen', behavior: '', default_text: '', sort_order: 0, is_active: true, alt: '' };
+const ACCESORIO_VACIO: FormAccesorio = { name: '', accessory_category_id: 0, type: 'imagen', behavior: '', default_text: '', sort_order: 0, is_active: true, is_exclusive: false, alt: '' };
 const UBICACION_VACIA: FormUbicacion = { name: '', sort_order: 0, allowed: [], excluded: [] };
 
 /**
@@ -159,7 +159,7 @@ export class AdminAccesorios implements OnInit {
   editarAccesorio(a: AccesorioAdmin): void {
     this.formAccesorio = {
       name: a.name, accessory_category_id: a.category_id, type: a.type, behavior: a.behavior ?? '', default_text: a.text ?? '',
-      sort_order: a.sort_order, is_active: a.is_active, alt: a.alt ?? '',
+      sort_order: a.sort_order, is_active: a.is_active, is_exclusive: a.is_exclusive, alt: a.alt ?? '',
     };
     this.archivoImagen = null;
     this.ponerVistaPrevia(a.image ?? a.thumb ?? null);
@@ -195,6 +195,7 @@ export class AdminAccesorios implements OnInit {
       default_text: f.type === 'texto' ? f.default_text.trim() : null,
       sort_order: Number(f.sort_order) || 0,
       is_active: f.is_active,
+      is_exclusive: f.is_exclusive,
     };
 
     if (f.type === 'imagen' && this.archivoImagen && !f.alt.trim()) {

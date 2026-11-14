@@ -22,6 +22,8 @@ export interface AccesorioAdmin {
   alt: string | null;
   sort_order: number;
   is_active: boolean;
+  /** Solo lo ve el cliente como accesorio fijo del producto al que se le asigna. */
+  is_exclusive: boolean;
 }
 
 export interface DatosAccesorio {
@@ -32,6 +34,7 @@ export interface DatosAccesorio {
   default_text: string | null;
   sort_order: number;
   is_active: boolean;
+  is_exclusive: boolean;
 }
 
 export interface UbicacionAdmin {
