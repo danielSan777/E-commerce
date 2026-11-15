@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, timeout } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
+import { SIN_CARGANDO } from '../../../shared/interceptores/cargandoInterceptor';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
 import {
   AccesorioAdmin, AjusteImagenAdmin, CategoriaAccesorioAdmin, ConfigGuardableAdmin, ConfiguracionDeCategoriaAdmin,
@@ -47,7 +48,8 @@ export class ConfiguradorAdminService {
   // ----- accesorios
   /** Lo más que puede pesar un archivo en el servidor (0 si no declara límite): permite avisar al elegirlo, sin esperar a guardar. */
   limitesDeSubida(): Observable<LimitesDeSubida> {
-    return this.http.get<LimitesDeSubida>(`${this.api}/upload-limits`).pipe(conErrorApi());
+    // En segundo plano: no muestra la pantalla de carga y, si el servidor no responde, se descarta (Laravel igual valida al guardar)
+    return this.http.get<LimitesDeSubida>(`${this.api}/upload-limits`, { context: new HttpContext().set(SIN_CARGANDO, true) }).pipe(timeout(8000), conErrorApi());
   }
 
   accesorios(): Observable<AccesorioAdmin[]> {

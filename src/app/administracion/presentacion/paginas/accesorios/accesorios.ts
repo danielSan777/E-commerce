@@ -100,6 +100,14 @@ export class AdminAccesorios implements OnInit {
 
   ngOnInit(): void {
     this.cargar();
+  }
+
+  private limitesPedidos = false;
+
+  /** Una sola vez y después de cargar la lista (no en paralelo, para no saturar un servidor local de un solo hilo). */
+  private pedirLimitesDeSubida(): void {
+    if (this.limitesPedidos) return;
+    this.limitesPedidos = true;
     // Si no se puede consultar el límite, simplemente no se avisa antes: Laravel lo valida al guardar
     this.servicio.limitesDeSubida().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: l => {
@@ -119,6 +127,7 @@ export class AdminAccesorios implements OnInit {
           this.accesorios.set(a);
           this.ubicaciones.set(u);
           this.cargando.set(false);
+          this.pedirLimitesDeSubida();
         },
         error: e => this.fallo(e),
       });
