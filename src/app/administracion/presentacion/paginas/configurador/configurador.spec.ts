@@ -338,6 +338,29 @@ describe('AdminConfigurador', () => {
       expect(c.fijoDe(7)).toBeNull();
     });
 
+    it('el selector de accesorio fijo se puede filtrar por categoría y buscar por nombre', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto({
+        config: configuracion({ locations: [ubicacion(7, 'Cabeza', { preset: GEO })] }),
+      }));
+      // Sin filtros se ofrece todo lo que la ubicación admite
+      const todos = c.opcionesDeFijo(7).map(a => a.id);
+      expect(todos.length).toBeGreaterThan(1);
+      expect(c.categoriasParaFijo(7).length).toBeGreaterThan(0);
+
+      c.ponerFiltroFijo(7, 'texto', 'GAF');
+      expect(c.opcionesDeFijo(7).map(a => a.nombre)).toEqual(['Gafas']);
+      c.ponerFiltroFijo(7, 'texto', 'zzz');
+      expect(c.opcionesDeFijo(7)).toEqual([]);
+      c.ponerFiltroFijo(7, 'texto', '');
+      c.ponerFiltroFijo(7, 'categoria', c.categoriasParaFijo(7)[0]);
+      expect(c.opcionesDeFijo(7).every(a => (a.categoria ?? 'Otros') === c.categoriasParaFijo(7)[0])).toBe(true);
+      // Los filtros de una ubicación no afectan a otra
+      expect(c.filtroFijo(8)).toEqual({ categoria: '', texto: '' });
+    });
+
     it('permite marcar el accesorio fijo como exclusivo de los productos que lo tienen, y desmarcarlo', async () => {
       const fixture = await montar();
       await abrirCategoria(fixture);

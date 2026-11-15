@@ -162,6 +162,15 @@ describe('AdminAccesorios · imagen del accesorio', () => {
 
     c.filtroCategoria.set(0);
     expect(c.accesoriosVisibles().length).toBe(total);
+
+    // Buscar por nombre (sin tildes ni mayúsculas) y combinado con la categoría
+    c.busqueda.set('BALAN');
+    fixture.detectChanges();
+    expect(c.accesoriosVisibles().map(a => a.name)).toEqual(['Balanza']);
+    c.busqueda.set('zzz');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.lista-accesorios .vacio')?.textContent).toContain('«zzz»');
+    c.busqueda.set('');
     ctrl.expectNone(`${BASE}/accessories`); // cambiar de categoría no pide nada
   });
 

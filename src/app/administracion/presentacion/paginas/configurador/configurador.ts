@@ -1,3 +1,4 @@
+import { coincide } from '../../../aplicacion/busqueda';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -182,10 +183,33 @@ export class AdminConfigurador implements OnInit {
     return this.producto()?.fixed_accessories.find(f => f.location_id === ubicacionId)?.accessory_id ?? null;
   }
 
-  /** Accesorios activos que esa ubicación admite según sus categorías (el elegido siempre se queda en la lista). */
+  /** Filtros del selector de accesorio fijo, uno por ubicación: categoría (nombre) y texto del nombre. */
+  filtrosFijo = signal<Record<number, { categoria: string; texto: string }>>({});
+
+  filtroFijo(ubicacionId: number): { categoria: string; texto: string } {
+    return this.filtrosFijo()[ubicacionId] ?? { categoria: '', texto: '' };
+  }
+
+  ponerFiltroFijo(ubicacionId: number, campo: 'categoria' | 'texto', valor: string): void {
+    this.filtrosFijo.update(f => ({ ...f, [ubicacionId]: { ...this.filtroFijo(ubicacionId), [campo]: valor } }));
+  }
+
+  /** Accesorios activos que esa ubicación admite según sus categorías (sin filtros de búsqueda). */
+  private admitidosEn(ubicacionId: number): Accesorio[] {
+    return this.accesorios().filter(a => this.categoriaPermitidaEn(ubicacionId, a.categoria ?? 'Otros'));
+  }
+
+  /** Categorías para filtrar en esa ubicación: solo las que tienen accesorios que ahí se admiten. */
+  categoriasParaFijo(ubicacionId: number): string[] {
+    return [...new Set(this.admitidosEn(ubicacionId).map(a => a.categoria ?? 'Otros'))];
+  }
+
+  /** Lo que se ofrece en el selector: lo que admite la ubicación, filtrado por categoría y nombre. El elegido siempre se queda en la lista. */
   opcionesDeFijo(ubicacionId: number): Accesorio[] {
     const elegido = this.fijoDe(ubicacionId);
-    return this.accesorios().filter(a => a.id === elegido || this.categoriaPermitidaEn(ubicacionId, a.categoria ?? 'Otros'));
+    const { categoria, texto } = this.filtroFijo(ubicacionId);
+    return this.accesorios().filter(a => a.id === elegido
+      || (this.categoriaPermitidaEn(ubicacionId, a.categoria ?? 'Otros') && (!categoria || (a.categoria ?? 'Otros') === categoria) && coincide(a.nombre, texto)));
   }
 
   elegirFijo(ubicacionId: number, lista: HTMLSelectElement): void {

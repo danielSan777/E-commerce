@@ -38,3 +38,7 @@ legend { font-weight: 700; font-size: .92rem; padding: 0 .4rem; }
 .filtro-categorias { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .75rem; }
 .filtro-categorias button { padding: .35rem .8rem; border-radius: 999px; font-size: .9rem; }
 .filtro-categorias button.activo { background: #047857; color: #fff; border-color: #047857; }
+
+.buscador { margin: 0 0 .6rem; }
+.buscador input { width: 100%; box-sizing: border-box; padding: .5rem .75rem; border: 1px solid var(--borde, #a7d8c3); border-radius: 10px; font: inherit; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

@@ -88,13 +88,26 @@
             @for (u of ubicacionesParaFijo(); track u.location_id) {
             <div class="col-12 col-md-6 col-lg-4">
               <label [for]="'fijo-' + u.location_id" class="form-label small mb-0">{{ u.name }}</label>
+              <div class="d-flex gap-1 mb-1">
+                <select class="form-select form-select-sm w-auto" [attr.aria-label]="'Categoría de accesorios para ' + u.name"
+                  (change)="ponerFiltroFijo(u.location_id, 'categoria', $any($event.target).value)">
+                  <option value="" [selected]="!filtroFijo(u.location_id).categoria">Todas</option>
+                  @for (cat of categoriasParaFijo(u.location_id); track cat) {
+                  <option [value]="cat" [selected]="filtroFijo(u.location_id).categoria === cat">{{ cat }}</option>
+                  }
+                </select>
+                <input type="search" class="form-control form-control-sm" placeholder="Buscar por nombre" autocomplete="off"
+                  [attr.aria-label]="'Buscar accesorio por nombre para ' + u.name" [value]="filtroFijo(u.location_id).texto"
+                  (input)="ponerFiltroFijo(u.location_id, 'texto', $any($event.target).value)" />
+              </div>
               <select class="form-select" [id]="'fijo-' + u.location_id" [disabled]="guardandoFijo()"
                 (change)="elegirFijo(u.location_id, $any($event.target))">
                 <option value="" [selected]="fijoDe(u.location_id) === null">— El de la categoría —</option>
                 @for (a of opcionesDeFijo(u.location_id); track a.id) {
-                <option [value]="a.id" [selected]="fijoDe(u.location_id) === a.id">{{ a.nombre }}</option>
+                <option [value]="a.id" [selected]="fijoDe(u.location_id) === a.id">{{ a.nombre }}@if (a.categoria) { ({{ a.categoria }}) }</option>
                 }
               </select>
+              @if (!opcionesDeFijo(u.location_id).length) { <small class="text-muted">Ningún accesorio coincide con la búsqueda.</small> }
               @if (fijoDe(u.location_id); as idFijo) {
               <div class="form-check mt-1">
                 <input class="form-check-input" type="checkbox" [id]="'excl-' + u.location_id" [checked]="esExclusivo(idFijo)"

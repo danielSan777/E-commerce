@@ -1,3 +1,4 @@
+import { coincide } from '../../../aplicacion/busqueda';
 import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -48,9 +49,12 @@ export class AdminAccesorios implements OnInit {
   accesorios = signal<AccesorioAdmin[]>([]);
   /** Categoría elegida para filtrar la lista de accesorios (0 = todas). El filtro se hace aquí, sin pedirle nada a la API. */
   filtroCategoria = signal(0);
+  /** Lo que se escribió en el buscador (por nombre; se combina con la categoría elegida). */
+  busqueda = signal('');
   accesoriosVisibles = computed(() => {
     const id = this.filtroCategoria();
-    return id ? this.accesorios().filter(a => a.category_id === id) : this.accesorios();
+    const texto = this.busqueda();
+    return this.accesorios().filter(a => (!id || a.category_id === id) && coincide(a.name, texto));
   });
   /** Cuántos accesorios tiene cada categoría, para mostrarlo en los botones del filtro. */
   cantidadPorCategoria = computed(() => {
