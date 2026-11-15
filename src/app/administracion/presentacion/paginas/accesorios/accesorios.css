@@ -29,10 +29,12 @@ legend { font-weight: 700; font-size: .92rem; padding: 0 .4rem; }
 
 .error-campo { display: block; margin-top: .25rem; color: #b00020; font-weight: 600; }
 
-/* Máximo 4 accesorios a la vista (cada fila mide al menos 7rem); el resto, con scroll */
-.lista-accesorios { max-height: calc(4 * 7rem + 3 * .75rem + .5rem); overflow-y: auto; padding-right: .35rem; overscroll-behavior: contain; }
-.lista-accesorios li { min-height: 7rem; box-sizing: border-box; }
-.lista-accesorios li.vacio { min-height: 0; justify-content: center; color: #4b5563; }
+/* Máximo 4 accesorios a la vista; el resto, con scroll. Las filas nunca se achican (así no se cortan los botones). */
+.lista-accesorios { --alto-fila: 7.25rem; max-height: calc(4 * var(--alto-fila) + 3 * .75rem + .5rem); overflow-y: auto; padding-right: .35rem; overscroll-behavior: contain; }
+.lista-accesorios li { flex-shrink: 0; min-height: var(--alto-fila); box-sizing: border-box; }
+.lista-accesorios li.vacio { flex-shrink: 0; min-height: 0; justify-content: center; color: #4b5563; }
+/* En pantallas angostas los botones bajan a otra línea y cada fila es más alta */
+@media (max-width: 640px) { .lista-accesorios { --alto-fila: 11rem; } }
 .filtro-categorias { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .75rem; }
 .filtro-categorias button { padding: .35rem .8rem; border-radius: 999px; font-size: .9rem; }
 .filtro-categorias button.activo { background: #047857; color: #fff; border-color: #047857; }
