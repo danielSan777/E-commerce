@@ -80,8 +80,9 @@
         <div class="mt-3 pt-3 border-top" aria-label="Accesorio propio del producto">
           <div class="fw-semibold mb-1">Accesorio propio de «{{ p.name }}»</div>
           <p class="text-muted small mb-2">
-            Elige qué accesorio lleva este producto en cada ubicación. La posición y el tamaño son los de la categoría;
-            si no eliges nada, se usa lo que diga la categoría.
+            Elige qué accesorio fijo lleva este producto en cada ubicación (el cliente no puede quitarlo ni moverlo).
+            La posición y el tamaño son los de la categoría. Si no eliges nada, se usa lo que diga la categoría.
+            Para que un mismo accesorio sea fijo en <strong>todos</strong> los productos, ponlo como «Fija» en «Toda la categoría».
           </p>
           <div class="row g-2">
             @for (u of ubicacionesParaFijo(); track u.location_id) {
@@ -94,6 +95,15 @@
                 <option [value]="a.id" [selected]="fijoDe(u.location_id) === a.id">{{ a.nombre }}</option>
                 }
               </select>
+              @if (fijoDe(u.location_id); as idFijo) {
+              <div class="form-check mt-1">
+                <input class="form-check-input" type="checkbox" [id]="'excl-' + u.location_id" [checked]="esExclusivo(idFijo)"
+                  [disabled]="guardandoFijo()" (change)="cambiarExclusivo(idFijo, $any($event.target))" />
+                <label class="form-check-label small" [for]="'excl-' + u.location_id">
+                  Solo para los productos que lo tienen fijo (no se ofrece en los demás)
+                </label>
+              </div>
+              }
             </div>
             }
           </div>

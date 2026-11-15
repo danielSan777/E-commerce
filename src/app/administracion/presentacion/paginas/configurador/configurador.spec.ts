@@ -338,6 +338,39 @@ describe('AdminConfigurador', () => {
       expect(c.fijoDe(7)).toBeNull();
     });
 
+    it('permite marcar el accesorio fijo como exclusivo de los productos que lo tienen, y desmarcarlo', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+
+      c.elegirFijo(7, lista('20'));
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/fixed-accessories/7`).flush(producto({
+        fixed_accessories: [{ location_id: 7, accessory_id: 20 }],
+        config: configuracion({ locations: [ubicacion(7, 'Cabeza', { state: 'fija', fixed_accessory_id: 20, preset: GEO }), ubicacion(8, 'Pie')] }),
+      }));
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#excl-7')).not.toBeNull();
+      expect(c.esExclusivo(20)).toBe(false);
+
+      c.cambiarExclusivo(20, { checked: true } as HTMLInputElement);
+      const put = ctrl.expectOne(`${BASE}/accessories/20`);
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ is_exclusive: true });
+      put.flush({ ...ACCESORIOS.find(a => a.id === 20), is_exclusive: true });
+      await esperar();
+      expect(c.esExclusivo(20)).toBe(true);
+
+      c.cambiarExclusivo(20, { checked: false } as HTMLInputElement);
+      ctrl.expectOne(`${BASE}/accessories/20`).flush({ ...ACCESORIOS.find(a => a.id === 20), is_exclusive: false });
+      await esperar();
+      expect(c.esExclusivo(20)).toBe(false);
+    });
+
     it('muestra el mensaje de Laravel si no se puede guardar y deja lo anterior', async () => {
       const fixture = await montar();
       await abrirCategoria(fixture);

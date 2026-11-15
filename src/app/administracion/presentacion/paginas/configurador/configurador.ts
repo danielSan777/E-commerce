@@ -151,6 +151,29 @@ export class AdminConfigurador implements OnInit {
 
   // ----- accesorio propio del producto por ubicación (sobre la configuración de la categoría)
   guardandoFijo = signal(false);
+  /** Ids de los accesorios exclusivos (solo se ven en los productos que los tienen como suyos). */
+  exclusivos = signal<ReadonlySet<number>>(new Set());
+
+  esExclusivo(id: number): boolean {
+    return this.exclusivos().has(id);
+  }
+
+  /** «Solo para este producto»: el accesorio deja de ofrecerse al cliente en los demás productos. */
+  cambiarExclusivo(id: number, casilla: HTMLInputElement): void {
+    const marcado = casilla.checked;
+    this.guardandoFijo.set(true);
+    this.limpiarMensajes();
+    this.servicio.editarAccesorio(id, { is_exclusive: marcado }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.guardandoFijo.set(false);
+        const nuevo = new Set(this.exclusivos());
+        if (marcado) nuevo.add(id); else nuevo.delete(id);
+        this.exclusivos.set(nuevo);
+        this.avisos.exito(marcado ? 'Ahora solo lo verán los productos que lo tengan como suyo.' : 'Ahora lo pueden ver los clientes en todos los productos que lo admitan.');
+      },
+      error: e => { this.guardandoFijo.set(false); casilla.checked = !marcado; this.fallo(e); },
+    });
+  }
 
   /** Ubicaciones donde la categoría ya define posición y tamaño (y no están deshabilitadas): ahí el producto puede tener el suyo. */
   ubicacionesParaFijo = computed(() => (this.producto()?.config.locations ?? []).filter(u => u.preset && u.state !== 'deshabilitada'));
@@ -314,6 +337,7 @@ export class AdminConfigurador implements OnInit {
         // Se ofrecen los activos (y los marcados aunque se hayan desactivado, para no perderlos al guardar)
         const visibles = lista.filter(a => a.is_active || config.accessory_ids.includes(a.id)).map(accesorioDelEditor);
         this.accesorios.set(visibles);
+        this.exclusivos.set(new Set(lista.filter(a => a.is_exclusive).map(a => a.id)));
         this.aplicarEstado(estadoDesdeApi(config, visibles));
         despues?.();
       },
