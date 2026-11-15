@@ -18,7 +18,7 @@ import { CategoriaAdmin } from '../../../dominio/interfaces/categoria-admin';
 import {
   AjusteImagenAdmin, ConfigGuardableAdmin, ConfigLeidaAdmin, ConfiguracionDeCategoriaAdmin, ConfiguracionDeProductoAdmin,
 } from '../../../dominio/interfaces/configurador-admin';
-import { TextoCanvas } from '../../directivas/texto-canvas';
+import { TextoPlaca } from '../../../../shared/componentes/texto-placa/texto-placa';
 
 // Valores que se pueden escribir a mano en el panel de ajustes
 type CampoEditable = 'ancho' | 'alto' | 'rotX' | 'rotY' | 'rotZ';
@@ -31,7 +31,7 @@ type CampoEditable = 'ancho' | 'alto' | 'rotX' | 'rotY' | 'rotZ';
  */
 @Component({
   selector: 'app-admin-configurador',
-  imports: [CdkDrag, CdkDropList, CdkDragPreview, FormsModule, RouterLink, TextoCanvas],
+  imports: [CdkDrag, CdkDropList, CdkDragPreview, FormsModule, RouterLink, TextoPlaca],
   templateUrl: './configurador.html',
   styleUrl: './configurador.css',
 })

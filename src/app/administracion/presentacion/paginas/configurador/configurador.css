@@ -85,6 +85,10 @@
 }
 
 
+.accesorio-colocado app-texto-placa {
+  pointer-events: none;
+}
+
 .accesorio-colocado canvas {
   display: block;
   width: 100%;

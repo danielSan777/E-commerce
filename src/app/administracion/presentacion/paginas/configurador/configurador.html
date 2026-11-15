@@ -192,7 +192,7 @@
           <div class="accesorio-colocado vista-previa" [style.width.%]="m.ancho" [style.height.%]="m.alto" [style.left.%]="m.x" [style.top.%]="m.y">
             <div class="contenido-3d" [style.transform]="transformar(m)">
               @if (m.tipo === 'texto') {
-              <canvas [appTextoCanvas]="m.texto ?? ''"></canvas>
+              <app-texto-placa [texto]="m.texto ?? ''" />
               } @else {
               <img draggable="false" [src]="m.imagen" [alt]="m.nombre">
               }
@@ -324,7 +324,7 @@
                 (ngModelChange)="alternarMarcado(item, $event)">
 
               @if (item.tipo === 'texto') {
-              <canvas class="mini-canvas" [appTextoCanvas]="item.texto ?? ''"></canvas>
+              <app-texto-placa class="mini-canvas" [texto]="item.texto ?? ''" />
               } @else {
               <img class="mini-imagen" [src]="item.imagen" [alt]="item.nombre">
               }
@@ -368,8 +368,8 @@
             <div class="card-body text-center">
 
               @if (accesorio.tipo === 'texto') {
-              <canvas [appTextoCanvas]="accesorio.texto ?? ''" style="width: 100%; height: 50px; display: block;"
-                [class.opacity-50]="estaColocado(accesorio.id)"></canvas>
+              <app-texto-placa [texto]="accesorio.texto ?? ''" style="width: 100%; height: 50px; display: block;"
+                [class.opacity-50]="estaColocado(accesorio.id)" />
               } @else {
               <img [src]="accesorio.imagen" [alt]="accesorio.nombre" class="img-fluid"
                 style="height: 80px; object-fit: contain;" [class.opacity-50]="estaColocado(accesorio.id)">
@@ -415,8 +415,8 @@
             <!-- Preview que aparece mientras arrastras -->
             <ng-template cdkDragPreview>
               @if (accesorio.tipo === 'texto') {
-              <canvas [appTextoCanvas]="accesorio.texto ?? ''"
-                style="width: 100px; height: 25px; display: block;"></canvas>
+              <app-texto-placa [texto]="accesorio.texto ?? ''"
+                style="width: 100px; height: 25px; display: block;" />
               } @else {
               <img [src]="accesorio.imagen" [alt]="accesorio.nombre"
                 style="width: 100px; height: 50px; object-fit: contain; background: transparent;">
@@ -478,7 +478,7 @@
                     [class.deshabilitada]="estadoDe(accesorio.ubicacionId) === 'deshabilitada'"><span>{{
                       accesorio.ubicacionId }}</span></div>
                   } @else if (accesorio.tipo === 'texto') {
-                  <canvas [appTextoCanvas]="accesorio.texto ?? ''"></canvas>
+                  <app-texto-placa [texto]="accesorio.texto ?? ''" />
                   } @else {
                   <img draggable="false" [src]="accesorio.imagen" [alt]="accesorio.nombre">
                   }
@@ -502,7 +502,7 @@
                 [style.left.%]="v.x" [style.top.%]="v.y">
                 <div class="contenido-3d" [style.transform]="transformar(v)">
                   @if (v.tipo === 'texto') {
-                  <canvas [appTextoCanvas]="v.texto ?? ''"></canvas>
+                  <app-texto-placa [texto]="v.texto ?? ''" />
                   } @else {
                   <img draggable="false" [src]="v.imagen" [alt]="v.nombre">
                   }
@@ -513,7 +513,7 @@
               <div class="accesorio-colocado vista-previa" [style.width.%]="m.ancho" [style.height.%]="m.alto" [style.left.%]="m.x" [style.top.%]="m.y">
                 <div class="contenido-3d" [style.transform]="transformar(m)">
                   @if (m.tipo === 'texto') {
-                  <canvas [appTextoCanvas]="m.texto ?? ''"></canvas>
+                  <app-texto-placa [texto]="m.texto ?? ''" />
                   } @else {
                   <img draggable="false" [src]="m.imagen" [alt]="m.nombre">
                   }
