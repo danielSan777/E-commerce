@@ -143,6 +143,28 @@ describe('AdminAccesorios · imagen del accesorio', () => {
     expect(c.errorImagen()).toContain('no es una imagen PNG, JPG o WebP');
   });
 
+  it('filtra los accesorios por categoría sin volver a consultar la API', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    const total = c.accesorios().length;
+    expect(c.accesoriosVisibles().length).toBe(total);
+    const idCategoria = c.accesorios()[0].category_id;
+
+    c.filtroCategoria.set(idCategoria);
+    fixture.detectChanges();
+    expect(c.accesoriosVisibles().every(a => a.category_id === idCategoria)).toBe(true);
+    expect(c.cantidadPorCategoria().get(idCategoria)).toBe(c.accesoriosVisibles().length);
+    expect(fixture.nativeElement.querySelectorAll('.lista-accesorios li:not(.vacio)').length).toBe(c.accesoriosVisibles().length);
+
+    c.filtroCategoria.set(999999);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.lista-accesorios .vacio')).not.toBeNull();
+
+    c.filtroCategoria.set(0);
+    expect(c.accesoriosVisibles().length).toBe(total);
+    ctrl.expectNone(`${BASE}/accessories`); // cambiar de categoría no pide nada
+  });
+
   it('si cancelas, el archivo elegido se olvida también en el campo y no se sube al editar otro accesorio', async () => {
     const fixture = await montar();
     const c = fixture.componentInstance;

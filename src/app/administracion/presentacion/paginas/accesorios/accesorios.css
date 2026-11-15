@@ -28,3 +28,11 @@ legend { font-weight: 700; font-size: .92rem; padding: 0 .4rem; }
 .nombre-archivo em { color: #5b6b66; font-style: normal; }
 
 .error-campo { display: block; margin-top: .25rem; color: #b00020; font-weight: 600; }
+
+/* Máximo 4 accesorios a la vista (cada fila mide al menos 7rem); el resto, con scroll */
+.lista-accesorios { max-height: calc(4 * 7rem + 3 * .75rem + .5rem); overflow-y: auto; padding-right: .35rem; overscroll-behavior: contain; }
+.lista-accesorios li { min-height: 7rem; box-sizing: border-box; }
+.lista-accesorios li.vacio { min-height: 0; justify-content: center; color: #4b5563; }
+.filtro-categorias { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .75rem; }
+.filtro-categorias button { padding: .35rem .8rem; border-radius: 999px; font-size: .9rem; }
+.filtro-categorias button.activo { background: #047857; color: #fff; border-color: #047857; }

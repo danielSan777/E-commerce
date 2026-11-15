@@ -125,8 +125,19 @@
       </form>
     }
 
-    <ul class="lista">
-      @for (a of accesorios(); track a.id) {
+    <div class="filtro-categorias" role="group" aria-label="Ver accesorios por categoría">
+      <button type="button" [class.activo]="filtroCategoria() === 0" [attr.aria-pressed]="filtroCategoria() === 0" (click)="filtroCategoria.set(0)">
+        Todas ({{ accesorios().length }})
+      </button>
+      @for (c of categorias(); track c.id) {
+        <button type="button" [class.activo]="filtroCategoria() === c.id" [attr.aria-pressed]="filtroCategoria() === c.id" (click)="filtroCategoria.set(c.id)">
+          {{ c.name }} ({{ cantidadPorCategoria().get(c.id) ?? 0 }})
+        </button>
+      }
+    </div>
+
+    <ul class="lista lista-accesorios" tabindex="0" aria-label="Accesorios creados">
+      @for (a of accesoriosVisibles(); track a.id) {
         <li [class.apagado]="!a.is_active">
           <div class="con-miniatura">
             @if (a.thumb) { <img [src]="a.thumb" [alt]="a.alt || a.name" class="miniatura" /> }
@@ -152,6 +163,7 @@
       } @empty {
         <li>Todavía no hay accesorios.</li>
       }
+      @if (!accesoriosVisibles().length) { <li class="vacio">No hay accesorios en esta categoría.</li> }
     </ul>
   </section>
 

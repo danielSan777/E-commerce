@@ -46,6 +46,18 @@ export class AdminAccesorios implements OnInit {
 
   categorias = signal<CategoriaAccesorioAdmin[]>([]);
   accesorios = signal<AccesorioAdmin[]>([]);
+  /** Categoría elegida para filtrar la lista de accesorios (0 = todas). El filtro se hace aquí, sin pedirle nada a la API. */
+  filtroCategoria = signal(0);
+  accesoriosVisibles = computed(() => {
+    const id = this.filtroCategoria();
+    return id ? this.accesorios().filter(a => a.category_id === id) : this.accesorios();
+  });
+  /** Cuántos accesorios tiene cada categoría, para mostrarlo en los botones del filtro. */
+  cantidadPorCategoria = computed(() => {
+    const cuenta = new Map<number, number>();
+    for (const a of this.accesorios()) cuenta.set(a.category_id, (cuenta.get(a.category_id) ?? 0) + 1);
+    return cuenta;
+  });
   ubicaciones = signal<UbicacionAdmin[]>([]);
   cargando = signal(true);
   guardando = signal(false);
