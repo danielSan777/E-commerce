@@ -67,6 +67,9 @@ export class AdminAccesorios implements OnInit {
   /** Imagen ya guardada del accesorio que se edita (null si no tiene): su nombre se muestra en lugar de «Ningún archivo seleccionado». */
   imagenGuardada = signal<string | null>(null);
   nombreArchivo = signal('');
+  /** Lo más que pesa un archivo en el servidor; 0 mientras no se sepa. */
+  limiteBytes = signal(0);
+  errorImagen = signal('');
   private nombreOriginal = signal<string | null>(null);
   /** El nombre con el que se subió; en imágenes anteriores a ese dato, el nombre del archivo guardado. */
   nombreGuardado = computed(() => this.nombreOriginal() ?? decodeURIComponent((this.imagenGuardada() ?? '').split('?')[0].split('/').pop() ?? ''));
@@ -83,6 +86,11 @@ export class AdminAccesorios implements OnInit {
 
   ngOnInit(): void {
     this.cargar();
+    // Si no se puede consultar el límite, simplemente no se avisa antes: Laravel lo valida al guardar
+    this.servicio.limitesDeSubida().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: l => this.limiteBytes.set(l.max_file_bytes),
+      error: () => undefined,
+    });
   }
 
   private cargar(): void {
@@ -192,15 +200,45 @@ export class AdminAccesorios implements OnInit {
   private vaciarArchivo(): void {
     this.archivoImagen = null;
     this.nombreArchivo.set('');
+    this.errorImagen.set('');
     const campo = this.campoImagen()?.nativeElement;
     if (campo) campo.value = '';
   }
 
   elegirImagen(evento: Event): void {
-    this.archivoImagen = (evento.target as HTMLInputElement).files?.[0] ?? null;
-    this.nombreArchivo.set(this.archivoImagen?.name ?? '');
+    const archivo = (evento.target as HTMLInputElement).files?.[0] ?? null;
+    const motivo = archivo ? this.motivoDeRechazo(archivo) : '';
+    if (motivo) {
+      // Se rechaza al elegirla: no hace falta guardar ni pedirle nada al servidor
+      this.vaciarArchivo();
+      this.errorImagen.set(motivo);
+      this.avisos.error(motivo);
+      this.ponerVistaPrevia(this.imagenGuardada());
+      return;
+    }
+    this.errorImagen.set('');
+    this.archivoImagen = archivo;
+    this.nombreArchivo.set(archivo?.name ?? '');
     // Si se cancela la elección, vuelve a verse la imagen guardada
-    this.ponerVistaPrevia(this.archivoImagen ? URL.createObjectURL(this.archivoImagen) : this.imagenGuardada());
+    this.ponerVistaPrevia(archivo ? URL.createObjectURL(archivo) : this.imagenGuardada());
+  }
+
+  /** Por qué no se puede subir ese archivo (vacío si está bien): tipo y peso, con lo mismo que exige el servidor. */
+  private motivoDeRechazo(archivo: File): string {
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(archivo.type)) {
+      return `«${archivo.name}» no es una imagen PNG, JPG o WebP. Elige otra.`;
+    }
+    const limite = this.limiteBytes();
+    if (limite > 0 && archivo.size > limite) {
+      return `La imagen «${archivo.name}» pesa ${this.pesoLegible(archivo.size)} y este servidor permite hasta ${this.pesoLegible(limite)}. Elige una más liviana.`;
+    }
+    return '';
+  }
+
+  pesoLegible(bytes: number): string {
+    return bytes < 1024 * 1024
+      ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+      : `${(bytes / (1024 * 1024)).toLocaleString('es', { maximumFractionDigits: 1 })} MB`;
   }
 
   private ponerVistaPrevia(url: string | null): void {

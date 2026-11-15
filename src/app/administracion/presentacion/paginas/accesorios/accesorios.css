@@ -26,3 +26,5 @@ legend { font-weight: 700; font-size: .92rem; padding: 0 .4rem; }
 .archivo-oculto:focus-visible + .boton-archivo { outline: 2px solid #0b7a55; outline-offset: 2px; }
 .nombre-archivo { min-width: 0; overflow-wrap: anywhere; font-size: .9rem; }
 .nombre-archivo em { color: #5b6b66; font-style: normal; }
+
+.error-campo { display: block; margin-top: .25rem; color: #b00020; font-weight: 600; }

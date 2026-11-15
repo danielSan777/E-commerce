@@ -21,6 +21,7 @@ describe('AdminAccesorios · imagen del accesorio', () => {
     ctrl = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(AdminAccesorios);
     fixture.detectChanges();
+    ctrl.expectOne(`${BASE}/upload-limits`).flush({ max_file_bytes: 2 * 1024 * 1024 });
     await responderCarga();
     fixture.detectChanges();
     return fixture;
@@ -114,6 +115,32 @@ describe('AdminAccesorios · imagen del accesorio', () => {
     expect(avisos.lista().some(a => a.tipo === 'error' && a.texto.includes('límite actual: 2M'))).toBe(true);
     expect(c.editandoAccesorio()).toBe(5);
     expect(avisos.lista().some(a => a.tipo === 'exito')).toBe(false);
+  });
+
+  it('al elegir una imagen que pesa más que el servidor lo avisa de inmediato, sin guardar ni pedir nada', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    const avisos = TestBed.inject(AvisosService);
+    c.editarAccesorio(BALANZA);
+    fixture.detectChanges();
+
+    c.elegirImagen(eleccion(new File([new Uint8Array(3 * 1024 * 1024)], 'Balanza_sin_fondo.png', { type: 'image/png' })));
+    fixture.detectChanges();
+
+    expect(c.archivoImagen).toBeNull();
+    expect(c.errorImagen()).toBe('La imagen «Balanza_sin_fondo.png» pesa 3 MB y este servidor permite hasta 2 MB. Elige una más liviana.');
+    expect(avisos.lista().some(a => a.tipo === 'error' && a.texto === c.errorImagen())).toBe(true);
+    expect(c.vistaPrevia()).toBe(BALANZA.image);
+    expect(fixture.nativeElement.querySelector('.error-campo')?.textContent).toContain('pesa 3 MB');
+    expect(fixture.nativeElement.querySelector('.ayuda')?.textContent ?? '').toBeDefined();
+
+    // Una imagen que sí cabe limpia el aviso y se acepta; un archivo que no es imagen se rechaza
+    c.elegirImagen(eleccion(new File(['x'], 'liviana.png', { type: 'image/png' })));
+    expect(c.errorImagen()).toBe('');
+    expect(c.archivoImagen?.name).toBe('liviana.png');
+    c.elegirImagen(eleccion(new File(['x'], 'documento.pdf', { type: 'application/pdf' })));
+    expect(c.archivoImagen).toBeNull();
+    expect(c.errorImagen()).toContain('no es una imagen PNG, JPG o WebP');
   });
 
   it('si cancelas, el archivo elegido se olvida también en el campo y no se sube al editar otro accesorio', async () => {

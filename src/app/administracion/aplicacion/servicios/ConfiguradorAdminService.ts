@@ -38,6 +38,11 @@ export class ConfiguradorAdminService {
   }
 
   // ----- accesorios
+  /** Lo más que puede pesar un archivo en el servidor (0 si no declara límite): permite avisar al elegirlo, sin esperar a guardar. */
+  limitesDeSubida(): Observable<{ max_file_bytes: number }> {
+    return this.http.get<{ max_file_bytes: number }>(`${this.api}/upload-limits`).pipe(conErrorApi());
+  }
+
   accesorios(): Observable<AccesorioAdmin[]> {
     return this.http.get<{ data: AccesorioAdmin[] }>(`${this.api}/accessories`).pipe(map(r => r.data), conErrorApi());
   }
