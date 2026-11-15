@@ -104,6 +104,8 @@ export class AdminAccesorios implements OnInit {
     this.guardando.set(false);
     this.error.set(api?.message ?? 'No se pudo completar la acción. Inténtalo de nuevo.');
     this.detalle.set(api?.errors ? Object.values(api.errors).flat() : []);
+    // El aviso flotante se ve aunque el formulario esté abajo en la pantalla (el cuadro rojo de arriba, en el celular, no)
+    this.avisos.error([this.error(), ...this.detalle()].join(' '));
   }
 
   private limpiar(): void {
@@ -223,6 +225,7 @@ export class AdminAccesorios implements OnInit {
 
     if (f.type === 'imagen' && this.archivoImagen && !f.alt.trim()) {
       this.error.set('Escribe el texto alternativo de la imagen (lo que se ve en ella).');
+      this.avisos.error(this.error());
       return;
     }
 

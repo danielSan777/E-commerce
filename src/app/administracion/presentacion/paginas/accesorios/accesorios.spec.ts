@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { API_URL } from '../../../../core/configuracion/api';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { AdminAccesorios } from './accesorios';
 
 const BASE = '/api/v1/admin';
@@ -93,6 +94,26 @@ describe('AdminAccesorios · imagen del accesorio', () => {
     c.nuevoAccesorio();
     fixture.detectChanges();
     expect(texto()).toContain('Ningún archivo seleccionado');
+  });
+
+  it('si falla la subida de la imagen avisa con un mensaje flotante y deja el formulario abierto', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    const avisos = TestBed.inject(AvisosService);
+    c.editarAccesorio(BALANZA);
+    c.elegirImagen(eleccion(new File(['x'], 'grande.png', { type: 'image/png' })));
+    c.guardarAccesorio();
+
+    ctrl.expectOne(r => r.method === 'PUT' && r.url === `${BASE}/accessories/5`).flush(BALANZA);
+    ctrl.expectOne(`${BASE}/accessories/5/image`).flush(
+      { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { image: ['El archivo pesa más de lo que permite este servidor (límite actual: 2M).'] } },
+      { status: 422, statusText: 'Unprocessable' });
+    await esperar();
+    await responderCarga();
+
+    expect(avisos.lista().some(a => a.tipo === 'error' && a.texto.includes('límite actual: 2M'))).toBe(true);
+    expect(c.editandoAccesorio()).toBe(5);
+    expect(avisos.lista().some(a => a.tipo === 'exito')).toBe(false);
   });
 
   it('si cancelas, el archivo elegido se olvida también en el campo y no se sube al editar otro accesorio', async () => {
