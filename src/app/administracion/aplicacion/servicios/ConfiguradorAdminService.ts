@@ -10,6 +10,13 @@ import {
 
 // Configurador del panel: accesorios, ubicaciones y configuración por categoría o por producto. Todo viene de Laravel;
 // aquí solo se envía lo que escribe el administrador y se muestran sus respuestas y mensajes.
+/** Lo que acepta el servidor para una imagen: peso, lado mínimo y píxeles máximos (0 = no se sabe). */
+export interface LimitesDeSubida {
+  max_file_bytes: number;
+  min_image_side?: number;
+  max_image_pixels?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ConfiguradorAdminService {
   private http = inject(HttpClient);
@@ -39,8 +46,8 @@ export class ConfiguradorAdminService {
 
   // ----- accesorios
   /** Lo más que puede pesar un archivo en el servidor (0 si no declara límite): permite avisar al elegirlo, sin esperar a guardar. */
-  limitesDeSubida(): Observable<{ max_file_bytes: number }> {
-    return this.http.get<{ max_file_bytes: number }>(`${this.api}/upload-limits`).pipe(conErrorApi());
+  limitesDeSubida(): Observable<LimitesDeSubida> {
+    return this.http.get<LimitesDeSubida>(`${this.api}/upload-limits`).pipe(conErrorApi());
   }
 
   accesorios(): Observable<AccesorioAdmin[]> {

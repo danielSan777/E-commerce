@@ -21,7 +21,7 @@ describe('AdminAccesorios · imagen del accesorio', () => {
     ctrl = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(AdminAccesorios);
     fixture.detectChanges();
-    ctrl.expectOne(`${BASE}/upload-limits`).flush({ max_file_bytes: 2 * 1024 * 1024 });
+    ctrl.expectOne(`${BASE}/upload-limits`).flush({ max_file_bytes: 2 * 1024 * 1024, min_image_side: 64, max_image_pixels: 40_000_000 });
     await responderCarga();
     fixture.detectChanges();
     return fixture;

@@ -69,6 +69,8 @@ export class AdminAccesorios implements OnInit {
   nombreArchivo = signal('');
   /** Lo más que pesa un archivo en el servidor; 0 mientras no se sepa. */
   limiteBytes = signal(0);
+  private ladoMinimo = 0;
+  private pixelesMaximos = 0;
   errorImagen = signal('');
   private nombreOriginal = signal<string | null>(null);
   /** El nombre con el que se subió; en imágenes anteriores a ese dato, el nombre del archivo guardado. */
@@ -88,7 +90,11 @@ export class AdminAccesorios implements OnInit {
     this.cargar();
     // Si no se puede consultar el límite, simplemente no se avisa antes: Laravel lo valida al guardar
     this.servicio.limitesDeSubida().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: l => this.limiteBytes.set(l.max_file_bytes),
+      next: l => {
+        this.limiteBytes.set(l.max_file_bytes);
+        this.ladoMinimo = l.min_image_side ?? 0;
+        this.pixelesMaximos = l.max_image_pixels ?? 0;
+      },
       error: () => undefined,
     });
   }
@@ -220,7 +226,31 @@ export class AdminAccesorios implements OnInit {
     this.archivoImagen = archivo;
     this.nombreArchivo.set(archivo?.name ?? '');
     // Si se cancela la elección, vuelve a verse la imagen guardada
-    this.ponerVistaPrevia(archivo ? URL.createObjectURL(archivo) : this.imagenGuardada());
+    const url = archivo ? URL.createObjectURL(archivo) : null;
+    this.ponerVistaPrevia(url ?? this.imagenGuardada());
+    if (archivo && url) this.revisarMedidas(archivo, url);
+  }
+
+  /** Lee las medidas de la imagen elegida (solo en el navegador) y la rechaza si no cumple lo que exige el servidor. */
+  private revisarMedidas(archivo: File, url: string): void {
+    if (!this.ladoMinimo && !this.pixelesMaximos) return;
+    const img = new Image();
+    img.onload = () => {
+      if (this.archivoImagen !== archivo) return; // ya eligió otra
+      const { naturalWidth: ancho, naturalHeight: alto } = img;
+      let motivo = '';
+      if (this.ladoMinimo && (ancho < this.ladoMinimo || alto < this.ladoMinimo)) {
+        motivo = `La imagen «${archivo.name}» mide ${ancho} × ${alto} píxeles y es muy pequeña. Debe medir al menos ${this.ladoMinimo} × ${this.ladoMinimo}.`;
+      } else if (this.pixelesMaximos && ancho * alto > this.pixelesMaximos) {
+        motivo = `La imagen «${archivo.name}» mide ${ancho} × ${alto} píxeles y es demasiado grande. Redúcela a menos de ${Math.round(this.pixelesMaximos / 1_000_000)} megapíxeles.`;
+      }
+      if (!motivo) return;
+      this.vaciarArchivo();
+      this.errorImagen.set(motivo);
+      this.avisos.error(motivo);
+      this.ponerVistaPrevia(this.imagenGuardada());
+    };
+    img.src = url;
   }
 
   /** Por qué no se puede subir ese archivo (vacío si está bien): tipo y peso, con lo mismo que exige el servidor. */
