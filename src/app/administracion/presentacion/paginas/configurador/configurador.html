@@ -155,6 +155,17 @@
             <input id="aj-y" type="range" class="form-range" min="-50" max="50" step="0.5" [value]="ajusteBase().y"
               (input)="cambiarAjuste('y', +$any($event.target).value)">
           </div>
+          <div class="col-12">
+            <label for="aj-color" class="form-label small mb-0">Color del texto de la placa (el nombre del cliente)</label>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <input id="aj-color" type="color" class="form-control form-control-color" [value]="colorTexto()"
+                (input)="cambiarColorTexto($any($event.target).value)">
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cambiarColorTexto('#111111')">Negro</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cambiarColorTexto('#FFFFFF')">Blanco</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="!ajusteBase().text_color" (click)="cambiarColorTexto(null)">Dorado (por defecto)</button>
+              <span class="small text-muted">Elige uno que se lea sobre la base de esta foto.</span>
+            </div>
+          </div>
           <div class="col-12 col-md-2 d-flex gap-2">
             <button type="button" class="btn btn-success btn-sm" [disabled]="!ajusteSinGuardar() || guardandoAjuste()" (click)="guardarAjuste()">
               {{ guardandoAjuste() ? 'Guardando…' : 'Guardar encuadre' }}
@@ -205,7 +216,7 @@
           <div class="accesorio-colocado vista-previa" [style.width.%]="m.ancho" [style.height.%]="m.alto" [style.left.%]="m.x" [style.top.%]="m.y">
             <div class="contenido-3d" [style.transform]="transformar(m)">
               @if (m.tipo === 'texto') {
-              <app-texto-placa [texto]="m.texto ?? ''" />
+              <app-texto-placa [texto]="m.texto ?? ''" [color]="colorTexto()" />
               } @else {
               <img draggable="false" [src]="m.imagen" [alt]="m.nombre">
               }
@@ -337,7 +348,7 @@
                 (ngModelChange)="alternarMarcado(item, $event)">
 
               @if (item.tipo === 'texto') {
-              <app-texto-placa class="mini-canvas" [texto]="item.texto ?? ''" />
+              <app-texto-placa class="mini-canvas" [texto]="item.texto ?? ''" [color]="colorTexto()" />
               } @else {
               <img class="mini-imagen" [src]="item.imagen" [alt]="item.nombre">
               }
@@ -381,7 +392,7 @@
             <div class="card-body text-center">
 
               @if (accesorio.tipo === 'texto') {
-              <app-texto-placa [texto]="accesorio.texto ?? ''" style="width: 100%; height: 50px; display: block;"
+              <app-texto-placa [texto]="accesorio.texto ?? ''" [color]="colorTexto()" style="width: 100%; height: 50px; display: block;"
                 [class.opacity-50]="estaColocado(accesorio.id)" />
               } @else {
               <img [src]="accesorio.imagen" [alt]="accesorio.nombre" class="img-fluid"
@@ -428,7 +439,7 @@
             <!-- Preview que aparece mientras arrastras -->
             <ng-template cdkDragPreview>
               @if (accesorio.tipo === 'texto') {
-              <app-texto-placa [texto]="accesorio.texto ?? ''"
+              <app-texto-placa [texto]="accesorio.texto ?? ''" [color]="colorTexto()"
                 style="width: 100px; height: 25px; display: block;" />
               } @else {
               <img [src]="accesorio.imagen" [alt]="accesorio.nombre"
@@ -491,7 +502,7 @@
                     [class.deshabilitada]="estadoDe(accesorio.ubicacionId) === 'deshabilitada'"><span>{{
                       accesorio.ubicacionId }}</span></div>
                   } @else if (accesorio.tipo === 'texto') {
-                  <app-texto-placa [texto]="accesorio.texto ?? ''" />
+                  <app-texto-placa [texto]="accesorio.texto ?? ''" [color]="colorTexto()" />
                   } @else {
                   <img draggable="false" [src]="accesorio.imagen" [alt]="accesorio.nombre">
                   }
@@ -515,7 +526,7 @@
                 [style.left.%]="v.x" [style.top.%]="v.y">
                 <div class="contenido-3d" [style.transform]="transformar(v)">
                   @if (v.tipo === 'texto') {
-                  <app-texto-placa [texto]="v.texto ?? ''" />
+                  <app-texto-placa [texto]="v.texto ?? ''" [color]="colorTexto()" />
                   } @else {
                   <img draggable="false" [src]="v.imagen" [alt]="v.nombre">
                   }
@@ -526,7 +537,7 @@
               <div class="accesorio-colocado vista-previa" [style.width.%]="m.ancho" [style.height.%]="m.alto" [style.left.%]="m.x" [style.top.%]="m.y">
                 <div class="contenido-3d" [style.transform]="transformar(m)">
                   @if (m.tipo === 'texto') {
-                  <app-texto-placa [texto]="m.texto ?? ''" />
+                  <app-texto-placa [texto]="m.texto ?? ''" [color]="colorTexto()" />
                   } @else {
                   <img draggable="false" [src]="m.imagen" [alt]="m.nombre">
                   }

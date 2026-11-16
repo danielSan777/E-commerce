@@ -76,6 +76,8 @@ export interface AjusteImagenAdmin {
   scale: number;
   x: number;
   y: number;
+  /** Color del texto de la placa (#RRGGBB); null = el dorado por defecto. */
+  text_color: string | null;
 }
 
 export interface ConfigLeidaAdmin {

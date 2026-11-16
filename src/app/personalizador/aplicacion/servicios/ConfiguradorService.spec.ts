@@ -11,7 +11,7 @@ const RESPUESTA: ConfiguradorApi = {
     source: 'category',
     configured: true,
     base_image: 'https://api.test/media/personalization/pro-doctor-1080.webp',
-    base_adjust: { scale: 110, x: -2.5, y: 4 },
+    base_adjust: { scale: 110, x: -2.5, y: 4, text_color: '#111111' },
     locations: [
         { location_id: 7, name: 'Cabeza', allowed_categories: ['Moda'], excluded_categories: [], state: 'libre', priority: 1, layer: 2, fixed_accessory_id: null, preset: GEO },
         { location_id: 8, name: 'Pie', allowed_categories: [], excluded_categories: ['Moda'], state: 'fija', priority: 2, layer: 1, fixed_accessory_id: 20, preset: null },
@@ -46,6 +46,7 @@ describe('ConfiguradorService', () => {
             configurado: true,
             imagenBase: 'https://api.test/media/personalization/pro-doctor-1080.webp',
             ajusteImagen: { escala: 110, x: -2.5, y: 4 },
+            colorTexto: '#111111',
             ubicaciones: [
                 { id: 7, nombre: 'Cabeza', categorias: ['Moda'], excluidas: undefined, estado: 'libre', prioridad: 1, capa: 2, fijoId: null,
                     preset: { x: 10, y: 20, ancho: 30, alto: 15, rotX: 5, rotY: -10, rotZ: 90, espejo: true } },

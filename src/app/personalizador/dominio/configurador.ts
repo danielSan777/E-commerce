@@ -49,7 +49,7 @@ export interface ConfiguradorApi {
     /** Imagen para personalizar del producto (la sube el administrador); null si aún no tiene. */
     base_image: string | null;
     /** Encuadre de la foto: escala en % (100 = igual) y desplazamiento en % del visor. */
-    base_adjust: { scale: number; x: number; y: number };
+    base_adjust: { scale: number; x: number; y: number; text_color?: string | null };
     locations: UbicacionApi[];
     accessories: AccesorioApi[];
     exceptions: ExcepcionApi[];
@@ -60,6 +60,8 @@ export interface ConfiguracionGuardada {
     configurado?: boolean;
     imagenBase?: string;
     ajusteImagen?: { escala: number; x: number; y: number };
+    /** Color del nombre en la placa (#RRGGBB) que eligió el administrador para este producto; sin él, el dorado por defecto. */
+    colorTexto?: string;
     ubicaciones?: UbicacionGuardada[];
     excepciones?: ExcepcionGuardada[];
     catalogo?: Accesorio[];
@@ -75,6 +77,7 @@ export function adaptarConfigurador(api: ConfiguradorApi): ConfiguracionGuardada
         configurado: api.configured,
         imagenBase: api.base_image ?? undefined,
         ajusteImagen: { escala: api.base_adjust?.scale ?? 100, x: api.base_adjust?.x ?? 0, y: api.base_adjust?.y ?? 0 },
+        colorTexto: api.base_adjust?.text_color ?? undefined,
         ubicaciones: api.locations.map(u => ({
             id: u.location_id,
             nombre: u.name,

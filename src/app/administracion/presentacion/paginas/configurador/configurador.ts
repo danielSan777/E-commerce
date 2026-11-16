@@ -1,3 +1,4 @@
+import { COLOR_DORADO_PLACA } from '../../../../personalizador/dominio/placa';
 import { coincide } from '../../../aplicacion/busqueda';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -107,7 +108,8 @@ export class AdminConfigurador implements OnInit {
   /** Lo que se está moviendo con los deslizadores del producto elegido (aún sin guardar). */
   ajusteEditado = signal<AjusteImagenAdmin | null>(null);
   guardandoAjuste = signal(false);
-  readonly ajusteNeutro: AjusteImagenAdmin = { scale: 100, x: 0, y: 0 };
+  readonly ajusteNeutro: AjusteImagenAdmin = { scale: 100, x: 0, y: 0, text_color: null };
+  readonly colorDoradoPlaca = COLOR_DORADO_PLACA;
 
   /** El encuadre que se ve: el que se está moviendo o, con «toda la categoría», el del producto cuya foto se muestra. */
   ajusteBase = computed<AjusteImagenAdmin>(() => {
@@ -118,12 +120,19 @@ export class AdminConfigurador implements OnInit {
   ajusteGuardado = computed(() => this.productoElegido()?.base_adjust ?? this.ajusteNeutro);
   ajusteSinGuardar = computed(() => {
     const a = this.ajusteBase(), g = this.ajusteGuardado();
-    return a.scale !== g.scale || a.x !== g.x || a.y !== g.y;
+    return a.scale !== g.scale || a.x !== g.x || a.y !== g.y || (a.text_color ?? null) !== (g.text_color ?? null);
   });
+  /** Color con el que se ve el texto de la placa en el visor (el del producto, o el dorado por defecto). */
+  colorTexto = computed(() => this.ajusteBase().text_color || COLOR_DORADO_PLACA);
   /** Cajas de las ubicaciones con valores: sirven de guía para alinear la foto cuando no se edita la configuración. */
   guiasDeUbicaciones = computed(() => this.accesoriosColocados().filter(a => a.accesorioId === 0));
 
-  cambiarAjuste(campo: keyof AjusteImagenAdmin, valor: number): void {
+  /** Color del texto de la placa de este producto; null vuelve al dorado por defecto. */
+  cambiarColorTexto(color: string | null): void {
+    this.ajusteEditado.set({ ...this.ajusteBase(), text_color: color });
+  }
+
+  cambiarAjuste(campo: 'scale' | 'x' | 'y', valor: number): void {
     const rango = campo === 'scale' ? [50, 200] : [-50, 50];
     const v = Math.min(rango[1], Math.max(rango[0], Number.isFinite(valor) ? valor : (campo === 'scale' ? 100 : 0)));
     this.ajusteEditado.set({ ...this.ajusteBase(), [campo]: v });

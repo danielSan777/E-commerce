@@ -73,6 +73,8 @@ export class Personalizador implements OnDestroy {
   imagenBase = signal(IMAGEN_BASE_GENERICA);
   /** Encuadre de la foto del producto (lo define el administrador para que los accesorios caigan en su sitio). */
   ajusteImagen = signal({ escala: 100, x: 0, y: 0 });
+  /** Color del nombre en la placa: el que eligió el administrador para este producto o, si no, el dorado. */
+  colorTextoPlaca = signal(COLOR_DORADO_PLACA);
   transformBase = computed(() => {
     const a = this.ajusteImagen();
     return `translate(${a.x}%, ${a.y}%) scale(${a.escala / 100})`;
@@ -182,6 +184,7 @@ export class Personalizador implements OnDestroy {
     try {
       this.imagenBase.set(guardado.imagenBase || IMAGEN_BASE_GENERICA);
       this.ajusteImagen.set(guardado.ajusteImagen ?? { escala: 100, x: 0, y: 0 });
+      this.colorTextoPlaca.set(guardado.colorTexto || COLOR_DORADO_PLACA);
       this.sinConfiguracion.set(!guardado.configurado || !(guardado.catalogo ?? []).length);
       this.ubicaciones.set((guardado.ubicaciones ?? []) as UbicacionGuardada[]);
       this.excepciones.set((guardado.excepciones ?? []) as ExcepcionGuardada[]);
@@ -1255,7 +1258,7 @@ export class Personalizador implements OnDestroy {
       c.font = `${letra}px Lobster, cursive`;
       c.textAlign = 'center';
       c.textBaseline = 'alphabetic';
-      c.fillStyle = COLOR_DORADO_PLACA;
+      c.fillStyle = this.colorTextoPlaca();
       c.fillText(texto, PLACA_CAJA_ANCHO / 2, PLACA_LINEA_BASE);
       return lienzo;
     }
