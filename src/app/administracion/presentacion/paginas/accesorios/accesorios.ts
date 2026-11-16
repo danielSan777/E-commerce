@@ -123,8 +123,12 @@ export class AdminAccesorios implements OnInit {
     });
   }
 
-  private cargar(): void {
-    forkJoin({ c: this.servicio.categoriasDeAccesorios(), a: this.servicio.accesorios(), u: this.servicio.ubicaciones() })
+  /**
+   * Carga la lista. Al abrir la pantalla muestra la pantalla de carga; después de guardar o eliminar se refresca en
+   * segundo plano, para que el spinner se vaya apenas responde el guardado y se alcance a leer el mensaje.
+   */
+  private cargar(segundoPlano = false): void {
+    forkJoin({ c: this.servicio.categoriasDeAccesorios(segundoPlano), a: this.servicio.accesorios(segundoPlano), u: this.servicio.ubicaciones(segundoPlano) })
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: ({ c, a, u }) => {
           this.categorias.set(c);
@@ -133,7 +137,8 @@ export class AdminAccesorios implements OnInit {
           this.cargando.set(false);
           this.pedirLimitesDeSubida();
         },
-        error: e => this.fallo(e),
+        // Si falla el refresco en segundo plano, se queda la lista de antes (el guardado ya salió bien)
+        error: e => { if (!segundoPlano) this.fallo(e); },
       });
   }
 
@@ -162,7 +167,7 @@ export class AdminAccesorios implements OnInit {
         this.guardando.set(false);
         this.avisos.exito(mensaje);
         luego();
-        this.cargar();
+        this.cargar(true);
       },
       error: e => this.fallo(e),
     });
@@ -332,7 +337,7 @@ export class AdminAccesorios implements OnInit {
         // El accesorio ya existe; falta subir su imagen
         this.servicio.subirImagenDeAccesorio(a.id, archivo, f.alt).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: () => this.terminarAccesorio('Accesorio guardado con su imagen.'),
-          error: e => { this.editandoAccesorio.set(a.id); this.fallo(e); this.cargar(); },
+          error: e => { this.editandoAccesorio.set(a.id); this.fallo(e); this.cargar(true); },
         });
       },
       error: e => this.fallo(e),
@@ -343,7 +348,7 @@ export class AdminAccesorios implements OnInit {
     this.guardando.set(false);
     this.avisos.exito(mensaje);
     this.cancelarAccesorio();
-    this.cargar();
+    this.cargar(true);
   }
 
   eliminarAccesorio(id: number): void {

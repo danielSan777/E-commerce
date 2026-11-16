@@ -1,3 +1,4 @@
+import { SIN_CARGANDO } from '../../../../shared/interceptores/cargandoInterceptor';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -115,6 +116,29 @@ describe('AdminAccesorios · imagen del accesorio', () => {
     expect(avisos.lista().some(a => a.tipo === 'error' && a.texto.includes('límite actual: 2M'))).toBe(true);
     expect(c.editandoAccesorio()).toBe(5);
     expect(avisos.lista().some(a => a.tipo === 'exito')).toBe(false);
+  });
+
+  it('después de guardar la lista se refresca en segundo plano, sin pantalla de carga, para poder leer el mensaje', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    const avisos = TestBed.inject(AvisosService);
+    c.editarAccesorio(BALANZA);
+    c.guardarAccesorio();
+
+    // El guardado sí muestra la pantalla de carga (es una consulta normal)
+    const put = ctrl.expectOne(r => r.method === 'PUT' && r.url === `${BASE}/accessories/5`);
+    expect(put.request.context.get(SIN_CARGANDO)).toBe(false);
+    put.flush(BALANZA);
+    await esperar();
+    expect(avisos.lista().some(a => a.tipo === 'exito')).toBe(true);
+
+    // El refresco de la lista no la muestra
+    for (const ruta of ['accessory-categories', 'accessories', 'locations']) {
+      const r = ctrl.expectOne(`${BASE}/${ruta}`);
+      expect(r.request.context.get(SIN_CARGANDO)).toBe(true);
+      r.flush({ data: [] });
+    }
+    await esperar();
   });
 
   it('al elegir una imagen que pesa más que el servidor lo avisa de inmediato, sin guardar ni pedir nada', async () => {

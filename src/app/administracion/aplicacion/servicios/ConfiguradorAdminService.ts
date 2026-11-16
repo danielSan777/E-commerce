@@ -32,8 +32,13 @@ export class ConfiguradorAdminService {
   }
 
   // ----- categorías de accesorios
-  categoriasDeAccesorios(): Observable<CategoriaAccesorioAdmin[]> {
-    return this.http.get<{ data: CategoriaAccesorioAdmin[] }>(`${this.api}/accessory-categories`).pipe(map(r => r.data), conErrorApi());
+  /** Con segundoPlano la consulta no muestra la pantalla de carga (se usa para refrescar la lista después de guardar). */
+  private opciones(segundoPlano: boolean): { context: HttpContext } {
+    return { context: new HttpContext().set(SIN_CARGANDO, segundoPlano) };
+  }
+
+  categoriasDeAccesorios(segundoPlano = false): Observable<CategoriaAccesorioAdmin[]> {
+    return this.http.get<{ data: CategoriaAccesorioAdmin[] }>(`${this.api}/accessory-categories`, this.opciones(segundoPlano)).pipe(map(r => r.data), conErrorApi());
   }
   crearCategoriaDeAccesorio(datos: { name: string; sort_order?: number }): Observable<CategoriaAccesorioAdmin> {
     return this.http.post<CategoriaAccesorioAdmin>(`${this.api}/accessory-categories`, datos).pipe(conErrorApi());
@@ -52,8 +57,8 @@ export class ConfiguradorAdminService {
     return this.http.get<LimitesDeSubida>(`${this.api}/upload-limits`, { context: new HttpContext().set(SIN_CARGANDO, true) }).pipe(timeout(8000), conErrorApi());
   }
 
-  accesorios(): Observable<AccesorioAdmin[]> {
-    return this.http.get<{ data: AccesorioAdmin[] }>(`${this.api}/accessories`).pipe(map(r => r.data), conErrorApi());
+  accesorios(segundoPlano = false): Observable<AccesorioAdmin[]> {
+    return this.http.get<{ data: AccesorioAdmin[] }>(`${this.api}/accessories`, this.opciones(segundoPlano)).pipe(map(r => r.data), conErrorApi());
   }
   crearAccesorio(datos: DatosAccesorio): Observable<AccesorioAdmin> {
     return this.http.post<AccesorioAdmin>(`${this.api}/accessories`, datos).pipe(conErrorApi());
@@ -74,8 +79,8 @@ export class ConfiguradorAdminService {
   }
 
   // ----- ubicaciones
-  ubicaciones(): Observable<UbicacionAdmin[]> {
-    return this.http.get<{ data: UbicacionAdmin[] }>(`${this.api}/locations`).pipe(map(r => r.data), conErrorApi());
+  ubicaciones(segundoPlano = false): Observable<UbicacionAdmin[]> {
+    return this.http.get<{ data: UbicacionAdmin[] }>(`${this.api}/locations`, this.opciones(segundoPlano)).pipe(map(r => r.data), conErrorApi());
   }
   crearUbicacion(datos: DatosUbicacion): Observable<UbicacionAdmin> {
     return this.http.post<UbicacionAdmin>(`${this.api}/locations`, datos).pipe(conErrorApi());
