@@ -47,7 +47,7 @@
                             </div>
                         </div>
 
-                        }@else if(accesorio.accesorioId==1 || accesorio.accesorioId==5){
+                        }@else if (esLentesOGafas(accesorio.accesorioId)) {
 
                         <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
                             [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"

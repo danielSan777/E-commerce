@@ -88,6 +88,11 @@ export class Personalizador implements OnDestroy {
   private get ID_LENTES(): number { return this.idDe('lentes'); }
   private get ID_GAFAS(): number { return this.idDe('gafas'); }
 
+  /** true si el accesorio es los lentes o las gafas (se dibujan en un lienzo y se pintan del color elegido). Se reconocen por su comportamiento, nunca por su número. */
+  esLentesOGafas(accesorioId: number): boolean {
+    return accesorioId === this.ID_LENTES || accesorioId === this.ID_GAFAS;
+  }
+
   private idDe(comportamiento: ComportamientoAccesorio): number {
     return this.catalogo().find(a => a.comportamiento === comportamiento)?.id ?? -1;
   }

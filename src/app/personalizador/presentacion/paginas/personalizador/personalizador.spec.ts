@@ -157,4 +157,29 @@ describe('Personalizador', () => {
       expect(nombres()).toEqual(['caja', 'corazon']);
     });
   });
+
+  describe('el número de un accesorio no lo vuelve lentes ni gafas', () => {
+    it('un accesorio con id 5 y sin comportamiento se dibuja como imagen; solo los marcados como lentes o gafas usan el lienzo', async () => {
+      const geo = { x: 40, y: 70, ancho: 15, alto: 10, rotX: 0, rotY: 0, rotZ: 0, espejo: false };
+      (component as unknown as { aplicarConfiguracion(c: unknown): void }).aplicarConfiguracion({
+        configurado: true,
+        ubicaciones: [
+          { id: 1, nombre: 'cabeza', categorias: ['Moda'], estado: 'libre', prioridad: 1, capa: 1, fijoId: null, preset: geo },
+          { id: 2, nombre: 'centro', excluidas: ['Moda'], estado: 'libre', prioridad: 2, capa: 1, fijoId: null, preset: geo },
+        ],
+        excepciones: [],
+        catalogo: [
+          { id: 1, nombre: 'lentes', imagen: '/l.webp', tipo: 'imagen', categoria: 'moda', comportamiento: 'lentes' },
+          { id: 5, nombre: 'caja-herramienta', imagen: '/caja.webp', tipo: 'imagen', categoria: 'objetos' },
+        ],
+      });
+      expect(component.esLentesOGafas(1)).toBe(true);
+      expect(component.esLentesOGafas(5)).toBe(false);
+
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const imagenes = [...fixture.nativeElement.querySelectorAll('.accesorio-colocado img')] as HTMLImageElement[];
+      expect(imagenes.map(i => i.getAttribute('src'))).toContain('/caja.webp');
+    });
+  });
 });
