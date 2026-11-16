@@ -1,3 +1,4 @@
+import { API_URL } from '../../../../core/configuracion/api';
 import {
   Component, DestroyRef, OnInit, OnDestroy, signal, ViewChild, ElementRef, HostListener,
   computed,
@@ -131,6 +132,7 @@ export class Personalizador implements OnDestroy {
   private siguienteId = 1;
 
   private platformId = inject(PLATFORM_ID);
+  private api = inject(API_URL);
   private configurador = inject(ConfiguradorService);
   private destroyRef = inject(DestroyRef);
 
@@ -1231,13 +1233,23 @@ export class Personalizador implements OnDestroy {
 
   // ----- Foto de la maceta ya personalizada (para el carrito) -----
   private cargarImagen(src: string): Promise<HTMLImageElement | null> {
-    return new Promise(resolve => {
+    const url = this.urlDeImagen(src);
+    const intentar = (direccion: string) => new Promise<HTMLImageElement | null>(resolve => {
       const img = new Image();
       img.crossOrigin = 'anonymous';   // las imágenes vienen de la API (otro dominio): sin esto el canvas no deja exportar la foto
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
-      img.src = this.urlDeImagen(src);
+      img.src = direccion;
     });
+
+    // Si /media no envía la cabecera CORS, la misma foto se pide por la API (que sí la envía)
+    return intentar(url).then(img => img ?? (this.porLaApi(url) ? intentar(this.porLaApi(url)!) : null));
+  }
+
+  /** http://sitio/media/accessories/a.webp → {api}/media/accessories/a.webp ; null si no es una foto de /media. */
+  private porLaApi(url: string): string | null {
+    const i = url.indexOf('/media/');
+    return i >= 0 ? `${this.api}/media/${url.slice(i + '/media/'.length)}` : null;
   }
 
   // Dibuja un accesorio del tamaño que ocupa en la foto (texto, lentes/gafas con su color, o imagen)
