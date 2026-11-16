@@ -127,4 +127,34 @@ describe('Personalizador', () => {
       expect(component.cantidadContada()).toBe(1);
     });
   });
+
+  describe('elegir dos accesorios', () => {
+    const geo = { x: 10, y: 80, ancho: 20, alto: 10, rotX: 0, rotY: 0, rotZ: 0, espejo: false };
+    const ub = (id: number, nombre: string, extra = {}) => ({ id, nombre, categorias: undefined, estado: 'libre', prioridad: id, capa: 1, fijoId: null, preset: geo, ...extra });
+    const catalogo = [
+      { id: 10, nombre: 'corazon', imagen: '/c.webp', tipo: 'imagen', categoria: 'objetos' },
+      { id: 11, nombre: 'marco-foto', imagen: '/m.webp', tipo: 'imagen', categoria: 'objetos' },
+      { id: 12, nombre: 'caja', imagen: '/x.webp', tipo: 'imagen', categoria: 'objetos' },
+    ];
+    const cargar = (ubicaciones: unknown[]) => (component as unknown as { aplicarConfiguracion(c: unknown): void })
+      .aplicarConfiguracion({ configurado: true, ubicaciones, excepciones: [], catalogo });
+    const nombres = () => component.accesoriosSeleccionados().map(a => a.nombre).sort();
+
+    it('con dos ubicaciones libres caben dos accesorios a la vez', async () => {
+      cargar([ub(1, 'izquierda', { categorias: ['objetos'] }), ub(2, 'derecha', { categorias: ['objetos'] })]);
+      for (const a of component.accesoriosSeleccionados()) component.quitarAccesorio(a.accesorioId);
+      await component.pulsarTarjeta(component.catalogo()[1]);
+      await component.pulsarTarjeta(component.catalogo()[2]);
+      expect(nombres()).toEqual(['caja', 'marco-foto']);
+    });
+
+    it('con una sola ubicación libre para objetos (la otra es fija) el segundo reemplaza al primero', async () => {
+      cargar([ub(1, 'izquierda', { estado: 'fija', fijoId: 10 }), ub(2, 'derecha', { categorias: ['objetos'] })]);
+      for (const a of component.accesoriosSeleccionados().filter(x => x.accesorioId !== 10)) component.quitarAccesorio(a.accesorioId);
+      await component.pulsarTarjeta(component.catalogo()[1]);
+      await component.pulsarTarjeta(component.catalogo()[2]);
+      // Solo hay un lugar libre para objetos: el segundo reemplaza al primero (el corazón fijo no cuenta ni se mueve)
+      expect(nombres()).toEqual(['caja', 'corazon']);
+    });
+  });
 });
