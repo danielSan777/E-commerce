@@ -30,7 +30,8 @@
                     <div class="visor" #visor [style.transform]="transformVisor()"
                         [style.transition]="gesto() ? 'none' : 'transform .2s ease-out'">
 
-                        <img [src]="imagenBase()" class="maceta" [style.transform]="transformBase()" crossorigin="anonymous" alt="">
+                        <!-- Sin «crossorigin»: la foto que se ve no debe depender de las cabeceras CORS del servidor de imágenes. Para exportar la vista, cargarImagen() la pide aparte con CORS. -->
+                        <img [src]="imagenBase()" class="maceta" [style.transform]="transformBase()" alt="">
 
                         @for (accesorio of accesoriosSeleccionados(); track accesorio.id){
 
