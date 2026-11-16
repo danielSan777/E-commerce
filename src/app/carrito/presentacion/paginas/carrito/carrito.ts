@@ -18,7 +18,7 @@ interface Sugerencia {
   nombre: string;
   precio: number;
   imagen: string;
-  categoria?: string;  // para filtrar en las hojas "Elige otra maceta" / "Complementa tu regalo"
+  categoria?: string;  // solo macetas: para filtrar en la hoja "Elige otra maceta" (los complementos no tienen categoría)
   slug?: string;       // solo macetas: producto al que corresponde
 }
 
@@ -55,19 +55,12 @@ export class Carrito implements AfterViewInit, OnDestroy {
       slug: p.slug,
     })));
 
-  // ===== EDITABLE: complementos (rutas de tus accesorios; el precio de cada uno es de ejemplo) =====
-  readonly complementos: Sugerencia[] = [
-    { id: 'acc-1', nombre: 'Lentes', imagen: 'accesorios/lentes.png', categoria: 'Moda', precio: 2 },
-    { id: 'acc-5', nombre: 'Gafas', imagen: 'accesorios/gafas-sin-fondo.png', categoria: 'Moda', precio: 2 },
-    { id: 'acc-3', nombre: 'Marco con foto', imagen: 'accesorios/marco-foto.png', categoria: 'Objetos', precio: 3 },
-    { id: 'acc-4', nombre: 'Marco con frase', imagen: 'accesorios/marco-frase.png', categoria: 'Objetos', precio: 3 },
-    { id: 'acc-6', nombre: 'Herramienta', imagen: 'accesorios/caja_herramientas.png', categoria: 'Objetos', precio: 3 },
-    { id: 'acc-7', nombre: 'Regalo', imagen: 'accesorios/regalo.png', categoria: 'Objetos', precio: 2 },
-    { id: 'acc-8', nombre: 'Vaso de café', imagen: 'accesorios/vaso_cafe.png', categoria: 'Objetos', precio: 2 },
-    { id: 'acc-9', nombre: 'Gato amarillo', imagen: 'accesorios/gatito.png', categoria: 'Animales', precio: 3 },
-    { id: 'acc-10', nombre: 'Perro', imagen: 'accesorios/perro.png', categoria: 'Animales', precio: 3 },
-    { id: 'acc-11', nombre: 'Flor', imagen: 'accesorios/flores.png', categoria: 'Flores', precio: 2 },
-  ];
+  // ===== Complementos: los productos activos de tipo "complemento" que entrega Laravel (sin categoría) =====
+  private complementosApi = toSignal(inject(CategoriaService).complementos().pipe(catchError(() => of([]))), { initialValue: [] });
+
+  readonly complementos = computed<Sugerencia[]>(() => this.complementosApi()
+    .filter(p => p.available)
+    .map(p => ({ id: p.sku, nombre: p.name, precio: p.price.final_cents / 100, imagen: p.image })));
 
   private carrito = inject(CarritoService);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -114,21 +107,11 @@ export class Carrito implements AfterViewInit, OnDestroy {
     return [...vistas].map(([clave, etiqueta]) => ({ clave, etiqueta }));
   });
 
-  catsComplementos = computed<Categoria[]>(() =>
-    [...new Set(this.complementos.map(c => c.categoria as string))].map(c => ({ clave: c, etiqueta: c }))
-  );
-
   catMaceta = signal('');
-  catComplemento = signal('');
 
   macetasDeCategoria = computed(() => {
     const cat = this.catMaceta() || this.catsMacetas()[0]?.clave;
     return this.macetas().filter(m => m.categoria === cat);
-  });
-
-  complementosDeCategoria = computed(() => {
-    const cat = this.catComplemento() || this.catsComplementos()[0]?.clave;
-    return this.complementos.filter(c => c.categoria === cat);
   });
 
   // ----- Hojas que suben de abajo hacia arriba -----

@@ -100,7 +100,8 @@
         }
     </section>
 
-    <!-- Franja rosa: complementos -->
+    <!-- Franja rosa: complementos (solo si hay productos de tipo complemento) -->
+    @if (complementos().length) {
     <section class="franja franja-rosa">
         <div class="franja-cab">
             <i class="bi bi-gift franja-icono" aria-hidden="true"></i>
@@ -110,10 +111,11 @@
         </div>
         <i class="bi bi-flower2 franja-hoja franja-hoja-1" aria-hidden="true"></i>
         <ng-container
-            *ngTemplateOutlet="carrusel; context: { lista: complementos, clave: 'complementos', tono: 'rosa' }" />
+            *ngTemplateOutlet="carrusel; context: { lista: complementos(), clave: 'complementos', tono: 'rosa' }" />
         <button type="button" class="ver-mas ver-mas-rosa" (click)="abrirHoja('complementos')">Ver más complementos
             <i class="bi bi-arrow-right"></i></button>
     </section>
+    }
     }
 
     <!-- Subtotal, envío y botones -->
@@ -330,14 +332,6 @@
             </h2>
             <p class="sheet-sub">Elige un adicional para tu pedido.</p>
 
-            <div class="cats" role="tablist">
-                @for (c of catsComplementos(); track c.clave) {
-                <button type="button" role="tab" class="cat"
-                    [class.activa]="(catComplemento() || catsComplementos()[0]?.clave) === c.clave"
-                    (click)="catComplemento.set(c.clave)">{{ c.etiqueta }}</button>
-                }
-            </div>
-
             <div class="sheet-banner sheet-banner-centro">
                 <i class="bi bi-flower3" aria-hidden="true"></i>
                 <span>Perfectos para acompañar tu maceta.</span>
@@ -347,7 +341,7 @@
 
         <div class="sheet-lista">
             <div class="rejilla-c">
-                @for (s of complementosDeCategoria(); track s.id) {
+                @for (s of complementos(); track s.id) {
                 <article class="tarjeta-c">
                     <div class="sug-foto sug-foto-contain">
                         <i class="bi bi-gift sug-vacia" aria-hidden="true"></i>

@@ -177,6 +177,11 @@ export class AdminProductoForm implements OnInit {
   }
 
   /** El producto personalizable necesita su imagen para personalizar; el complemento no. */
+  /** Un complemento no tiene categoría ni subcategoría. */
+  get pideCategoria(): boolean {
+    return this.form.type !== 'complemento';
+  }
+
   get pideImagenBase(): boolean {
     return this.form.type === 'personalizable';
   }
@@ -202,11 +207,13 @@ export class AdminProductoForm implements OnInit {
 
     const errores: Record<string, string> = {};
     if (!this.form.name.trim()) errores['name'] = 'Escribe el nombre del producto.';
-    if (!this.form.category) errores['category'] = 'Elige la categoría.';
-    if (this.form.category && this.subcategoriasListas() && this.subcategorias().length === 0) {
-      errores['subcategory'] = 'Esta categoría todavía no tiene subcategorías. Crea una primero.';
-    } else if (!this.form.subcategory) {
-      errores['subcategory'] = 'Elige la subcategoría.';
+    if (this.pideCategoria) {
+      if (!this.form.category) errores['category'] = 'Elige la categoría.';
+      if (this.form.category && this.subcategoriasListas() && this.subcategorias().length === 0) {
+        errores['subcategory'] = 'Esta categoría todavía no tiene subcategorías. Crea una primero.';
+      } else if (!this.form.subcategory) {
+        errores['subcategory'] = 'Elige la subcategoría.';
+      }
     }
     const precio = dolaresACentavos(this.form.precio);
     if (precio === null) errores['precio'] = 'Escribe un precio válido, por ejemplo 21.50.';
@@ -224,8 +231,7 @@ export class AdminProductoForm implements OnInit {
     const datos: DatosProducto = {
       name: this.form.name.trim(),
       type: this.form.type,
-      category: this.form.category,
-      subcategory: this.form.subcategory,
+      ...(this.pideCategoria ? { category: this.form.category, subcategory: this.form.subcategory } : {}),
       base_price_cents: precio!,
       cost_cents: costo,
       discount_percent: descuento!,
@@ -286,7 +292,7 @@ export class AdminProductoForm implements OnInit {
 
   private aFormulario(p: ProductoAdmin): Formulario {
     return {
-      name: p.name, type: p.type, category: p.category_slug, subcategory: p.subcategory_slug ?? '',
+      name: p.name, type: p.type, category: p.category_slug ?? '', subcategory: p.subcategory_slug ?? '',
       precio: centavosADolares(p.base_price_cents), costo: p.cost_cents === null ? '' : centavosADolares(p.cost_cents),
       descuento: p.discount_percent > 0 ? String(p.discount_percent) : '',
       size_text: p.size_text ?? '', material_text: p.material_text ?? '', incluye: p.includes.join('\n'),

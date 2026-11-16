@@ -118,6 +118,11 @@ export class CategoriaService {
         return this.http.get<{ data: ProductoListado[] }>(`${this.api}/products${consulta}`).pipe(map(r => r.data.map(conImagen)));
     }
 
+    /** Complementos activos (productos de tipo "complemento"): no tienen categoría ni subcategoría. */
+    complementos(): Observable<ProductoCategoria[]> {
+        return this.http.get<{ data: ProductoCategoria[] }>(`${this.api}/products?type=complemento`).pipe(map(r => r.data.map(conImagen)));
+    }
+
     /** Favoritos de la página principal: mientras no se elijan a mano en el panel, los 6 productos más nuevos. */
     favoritos(): Observable<ProductoCategoria[]> {
         return this.productos(6);

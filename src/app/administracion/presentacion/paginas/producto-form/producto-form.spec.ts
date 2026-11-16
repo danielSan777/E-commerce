@@ -140,7 +140,7 @@ describe('AdminProductoForm', () => {
     ctrl.verify();
   });
 
-  it('crear envía centavos enteros, subcategoría, descuento y nunca un SKU', async () => {
+  it('crear un complemento envía centavos enteros, descuento, sin categoría ni subcategoría y nunca un SKU', async () => {
     const fixture = await montar(null);
     await elegirCategoria(fixture);
     const c = fixture.componentInstance;
@@ -149,8 +149,11 @@ describe('AdminProductoForm', () => {
 
     const p = c.guardar(new Event('submit'));
     const post = ctrl.expectOne('/api/v1/admin/products');
-    expect(post.request.body).toMatchObject({ name: 'Doctor', category: CAT.slug, subcategory: 'salud', base_price_cents: 2150, cost_cents: 900, discount_percent: 12.5, includes: ['Maceta', 'Planta'] });
+    expect(post.request.body).toMatchObject({ name: 'Doctor', base_price_cents: 2150, cost_cents: 900, discount_percent: 12.5, includes: ['Maceta', 'Planta'] });
     expect('sku' in post.request.body).toBe(false);
+    // un complemento no tiene categoría ni subcategoría
+    expect('category' in post.request.body).toBe(false);
+    expect('subcategory' in post.request.body).toBe(false);
     post.flush({ sku: 'JDS-004' }, { status: 201, statusText: 'Created' });
     await p;
     expect(navegar).toHaveBeenCalledWith(['/admin/productos']);
@@ -266,6 +269,37 @@ describe('AdminProductoForm', () => {
     await p;
     expect(c.error()).toBe('Revisa los datos.');
     expect(c.detalle()).toEqual(['Ya existe un producto con un nombre igual.']);
+  });
+
+  it('al elegir Complemento desaparecen Categoría y Subcategoría, y no se exigen; con Personalizable vuelven', async () => {
+    const fixture = await montar(null);
+    const c = fixture.componentInstance;
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('#category')).not.toBeNull();
+    expect(html.querySelector('#subcategory')).not.toBeNull();
+
+    const elegirTipo = async (tipo: string) => {
+      const select = html.querySelector<HTMLSelectElement>('#type')!;
+      select.value = tipo;
+      select.dispatchEvent(new Event('change')); // como lo hace la persona: así Angular vuelve a pintar la pantalla
+      await fixture.whenStable();
+      fixture.detectChanges();
+    };
+
+    await elegirTipo('complemento');
+    expect(c.form.type).toBe('complemento');
+    expect(html.querySelector('#category')).toBeNull();
+    expect(html.querySelector('#subcategory')).toBeNull();
+
+    Object.assign(c.form, { name: 'Tarjeta', precio: '3' });
+    const p = c.guardar(new Event('submit'));
+    expect(c.errores()['category']).toBeUndefined();
+    expect(c.errores()['subcategory']).toBeUndefined();
+    ctrl.expectOne('/api/v1/admin/products').flush({ sku: 'JDS-009' }, { status: 201, statusText: 'Created' });
+    await p;
+
+    await elegirTipo('personalizable');
+    expect(html.querySelector('#category')).not.toBeNull();
   });
 
   describe('imagen para personalizar (obligatoria)', () => {

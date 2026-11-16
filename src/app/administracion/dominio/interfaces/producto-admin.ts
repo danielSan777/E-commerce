@@ -4,8 +4,9 @@ export interface ProductoAdmin {
   slug: string;
   name: string;
   type: 'personalizable' | 'complemento';
-  category_slug: string;
-  category_name: string;
+  /** null en los complementos: no tienen categoría ni subcategoría. */
+  category_slug: string | null;
+  category_name: string | null;
   subcategory_slug: string | null;
   base_price_cents: number;
   cost_cents: number | null;
@@ -29,8 +30,9 @@ export interface ProductoAdmin {
 export interface DatosProducto {
   name: string;
   type: 'personalizable' | 'complemento';
-  category: string;
-  subcategory: string;
+  /** Se omiten en los complementos. */
+  category?: string;
+  subcategory?: string;
   base_price_cents: number;
   cost_cents: number | null;
   discount_percent: number;

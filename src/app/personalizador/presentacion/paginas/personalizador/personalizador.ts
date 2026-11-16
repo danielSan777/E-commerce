@@ -1298,7 +1298,9 @@ export class Personalizador implements OnDestroy {
       ctx.fillRect(0, 0, T, T);
 
       const base = await this.cargarImagen(this.imagenBase());
-      if (base) {
+      // Sin la foto de la maceta (p. ej. /media sin cabecera CORS) la vista saldría en blanco: mejor que el carrito muestre su icono
+      if (!base) return '';
+      {
         // Igual que el visor: la foto difuminada rellena los lados y la foto completa va encima
         const cubrir = Math.max(T / base.width, T / base.height) * 1.15;
         ctx.save();

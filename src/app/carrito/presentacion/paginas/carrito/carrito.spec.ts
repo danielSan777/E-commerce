@@ -13,6 +13,11 @@ const PRODUCTOS = [
   productoListadoApi('agotado', 'Agotado', { available: false, category: { slug: 'familia', name: 'Familia' } }),
 ];
 
+const COMPLEMENTOS = [
+  { ...productoListadoApi('tarjeta', 'Tarjeta de regalo'), price: { ...productoListadoApi('x').price, final_cents: 300 } },
+  { ...productoListadoApi('caja', 'Caja'), available: false },
+];
+
 describe('Carrito', () => {
   let component: Carrito;
   let fixture: ComponentFixture<Carrito>;
@@ -24,13 +29,23 @@ describe('Carrito', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(Carrito);
-    TestBed.inject(HttpTestingController).expectOne('/api/v1/products').flush({ data: PRODUCTOS });
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/v1/products').flush({ data: PRODUCTOS });
+    http.expectOne('/api/v1/products?type=complemento').flush({ data: COMPLEMENTOS });
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('"Complementa tu regalo" sale de los productos de tipo complemento de Laravel, sin categorías', () => {
+    expect(component.complementos().map(c => c.nombre)).toEqual(['Tarjeta de regalo']);
+    expect(component.complementos()[0]).toMatchObject({ id: 'JDS-tarjeta', precio: 3 });
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('.franja-rosa')).toBeNull(); // el carrito está vacío: la franja solo sale con productos en el carrito
   });
 
   it('"Otras macetas" salen de los productos de Laravel: solo los disponibles, con su precio final y sus categorías', () => {
