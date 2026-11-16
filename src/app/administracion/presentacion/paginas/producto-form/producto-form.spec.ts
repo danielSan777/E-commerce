@@ -23,8 +23,18 @@ describe('leerDescuento', () => {
   });
 });
 
+const FOTO_COMPLEMENTO = () => new File(['x'], 'llavero.png', { type: 'image/png' });
+
 describe('AdminProductoForm', () => {
   let ctrl: HttpTestingController;
+
+  /** Un complemento se crea inactivo, se sube su foto y solo entonces se activa. */
+  async function terminarCreacion(sku: string) {
+    await esperar();
+    ctrl.expectOne(`/api/v1/admin/products/${sku}/complement-photo`).flush({});
+    await esperar();
+    ctrl.expectOne(`/api/v1/admin/products/${sku}`).flush({ sku });
+  }
 
   async function montar(sku: string | null, producto?: object) {
     TestBed.configureTestingModule({
@@ -146,6 +156,7 @@ describe('AdminProductoForm', () => {
     const c = fixture.componentInstance;
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     Object.assign(c.form, { name: 'Doctor', type: 'complemento', subcategory: 'salud', precio: '21.50', costo: '9', descuento: '12,5', incluye: 'Maceta\n\n Planta ' });
+    c.archivoBase = FOTO_COMPLEMENTO();
 
     const p = c.guardar(new Event('submit'));
     const post = ctrl.expectOne('/api/v1/admin/products');
@@ -154,7 +165,9 @@ describe('AdminProductoForm', () => {
     // un complemento no tiene categoría ni subcategoría
     expect('category' in post.request.body).toBe(false);
     expect('subcategory' in post.request.body).toBe(false);
+    expect(post.request.body.is_active).toBe(false); // se activa cuando ya tiene su foto
     post.flush({ sku: 'JDS-004' }, { status: 201, statusText: 'Created' });
+    await terminarCreacion('JDS-004');
     await p;
     expect(navegar).toHaveBeenCalledWith(['/admin/productos']);
   });
@@ -165,10 +178,12 @@ describe('AdminProductoForm', () => {
     const c = fixture.componentInstance;
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     Object.assign(c.form, { name: 'Doctor', type: 'complemento', subcategory: 'salud', precio: '10' });
+    c.archivoBase = FOTO_COMPLEMENTO();
     const p = c.guardar(new Event('submit'));
     const post = ctrl.expectOne('/api/v1/admin/products');
     expect(post.request.body.discount_percent).toBe(0);
     post.flush({ sku: 'JDS-004' }, { status: 201, statusText: 'Created' });
+    await terminarCreacion('JDS-004');
     await p;
   });
 
@@ -246,6 +261,7 @@ describe('AdminProductoForm', () => {
     c.form.seo_title = 'Maceta para doctores';
     expect(c.tituloVistaPrevia()).toBe('Maceta para doctores');
     c.form.seo_title = '   ';
+    c.archivoBase = FOTO_COMPLEMENTO();
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const p = c.guardar(new Event('submit'));
     await esperar(350);
@@ -253,6 +269,7 @@ describe('AdminProductoForm', () => {
     const post = ctrl.expectOne('/api/v1/admin/products');
     expect(post.request.body).toMatchObject({ seo_title: null, seo_description: null });
     post.flush({ sku: 'JDS-001' }, { status: 201, statusText: 'Created' });
+    await terminarCreacion('JDS-001');
     await p;
   });
 
@@ -261,6 +278,7 @@ describe('AdminProductoForm', () => {
     await elegirCategoria(fixture);
     const c = fixture.componentInstance;
     Object.assign(c.form, { name: 'Doctor', type: 'complemento', subcategory: 'salud', precio: '10' });
+    c.archivoBase = FOTO_COMPLEMENTO();
     const p = c.guardar(new Event('submit'));
     ctrl.expectOne('/api/v1/admin/products').flush(
       { code: 'validation_error', message: 'Revisa los datos.', errors: { name: ['Ya existe un producto con un nombre igual.'] } },
@@ -292,10 +310,12 @@ describe('AdminProductoForm', () => {
     expect(html.querySelector('#subcategory')).toBeNull();
 
     Object.assign(c.form, { name: 'Tarjeta', precio: '3' });
+    c.archivoBase = FOTO_COMPLEMENTO();
     const p = c.guardar(new Event('submit'));
     expect(c.errores()['category']).toBeUndefined();
     expect(c.errores()['subcategory']).toBeUndefined();
     ctrl.expectOne('/api/v1/admin/products').flush({ sku: 'JDS-009' }, { status: 201, statusText: 'Created' });
+    await terminarCreacion('JDS-009');
     await p;
 
     await elegirTipo('personalizable');
@@ -307,7 +327,7 @@ describe('AdminProductoForm', () => {
     const completar = (c: AdminProductoForm) => Object.assign(c.form, { name: 'Doctor', subcategory: 'salud', precio: '10' });
     const EXISTENTE = { sku: 'JDS-001', slug: 'doctor', name: 'Doctor', type: 'personalizable', category_slug: CAT.slug, subcategory_slug: 'salud', base_price_cents: 1000, cost_cents: null, discount_percent: 0, discount_cents: 0, final_price_cents: 1000, size_text: null, material_text: null, includes: [], description_html: null, seo_title: null, seo_description: null, is_available: true, is_active: true, personalization_image: null };
 
-    it('un producto personalizable nuevo no se guarda sin la imagen, y el complemento no la pide', async () => {
+    it('cada tipo exige su foto: la imagen para personalizar o la foto del complemento (una sola)', async () => {
       const fixture = await montar(null);
       await elegirCategoria(fixture);
       const c = fixture.componentInstance;
@@ -317,8 +337,9 @@ describe('AdminProductoForm', () => {
       ctrl.verify();
 
       c.form.type = 'complemento';
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('#imagen-base')).toBeNull();
+      await c.guardar(new Event('submit'));
+      expect(c.errores()['imagen']).toBe('Sube la foto del complemento: es obligatoria.');
+      ctrl.verify();
     });
 
     it('crear: se crea inactivo, se sube la imagen y solo entonces se activa', async () => {

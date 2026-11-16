@@ -31,14 +31,20 @@
 
       @if (pideImagenBase) {
         <label for="imagen-base">Imagen para personalizar (obligatoria)</label>
-        <input id="imagen-base" name="imagen-base" type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirImagenBase($event)"
-          [attr.aria-invalid]="errores()['imagen'] ? true : null" />
-        @if (vistaPreviaBase(); as foto) {
-          <div class="vista-previa"><img [src]="foto" alt="Vista previa de la imagen para personalizar" /></div>
-        }
-        <small class="ayuda">Es la foto que el cliente ve en el personalizador y sobre la que se colocan los accesorios (la maceta sin accesorios; PNG, JPG o WebP). Es distinta de las fotos de la ficha del producto.</small>
-        @if (errores()['imagen']) { <small class="campo-error">{{ errores()['imagen'] }}</small> }
+      } @else {
+        <label for="imagen-base">Foto del complemento (obligatoria)</label>
       }
+      <input id="imagen-base" name="imagen-base" type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirImagenBase($event)"
+        [attr.aria-invalid]="errores()['imagen'] ? true : null" />
+      @if (vistaPreviaBase(); as foto) {
+        <div class="vista-previa"><img [src]="foto" alt="Vista previa de la foto" /></div>
+      }
+      @if (pideImagenBase) {
+        <small class="ayuda">Es la foto que el cliente ve en el personalizador y sobre la que se colocan los accesorios (la maceta sin accesorios; PNG, JPG o WebP). Es distinta de las fotos de la ficha del producto.</small>
+      } @else {
+        <small class="ayuda">Un complemento lleva una sola foto (PNG, JPG o WebP): sin galería ni video. Es la que ve el cliente al complementar su regalo.</small>
+      }
+      @if (errores()['imagen']) { <small class="campo-error">{{ errores()['imagen'] }}</small> }
 
       @if (pideCategoria) {
         <label for="category">Categoría</label>
@@ -123,7 +129,9 @@
       </div>
     </form>
 
-    @if (esNuevo) {
+    @if (form.type === 'complemento') {
+      <!-- La única foto del complemento se sube en el formulario: sin galería ni video -->
+    } @else if (esNuevo) {
       <p class="ayuda">Guarda el producto y luego podrás subir sus imágenes.</p>
     } @else {
       <app-galeria-imagenes dueno="products" [clave]="sku!" />

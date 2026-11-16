@@ -42,6 +42,13 @@ export class ProductosAdminService {
     return this.http.post<{ personalization_image: string }>(`${this.url(sku)}/personalization-image`, datos).pipe(conErrorApi());
   }
 
+  /** Foto única y obligatoria de un complemento (reemplaza la anterior). Sin galería ni video. */
+  subirFotoDeComplemento(sku: string, archivo: File): Observable<unknown> {
+    const datos = new FormData();
+    datos.append('image', archivo);
+    return this.http.post(`${this.url(sku)}/complement-photo`, datos).pipe(conErrorApi());
+  }
+
   /** Código que recibiría el próximo producto (solo para mostrarlo; el definitivo se asigna al guardar). */
   siguienteSku(): Observable<string> {
     return this.http.get<{ sku: string }>(`${this.url()}/next-sku`).pipe(map(r => r.sku), conErrorApi());

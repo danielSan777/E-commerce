@@ -84,4 +84,16 @@ describe('AdminProductos', () => {
     expect((f.nativeElement as HTMLElement).querySelector('select[name=categoria]')).toBeNull();
     expect((f.nativeElement as HTMLElement).textContent).toContain('Tarjeta de regalo');
   });
+
+  it('los complementos no tienen botón Configurador (no se personalizan); los productos sí', async () => {
+    const f = await montar();
+    const c = f.componentInstance;
+    c.productos.set([prod('D-1', 'Doctor', { type: 'personalizable' }), prod('C-1', 'Llavero', { type: 'complemento', category_name: null })]);
+    f.detectChanges();
+    const filas = Array.from((f.nativeElement as HTMLElement).querySelectorAll('ul.lista > li'));
+    const tiene = (i: number) => filas[i].textContent!.includes('Configurador');
+    expect(tiene(0)).toBe(true);
+    expect(tiene(1)).toBe(false);
+    expect(filas[1].textContent).toContain('Editar');
+  });
 });

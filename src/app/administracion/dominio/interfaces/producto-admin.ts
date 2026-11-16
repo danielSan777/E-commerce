@@ -23,6 +23,8 @@ export interface ProductoAdmin {
   is_active: boolean;
   /** Imagen para personalizar (obligatoria en los personalizables); null si aún no se sube. */
   personalization_image: string | null;
+  /** Única foto de un complemento (obligatoria); null si aún no se sube o si no es complemento. */
+  complement_image: string | null;
   search_synonyms: string[];
   updated_at: string;
 }

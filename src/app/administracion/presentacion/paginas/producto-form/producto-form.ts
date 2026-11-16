@@ -113,7 +113,7 @@ export class AdminProductoForm implements OnInit {
             this.slugActual = p.slug;
             this.skuMostrado.set(p.sku);
             this.form = this.aFormulario(p);
-            this.imagenGuardada = p.personalization_image ?? null;
+            this.imagenGuardada = (p.type === 'complemento' ? p.complement_image : p.personalization_image) ?? null;
             this.vistaPreviaBase.set(this.imagenGuardada);
           }),
           switchMap(() => this.subcategoriasDeLaCategoria()),
@@ -186,6 +186,13 @@ export class AdminProductoForm implements OnInit {
     return this.form.type === 'personalizable';
   }
 
+  /** Cada tipo tiene su propia foto obligatoria: la imagen para personalizar o la foto del complemento. Sube la que corresponda. */
+  private subirFoto(sku: string, archivo: File): Observable<unknown> {
+    return this.form.type === 'complemento'
+      ? this.productosApi.subirFotoDeComplemento(sku, archivo)
+      : this.productosApi.subirImagenParaPersonalizar(sku, archivo);
+  }
+
   elegirImagenBase(evento: Event): void {
     const campo = evento.target as HTMLInputElement;
     this.archivoBase = campo.files?.[0] ?? null;
@@ -222,8 +229,9 @@ export class AdminProductoForm implements OnInit {
     const descuento = leerDescuento(this.form.descuento);
     if (descuento === null) errores['descuento'] = `Escribe un descuento entre 0 y ${DESCUENTO_MAXIMO}, por ejemplo 10 o 12.5, o déjalo vacío.`;
     // La imagen para personalizar es obligatoria. Al editar basta con que el producto ya la tenga, o con que esté inactivo.
-    if (this.pideImagenBase && !this.archivoBase && (this.esNuevo || (!this.imagenGuardada && this.form.is_active))) {
-      errores['imagen'] = this.esNuevo ? 'Sube la imagen para personalizar: es obligatoria.' : 'Sube la imagen para personalizar antes de dejar el producto activo.';
+    if (!this.archivoBase && (this.esNuevo || (!this.imagenGuardada && this.form.is_active))) {
+      const que = this.form.type === 'complemento' ? 'la foto del complemento' : 'la imagen para personalizar';
+      errores['imagen'] = this.esNuevo ? `Sube ${que}: es obligatoria.` : `Sube ${que} antes de dejar el producto activo.`;
     }
     this.errores.set(errores);
     if (Object.keys(errores).length) return this.avisos.faltanDatos(); // no se llama a la API con datos incompletos
@@ -246,7 +254,7 @@ export class AdminProductoForm implements OnInit {
     };
 
     this.guardando.set(true);
-    const imagen = this.pideImagenBase ? this.archivoBase : null;
+    const imagen = this.archivoBase;
     const peticion = this.esNuevo ? this.crearProducto(datos, imagen) : this.editarProducto(datos, imagen);
     peticion.pipe(
       switchMap(() => from(this.router.navigate(['/admin/productos']))),
@@ -270,7 +278,7 @@ export class AdminProductoForm implements OnInit {
       return this.productosApi.crear(datos).pipe(tap(creado => this.avisos.exito(`Producto creado con el código ${creado.sku}.`)));
     }
     return this.productosApi.crear({ ...datos, is_active: false }).pipe(
-      switchMap(creado => this.productosApi.subirImagenParaPersonalizar(creado.sku, imagen).pipe(
+      switchMap(creado => this.subirFoto(creado.sku, imagen).pipe(
         catchError((err: Partial<ErrorApi>) => {
           this.avisos.error(`El producto se creó con el código ${creado.sku}, pero la imagen no se pudo subir: ${err.errors?.['image']?.[0] ?? err.message ?? 'inténtalo de nuevo'}. Súbela al editarlo.`);
           return from(this.router.navigate(['/admin/productos', creado.sku])).pipe(switchMap(() => EMPTY));
@@ -283,7 +291,7 @@ export class AdminProductoForm implements OnInit {
 
   /** Al editar, la imagen nueva (si se eligió) se sube primero: así el producto puede quedar activo. */
   private editarProducto(datos: DatosProducto, imagen: File | null): Observable<unknown> {
-    const subida: Observable<unknown> = imagen ? this.productosApi.subirImagenParaPersonalizar(this.sku!, imagen) : of(null);
+    const subida: Observable<unknown> = imagen ? this.subirFoto(this.sku!, imagen) : of(null);
     return subida.pipe(
       switchMap(() => this.productosApi.editar(this.sku!, datos)),
       tap(() => this.avisos.exito('Cambios guardados.')),
