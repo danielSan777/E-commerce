@@ -15,8 +15,9 @@ export class ProductosAdminService {
     return sku ? `${this.api}/admin/products/${encodeURIComponent(sku)}` : `${this.api}/admin/products`;
   }
 
-  listar(categoria?: string, texto?: string): Observable<ProductoAdmin[]> {
+  listar(categoria?: string, texto?: string, tipo?: 'personalizable' | 'complemento'): Observable<ProductoAdmin[]> {
     let params = new HttpParams();
+    if (tipo) params = params.set('type', tipo);
     if (categoria) params = params.set('category', categoria);
     if (texto?.trim()) params = params.set('q', texto.trim());
     return this.http.get<{ data: ProductoAdmin[] }>(this.url(), { params }).pipe(map(r => r.data), conErrorApi());

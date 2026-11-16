@@ -68,6 +68,27 @@ describe('Carrito', () => {
     beforeEach(() => TestBed.inject(CarritoService).vaciar());
     afterEach(() => TestBed.inject(CarritoService).vaciar());
 
+    it('la franja "Complementa tu regalo" solo sale con al menos una maceta en el carrito', async () => {
+      const servicio = TestBed.inject(CarritoService);
+      const html = fixture.nativeElement as HTMLElement;
+
+      servicio.guardar(maceta('m1'));
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(html.querySelector('.franja-rosa')).not.toBeNull();
+
+      servicio.quitar('m1');
+      servicio.guardar(complemento);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(html.querySelector('.franja-rosa')).toBeNull();
+
+      // y sin maceta no se puede agregar un complemento aunque se intente
+      servicio.vaciar();
+      component.agregarComplemento(component.complementos()[0]);
+      expect(servicio.items().length).toBe(0);
+    });
+
     it('con solo complementos bloquea el checkout y muestra el mensaje', async () => {
       TestBed.inject(CarritoService).guardar(complemento);
       await fixture.whenStable();

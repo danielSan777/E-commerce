@@ -218,7 +218,8 @@ export class Carrito implements AfterViewInit, OnDestroy {
   }
 
   agregarComplemento(s: Sugerencia): void {
-    if (this.enCarrito(s.id)) return;
+    // Un complemento acompaña a una maceta: sin al menos una en el carrito no se agrega
+    if (!this.hayMacetas() || this.enCarrito(s.id)) return;
 
     this.carrito.guardar({
       uid: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`,

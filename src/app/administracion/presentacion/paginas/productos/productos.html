@@ -10,10 +10,16 @@
 
   <form class="filtros" (submit)="buscar($event)">
     <input name="texto" type="search" placeholder="Buscar por nombre o código (SKU)" [(ngModel)]="texto" />
-    <select name="categoria" [(ngModel)]="categoria" (ngModelChange)="cargar()" aria-label="Filtrar por categoría">
-      <option value="">Todas las categorías</option>
-      @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
+    <select name="tipo" [(ngModel)]="tipo" (ngModelChange)="cambiarTipo()" aria-label="Filtrar por tipo">
+      <option value="personalizable">Productos</option>
+      <option value="complemento">Complementos</option>
     </select>
+    @if (tipo === 'personalizable') {
+      <select name="categoria" [(ngModel)]="categoria" (ngModelChange)="cargar()" aria-label="Filtrar por categoría">
+        <option value="">Todas las categorías</option>
+        @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
+      </select>
+    }
     <button type="submit">Buscar</button>
   </form>
 
