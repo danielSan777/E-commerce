@@ -90,4 +90,41 @@ describe('Personalizador', () => {
       expect(component.borrador()).toBeNull();
     });
   });
+
+  describe('categorías que llegan de la base sin tilde ni mayúscula', () => {
+    const geo = { x: 10, y: 80, ancho: 40, alto: 10, rotX: 0, rotY: 0, rotZ: 0, espejo: false };
+    const cargar = () => (component as unknown as { aplicarConfiguracion(c: unknown): void }).aplicarConfiguracion({
+      configurado: true,
+      ubicaciones: [
+        { id: 1, nombre: 'base', categorias: ['personalizacion'], estado: 'libre', prioridad: 1, capa: 1, fijoId: null, preset: geo },
+        { id: 2, nombre: 'izquierda', categorias: ['objetos'], estado: 'libre', prioridad: 2, capa: 1, fijoId: null, preset: geo },
+      ],
+      excepciones: [],
+      catalogo: [
+        { id: 1, nombre: 'nombre', imagen: '', tipo: 'texto', texto: 'Ingrese su nombre.', categoria: 'personalizacion' },
+        { id: 2, nombre: 'marco-foto', imagen: '/m.webp', tipo: 'imagen', categoria: 'objetos' },
+      ],
+    });
+
+    it('el nombre sale puesto en la base y la pestaña Nombre muestra el campo de texto', () => {
+      cargar();
+      expect(component.hayTexto()).toBe(true);
+      expect(component.accesoriosSeleccionados().find(a => a.tipo === 'texto')?.ubicacionId).toBe(1);
+      component.cambiarNombre('Dr. Luis');
+      expect(component.nombreCliente()).toBe('Dr. Luis');
+    });
+
+    it('el accesorio nombre y su categoría no aparecen en la pestaña Accesorios', () => {
+      cargar();
+      expect(component.categoriasAccesorios()).toEqual(['Todos', 'Objetos']);
+      component.categoriaActual.set('Todos');
+      expect(component.accesoriosDeCategoria().map(a => a.nombre)).toEqual(['marco-foto']);
+      expect(component.accesoriosPersonalizacion().map(a => a.nombre)).toEqual(['nombre']);
+    });
+
+    it('el nombre no cuenta entre los complementos', () => {
+      cargar();
+      expect(component.cantidadContada()).toBe(1);
+    });
+  });
 });

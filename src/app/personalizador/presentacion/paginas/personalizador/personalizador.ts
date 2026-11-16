@@ -14,6 +14,7 @@ import { ConfiguracionGuardada } from '../../../dominio/configurador';
 import { ConfiguradorService } from '../../../aplicacion/servicios/ConfiguradorService';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TextoPlaca } from '../../../../shared/componentes/texto-placa/texto-placa';
+import { CATEGORIA_MODA, CATEGORIA_PERSONALIZACION, categoriaCanonica } from '../../../dominio/categorias';
 import { COLOR_DORADO_PLACA, PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE, tamanoLetra } from '../../../dominio/placa';
 import { ExcepcionGuardada, Geometria, UbicacionGuardada } from '../../../dominio/ubicaciones';
 import { contarCaracteres, recortarCaracteres, sinEmojis } from '../../../dominio/texto';
@@ -186,14 +187,14 @@ export class Personalizador implements OnDestroy {
       this.ajusteImagen.set(guardado.ajusteImagen ?? { escala: 100, x: 0, y: 0 });
       this.colorTextoPlaca.set(guardado.colorTexto || COLOR_DORADO_PLACA);
       this.sinConfiguracion.set(!guardado.configurado || !(guardado.catalogo ?? []).length);
-      this.ubicaciones.set((guardado.ubicaciones ?? []) as UbicacionGuardada[]);
+      // Las categorías de cada ubicación se escriben igual que las de los accesorios, para que coincidan
+      const listaCanonica = (l?: string[]) => l?.map(c => categoriaCanonica(c) ?? c);
+      this.ubicaciones.set(((guardado.ubicaciones ?? []) as UbicacionGuardada[]).map(u => ({
+        ...u, categorias: listaCanonica(u.categorias), excluidas: listaCanonica(u.excluidas),
+      })));
       this.excepciones.set((guardado.excepciones ?? []) as ExcepcionGuardada[]);
-      // La categoria se normaliza (sin espacios y con la primera letra en mayuscula)
-      // para que "moda" cuente igual que "Moda"
-      const normalizar = (c?: string) => {
-        const t = c?.trim();
-        return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
-      };
+      // La categoría se escribe siempre igual (sin espacios, con mayúscula y reconociendo «personalizacion» sin tilde)
+      const normalizar = categoriaCanonica;
       this.catalogo.set(
         ((guardado.catalogo ?? []) as Accesorio[]).map(a => ({ ...a, categoria: normalizar(a.categoria) }))
       );
@@ -316,7 +317,7 @@ export class Personalizador implements OnDestroy {
   // NO cuentan: los de categoría Moda (lentes), el nombre (Personalización) ni los elementos fijos.
   private cuenta(accesorio: { categoria?: string }): boolean {
     const c = accesorio.categoria ?? 'Otros';
-    return c !== 'Moda' && c !== 'Personalización';
+    return c !== this.CATEGORIA_MODA && c !== this.CATEGORIA_PERSONALIZACION;
   }
 
   // Cuántos accesorios que cuentan hay puestos
@@ -409,8 +410,8 @@ export class Personalizador implements OnDestroy {
   // PESTAÑAS: Nombre · Lentes / Gafas · Accesorios · Dedicatoria / Marcos
   // ==========================================
 
-  private readonly CATEGORIA_MODA = 'Moda';
-  private readonly CATEGORIA_PERSONALIZACION = 'Personalización';
+  private readonly CATEGORIA_MODA = CATEGORIA_MODA;
+  private readonly CATEGORIA_PERSONALIZACION = CATEGORIA_PERSONALIZACION;
 
   readonly pestanas: Pestana[] = [
     {
