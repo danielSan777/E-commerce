@@ -11,6 +11,7 @@ import { catchError, of } from 'rxjs';
 import { CategoriaService } from '../../../../categorias/aplicacion/servicios/CategoriaService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { macetaIgualSinConfirmar } from '../../../dominio/iguales';
+import { ConfiguradorService } from '../../../../personalizador/aplicacion/servicios/ConfiguradorService';
 import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
 
 interface Sugerencia {
@@ -128,6 +129,15 @@ export class Carrito implements AfterViewInit, OnDestroy {
     effect(() => {
       const abierta = this.hoja() !== null || this.personalizando() !== null;
       this.document.body.style.overflow = abierta ? 'hidden' : '';
+    });
+
+    // Las macetas del carrito adelantan su configuración en segundo plano: al tocar "Editar" abre al instante, sin esperar a la API
+    const configurador = inject(ConfiguradorService);
+    effect(() => {
+      const macetas = this.items().filter(i => i.tipo === 'personalizado');
+      untracked(() => {
+        if (this.esNavegador) new Set(macetas.map(i => String(i.producto.id))).forEach(slug => configurador.adelantar(slug));
+      });
     });
 
     // Cuando el personalizador guarda el detalle en el carrito (nuevo o editado), la hoja se cierra sola

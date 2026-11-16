@@ -69,4 +69,39 @@ describe('ConfiguradorService', () => {
         expect(resultado?.catalogo).toEqual([]);
         expect((resultado as { imagenBase?: string }).imagenBase).toBeUndefined();
     });
+
+    it('reutiliza la configuración ya descargada: la segunda vez no consume la API', () => {
+        const URL = 'https://api.test/api/v1/products/doctor/configurator';
+        const veces: boolean[] = [];
+        servicio.configuracion('doctor').subscribe(() => veces.push(true));
+        http.expectOne(URL).flush(RESPUESTA);
+
+        let instantaneo = false;
+        servicio.configuracion('doctor').subscribe(() => (instantaneo = true));
+        expect(instantaneo).toBe(true); // llegó en el mismo instante
+        http.expectNone(URL);
+    });
+
+    it('dos pantallas que la piden a la vez comparten una sola petición, y un error no se guarda', () => {
+        const URL = 'https://api.test/api/v1/products/doctor/configurator';
+        servicio.configuracion('doctor').subscribe({ error: () => undefined });
+        servicio.configuracion('doctor').subscribe({ error: () => undefined });
+        http.expectOne(URL).flush({}, { status: 500, statusText: 'Error' });
+
+        servicio.configuracion('doctor').subscribe();
+        http.expectOne(URL).flush(RESPUESTA); // tras el error se vuelve a pedir
+    });
+
+    it('vuelve a pedirla cuando pasaron más de 5 minutos, para que lleguen los cambios del panel', () => {
+        const URL = 'https://api.test/api/v1/products/doctor/configurator';
+        const ahora = Date.now();
+        const reloj = vi.spyOn(Date, 'now').mockReturnValue(ahora);
+        servicio.configuracion('doctor').subscribe();
+        http.expectOne(URL).flush(RESPUESTA);
+
+        reloj.mockReturnValue(ahora + 5 * 60 * 1000 + 1);
+        servicio.configuracion('doctor').subscribe();
+        http.expectOne(URL).flush(RESPUESTA);
+        reloj.mockRestore();
+    });
 });
