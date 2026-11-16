@@ -1674,22 +1674,36 @@ export class Personalizador implements OnDestroy {
 
     if (!contexto) return;
 
-    const imagenNueva = new Image();
+    const url = this.urlDeImagen(imagen);
 
-    imagenNueva.onload = () => {
-      this.imagenLentes = imagenNueva;
-      canvas.width = anchoPx;
-      canvas.height = altoPx;
+    const cargar = (conCors: boolean): void => {
+      const imagenNueva = new Image();
 
-      this.pintar(contexto, canvas, imagenNueva, this.colorDe(accesorioId));
+      imagenNueva.onload = () => {
+        this.imagenLentes = imagenNueva;
+        canvas.width = anchoPx;
+        canvas.height = altoPx;
+
+        this.pintar(contexto, canvas, imagenNueva, this.colorDe(accesorioId));
+      };
+
+      imagenNueva.onerror = () => {
+        if (conCors) {
+          // El servidor de /media aún no envía la cabecera CORS: se dibuja igual sin ella
+          // (solo cambia que el canvas queda "marcado" y no se exporta desde ahí).
+          cargar(false);
+          return;
+        }
+        console.error('No se pudo cargar la imagen de los lentes o las gafas');
+      };
+
+      if (conCors) {
+        imagenNueva.crossOrigin = 'anonymous';
+      }
+      imagenNueva.src = url;
     };
 
-    imagenNueva.onerror = () => {
-      console.error('No se pudo cargar la imagen de los lentes o las gafas');
-    };
-
-    imagenNueva.crossOrigin = 'anonymous';
-    imagenNueva.src = this.urlDeImagen(imagen);
+    cargar(true);
   }
 
   // Color (en hexadecimal) que le toca a lentes o gafas
