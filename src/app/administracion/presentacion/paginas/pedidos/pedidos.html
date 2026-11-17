@@ -81,7 +81,7 @@
               }
             </div>
 
-            @if (e === 'to_produce' || e === 'in_production' || e === 'shipped') {
+            @if (e === 'in_production' || e === 'shipped') {
               <form class="envio-guia" (submit)="enviar(p); $event.preventDefault()" novalidate>
                 <label [for]="'guia-' + p.number">{{ e === 'shipped' ? 'Guía de Servientrega (puedes corregirla)' : 'Guía de Servientrega para marcar «Enviado»' }}</label>
                 <div class="fila-guia">

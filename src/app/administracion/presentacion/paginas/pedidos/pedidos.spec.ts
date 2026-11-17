@@ -159,6 +159,24 @@ describe('AdminPedidos', () => {
     expect(el.querySelector<HTMLInputElement>('.fila-guia input')?.value).toBe('1234567890');
   });
 
+  it('el campo de la guía solo aparece cuando el pedido ya está en producción', async () => {
+    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'ready_for_production' })]);
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+
+    expect(el.textContent).toContain('Pasar a producción');
+    expect(el.querySelector('.envio-guia')).toBeNull();
+  });
+
+  it('en producción sí muestra la guía y ya no ofrece "Pasar a producción"', async () => {
+    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'in_production' })]);
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+
+    expect(el.querySelector('.envio-guia')).not.toBeNull();
+    expect(el.textContent).not.toContain('Pasar a producción');
+  });
+
   it('la guía se valida como en Laravel', () => {
     expect(guiaValida('1234567890')).toBe(true);
     expect(guiaValida(' AB-12345 ')).toBe(true);
