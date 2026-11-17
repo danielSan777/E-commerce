@@ -12,8 +12,8 @@
         <h2 id="t-estado">Estado de tu pedido</h2>
         <ol class="pasos">
             @for (paso of PASOS; track paso.clave; let i = $index) {
-            <li [class.hecho]="i < indice()" [class.actual]="i === indice()">
-                <i class="bi" [class]="i < indice() ? 'bi-check-circle-fill' : paso.icono" aria-hidden="true"></i>
+            <li [class.hecho]="completado(i)" [class.actual]="i === indice()">
+                <i class="bi" [class]="completado(i) ? 'bi-check-circle-fill' : paso.icono" aria-hidden="true"></i>
                 <span>{{ paso.etiqueta }}</span>
             </li>
             }

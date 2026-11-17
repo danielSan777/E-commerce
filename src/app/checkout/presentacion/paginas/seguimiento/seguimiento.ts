@@ -31,6 +31,8 @@ export class Seguimiento {
 
   etiqueta = computed(() => this.ETIQUETAS[this.pedido().visible_status]);
   esFinalNegativo = computed(() => ['cancelado', 'reembolsado'].includes(this.pedido().visible_status));
+  /** Cuando el pedido está «Enviado» ese paso también queda con el visto: no existe «Entregado», es el último. */
+  completado = (i: number) => i < this.indice() || (i === this.indice() && this.PASOS[i].clave === 'enviado');
   indice = computed(() => this.PASOS.findIndex(p => p.clave === this.pedido().visible_status));
   ventana = computed(() => textoVentana(this.pedido().window.start, this.pedido().window.end));
 
