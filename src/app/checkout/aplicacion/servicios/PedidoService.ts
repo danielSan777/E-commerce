@@ -6,6 +6,7 @@ import { API_URL } from '../../../core/configuracion/api';
 import { AtribucionService } from '../../../core/seguimiento/AtribucionService';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
 import { DatosCheckout } from './CheckoutService';
+import { PedidoPendienteRecordadoService } from './PedidoPendienteRecordadoService';
 import { UbicacionesService } from './UbicacionesService';
 import { EntregaPedido } from '../../dominio/interfaces/promesa';
 import { PedidoPendiente } from '../../dominio/interfaces/pedido_pendiente';
@@ -60,6 +61,7 @@ export class PedidoService {
     private api = inject(API_URL);
     private ubicaciones = inject(UbicacionesService);
     private atribucion = inject(AtribucionService);
+    private recordado = inject(PedidoPendienteRecordadoService);
 
     // sessionStorage: son datos personales y se borran al cerrar la pestaña
     private readonly CLAVE = 'pedido-jardin-de-sele';
@@ -87,7 +89,11 @@ export class PedidoService {
 
         return this.http.post<RespuestaCheckout>(`${this.api}/checkout`, solicitud).pipe(
             map(r => this.desdeApi(nuevo, r)),
-            tap(p => this.guardarPedido(p)),
+            tap(p => {
+                this.guardarPedido(p);
+                // Para poder volver al pedido (y a WhatsApp) aunque se cierre la pestaña
+                this.recordado.recordar({ numero: p.numero, token: p.token, vence: p.limitePago ?? '' });
+            }),
             conErrorApi(),
         );
     }

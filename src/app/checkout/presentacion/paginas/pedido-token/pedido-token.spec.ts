@@ -40,6 +40,13 @@ describe('PedidoToken (/pedido/{token})', () => {
         expect(html.textContent).not.toContain('Estado de tu pedido');
     });
 
+    it('un pedido ya pagado o vencido deja de recordarse como pendiente', async () => {
+        localStorage.setItem('jds_pedido_pendiente', '{"numero":"JDS-1","token":"t","vence":"2099-01-01T00:00:00Z"}');
+        await montar({ cuerpo: SEGUIMIENTO_API });
+
+        expect(localStorage.getItem('jds_pedido_pendiente')).toBeNull();
+    });
+
     it('token desconocido: 404', async () => {
         const html = await montar({ cuerpo: { code: 'not_found', message: 'No encontramos ese pedido.' }, status: 404 });
 

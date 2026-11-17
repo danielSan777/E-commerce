@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { API_URL } from '../../../core/configuracion/api';
 import { CHECKOUT_API, TOKEN_PRUEBA } from '../../../testing/pedido-api';
 import { ErrorApi } from '../../../cuenta/dominio/interfaces/sesion';
+import { PedidoPendienteRecordadoService } from './PedidoPendienteRecordadoService';
 import { PedidoService, NuevoPedido } from './PedidoService';
 import { DatosCheckout } from './CheckoutService';
 
@@ -21,6 +22,7 @@ describe('PedidoService.crear', () => {
 
     beforeEach(() => {
         sessionStorage.clear();
+        localStorage.clear();
         TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
         http = TestBed.inject(HttpTestingController);
         servicio = TestBed.inject(PedidoService);
@@ -44,6 +46,8 @@ describe('PedidoService.crear', () => {
         expect(creado!.pagoConfirmado).toBe(false);
         expect(creado!.pendiente?.whatsapp_message).toContain(`/pedido/${TOKEN_PRUEBA}`);
         expect(servicio.pedido()?.token).toBe(TOKEN_PRUEBA);
+        // queda recordado para volver al pedido aunque se cierre la pestaña
+        expect(TestBed.inject(PedidoPendienteRecordadoService).pedido()).toMatchObject({ numero: 'JDS-48213', token: TOKEN_PRUEBA });
     });
 
     it('si Laravel rechaza (price_changed) no guarda ningún pedido y entrega el total nuevo', () => {

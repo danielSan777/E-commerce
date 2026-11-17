@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { PedidoPendiente as VistaPendiente } from '../../../dominio/interfaces/pedido_pendiente';
 import { PedidoSeguimiento } from '../../../dominio/interfaces/seguimiento';
 import { PedidoConsultaService, VistaPedido, esSeguimiento } from '../../../aplicacion/servicios/PedidoConsultaService';
+import { PedidoPendienteRecordadoService } from '../../../aplicacion/servicios/PedidoPendienteRecordadoService';
 import { etiquetasDeVistaPrevia } from '../../../dominio/validaciones/vista_previa';
 import { PedidoPendiente } from '../pedido-pendiente/pedido-pendiente';
 import { Seguimiento } from '../seguimiento/seguimiento';
@@ -48,6 +49,7 @@ export class PedidoToken {
   private servicio = inject(PedidoConsultaService);
   private meta = inject(Meta);
   private titulo = inject(Title);
+  private recordado = inject(PedidoPendienteRecordadoService);
 
   readonly token = inject(ActivatedRoute).snapshot.paramMap.get('token') ?? '';
   estado = signal<Estado>({ tipo: 'cargando' });
@@ -72,11 +74,15 @@ export class PedidoToken {
     this.estado.set({ tipo: 'cargando' });
     this.servicio.obtener(this.token).subscribe({
       next: v => this.mostrar(v),
-      error: e => this.estado.set({ tipo: e?.status === 404 ? 'no_encontrado' : 'error' }),
+      error: e => {
+        if (e?.status === 404) this.recordado.olvidar();
+        this.estado.set({ tipo: e?.status === 404 ? 'no_encontrado' : 'error' });
+      },
     });
   }
 
   mostrar(v: VistaPedido): void {
+    if (esSeguimiento(v) || v.status === 'expired') this.recordado.olvidar();   // ya no hay nada que pagar
     if (esSeguimiento(v)) this.estado.set({ tipo: 'seguimiento', vista: v });
     else this.estado.set({ tipo: 'pendiente', vista: v });
 
