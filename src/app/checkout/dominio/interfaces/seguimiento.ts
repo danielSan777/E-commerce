@@ -11,7 +11,7 @@ export interface PedidoSeguimiento {
     visible_status: EstadoVisible;
     payment: { method: 'transfer' | 'card'; status: 'paid'; paid_at: string };
     window: { start: string; end: string };
-    shipment: { carrier: string; tracking_number: string | null };
+    shipment: { carrier: string; tracking_number: string | null; tracking_url: string | null };
     items: { name: string; name_text: string | null }[];
     total_cents: number;
     share: VistaPrevia;

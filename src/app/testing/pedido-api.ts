@@ -27,7 +27,7 @@ export const SEGUIMIENTO_API: PedidoSeguimiento = {
     visible_status: 'confirmado',
     payment: { method: 'transfer', status: 'paid', paid_at: '2026-11-03T18:00:00Z' },
     window: { start: '2026-11-12', end: '2026-11-13' },
-    shipment: { carrier: 'Servientrega', tracking_number: null },
+    shipment: { carrier: 'Servientrega', tracking_number: null, tracking_url: null },
     items: [{ name: 'Doctor', name_text: 'Josué de Santis' }],
     total_cents: 2850,
     share: PENDIENTE_API.share,

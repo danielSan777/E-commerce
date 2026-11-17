@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { PedidoSeguimiento, EstadoVisible } from '../../../dominio/interfaces/seguimiento';
 import { textoVentana } from '../../../dominio/validaciones/fechas';
@@ -28,6 +28,25 @@ export class Seguimiento {
     cancelado: 'Cancelado',
     reembolsado: 'Reembolsado',
   };
+
+  copiada = signal(false);
+
+  async copiarGuia(guia: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(guia);
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = guia;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy'); } catch { /* sin permiso */ }
+      area.remove();
+    }
+    this.copiada.set(true);
+    setTimeout(() => this.copiada.set(false), 1800);
+  }
 
   etiqueta = computed(() => this.ETIQUETAS[this.pedido().visible_status]);
   esFinalNegativo = computed(() => ['cancelado', 'reembolsado'].includes(this.pedido().visible_status));
