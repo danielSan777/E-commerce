@@ -10,7 +10,8 @@ import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { PromesaService } from '../../../aplicacion/servicios/PromesaService';
 import { EntregaPedido, VentanaDisponible } from '../../../dominio/interfaces/promesa';
 import { textoVentana } from '../../../dominio/validaciones/fechas';
-import { costoEnvio, envioDisponible, MENSAJE_SIN_ENVIO, tieneDiaAdicional } from '../../../dominio/validaciones/envio';
+import { UbicacionesService } from '../../../aplicacion/servicios/UbicacionesService';
+import { MENSAJE_SIN_ENVIO } from '../../../dominio/validaciones/envio';
 
 type Metodo = DatosCheckout['metodoPago'];
 
@@ -27,7 +28,7 @@ export class Pago {
   readonly RUTA_CONFIRMAR = '/checkout/confirmacion';  // "Confirmar pedido"
   readonly RUTA_CATALOGO = '/categorias';
 
-  // Las tarifas de envío por cantón están en dominio/validaciones/envio.ts
+  // Las tarifas y la zona de cada cantón las edita el administrador (panel > Envíos) y llegan desde Laravel
   readonly RECARGO_PAYPHONE = 0.06;  // 6 % sobre (subtotal + envío) cuando se paga con tarjeta
 
   private carrito = inject(CarritoService);
@@ -35,6 +36,7 @@ export class Pago {
   private pedidos = inject(PedidoService);
   private router = inject(Router);
   private promesas = inject(PromesaService);
+  private ubicaciones = inject(UbicacionesService);
 
   items = this.carrito.items;
   cantidad = this.carrito.cantidad;
@@ -51,7 +53,7 @@ export class Pago {
   entrega = computed(() => this.datos().entrega);
   ventanaElegida = computed(() =>
     this.ventanas.find(v => v.start === this.datos().ventanaInicio && v.end === this.datos().ventanaFin && v.available));
-  esAmazonia = computed(() => tieneDiaAdicional(this.datos().provincia, this.datos().canton));
+  esAmazonia = computed(() => this.ubicaciones.diaAdicional(this.datos().provincia, this.datos().canton));
 
   entregaPedido = computed<EntregaPedido | null>(() => {
     if (this.entrega() === 'inmediata') {
@@ -76,11 +78,11 @@ export class Pago {
   textoProductos = computed(() => `${this.cantidad()} ${this.cantidad() === 1 ? 'producto' : 'productos'}`);
 
   // Galápagos: no hay envío, no se puede pagar el pedido
-  sinEnvio = computed(() => !envioDisponible(this.datos().provincia, this.datos().canton));
+  sinEnvio = computed(() => !this.ubicaciones.disponible(this.datos().provincia, this.datos().canton));
   readonly MENSAJE_GALAPAGOS = MENSAJE_SIN_ENVIO;
 
   // Tarifa según el cantón y la provincia elegidos en "Envío y facturación"
-  tarifaEnvio = computed(() => costoEnvio(this.datos().provincia, this.datos().canton));
+  tarifaEnvio = computed(() => this.ubicaciones.costo(this.datos().provincia, this.datos().canton));
   envio = computed(() => (this.envioGratis() ? 0 : this.tarifaEnvio()));
 
   // Total por transferencia (sin cargo adicional)
@@ -99,6 +101,7 @@ export class Pago {
   private analytics = inject(AnalyticsService);
 
   constructor() {
+    this.ubicaciones.cargar();
     // Solo en el navegador: así el servidor y el cliente pintan lo mismo en el primer render
     afterNextRender(() => {
       this.checkout.restaurar();

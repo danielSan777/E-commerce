@@ -15,7 +15,7 @@ import { PromesaService } from '../../../../checkout/aplicacion/servicios/Promes
 import { CheckoutService } from '../../../../checkout/aplicacion/servicios/CheckoutService';
 import { VentanaDisponible } from '../../../../checkout/dominio/interfaces/promesa';
 import { textoVentana } from '../../../../checkout/dominio/validaciones/fechas';
-import { ENVIO_DESDE } from '../../../../checkout/dominio/validaciones/envio';
+import { UbicacionesService } from '../../../../checkout/aplicacion/servicios/UbicacionesService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { CalendarioVentanas } from '../../../../shared/componentes/calendario-ventanas/calendario-ventanas';
 import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
@@ -37,6 +37,7 @@ export class DetalleProducto implements OnDestroy {
   private checkout = inject(CheckoutService);
   private analytics = inject(AnalyticsService);
   private envioGratis = inject(EnvioGratisService);
+  private ubicaciones = inject(UbicacionesService);
   private esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
   // ====== EDITABLE ======
   moneda = '$.';
@@ -115,8 +116,9 @@ export class DetalleProducto implements OnDestroy {
 
   // "Envío desde $3,50 según destino · Lleva 2 macetas y el envío es gratis (excepto Galápagos)". Valores desde la configuración.
   lineaEnvio = computed(() => {
-    const desde = `$${ENVIO_DESDE.toFixed(2).replace('.', ',')}`;
-    return `Envío desde ${desde} según destino · Lleva ${this.envioGratis.MACETAS_PARA_ENVIO_GRATIS} macetas y el envío es gratis (excepto Galápagos)`;
+    const tarifa = this.ubicaciones.tarifaDesde();
+    const desde = tarifa === null ? 'Envío' : `Envío desde $${tarifa.toFixed(2).replace('.', ',')}`;
+    return `${desde} según destino · Lleva ${this.envioGratis.MACETAS_PARA_ENVIO_GRATIS} macetas y el envío es gratis (excepto Galápagos)`;
   });
 
   agregado = signal(false);
@@ -177,6 +179,7 @@ export class DetalleProducto implements OnDestroy {
     });
 
     afterNextRender(() => {
+      this.ubicaciones.cargar();                                   // tarifas para «Envío desde $…»
       this.checkout.restaurar();                                   // la ventana elegida en una visita anterior
       this.document.body.classList.add('con-barra-ficha');         // la barra fija de la ficha ocupa el lugar de la barra del celular
     });

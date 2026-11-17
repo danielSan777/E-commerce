@@ -515,8 +515,8 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 
 - [x] Quitar toda opción de enviar algo por WhatsApp después: "Prefiero enviar mi tarjeta de dedicatoria por WhatsApp", enviar la foto o la frase del marco por WhatsApp, el bloque "Pendiente por WhatsApp" de la confirmación y la frase "Te enviaré por aquí…" del mensaje. Todo se completa en la web antes de pagar.
 - [x] Quitar la foto de la tarjeta de dedicatoria: la dedicatoria es solo texto, o "No quiero dedicatoria".
-- [ ] Provincias, cantones y localidades desde el JSON del INEC dentro del proyecto (Paso 10). *(Hecho: provincias y cantones del INEC 2026 y sin countriesnow.space. Hecho también: La Aurora, La Joya, Villa Club y Villa Italia salen en la lista de cantones como "La Aurora - Daule" etc., desde `sectores-zona-a.json`, sin selector aparte. Falta: el panel que las edite.)* Eliminar el uso de countriesnow.space en `UbicacionesService`: no trae cantones como Durán y, si falla, nadie puede comprar.
-- [ ] Zona y tarifa por localidad > cantón > provincia (Paso 10), no por nombre de ciudad. Amazonía $6,25. *(Hecho por cantón y provincia con códigos del INEC; Galápagos bloqueado; esos cuatro sectores de Daule son Zona A $3,50.)*
+- [x] Provincias, cantones y localidades desde el JSON del INEC dentro del proyecto (Paso 10). *(Hecho: provincias y cantones del INEC 2026 sin countriesnow.space, ahora guardados en la base de datos (`GET /api/v1/locations`); Angular los pide una vez al abrir el checkout y filtra en memoria. La Aurora, La Joya, Villa Club y Villa Italia salen como "La Aurora - Daule" etc. (sectores en la misma tabla `cantons`, `is_locality`).)* Eliminar el uso de countriesnow.space en `UbicacionesService`: no trae cantones como Durán y, si falla, nadie puede comprar.
+- [x] Zona y tarifa por localidad > cantón > provincia (Paso 10), no por nombre de ciudad. Amazonía $6,25. *(Hecho: la zona de cada cantón o sector y las tarifas salen de la base de datos y se editan en el panel, pantalla Envíos (`/admin/envios`). Galápagos bloqueado; los cuatro sectores de Daule son Zona A $3,50.)*
 - [x] Lista de países del número de contacto fija dentro del proyecto (sin restcountries.com), con Ecuador (+593) primero. *(Decisión del 3 nov: solo se envía a Ecuador, así que se quita el selector y el número queda fijo en +593.)*
 - [x] Una sola casilla obligatoria y desmarcada, "Acepto los términos y condiciones de Jardín de Sele", con enlace a `/terminos-y-condiciones` (Paso 12). Decisión de Josué (5 nov): no hay casilla de marketing. *(Hecho en `/checkout/pago`.)*
 - [x] Resumen final con la personalización completa de cada maceta y el aviso "Revisa bien: después de confirmar no se puede editar".
@@ -1112,11 +1112,11 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Precargar el Clasificador Geográfico Estadístico del INEC (versión 2026) con sus códigos (por ejemplo, Guayas `09`, Guayaquil `0901`). Mientras el backend no exista, convertirlo en un JSON para la pantalla de envío; ese mismo archivo alimenta después el seeder de Laravel.
-- [ ] Localidades opcionales por cantón (por ejemplo, La Aurora, La Joya y Villa Club en Daule), editables desde el panel.
+- [x] Precargar el Clasificador Geográfico Estadístico del INEC (versión 2026) con sus códigos (por ejemplo, Guayas `09`, Guayaquil `0901`). *(Cargado por la migración `2026_11_17_100001` desde `database/data/*.json`.)*
+- [x] Localidades opcionales por cantón (por ejemplo, La Aurora, La Joya y Villa Club en Daule), editables desde el panel. *(Se asignan de zona igual que un cantón; no hay alta ni baja de sectores desde el panel todavía.)*
 - [ ] Alias para el buscador: "La Puntilla" → Samborondón, "Vía a la Costa" → Guayaquil, "La Aurora" → localidad de Daule.
 - [ ] API de búsqueda para los selectores escribibles de provincia, cantón y localidad.
-- [ ] Zonas: tarifa, días de tránsito adicionales y disponibilidad; asignación por localidad, cantón o provincia.
+- [x] Zonas: tarifa, días de tránsito adicionales y disponibilidad; asignación por localidad, cantón o provincia. *(Asignación por sector y cantón, individual o en bloque filtrando por provincia; no hay regla «toda la provincia» aparte.)*
 - [ ] Ajuste manual del envío de un pedido puntual desde el panel, con motivo y registro en el historial.
 
 **Implementación acordada**
@@ -1136,7 +1136,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - El envío gratis desde 2 macetas es una regla del Paso 7, no una tarifa.
 - Nunca texto libre para provincia, cantón ni localidad. Fuente única: el JSON del INEC dentro del proyecto; no se usan APIs externas de ubicaciones (countriesnow.space, por ejemplo, no trae cantones como Durán).
 
-**Datos y configuración.** Tablas `provinces`, `cantons`, `localities`, `location_aliases`, `shipping_zones`, `zone_assignments`.
+**Datos y configuración.** Tablas `provinces`, `cantons`, `localities`, `location_aliases`, `shipping_zones`, `zone_assignments`. *(Implementado con tres tablas: `provinces`, `cantons` (con `is_locality` para los sectores y `shipping_zone_id` como asignación) y `shipping_zones`. `location_aliases` queda pendiente.)*
 
 **Acción de Josué.** Confirmar con Servientrega el cantón de Santa Rosa (hoy Zona B provisional). Villa Italia ya no importa: todo Daule es Zona A.
 

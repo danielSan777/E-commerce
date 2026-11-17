@@ -1,0 +1,90 @@
+<header class="barra">
+  <strong>Envíos</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+  @if (error()) { <p class="error" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
+  @if (cargando() && !zonas().length) { <p>Cargando…</p> }
+
+  <h2>Zonas y tarifas</h2>
+  <p class="ayuda">El precio de envío se cobra por pedido según la zona del cantón elegido. Los cambios se ven en la tienda al instante.</p>
+
+  <div class="zonas">
+    @for (z of zonas(); track z.code) {
+      @if (formularios()[z.code]; as f) {
+        <form class="zona" [class.no]="z.code === 'no_disponible'" (submit)="guardarZona(z.code, $event)" novalidate>
+          <h3>{{ nombres[z.code] }}</h3>
+          <span class="cuenta">{{ z.cantons_count }} cantones</span>
+
+          @if (z.code !== 'no_disponible') {
+            <label [for]="'precio-' + z.code">Precio de envío ($)</label>
+            <input [id]="'precio-' + z.code" [name]="'precio-' + z.code" inputmode="decimal" [ngModel]="f.precio" (ngModelChange)="ponerFormulario(z.code, 'precio', $event)"
+              [attr.aria-invalid]="errores(z.code)['precio'] ? true : null" />
+            @if (errores(z.code)['precio']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+
+            <label [for]="'dias-' + z.code">Días adicionales de entrega</label>
+            <input [id]="'dias-' + z.code" [name]="'dias-' + z.code" type="number" min="0" max="30" [ngModel]="f.dias" (ngModelChange)="ponerFormulario(z.code, 'dias', $event)"
+              [attr.aria-invalid]="errores(z.code)['dias'] ? true : null" />
+            @if (errores(z.code)['dias']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+          } @else {
+            <small class="ayuda">No se vende por la web a estos cantones: el cliente ve el aviso para escribir por WhatsApp.</small>
+          }
+
+          <button type="submit" class="primario" [disabled]="guardandoZona() === z.code">{{ guardandoZona() === z.code ? 'Guardando…' : 'Guardar' }}</button>
+        </form>
+      }
+    }
+  </div>
+
+  <h2>Cantones de cada zona</h2>
+
+  <div class="filtros">
+    <label for="f-provincia">Provincia
+      <select id="f-provincia" [ngModel]="provincia()" (ngModelChange)="provincia.set($event)">
+        <option value="">Todas</option>
+        @for (p of provincias(); track p.codigo) { <option [value]="p.codigo">{{ p.nombre }}</option> }
+      </select>
+    </label>
+    <label for="f-zona">Zona
+      <select id="f-zona" [ngModel]="zonaFiltro()" (ngModelChange)="zonaFiltro.set($event)">
+        <option value="">Todas</option>
+        @for (c of codigos; track c) { <option [value]="c">{{ nombres[c] }}</option> }
+      </select>
+    </label>
+    <label for="f-texto">Buscar cantón
+      <input id="f-texto" type="search" [ngModel]="texto()" (ngModelChange)="texto.set($event)" placeholder="Ej. Durán" />
+    </label>
+    <button type="button" (click)="limpiarFiltros()">Limpiar</button>
+  </div>
+
+  @if (marcados().size) {
+    <div class="masiva">
+      <strong>{{ marcados().size }} marcados</strong>
+      <label for="zona-masiva" class="ayuda">Mover a</label>
+      <select id="zona-masiva" [(ngModel)]="zonaMasiva">
+        @for (c of codigos; track c) { <option [value]="c">{{ nombres[c] }}</option> }
+      </select>
+      <button type="button" class="primario" (click)="moverMarcados()" [disabled]="moviendo()">Aplicar</button>
+    </div>
+  }
+
+  <ul class="tabla">
+    <li class="cabecera">
+      <input type="checkbox" aria-label="Marcar todos los cantones que se ven" [checked]="todosMarcados()" (change)="marcarVisibles($any($event.target).checked)" />
+      <span>{{ visibles().length }} cantones</span>
+      <span>Zona</span>
+    </li>
+    @for (c of visibles(); track c.code) {
+      <li>
+        <input type="checkbox" [attr.aria-label]="'Marcar ' + c.name" [checked]="marcados().has(c.code)" (change)="marcar(c.code, $any($event.target).checked)" />
+        <span>{{ c.name }}@if (c.is_locality) { <span class="sector">sector</span> }<span class="provincia">{{ c.province_name }}</span></span>
+        <select [attr.aria-label]="'Zona de ' + c.name" [value]="c.zone" [disabled]="moviendo()" (change)="cambiarZona(c, $any($event.target).value)">
+          @for (z of codigos; track z) { <option [value]="z" [selected]="z === c.zone">{{ nombres[z] }}</option> }
+        </select>
+      </li>
+    } @empty {
+      <li class="vacio">No hay cantones con esos filtros.</li>
+    }
+  </ul>
+</main>

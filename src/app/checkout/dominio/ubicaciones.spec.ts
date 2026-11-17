@@ -1,32 +1,20 @@
-import { PROVINCIAS, buscarCanton, buscarProvincia, nombresDeCantones, nombresDeProvincias } from './ubicaciones';
+import { buscarCanton, buscarProvincia, nombresDeCantones, nombresDeProvincias } from './ubicaciones';
+import { CATALOGO_PRUEBA } from './ubicaciones.prueba';
 
-describe('provincias y cantones del INEC (2026)', () => {
-    it('trae las 24 provincias, con Guayas código 09', () => {
-        expect(PROVINCIAS.length).toBe(24);
-        expect(buscarProvincia('Guayas')?.codigo).toBe('09');
+describe('ubicaciones', () => {
+    it('busca provincias y cantones sin importar tildes ni mayúsculas', () => {
+        expect(buscarProvincia(CATALOGO_PRUEBA, 'guayas')?.codigo).toBe('09');
+        expect(buscarProvincia(CATALOGO_PRUEBA, 'GALAPAGOS')?.codigo).toBe('20');
+        expect(buscarCanton(CATALOGO_PRUEBA, 'Guayas', 'duran')?.codigo).toBe('0907');
     });
 
-    it('Durán aparece como cantón de Guayas (0907) y Guayaquil es 0901', () => {
-        expect(nombresDeCantones('Guayas')).toContain('Durán');
-        expect(buscarCanton('Guayas', 'Durán')?.codigo).toBe('0907');
-        expect(buscarCanton('Guayas', 'Guayaquil')?.codigo).toBe('0901');
+    it('los sectores salen en la lista de cantones de su provincia', () => {
+        expect(nombresDeCantones(CATALOGO_PRUEBA, 'Guayas')).toContain('La Aurora - Daule');
     });
 
-    it('no incluye las zonas en estudio (código 90)', () => {
-        expect(PROVINCIAS.some(p => p.codigo === '90')).toBe(false);
-        expect(nombresDeProvincias()).not.toContain('Zonas en estudio');
-    });
-
-    it('los códigos de cantón empiezan con el código de su provincia y no se repiten', () => {
-        const todos = PROVINCIAS.flatMap(p => p.cantones);
-
-        for (const p of PROVINCIAS) {
-            expect(p.cantones.every(c => c.codigo.startsWith(p.codigo))).toBe(true);
-        }
-        expect(new Set(todos.map(c => c.codigo)).size).toBe(todos.length);
-    });
-
-    it('una provincia desconocida no tiene cantones (nunca texto libre)', () => {
-        expect(nombresDeCantones('Narnia')).toEqual([]);
+    it('una provincia o cantón que no existe da vacío', () => {
+        expect(nombresDeCantones(CATALOGO_PRUEBA, 'Narnia')).toEqual([]);
+        expect(buscarCanton(CATALOGO_PRUEBA, 'Guayas', 'Nada')).toBeUndefined();
+        expect(nombresDeProvincias(CATALOGO_PRUEBA)).toEqual(['Guayas', 'Pichincha', 'Napo', 'Galápagos']);
     });
 });

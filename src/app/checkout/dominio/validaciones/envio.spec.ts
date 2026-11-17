@@ -1,59 +1,47 @@
-import { costoEnvio, envioDisponible, tieneDiaAdicional, zonaEnvio } from './envio';
-import { nombresDeCantones } from '../ubicaciones';
-import tablaZonas from '../datos/zonas-envio.json';
-import inec from '../datos/ubicaciones-inec.json';
+import { CATALOGO_PRUEBA } from '../ubicaciones.prueba';
+import { CATALOGO_VACIO } from '../ubicaciones';
+import { costoEnvio, envioDesde, envioDisponible, tieneDiaAdicional, zonaEnvio } from './envio';
 
-describe('zona y costo de envío', () => {
-    it('la tabla tiene los 222 cantones del INEC, una vez cada uno', () => {
-        const codigos = inec.provincias.flatMap(p => p.cantones.map(c => c.codigo)).sort();
-        expect(tablaZonas.cantones.map(c => c.codigo).sort()).toEqual(codigos);
+const C = CATALOGO_PRUEBA;
+
+describe('envío por zona (datos de la base de datos)', () => {
+    it('la zona sale del cantón elegido', () => {
+        expect(zonaEnvio(C, 'Guayas', 'Guayaquil')).toBe('A');
+        expect(zonaEnvio(C, 'guayas', 'duran')).toBe('A');
+        expect(zonaEnvio(C, 'Guayas', 'Milagro')).toBe('C');
+        expect(zonaEnvio(C, 'Guayas', 'La Aurora - Daule')).toBe('A');
     });
 
-    it('Guayaquil, Daule, Durán, Samborondón y Salitre son Zona A: $3.50', () => {
-        for (const canton of ['Guayaquil', 'Daule', 'Durán', 'Samborondón', 'Salitre']) {
-            expect(zonaEnvio('Guayas', canton)).toBe('A');
-            expect(costoEnvio('Guayas', canton)).toBe(3.5);
-        }
+    it('el costo en dólares sale de los centavos de la zona', () => {
+        expect(costoEnvio(C, 'Guayas', 'Guayaquil')).toBe(3.5);
+        expect(costoEnvio(C, 'Pichincha', 'Distrito Metropolitano de Quito')).toBe(5);
+        expect(costoEnvio(C, 'Napo', 'Tena')).toBe(6.25);
     });
 
-    it('reconoce el cantón sin tildes ni mayúsculas', () => {
-        expect(zonaEnvio('guayas', 'duran')).toBe('A');
+    it('si el administrador cambia la tarifa, el costo cambia', () => {
+        const cambiado = { ...C, zonas: C.zonas.map(z => (z.codigo === 'C' ? { ...z, centavos: 550 } : z)) };
+        expect(costoEnvio(cambiado, 'Guayas', 'Milagro')).toBe(5.5);
     });
 
-    it('La Aurora, La Joya, Villa Club y Villa Italia (Daule) siguen en la lista y son Zona A', () => {
-        for (const sector of ['La Aurora - Daule', 'La Joya - Daule', 'Villa Club - Daule', 'Villa Italia - Daule']) {
-            expect(nombresDeCantones('Guayas')).toContain(sector);
-            expect(zonaEnvio('Guayas', sector)).toBe('A');
-        }
+    it('los días adicionales de la zona los define el administrador', () => {
+        expect(tieneDiaAdicional(C, 'Napo', 'Tena')).toBe(true);
+        expect(tieneDiaAdicional(C, 'Guayas', 'Guayaquil')).toBe(false);
     });
 
-    it('Quito, Cuenca, Machala, Milagro, Salinas y Balao son Zona C: $5.00', () => {
-        expect(costoEnvio('Pichincha', 'Distrito Metropolitano de Quito')).toBe(5);
-        expect(costoEnvio('Azuay', 'Cuenca')).toBe(5);
-        expect(costoEnvio('El Oro', 'Machala')).toBe(5);
-        expect(zonaEnvio('Guayas', 'Milagro')).toBe('C');
-        expect(zonaEnvio('Santa Elena', 'Salinas')).toBe('C');
-        expect(zonaEnvio('Guayas', 'Balao')).toBe('C');
+    it('un cantón desconocido se cobra como Zona B', () => {
+        expect(zonaEnvio(C, 'Napo', '')).toBe('B');
+        expect(zonaEnvio(C, 'Guayas', 'No existe')).toBe('B');
+        expect(costoEnvio(C, 'Guayas', 'No existe')).toBe(6.25);
     });
 
-    it('Amazonía y destinos al mismo costo son Zona B: $6.25 y +1 día', () => {
-        for (const [prov, cant] of [['Napo', 'Tena'], ['Pastaza', 'Arajuno'], ['El Oro', 'Zaruma'], ['Loja', 'Catamayo'], ['El Oro', 'Santa Rosa']]) {
-            expect(zonaEnvio(prov, cant)).toBe('B');
-            expect(costoEnvio(prov, cant)).toBe(6.25);
-            expect(tieneDiaAdicional(prov, cant)).toBe(true);
-        }
-        expect(tieneDiaAdicional('Pichincha', 'Distrito Metropolitano de Quito')).toBe(false);
+    it('la zona no disponible no cobra ni permite el pedido', () => {
+        expect(envioDisponible(C, 'Galápagos', 'San Cristóbal')).toBe(false);
+        expect(costoEnvio(C, 'Galápagos', 'San Cristóbal')).toBe(0);
+        expect(envioDisponible(C, 'Guayas', 'Guayaquil')).toBe(true);
     });
 
-    it('sin cantón o con un cantón desconocido se cobra Zona B, la más cara', () => {
-        expect(zonaEnvio('Napo', '')).toBe('B');
-        expect(zonaEnvio('Guayas', 'No existe')).toBe('B');
-    });
-
-    it('Galápagos, Taisha y Aguarico no tienen envío por la web', () => {
-        expect(envioDisponible('Galápagos', 'Santa Cruz')).toBe(false);
-        expect(envioDisponible('Morona Santiago', 'Taisha')).toBe(false);
-        expect(envioDisponible('Orellana', 'Aguarico')).toBe(false);
-        expect(envioDisponible('Guayas', 'Guayaquil')).toBe(true);
+    it('«Envío desde» es la tarifa más baja disponible, o nada si aún no hay datos', () => {
+        expect(envioDesde(C)).toBe(3.5);
+        expect(envioDesde(CATALOGO_VACIO)).toBeNull();
     });
 });

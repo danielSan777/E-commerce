@@ -1,0 +1,25 @@
+@import '../../estilos/admin-tema.css';
+
+.contenido { max-width: 960px; }
+.zonas { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .75rem; }
+.zona { display: flex; flex-direction: column; gap: .35rem; background: var(--tarjeta); border: 1px solid var(--borde); border-top: 5px solid var(--primario); border-radius: 12px; padding: 1rem; box-shadow: 0 2px 8px rgba(6, 78, 59, .08); }
+.zona.no { border-top-color: var(--peligro); }
+.zona h3 { margin: 0; font-size: 1.05rem; }
+.zona .cuenta { color: var(--suave); font-size: .85rem; }
+.zona button { align-self: flex-start; margin-top: .5rem; }
+
+.filtros { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: .75rem 1rem; }
+.filtros label { display: flex; flex-direction: column; gap: .2rem; margin: 0; }
+.masiva { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+
+.tabla { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; overflow: hidden; }
+.tabla li { display: grid; grid-template-columns: 2rem 1fr 11rem; gap: .5rem; align-items: center; padding: .4rem .9rem; border-top: 1px solid #d1fae5; }
+.tabla li:first-child { border-top: 0; }
+.tabla li.cabecera { background: #d1fae5; font-weight: 700; }
+.tabla .provincia { color: var(--suave); font-size: .82rem; display: block; }
+.tabla .sector { font-size: .75rem; background: #fef3c7; color: #92400e; border-radius: 999px; padding: 0 .5rem; margin-left: .4rem; }
+.tabla input[type=checkbox] { width: 1.2rem; height: 1.2rem; accent-color: var(--primario); }
+.tabla select { min-height: 40px; }
+.vacio { padding: 1rem; color: var(--suave); }
+
+@media (max-width: 560px) { .tabla li { grid-template-columns: 2rem 1fr; } .tabla li select { grid-column: 2; } }

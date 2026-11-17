@@ -129,7 +129,7 @@
                                     [class.elegida]="x === datos().provincia" [attr.aria-selected]="x === datos().provincia"
                                     (mousedown)="$event.preventDefault(); elegirProvincia(x)">{{ x }}</li>
                                 } @empty {
-                                <li class="aviso">Sin resultados</li>
+                                <li class="aviso">{{ listo() ? 'Sin resultados' : fallo() ? 'No pudimos cargar la lista. Recarga la página.' : 'Cargando…' }}</li>
                                 }
                             </ul>
                             }
@@ -158,7 +158,7 @@
                                     [class.elegida]="x === datos().canton" [attr.aria-selected]="x === datos().canton"
                                     (mousedown)="$event.preventDefault(); elegirCanton(x)">{{ x }}</li>
                                 } @empty {
-                                <li class="aviso">Sin resultados</li>
+                                <li class="aviso">{{ listo() ? 'Sin resultados' : fallo() ? 'No pudimos cargar la lista. Recarga la página.' : 'Cargando…' }}</li>
                                 }
                             </ul>
                             }
@@ -297,7 +297,7 @@
                                         [class.elegida]="x === datos().fProvincia" [attr.aria-selected]="x === datos().fProvincia"
                                         (mousedown)="$event.preventDefault(); elegirFProvincia(x)">{{ x }}</li>
                                     } @empty {
-                                    <li class="aviso">Sin resultados</li>
+                                    <li class="aviso">{{ listo() ? 'Sin resultados' : fallo() ? 'No pudimos cargar la lista. Recarga la página.' : 'Cargando…' }}</li>
                                     }
                                 </ul>
                             }
@@ -327,7 +327,7 @@
                                     [class.elegida]="x === datos().fCanton" [attr.aria-selected]="x === datos().fCanton"
                                     (mousedown)="$event.preventDefault(); elegirFCanton(x)">{{ x }}</li>
                                 } @empty {
-                                <li class="aviso">Sin resultados</li>
+                                <li class="aviso">{{ listo() ? 'Sin resultados' : fallo() ? 'No pudimos cargar la lista. Recarga la página.' : 'Cargando…' }}</li>
                                 }
                             </ul>
                             }
