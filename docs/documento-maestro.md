@@ -1000,10 +1000,10 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 
 **Tareas**
 
-- [ ] Tabla de días no hábiles con tipo (feriado nacional, feriado local de Guayaquil, cierre propio) y a qué afecta (producción, despacho o ambos).
+- [x] Tabla de días no hábiles con tipo (feriado nacional, feriado local de Guayaquil, cierre propio) y a qué afecta (producción, despacho o ambos). *(Tabla `non_working_days` con API de administración (`/admin/non-working-days`); solo trae Navidad y Año Nuevo 2027. Falta la pantalla del panel y que Josué cargue los feriados del año.)*
 - [ ] En el panel: bloquear un día, varios días o un rango; ver cada ciclo con pedidos pagados, pendientes y capacidad restante; cambiar la capacidad de un ciclo puntual.
 - [ ] Botón **"Pasar las ventas al siguiente ciclo"** y su reverso, "Reabrir ciclo".
-- [ ] Servicio de ciclo: dado un instante, devuelve ciclo, día de despacho y ventana.
+- [x] Servicio de ciclo: dado un instante, devuelve ciclo, día de despacho y ventana. *(`MotorDeEntrega` en Laravel, probado con cada fila de la tabla y los cortes 19:59:59, 20:00:00, 20:00:01 y sábado 16:00:00/16:00:01. Falta la capacidad de 8 y 10 pedidos: todavía no existen pedidos.)*
 - [ ] Servicio de capacidad con asignación dentro de una transacción que bloquea la fila del ciclo.
 - [ ] Aviso en el panel si no hay feriados cargados para el año siguiente.
 
@@ -1064,12 +1064,12 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Endpoint de promesa para la ficha (contrato del Paso 0), con `server_now` y `promise_token` firmado.
-- [ ] Contador en Angular basado en la diferencia con `server_now`, nunca en el reloj del teléfono.
-- [ ] La ficha vuelve a pedir la promesa al llegar el corte y al volver a la pestaña.
+- [x] Endpoint de promesa para la ficha (contrato del Paso 0), con `server_now` y `promise_token` firmado. *(`GET /api/v1/delivery/promise?canton=`; la Amazonía suma un día; Galápagos responde 422; `Cache-Control: no-store`.)*
+- [x] Contador en Angular basado en la diferencia con `server_now`, nunca en el reloj del teléfono. *(`PromesaService`: hora del servidor + reloj monótono.)*
+- [x] La ficha vuelve a pedir la promesa al llegar el corte y al volver a la pestaña.
 - [ ] Guardar el `promise_token` al tocar "Personalizar" y enviarlo al crear el pedido.
 - [ ] Validar la gracia al crear el pedido.
-- [ ] Endpoint de ventanas disponibles para "Programar para otra fecha".
+- [x] Endpoint de ventanas disponibles para "Programar para otra fecha". *(`GET /api/v1/delivery/windows?canton=`: 8 semanas desde la primera ventana posible, sin domingos ni feriados, nunca en el pasado. Angular además descarta una ventana guardada que Laravel ya no ofrece. Hoy todas salen disponibles: falta la capacidad.)*
 - [ ] Mensaje tranquilo cuando la fecha cambió: "Actualizamos tu fecha estimada".
 - [ ] Fecha límite de campaña.
 

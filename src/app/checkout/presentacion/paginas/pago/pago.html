@@ -60,7 +60,7 @@
         </div>
     </section>
 
-    <!-- ===== Fecha de entrega (la promesa y las ventanas las entrega Laravel; hoy, un mock) ===== -->
+    <!-- ===== Fecha de entrega (la promesa y las ventanas las calcula Laravel) ===== -->
     <section class="tarjeta entrega" aria-labelledby="t-entrega">
         <h2 id="t-entrega" class="titulo-metodos"><i class="bi bi-truck" aria-hidden="true"></i> Fecha de entrega</h2>
 
@@ -70,8 +70,8 @@
                     (change)="elegirEntrega('inmediata')">
                 <span class="punto" aria-hidden="true"></span>
                 <span class="opcion-texto">
-                    <strong>{{ promesa.label }}</strong>
-                    <small>{{ promesa.countdown_label }}</small>
+                    <strong>{{ promesa()?.label }}</strong>
+                    <small>{{ contador() }}</small>
                 </span>
             </label>
 
@@ -87,10 +87,10 @@
         </div>
 
         @if (entrega() === 'programada') {
-        <app-calendario-ventanas [ventanas]="ventanas" [elegida]="ventanaElegida()" (elegir)="elegirVentana($event)" />
+        <app-calendario-ventanas [ventanas]="ventanas()" [elegida]="ventanaElegida()" (elegir)="elegirVentana($event)" />
         }
 
-        @if (esAmazonia()) { <p class="nota-amazonia">{{ promesa.amazon_note }}</p> }
+        @if (esAmazonia()) { <p class="nota-amazonia">{{ promesa()?.amazon_note }}</p> }
 
         @if (errorEntrega()) {
         <p class="error" role="alert">Elige una fecha de entrega disponible.</p>

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { CalendarioVentanas } from './calendario-ventanas';
-import { PromesaService } from '../../../checkout/aplicacion/servicios/PromesaService';
+import { VENTANAS_API } from '../../../testing/entrega-api';
 import { VentanaDisponible } from '../../../checkout/dominio/interfaces/promesa';
 
 @Component({
@@ -9,7 +9,7 @@ import { VentanaDisponible } from '../../../checkout/dominio/interfaces/promesa'
     template: `<app-calendario-ventanas [ventanas]="ventanas" [elegida]="elegida" (elegir)="elegida = $event" />`,
 })
 class Anfitrion {
-    ventanas = new PromesaService().ventanas().windows;
+    ventanas = VENTANAS_API;
     elegida: VentanaDisponible | undefined;
 }
 

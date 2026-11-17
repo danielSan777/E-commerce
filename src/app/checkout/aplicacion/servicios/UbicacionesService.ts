@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { API_URL } from '../../../core/configuracion/api';
 import { SIN_CARGANDO } from '../../../shared/interceptores/cargandoInterceptor';
 import {
-    CATALOGO_VACIO, CatalogoUbicaciones, CodigoZona, nombresDeCantones, nombresDeProvincias,
+    CATALOGO_VACIO, CatalogoUbicaciones, CodigoZona, buscarCanton, nombresDeCantones, nombresDeProvincias,
 } from '../../dominio/ubicaciones';
 import { costoEnvio, envioDesde, envioDisponible, tieneDiaAdicional, zonaEnvio } from '../../dominio/validaciones/envio';
 import { normalizar } from '../../dominio/validaciones/validaciones';
@@ -63,6 +63,11 @@ export class UbicacionesService {
     esProvinciaSinEnvio(provincia: string): boolean {
         const p = this.datos().provincias.find(x => normalizar(x.nombre) === normalizar(provincia.trim()));
         return !!p && p.cantones.length > 0 && p.cantones.every(c => !this.disponible(provincia, c.nombre));
+    }
+
+    /** Código del INEC del cantón elegido ('' si todavía no hay datos o no existe). */
+    codigoCanton(provincia: string, canton: string): string {
+        return buscarCanton(this.datos(), provincia, canton)?.codigo ?? '';
     }
 
     zona(provincia: string, canton: string): CodigoZona { return zonaEnvio(this.datos(), provincia, canton); }

@@ -23,7 +23,7 @@
     <h1 class="titulo"><i class="bi bi-flower1" aria-hidden="true"></i> {{ c.name }}</h1>
     <div class="intro" [innerHTML]="c.intro_html"></div>
     <ul class="datos">
-        <li><i class="bi bi-truck" aria-hidden="true"></i> {{ promesa.label }}</li>
+        <li><i class="bi bi-truck" aria-hidden="true"></i> {{ promesa()?.label }}</li>
         @if (c.price_from_cents) {
         <li><i class="bi bi-tag" aria-hidden="true"></i> Desde {{ c.price_from_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</li>
         }

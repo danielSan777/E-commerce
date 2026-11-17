@@ -1,5 +1,6 @@
 import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
-import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
+import { Component, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { CurrencyPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { CalendarioVentanas } from '../../../../shared/componentes/calendario-ventanas/calendario-ventanas';
@@ -37,6 +38,7 @@ export class Pago {
   private router = inject(Router);
   private promesas = inject(PromesaService);
   private ubicaciones = inject(UbicacionesService);
+  private avisos = inject(AvisosService);
 
   items = this.carrito.items;
   cantidad = this.carrito.cantidad;
@@ -47,21 +49,24 @@ export class Pago {
   metodo = computed<Metodo>(() => this.datos().metodoPago);
 
   // ===== Fecha de entrega: la promesa y las ventanas las entrega Laravel (hoy, un mock) =====
-  promesa = this.promesas.promesa();
-  ventanas = this.promesas.ventanas().windows;
+  promesa = this.promesas.promesa;
+  contador = this.promesas.contador;
+  ventanas = this.promesas.ventanas;
   textoVentana = textoVentana;
   entrega = computed(() => this.datos().entrega);
   ventanaElegida = computed(() =>
-    this.ventanas.find(v => v.start === this.datos().ventanaInicio && v.end === this.datos().ventanaFin && v.available));
+    this.ventanas().find(v => v.start === this.datos().ventanaInicio && v.end === this.datos().ventanaFin && v.available));
   esAmazonia = computed(() => this.ubicaciones.diaAdicional(this.datos().provincia, this.datos().canton));
 
   entregaPedido = computed<EntregaPedido | null>(() => {
+    const p = this.promesa();
+    if (!p) return null;
     if (this.entrega() === 'inmediata') {
-      return { tipo: 'inmediata', window: this.promesa.window, label: this.promesa.label, promise_token: this.promesa.promise_token };
+      return { tipo: 'inmediata', window: p.window, label: p.label, promise_token: p.promise_token };
     }
     const v = this.ventanaElegida();
     return v
-      ? { tipo: 'programada', window: { start: v.start, end: v.end }, label: textoVentana(v.start, v.end), promise_token: this.promesa.promise_token }
+      ? { tipo: 'programada', window: { start: v.start, end: v.end }, label: textoVentana(v.start, v.end), promise_token: p.promise_token }
       : null;
   });
 
@@ -102,6 +107,25 @@ export class Pago {
 
   constructor() {
     this.ubicaciones.cargar();
+    // La promesa y las ventanas se piden al destino elegido: la Amazonía suma un día (Laravel lo calcula)
+    effect(() => {
+      const d = this.datos();
+      const codigo = this.ubicaciones.codigoCanton(d.provincia, d.canton);
+      // Con cantón elegido se espera a tener la lista de ubicaciones para conocer su código
+      if (this.datosListos() && (this.ubicaciones.listo() || !d.canton)) untracked(() => this.promesas.cargar(codigo));
+    });
+    // Una ventana guardada en otra visita puede haber quedado en el pasado: Laravel ya no la ofrece
+    effect(() => {
+      const d = this.datos();
+      this.ventanas();
+      if (!this.datosListos() || !this.ventanas().length || d.entrega !== 'programada') return;
+      if (!this.promesas.esVigente(d.ventanaInicio, d.ventanaFin)) {
+        untracked(() => {
+          this.checkout.actualizar({ entrega: 'inmediata', ventanaInicio: '', ventanaFin: '' });
+          this.avisos.exito('Actualizamos tu fecha estimada.');
+        });
+      }
+    });
     // Solo en el navegador: así el servidor y el cliente pintan lo mismo en el primer render
     afterNextRender(() => {
       this.checkout.restaurar();
@@ -119,7 +143,7 @@ export class Pago {
       this.checkout.actualizar({ entrega: 'inmediata', ventanaInicio: '', ventanaFin: '' });
       return;
     }
-    const primera = this.ventanaElegida() ?? this.ventanas.find(v => v.available);
+    const primera = this.ventanaElegida() ?? this.ventanas().find(v => v.available);
     this.checkout.actualizar({ entrega: 'programada', ventanaInicio: primera?.start ?? '', ventanaFin: primera?.end ?? '' });
   }
 
