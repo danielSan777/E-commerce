@@ -1,0 +1,104 @@
+<header class="barra">
+  <strong>Pedidos</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+  <div class="filtros" role="tablist" aria-label="Filtrar pedidos">
+    @for (f of filtros; track f.valor) {
+      <button type="button" role="tab" [attr.aria-selected]="filtro() === f.valor" [class.activo]="filtro() === f.valor" (click)="elegirFiltro(f.valor)">{{ f.etiqueta }}</button>
+    }
+  </div>
+
+  @if (error()) { <p class="error" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
+  @if (cargando()) { <p>Cargando…</p> }
+  @else if (!pedidos().length && !error()) { <p class="vacio">No hay pedidos en esta lista.</p> }
+
+  <ul class="pedidos">
+    @for (p of pedidos(); track p.number) {
+      @let e = estado(p);
+      <li class="pedido" [class.abierto]="abierto() === p.number">
+        <button type="button" class="resumen" (click)="alternar(p.number)" [attr.aria-expanded]="abierto() === p.number">
+          <strong>{{ p.number }}</strong>
+          <span class="cliente">{{ p.customer.name }}</span>
+          <span class="monto">{{ p.total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</span>
+          <span class="insignia" [class]="e">{{ ETIQUETAS[e] }}</span>
+          @if (e === 'pending' || e === 'expired') {
+            @if (p.receipt_uploaded_at) { <span class="insignia con-comprobante">Con comprobante</span> }
+            @else { <span class="insignia sin-comprobante">Sin comprobante</span> }
+          }
+        </button>
+
+        @if (abierto() === p.number) {
+          <div class="detalle">
+            <dl>
+              <dt>Creado</dt><dd>{{ fechaHora(p.created_at) }}</dd>
+              @if (p.deadline_at && e !== 'paid') { <dt>Plazo de pago</dt><dd>{{ fechaHora(p.deadline_at) }}</dd> }
+              @if (p.paid_at) { <dt>Pagado</dt><dd>{{ fechaHora(p.paid_at) }}</dd> }
+              <dt>Comprobante</dt><dd>{{ p.receipt_uploaded_at ? 'Subido ' + fechaHora(p.receipt_uploaded_at) : 'No ha subido' }}</dd>
+              <dt>Tocó WhatsApp</dt><dd>{{ p.whatsapp_clicked_at ? fechaHora(p.whatsapp_clicked_at) : 'No' }}</dd>
+              <dt>Entrega</dt><dd>{{ ventana(p.window) }} ({{ p.window.type === 'scheduled' ? 'programada' : 'lo antes posible' }})</dd>
+              <dt>Cliente</dt><dd>{{ p.customer.name }} · {{ p.customer.email }} · {{ p.customer.phone }}</dd>
+              <dt>Envía a</dt>
+              <dd>{{ p.shipping.name }} · {{ p.shipping.address }}, {{ p.shipping.canton_name }}, {{ p.shipping.province_name }}
+                @if (p.shipping.reference) { <br><small>Ref.: {{ p.shipping.reference }}</small> }</dd>
+              <dt>Documento</dt><dd>{{ p.shipping.id_number }}</dd>
+            </dl>
+
+            <ul class="items">
+              @for (i of p.items; track $index) {
+                <li>
+                  <span>{{ i.name }}
+                    @if (i.personalization?.name_text) { <small>· Nombre: «{{ i.personalization?.name_text }}»</small> }
+                    @if (i.personalization?.dedication?.mode === 'text') { <small>· Dedicatoria: «{{ i.personalization?.dedication?.text }}»</small> }
+                  </span>
+                  <b>{{ i.line_total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b>
+                </li>
+              }
+              <li class="envio"><span>Envío (zona {{ p.shipping_zone }})</span><b>{{ p.shipping_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b></li>
+            </ul>
+
+            <div class="acciones">
+              @if (p.receipt_uploaded_at) {
+                <button type="button" (click)="verComprobante(p)" [disabled]="trabajando() === p.number">Ver comprobante</button>
+              }
+
+              @if (e === 'pending' || e === 'expired') {
+                <button type="button" class="primario" (click)="pedirConfirmacion(p.number, 'pagar')" [disabled]="trabajando() === p.number">
+                  {{ e === 'expired' ? 'Marcar pagado (pagó a tiempo)' : 'Marcar pagado' }}
+                </button>
+              }
+              @if (e === 'expired') {
+                <button type="button" (click)="pedirConfirmacion(p.number, 'pagar_tarde')" [disabled]="trabajando() === p.number">Pagado fuera de plazo</button>
+              }
+              @if (e !== 'cancelled') {
+                <button type="button" class="peligro" (click)="pedirConfirmacion(p.number, 'cancelar')" [disabled]="trabajando() === p.number">Cancelar pedido</button>
+              }
+            </div>
+
+            @if (confirmando(); as c) {
+              @if (c.numero === p.number) {
+                <div class="confirmacion" role="alert">
+                  @switch (c.accion) {
+                    @case ('pagar') { <p>Confirma que <b>revisaste el banco</b> y el dinero ({{ p.total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}) llegó. El pedido entra a producción en su ciclo.</p> }
+                    @case ('pagar_tarde') { <p>El pago llegó después del plazo: se le asigna el <b>siguiente ciclo disponible</b> y cambia su fecha de entrega.</p> }
+                    @case ('cancelar') { <p>¿Cancelar el pedido {{ p.number }}? Libera su cupo y no se puede deshacer.</p> }
+                  }
+                  @if (sobrecupo(); as s) {
+                    @if (s.numero === p.number) { <p class="aviso">{{ s.mensaje }}</p> }
+                  }
+                  <div class="botones">
+                    <button type="button" class="primario" (click)="ejecutar(p, c.accion, !!sobrecupo())" [disabled]="trabajando() === p.number">
+                      {{ sobrecupo() ? 'Sí, superar el límite' : 'Sí, confirmar' }}
+                    </button>
+                    <button type="button" (click)="confirmando.set(null); sobrecupo.set(null)">No</button>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
+      </li>
+    }
+  </ul>
+</main>

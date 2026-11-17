@@ -1295,7 +1295,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - [x] Subida del comprobante (JPG, PNG o PDF) al disco privado, con límite de intentos; se guarda la hora de subida. *(Hecho: 5 MB y 5 intentos por defecto; el tamaño máximo no estaba definido, confirmar con Josué.)*
 - [x] Botón de WhatsApp que pasa por un endpoint propio, registra el clic y abre `wa.me` con "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." y el total. *(Hecho: el mensaje incluye el enlace `/pedido/{token}` y la vista previa `og:*` se genera en el servidor.)*
 - [ ] Aviso a Josué al subirse un comprobante (Paso 18).
-- [ ] Acciones en el panel: "Marcar pagado", "Pagado fuera de plazo" y "Cancelar".
+- [x] Acciones en el panel: "Marcar pagado", "Pagado fuera de plazo" y "Cancelar". *(Hecho en `/admin/pedidos`: lista por estado, detalle, ver comprobante, y las tres acciones con confirmación; si el ciclo pasa de 10 pide confirmar. El historial de cambios y el aviso a Josué siguen pendientes, Paso 15 y 18.)*
 - [x] Vencimiento automático al cumplirse el plazo.
 
 **Implementación acordada**

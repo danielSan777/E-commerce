@@ -50,6 +50,11 @@ export const routes: Routes = [
         loadComponent: () => import('./administracion/presentacion/paginas/configurador/configurador').then(m => m.AdminConfigurador)
     },
     {
+        path: 'admin/pedidos',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/pedidos/pedidos').then(m => m.AdminPedidos)
+    },
+    {
         path: 'admin/envios',
         canActivate: [adminGuard],
         loadComponent: () => import('./administracion/presentacion/paginas/envios/envios').then(m => m.AdminEnvios)
