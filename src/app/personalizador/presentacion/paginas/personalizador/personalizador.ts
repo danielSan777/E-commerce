@@ -14,6 +14,7 @@ import { Accesorio, AccesorioColocado, ComportamientoAccesorio } from '../../../
 import { ConfiguracionGuardada } from '../../../dominio/configurador';
 import { ConfiguradorService } from '../../../aplicacion/servicios/ConfiguradorService';
 import { ActivatedRoute, Router } from '@angular/router';
+import type { EscenaMaceta } from '../../../../shared/componentes/vista-maceta/vista-maceta';
 import { TextoPlaca } from '../../../../shared/componentes/texto-placa/texto-placa';
 import { CATEGORIA_MODA, CATEGORIA_PERSONALIZACION, categoriaCanonica } from '../../../dominio/categorias';
 import { COLOR_DORADO_PLACA, PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE, tamanoLetra } from '../../../dominio/placa';
@@ -1048,14 +1049,16 @@ export class Personalizador implements OnDestroy {
     const uid = this.editandoUid
       ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
-    const vista = await this.capturarVista();
+    // El carrito pinta la maceta con la misma foto y las mismas medidas del visor: no hay que armar ninguna imagen para mostrarla
+    const escena = this.escenaParaElCarrito();
 
     this.carrito.guardar(
       {
         uid,
         tipo: 'personalizado',
         producto,
-        vista,
+        vista: '',            // la foto del pedido se arma en segundo plano, ya en el carrito
+        escena,
         ruta: this.editandoRuta ?? this.rutaDelProducto(),
         resumen: this.resumenPedido(),
         configuracion: this.configuracionGuardada(),
@@ -1066,7 +1069,29 @@ export class Personalizador implements OnDestroy {
     );
 
     this.borrarBorradorGuardado();   // ya está en el carrito: el borrador sobra
+
+    // La imagen única (JPG) que se adjunta al pedido se arma ahora, sin hacer esperar a la persona
+    void this.capturarVista().then(vista => this.carrito.ponerVista(uid, vista)).catch(() => undefined);
+
     await this.router.navigate(['carrito']);
+  }
+
+  /** La maceta, sus accesorios (de atrás hacia adelante) y los colores de lentes y gafas, tal como se ven en el visor. */
+  private escenaParaElCarrito(): EscenaMaceta {
+    const accesorios = [...this.accesoriosSeleccionados()]
+      .sort((a, b) => this.capaDe(a.ubicacionId) - this.capaDe(b.ubicacionId))
+      .map(a => ({ ...a }));
+    const tintes: Record<number, string> = {};
+    for (const a of accesorios) if (this.esLentesOGafas(a.accesorioId)) tintes[a.accesorioId] = this.colorDe(a.accesorioId);
+
+    return {
+      imagenBase: this.urlDeImagen(this.imagenBase()),
+      ajuste: { ...this.ajusteImagen() },
+      accesorios: accesorios.map(a => ({ ...a, imagen: a.tipo === 'texto' ? a.imagen : this.urlDeImagen(a.imagen) })),
+      nombre: this.nombreCliente(),
+      colorTexto: this.colorTextoPlaca(),
+      tintes,
+    };
   }
 
   // Ruta a la que vuelve "Editar" desde el carrito. Si se personalizó desde el propio carrito,

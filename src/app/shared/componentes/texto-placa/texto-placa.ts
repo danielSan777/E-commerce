@@ -40,7 +40,8 @@ export class TextoPlaca {
 
   constructor() {
     if (this.esNavegador) {
-      document.fonts.load('40px Lobster').then(() => this.fuenteLista.set(true), () => this.fuenteLista.set(true));
+      // Un navegador sin la API de fuentes sigue con la medida estimada
+      document.fonts?.load('40px Lobster').then(() => this.fuenteLista.set(true), () => this.fuenteLista.set(true));
     }
   }
 }

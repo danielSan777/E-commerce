@@ -11,6 +11,7 @@ import { catchError, of } from 'rxjs';
 import { CategoriaService } from '../../../../categorias/aplicacion/servicios/CategoriaService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { macetaIgualSinConfirmar } from '../../../dominio/iguales';
+import { VistaMaceta } from '../../../../shared/componentes/vista-maceta/vista-maceta';
 import { ConfiguradorService } from '../../../../personalizador/aplicacion/servicios/ConfiguradorService';
 import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
 
@@ -30,7 +31,7 @@ interface Categoria {
 
 @Component({
   selector: 'app-carrito',
-  imports: [CurrencyPipe, NgTemplateOutlet, RouterLink, Personalizador],
+  imports: [CurrencyPipe, NgTemplateOutlet, RouterLink, Personalizador, VistaMaceta],
   templateUrl: './carrito.html',
   styleUrl: './carrito.css',
 })

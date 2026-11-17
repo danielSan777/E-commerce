@@ -68,6 +68,25 @@ describe('Carrito', () => {
     beforeEach(() => TestBed.inject(CarritoService).vaciar());
     afterEach(() => TestBed.inject(CarritoService).vaciar());
 
+    it('la maceta del carrito se pinta al instante con sus accesorios (sin esperar ninguna imagen armada); la foto del pedido llega después', async () => {
+      const servicio = TestBed.inject(CarritoService);
+      const html = fixture.nativeElement as HTMLElement;
+      const escena = { imagenBase: 'http://api/media/base.webp', ajuste: { escala: 100, x: 0, y: 0 }, accesorios: [], nombre: 'Ana', colorTexto: '#C7B084', tintes: {} };
+
+      servicio.guardar({ ...maceta('m1'), escena });
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(html.querySelector('.item-foto app-vista-maceta')).not.toBeNull();
+      expect(html.querySelector('.item-foto > img')).toBeNull();
+
+      servicio.ponerVista('m1', 'data:image/jpeg;base64,AAA');
+      expect(servicio.buscar('m1')?.vista).toBe('data:image/jpeg;base64,AAA');
+      expect(servicio.buscar('m1')?.escena).toEqual(escena);
+
+      servicio.ponerVista('no-existe', 'data:image/jpeg;base64,BBB'); // un item que ya no está: no hace nada
+      expect(servicio.items().length).toBe(1);
+    });
+
     it('la franja "Complementa tu regalo" solo sale con al menos una maceta en el carrito', async () => {
       const servicio = TestBed.inject(CarritoService);
       const html = fixture.nativeElement as HTMLElement;

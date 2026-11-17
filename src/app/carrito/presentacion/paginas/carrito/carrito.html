@@ -14,7 +14,9 @@
     <article class="item">
         <div class="item-cuerpo">
             <div class="item-foto">
-                @if (item.vista) {
+                @if (item.escena) {
+                <app-vista-maceta [escena]="item.escena" [alt]="item.producto.nombre" />
+                } @else if (item.vista) {
                 <img [src]="item.vista" [alt]="item.producto.nombre">
                 } @else {
                 <i class="bi bi-flower1" aria-hidden="true"></i>

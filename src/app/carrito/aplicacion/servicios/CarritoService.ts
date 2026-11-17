@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { AnalyticsService } from '../../../core/seguimiento/AnalyticsService';
 import { AccesorioColocado } from '../../../personalizador/dominio/Accesorios';
+import type { EscenaMaceta } from '../../../shared/componentes/vista-maceta/vista-maceta';
 
 // Producto que se está personalizando (lo manda la pantalla del producto al personalizador)
 export interface ProductoCarrito {
@@ -33,7 +34,8 @@ export interface ItemCarrito {
     uid: string;
     tipo: 'personalizado' | 'complemento';
     producto: ProductoCarrito;
-    vista: string;                 // foto de la maceta ya personalizada (data URL)
+    vista: string;                 // foto de la maceta ya personalizada (data URL); se arma en segundo plano, para el pedido
+    escena?: EscenaMaceta;         // lo que el carrito pinta al instante: la maceta y sus accesorios en sus ubicaciones
     ruta: string;                  // pantalla donde se personalizó (para el botón Editar)
     resumen: LineaResumen[];
     configuracion?: ConfigGuardada;
@@ -72,6 +74,13 @@ export class CarritoService {
         );
 
         if (archivos) this.archivos.set(item.uid, archivos);
+        this.persistir();
+    }
+
+    /** Pone la foto ya armada (data URL) de un item, sin tocar lo demás. Si el item se quitó mientras tanto, no hace nada. */
+    ponerVista(uid: string, vista: string): void {
+        if (!vista || !this.items().some(i => i.uid === uid)) return;
+        this.items.update(lista => lista.map(i => (i.uid === uid ? { ...i, vista } : i)));
         this.persistir();
     }
 
