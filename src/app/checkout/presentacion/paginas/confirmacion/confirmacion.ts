@@ -2,12 +2,9 @@ import { Component, afterNextRender, computed, inject, signal } from '@angular/c
 import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
-import { PedidoPendienteService } from '../../../aplicacion/servicios/PedidoPendienteService';
-import { CUENTAS, TITULAR_TRANSFERENCIA } from '../../../dominio/interfaces/datos_transferencia';
+import { distintivoBanco } from '../../../dominio/interfaces/datos_transferencia';
 import { itemsConFoto, nombreArchivoFoto } from '../../../dominio/validaciones/foto_pedido';
-import {
-  fechaLarga, mensajeComprobante, urlWhatsapp
-} from '../../../dominio/validaciones/mensaje_whatsapp';
+import { fechaLarga } from '../../../dominio/validaciones/mensaje_whatsapp';
 
 @Component({
   selector: 'app-confirmacion',
@@ -19,11 +16,8 @@ export class Confirmacion {
 
   // ===== EDITABLES =====
   readonly RUTA_SEGUIR = '/categorias';   // "Seguir comprando"
-  readonly TITULAR = TITULAR_TRANSFERENCIA;
-  readonly CUENTAS = CUENTAS;
 
   private pedidos = inject(PedidoService);
-  private pendientes = inject(PedidoPendienteService);
 
   pedido = this.pedidos.pedido;
 
@@ -32,10 +26,13 @@ export class Confirmacion {
 
   esTransferencia = computed(() => this.pedido()?.metodo === 'transferencia');
   fecha = computed(() => (this.pedido() ? fechaLarga(this.pedido()!.fecha) : ''));
-  // Las mismas instrucciones del pedido pendiente: la etiqueta del plazo viene del contrato (hoy, un mock)
-  limite = computed(() => (this.esTransferencia() ? this.pendientes.desdePedido(this.pedido()!).deadline_label : ''));
-  mensaje = computed(() => (this.pedido() ? mensajeComprobante(this.pedido()!) : ''));
-  enlaceWhatsapp = computed(() => (this.pedido() ? urlWhatsapp(this.pedido()!) : ''));
+  // Todo lo de la transferencia (plazo, cuentas, mensaje y enlace de WhatsApp) lo entregó Laravel al crear el pedido
+  pendiente = computed(() => this.pedido()?.pendiente ?? null);
+  limite = computed(() => this.pendiente()?.deadline_label ?? '');
+  mensaje = computed(() => this.pendiente()?.whatsapp_message ?? '');
+  enlaceWhatsapp = computed(() => this.pendiente()?.whatsapp_url ?? '');
+  titular = computed(() => this.pendiente()?.bank_accounts[0] ?? null);
+  cuentas = computed(() => (this.pendiente()?.bank_accounts ?? []).map(c => ({ ...c, ...distintivoBanco(c.bank) })));
 
   // Fotos de las macetas personalizadas: se descargan para adjuntarlas en el chat de WhatsApp (el enlace solo lleva texto)
   fotos = computed(() => {
@@ -74,8 +71,8 @@ export class Confirmacion {
   }
 
   copiarMensaje(): void {
-    const p = this.pedido();
-    if (p) this.copiar('mensaje', mensajeComprobante(p));
+    const texto = this.mensaje();
+    if (texto) this.copiar('mensaje', texto);
   }
 
   // Si la foto del producto no existe, se oculta y queda el fondo

@@ -21,5 +21,14 @@ export interface PedidoPendiente {
     window: { start: string; end: string };
     bank_accounts: CuentaBancariaContrato[];
     receipt: { uploaded: boolean };
-    whatsapp_url: string;
+    whatsapp_url: string;         // endpoint de Laravel: registra el clic y abre WhatsApp con el mensaje
+    whatsapp_message: string;     // el mismo texto que lleva el enlace (incluye /pedido/{token})
+    share: VistaPrevia;
+}
+
+/** Datos de la vista previa del enlace /pedido/{token} (WhatsApp, redes). Sin datos personales. */
+export interface VistaPrevia {
+    title: string;
+    description: string;
+    image: string | null;
 }

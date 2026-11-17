@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { API_URL } from '../../../core/configuracion/api';
 import { SIN_CARGANDO } from '../../../shared/interceptores/cargandoInterceptor';
 import {
-    CATALOGO_VACIO, CatalogoUbicaciones, CodigoZona, buscarCanton, nombresDeCantones, nombresDeProvincias,
+    CATALOGO_VACIO, CatalogoUbicaciones, CodigoZona, buscarCanton, buscarProvincia, nombresDeCantones, nombresDeProvincias,
 } from '../../dominio/ubicaciones';
 import { costoEnvio, envioDesde, envioDisponible, tieneDiaAdicional, zonaEnvio } from '../../dominio/validaciones/envio';
 import { normalizar } from '../../dominio/validaciones/validaciones';
@@ -56,6 +56,12 @@ export class UbicacionesService {
         });
     }
 
+    /** Vuelve a pedir las ubicaciones y tarifas (por ejemplo, cuando Laravel avisa que el total cambió). */
+    recargar(): void {
+        this.pedido = false;
+        this.cargar();
+    }
+
     cantones(provincia: string): string[] {
         return this.cantonesPorProvincia().get(normalizar(provincia.trim())) ?? [];
     }
@@ -63,6 +69,11 @@ export class UbicacionesService {
     esProvinciaSinEnvio(provincia: string): boolean {
         const p = this.datos().provincias.find(x => normalizar(x.nombre) === normalizar(provincia.trim()));
         return !!p && p.cantones.length > 0 && p.cantones.every(c => !this.disponible(provincia, c.nombre));
+    }
+
+    /** Código del INEC de la provincia elegida ('' si todavía no hay datos o no existe). */
+    codigoProvincia(provincia: string): string {
+        return buscarProvincia(this.datos(), provincia)?.codigo ?? '';
     }
 
     /** Código del INEC del cantón elegido ('' si todavía no hay datos o no existe). */

@@ -204,7 +204,11 @@
         <span><b>Revisa bien:</b> después de confirmar no se puede editar tu pedido.</span>
     </p>
 
-    <button type="button" class="btn-confirmar" [disabled]="faltanDatos() || sinEnvio()" (click)="confirmar()">
+    @if (errorPedido()) {
+    <p class="error error-pedido" role="alert">{{ errorPedido() }}</p>
+    }
+
+    <button type="button" class="btn-confirmar" [disabled]="faltanDatos() || sinEnvio() || enviando()" (click)="confirmar()">
         Confirmar pedido <i class="bi bi-arrow-right" aria-hidden="true"></i>
     </button>
 

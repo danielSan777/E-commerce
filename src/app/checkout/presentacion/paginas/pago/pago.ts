@@ -7,12 +7,17 @@ import { CalendarioVentanas } from '../../../../shared/componentes/calendario-ve
 import { CarritoService } from '../../../../carrito/aplicacion/servicios/CarritoService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { CheckoutService, DatosCheckout } from '../../../aplicacion/servicios/CheckoutService';
+import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { PromesaService } from '../../../aplicacion/servicios/PromesaService';
 import { EntregaPedido, VentanaDisponible } from '../../../dominio/interfaces/promesa';
 import { textoVentana } from '../../../dominio/validaciones/fechas';
 import { UbicacionesService } from '../../../aplicacion/servicios/UbicacionesService';
 import { MENSAJE_SIN_ENVIO } from '../../../dominio/validaciones/envio';
+
+function formatearCentavos(c: number): string {
+  return `$${(c / 100).toFixed(2)}`;
+}
 
 type Metodo = DatosCheckout['metodoPago'];
 
@@ -74,6 +79,8 @@ export class Pago {
   aceptaTerminos = signal(false);
   intentoConfirmar = signal(false);
   errorTerminos = computed(() => this.intentoConfirmar() && !this.aceptaTerminos());
+  enviando = signal(false);
+  errorPedido = signal('');   // por qué Laravel no aceptó el pedido (precio, fecha, cupo, datos)
   errorEntrega = computed(() => this.intentoConfirmar() && !this.entregaPedido());
 
   // Hasta que se lean los datos guardados no se sabe si falta algo
@@ -165,7 +172,11 @@ export class Pago {
     const entrega = this.entregaPedido();
     if (!this.aceptaTerminos() || !entrega) return;
 
+    if (this.enviando()) return;
+
     const payphone = this.metodo() === 'payphone';
+    this.enviando.set(true);
+    this.errorPedido.set('');
 
     this.pedidos.crear({
       metodo: this.metodo(),
@@ -177,11 +188,48 @@ export class Pago {
       recargo: payphone ? this.recargoPayphone() : 0,
       total: this.totalFinal(),
       entrega,
+    }).subscribe({
+      next: () => {
+        // El carrito se vacía cuando ya se llegó a la confirmación (el pedido quedó guardado aparte)
+        this.router.navigateByUrl(this.RUTA_CONFIRMAR).then(ok => {
+          this.enviando.set(false);
+          if (ok) this.carrito.vaciar();
+        });
+      },
+      error: (e: ErrorApi) => {
+        this.enviando.set(false);
+        this.mostrarRechazo(e);
+      },
     });
+  }
 
-    // El carrito se vacía cuando ya se llegó a la confirmación (el pedido quedó guardado aparte)
-    this.router.navigateByUrl(this.RUTA_CONFIRMAR).then(ok => {
-      if (ok) this.carrito.vaciar();
-    });
+  /** Laravel rechazó el pedido: se explica qué cambió y se actualiza lo que Angular muestra (nada se calcula aquí). */
+  private mostrarRechazo(e: ErrorApi): void {
+    const d = e.details ?? {};
+    let texto = e.message;
+
+    switch (e.code) {
+      case 'price_changed':
+        // Los precios y tarifas pueden haber cambiado: se vuelven a pedir las zonas
+        this.ubicaciones.recargar();
+        if (typeof d['total_cents'] === 'number') texto = `${e.message} El total ahora es ${formatearCentavos(d['total_cents'])}.`;
+        break;
+      case 'window_changed':
+      case 'window_unavailable':
+      case 'capacity_full':
+        // Fecha distinta o sin cupo: se vuelve a pedir la promesa y se vuelve a la entrega estimada
+        this.checkout.actualizar({ entrega: 'inmediata', ventanaInicio: '', ventanaFin: '' });
+        this.promesas.cargar(this.ubicaciones.codigoCanton(this.datos().provincia, this.datos().canton), true);
+        if (e.code === 'window_changed' && typeof d['label'] === 'string') texto = `${e.message} Ahora: ${d['label']}.`;
+        break;
+      case 'validation_error': {
+        const primero = Object.values(e.errors ?? {})[0]?.[0];
+        texto = primero ? `${e.message} ${primero}` : e.message;
+        break;
+      }
+    }
+
+    this.errorPedido.set(texto);
+    this.avisos.error(texto);
   }
 }

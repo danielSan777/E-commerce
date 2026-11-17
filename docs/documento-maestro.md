@@ -521,7 +521,7 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 - [x] Una sola casilla obligatoria y desmarcada, "Acepto los términos y condiciones de Jardín de Sele", con enlace a `/terminos-y-condiciones` (Paso 12). Decisión de Josué (5 nov): no hay casilla de marketing. *(Hecho en `/checkout/pago`.)*
 - [x] Resumen final con la personalización completa de cada maceta y el aviso "Revisa bien: después de confirmar no se puede editar".
 - [x] Fecha de entrega desde la promesa del mock (Paso 0), no el texto fijo "jueves a viernes"; elección de ventana inmediata o programada en el checkout. *(Hecho en pago y confirmación con `PromesaService`, un mock con la forma exacta del Paso 0. Falta mostrarla en la ficha y la página principal.)*
-- [x] Transferencia: después de confirmar, mostrar la hora límite de 12 horas y el botón "Subir comprobante" (pedido pendiente, Paso 14). El mensaje de WhatsApp es corto: "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." con el total y hasta 3 productos, sin datos personales ni dirección. *(El botón abre WhatsApp con el mensaje corto; la subida del comprobante en la web llega con el Paso 14.)* *(Actualización del 7 nov: el enlace `wa.me` solo lleva texto, no puede adjuntar imágenes. En la confirmación, cada maceta personalizada tiene el botón "Descargar foto" para adjuntarla a mano en el chat (hecho, con la foto que guarda el personalizador). Pendiente con backend: el enlace `/pedido/{token}` dentro del mensaje, con etiquetas `og:image`/`og:title` generadas en el servidor para que WhatsApp muestre la vista previa; la imagen debe ser pública solo por token largo y sin datos personales.)*
+- [x] Transferencia: después de confirmar, mostrar la hora límite de 12 horas y el botón "Subir comprobante" (pedido pendiente, Paso 14). El mensaje de WhatsApp es corto: "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." con el total y hasta 3 productos, sin datos personales ni dirección. *(El botón abre WhatsApp con el mensaje corto; la subida del comprobante en la web llega con el Paso 14.)* *(Actualización del 7 nov: el enlace `wa.me` solo lleva texto, no puede adjuntar imágenes. En la confirmación, cada maceta personalizada tiene el botón "Descargar foto" para adjuntarla a mano en el chat (hecho, con la foto que guarda el personalizador). Hecho con el backend (Pasos 12 y 14): el enlace `/pedido/{token}` va dentro del mensaje, con etiquetas `og:image`/`og:title` generadas en el servidor para que WhatsApp muestre la vista previa; la imagen es pública solo por token largo y sin datos personales. Falta probarlo en WhatsApp real con el dominio publicado.)*
 - [x] "Usar otros datos de facturación": agregar los campos (nombre, cédula o RUC, correo y dirección).
 - [x] Logos de tarjetas: mostrar solo las marcas que PayPhone acepte en la cuenta de Josué. *(Visa, Mastercard, Diners Club y Discover, confirmadas por Josué.)*
 - [x] PayPhone simulado: hoy el pedido con tarjeta se marca pagado sin cobro. Debe quedar marcado como simulación y nunca llegar así a producción (Paso 13). *(Hecho: el pedido queda con `pagoSimulado` y se avisa en pago y confirmación.)*
@@ -1192,16 +1192,16 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Validaciones en el servidor de todos los campos: cédula (10 dígitos con dígito verificador) o RUC (13 dígitos, con la validación de su tipo); teléfono y correo normalizados (+593…, minúsculas, sin espacios). No se acepta pasaporte.
-- [ ] Facturación: por defecto, los datos de envío; si el comprador elige "otros datos", se guardan aparte (nombre, cédula o RUC, correo, dirección).
-- [ ] Número de contacto: por defecto, el celular de envío; si elige "otro número", se guarda ese.
+- [x] Validaciones en el servidor de todos los campos: cédula (10 dígitos con dígito verificador) o RUC (13 dígitos, con la validación de su tipo); teléfono y correo normalizados (+593…, minúsculas, sin espacios). No se acepta pasaporte.
+- [x] Facturación: por defecto, los datos de envío; si el comprador elige "otros datos", se guardan aparte (nombre, cédula o RUC, correo, dirección).
+- [x] Número de contacto: por defecto, el celular de envío; si elige "otro número", se guarda ese.
 - [ ] Validar que haya al menos una maceta y que cada maceta tenga sus accesorios completos, la frase o la foto si el marco la requiere, y dedicatoria o "No quiero dedicatoria".
-- [ ] Rechazar el pedido sin la casilla de términos (`terms_required`).
-- [ ] Crear o actualizar el cliente (Paso 23).
-- [ ] Guardar el tracking del Paso 0 más la IP real y el user agent que toma Laravel.
-- [ ] Recalcular precios, descuentos, envío, recargo y total; si difieren de lo mostrado, devolver `price_changed` y mostrar el nuevo total antes de pagar.
-- [ ] Asignar ciclo y ventana en una transacción (Pasos 8 y 9), aplicando la gracia si corresponde.
-- [ ] Crear el pedido con pago `unpaid` (tarjeta) o `pending_validation` (transferencia), número `JDS-####`, UUID, token privado aleatorio y `event_id` de compra.
+- [x] Rechazar el pedido sin la casilla de términos (`terms_required`).
+- [x] Crear o actualizar el cliente (Paso 23).
+- [x] Guardar el tracking del Paso 0 más la IP real y el user agent que toma Laravel.
+- [x] Recalcular precios, descuentos, envío, recargo y total; si difieren de lo mostrado, devolver `price_changed` y mostrar el nuevo total antes de pagar.
+- [x] Asignar ciclo y ventana en una transacción (Pasos 8 y 9), aplicando la gracia si corresponde.
+- [x] Crear el pedido con pago `unpaid` (tarjeta) o `pending_validation` (transferencia), número `JDS-####`, UUID, token privado aleatorio y `event_id` de compra.
 - [ ] Copiar a cada ítem: SKU, nombre del producto, precio, costo, descuento, personalización completa, nombre de placa, gafas o lentes, accesorios con su slot, frase o foto y dedicatoria.
 
 **Implementación acordada**
@@ -1290,13 +1290,13 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Al elegir transferencia: pedido con pago `pending_validation`, cupo apartado y plazo = creación + 12 h.
-- [ ] Página de pedido pendiente (Paso 1) con cuentas, hora límite, "Subir comprobante" y WhatsApp.
-- [ ] Subida del comprobante (JPG, PNG o PDF) al disco privado, con límite de intentos; se guarda la hora de subida.
-- [ ] Botón de WhatsApp que pasa por un endpoint propio, registra el clic y abre `wa.me` con "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." y el total.
+- [x] Al elegir transferencia: pedido con pago `pending_validation`, cupo apartado y plazo = creación + 12 h. *(Hecho: Laravel crea el pedido desde `/checkout/pago`; Angular maneja `price_changed`, `window_changed` y `capacity_full`.)*
+- [x] Página de pedido pendiente (Paso 1) con cuentas, hora límite, "Subir comprobante" y WhatsApp. *(Hecho: `/pedido/{token}` lee `GET /orders/{token}`.)*
+- [x] Subida del comprobante (JPG, PNG o PDF) al disco privado, con límite de intentos; se guarda la hora de subida. *(Hecho: 5 MB y 5 intentos por defecto; el tamaño máximo no estaba definido, confirmar con Josué.)*
+- [x] Botón de WhatsApp que pasa por un endpoint propio, registra el clic y abre `wa.me` con "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." y el total. *(Hecho: el mensaje incluye el enlace `/pedido/{token}` y la vista previa `og:*` se genera en el servidor.)*
 - [ ] Aviso a Josué al subirse un comprobante (Paso 18).
 - [ ] Acciones en el panel: "Marcar pagado", "Pagado fuera de plazo" y "Cancelar".
-- [ ] Vencimiento automático al cumplirse el plazo.
+- [x] Vencimiento automático al cumplirse el plazo.
 
 **Implementación acordada**
 
