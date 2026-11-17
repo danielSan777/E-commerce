@@ -43,7 +43,7 @@ export class Carrito implements AfterViewInit, OnDestroy {
   readonly RUTA_CONTINUAR = '/checkout';  // "Continuar"
 
   // ===== Otras macetas: los productos activos y disponibles que entrega Laravel =====
-  private productosApi = toSignal(inject(CategoriaService).productos().pipe(catchError(() => of([]))), { initialValue: [] });
+  private productosApi = toSignal(inject(CategoriaService).productos(undefined, true).pipe(catchError(() => of([]))), { initialValue: [] });
 
   /** Precio en dólares para mostrarlo y guardarlo en el carrito; el precio final lo calculó Laravel. */
   readonly macetas = computed<Sugerencia[]>(() => this.productosApi()
@@ -58,7 +58,7 @@ export class Carrito implements AfterViewInit, OnDestroy {
     })));
 
   // ===== Complementos: los productos activos de tipo "complemento" que entrega Laravel (sin categoría) =====
-  private complementosApi = toSignal(inject(CategoriaService).complementos().pipe(catchError(() => of([]))), { initialValue: [] });
+  private complementosApi = toSignal(inject(CategoriaService).complementos(true).pipe(catchError(() => of([]))), { initialValue: [] });
 
   readonly complementos = computed<Sugerencia[]>(() => this.complementosApi()
     .filter(p => p.available)

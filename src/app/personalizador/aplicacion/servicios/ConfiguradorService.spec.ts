@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { SIN_CARGANDO } from '../../../shared/interceptores/cargandoInterceptor';
 import { API_URL } from '../../../core/configuracion/api';
 import { ConfiguradorApi } from '../../dominio/configurador';
 import { ConfiguradorService } from './ConfiguradorService';
@@ -103,5 +104,16 @@ describe('ConfiguradorService', () => {
         servicio.configuracion('doctor').subscribe();
         http.expectOne(URL).flush(RESPUESTA);
         reloj.mockRestore();
+    });
+
+    it('lo que se adelanta en segundo plano no muestra la pantalla de carga; lo que la persona espera, sí', () => {
+        const URL = 'https://api.test/api/v1/products';
+        servicio.adelantar('doctor');
+        const adelantada = http.expectOne(`${URL}/doctor/configurator`);
+        expect(adelantada.request.context.get(SIN_CARGANDO)).toBe(true);
+        adelantada.flush(RESPUESTA);
+
+        servicio.configuracion('abogada').subscribe();
+        expect(http.expectOne(`${URL}/abogada/configurator`).request.context.get(SIN_CARGANDO)).toBe(false);
     });
 });
