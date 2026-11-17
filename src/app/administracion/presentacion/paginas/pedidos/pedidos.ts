@@ -8,7 +8,12 @@ import { AvisosService } from '../../../../shared/componentes/avisos/AvisosServi
 import { PedidosAdminService } from '../../../aplicacion/servicios/PedidosAdminService';
 import { EstadoPedidoAdmin, FiltroPedidos, PedidoAdmin, estadoDePedido } from '../../../dominio/interfaces/pedidos-admin';
 
-type Accion = 'pagar' | 'pagar_tarde' | 'cancelar';
+type Accion = 'pagar' | 'pagar_tarde' | 'cancelar' | 'produccion';
+
+/** La guía de Servientrega: letras, números y guiones, de 5 a 40 caracteres (Laravel valida lo mismo). */
+export function guiaValida(guia: string): boolean {
+  return /^[A-Za-z0-9-]{5,40}$/.test(guia.trim());
+}
 
 /** "mar 17 nov, 13:50" en la hora de Ecuador. */
 export function fechaHora(iso: string | null): string {
@@ -35,10 +40,11 @@ export class AdminPedidos implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   readonly filtros: { valor: FiltroPedidos; etiqueta: string }[] = [
-    { valor: 'pending', etiqueta: 'Por validar' }, { valor: 'paid', etiqueta: 'Pagados' },
+    { valor: 'pending', etiqueta: 'Por validar' }, { valor: 'to_produce', etiqueta: 'Por producir' },
+    { valor: 'in_production', etiqueta: 'En producción' }, { valor: 'shipped', etiqueta: 'Enviados' },
     { valor: 'expired', etiqueta: 'Vencidos' }, { valor: 'cancelled', etiqueta: 'Cancelados' }, { valor: 'all', etiqueta: 'Todos' },
   ];
-  readonly ETIQUETAS: Record<EstadoPedidoAdmin, string> = { pending: 'Pendiente de pago', paid: 'Pagado', expired: 'Vencido', cancelled: 'Cancelado' };
+  readonly ETIQUETAS: Record<EstadoPedidoAdmin, string> = { pending: 'Pendiente de pago', to_produce: 'Pagado · por producir', in_production: 'En producción', shipped: 'Enviado', expired: 'Vencido', cancelled: 'Cancelado' };
   readonly fechaHora = fechaHora;
   readonly ventana = ventana;
   readonly estado = estadoDePedido;
@@ -50,6 +56,8 @@ export class AdminPedidos implements OnInit {
   error = signal('');
   trabajando = signal<string | null>(null);              // número del pedido con una acción en curso
   confirmando = signal<{ numero: string; accion: Accion } | null>(null);
+  guia = signal('');                                       // guía escrita para marcar «Enviado»
+  errorGuia = signal('');
   sobrecupo = signal<{ numero: string; mensaje: string } | null>(null);   // Laravel pidió confirmar que se pasa del límite
 
   ngOnInit(): void { this.cargar(); }
@@ -73,6 +81,8 @@ export class AdminPedidos implements OnInit {
     this.abierto.set(this.abierto() === numero ? null : numero);
     this.confirmando.set(null);
     this.sobrecupo.set(null);
+    this.errorGuia.set('');
+    this.guia.set(this.pedidos().find(p => p.number === numero)?.tracking_number ?? '');
   }
 
   pedirConfirmacion(numero: string, accion: Accion): void {
@@ -95,24 +105,46 @@ export class AdminPedidos implements OnInit {
 
   ejecutar(p: PedidoAdmin, accion: Accion, confirmarSobrecupo = false): void {
     this.trabajando.set(p.number);
-    const llamada = accion === 'cancelar'
-      ? this.servicio.cancelar(p.number)
+    const llamada = accion === 'cancelar' ? this.servicio.cancelar(p.number)
+      : accion === 'produccion' ? this.servicio.enProduccion(p.number)
       : this.servicio.marcarPagado(p.number, { fueraDePlazo: accion === 'pagar_tarde', confirmarSobrecupo });
 
     llamada.pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.trabajando.set(null))).subscribe({
       next: nuevo => {
         this.confirmando.set(null);
         this.sobrecupo.set(null);
-        this.avisos.exito(accion === 'cancelar' ? `Pedido ${p.number} cancelado.` : `Pedido ${p.number} marcado como pagado.`);
-        // Sale de la lista si ya no corresponde al filtro; si no, se actualiza en su lugar
-        const f = this.filtro();
-        const sigue = f === 'all' || (f === 'paid' && estadoDePedido(nuevo) === 'paid') || (f === 'cancelled' && estadoDePedido(nuevo) === 'cancelled');
-        this.pedidos.update(l => sigue ? l.map(x => (x.number === nuevo.number ? nuevo : x)) : l.filter(x => x.number !== nuevo.number));
+        this.avisos.exito(accion === 'cancelar' ? `Pedido ${p.number} cancelado.` : accion === 'produccion' ? `Pedido ${p.number} en producción.` : `Pedido ${p.number} marcado como pagado.`);
+        this.reemplazar(nuevo);
       },
       error: (e: ErrorApi) => {
         if (e.code === 'capacity_over_limit') this.sobrecupo.set({ numero: p.number, mensaje: e.message });
         else { this.confirmando.set(null); this.avisos.error(e.message); }
       },
     });
+  }
+
+  /** «Enviado»: exige la guía de Servientrega; el comprador la ve en su seguimiento. */
+  enviar(p: PedidoAdmin): void {
+    const guia = this.guia().trim();
+    if (!guiaValida(guia)) {
+      this.errorGuia.set('Escribe la guía de Servientrega (letras, números y guiones, de 5 a 40 caracteres).');
+      return;
+    }
+    this.errorGuia.set('');
+    this.trabajando.set(p.number);
+    this.servicio.enviado(p.number, guia).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.trabajando.set(null))).subscribe({
+      next: nuevo => {
+        this.avisos.exito(p.shipped_at ? `Guía de ${p.number} corregida.` : `Pedido ${p.number} marcado como enviado.`);
+        this.reemplazar(nuevo);
+      },
+      error: (e: ErrorApi) => this.errorGuia.set(e.errors?.['tracking_number']?.[0] ?? e.message),
+    });
+  }
+
+  /** Actualiza el pedido en su lugar; si ya no corresponde al filtro elegido, sale de la lista. */
+  private reemplazar(nuevo: PedidoAdmin): void {
+    const f = this.filtro();
+    const sigue = f === 'all' || f === estadoDePedido(nuevo);   // cada filtro es un estado
+    this.pedidos.update(l => sigue ? l.map(x => (x.number === nuevo.number ? nuevo : x)) : l.filter(x => x.number !== nuevo.number));
   }
 }

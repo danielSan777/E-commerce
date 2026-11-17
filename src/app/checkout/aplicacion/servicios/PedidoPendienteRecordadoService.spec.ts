@@ -1,13 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { PedidoPendienteRecordadoService } from './PedidoPendienteRecordadoService';
 
-const futuro = new Date(Date.now() + 3600_000).toISOString();
-
 describe('PedidoPendienteRecordadoService', () => {
     beforeEach(() => localStorage.clear());
 
-    it('recuerda número, token y vencimiento, y los recupera al volver', () => {
-        TestBed.inject(PedidoPendienteRecordadoService).recordar({ numero: 'JDS-1', token: 't'.repeat(64), vence: futuro });
+    it('recuerda número y token, y los recupera al volver', () => {
+        TestBed.inject(PedidoPendienteRecordadoService).recordar('JDS-1', 't'.repeat(64));
         TestBed.resetTestingModule();
 
         const nuevo = TestBed.inject(PedidoPendienteRecordadoService);
@@ -17,13 +15,13 @@ describe('PedidoPendienteRecordadoService', () => {
     });
 
     it('no guarda datos personales', () => {
-        TestBed.inject(PedidoPendienteRecordadoService).recordar({ numero: 'JDS-1', token: 'abc', vence: futuro });
+        TestBed.inject(PedidoPendienteRecordadoService).recordar('JDS-1', 'abc');
 
-        expect(Object.keys(JSON.parse(localStorage.getItem('jds_pedido_pendiente')!)).sort()).toEqual(['numero', 'token', 'vence']);
+        expect(Object.keys(JSON.parse(localStorage.getItem('jds_pedido_pendiente')!)).sort()).toEqual(['guardado', 'numero', 'token']);
     });
 
-    it('un pedido vencido se descarta', () => {
-        localStorage.setItem('jds_pedido_pendiente', JSON.stringify({ numero: 'JDS-1', token: 'abc', vence: '2020-01-01T00:00:00Z' }));
+    it('lo guardado hace más de 30 días se descarta', () => {
+        localStorage.setItem('jds_pedido_pendiente', JSON.stringify({ numero: 'JDS-1', token: 'abc', guardado: '2020-01-01T00:00:00Z' }));
         const s = TestBed.inject(PedidoPendienteRecordadoService);
         s.restaurar();
 
@@ -33,7 +31,7 @@ describe('PedidoPendienteRecordadoService', () => {
 
     it('olvidar borra el aviso', () => {
         const s = TestBed.inject(PedidoPendienteRecordadoService);
-        s.recordar({ numero: 'JDS-1', token: 'abc', vence: futuro });
+        s.recordar('JDS-1', 'abc');
         s.olvidar();
 
         expect(s.pedido()).toBeNull();

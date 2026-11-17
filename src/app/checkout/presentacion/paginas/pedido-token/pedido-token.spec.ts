@@ -40,10 +40,13 @@ describe('PedidoToken (/pedido/{token})', () => {
         expect(html.textContent).not.toContain('Estado de tu pedido');
     });
 
-    it('un pedido ya pagado o vencido deja de recordarse como pendiente', async () => {
-        localStorage.setItem('jds_pedido_pendiente', '{"numero":"JDS-1","token":"t","vence":"2099-01-01T00:00:00Z"}');
+    it('un pedido pagado o pendiente queda recordado; uno vencido se olvida', async () => {
+        localStorage.clear();
         await montar({ cuerpo: SEGUIMIENTO_API });
+        expect(JSON.parse(localStorage.getItem('jds_pedido_pendiente')!).numero).toBe('JDS-48213');
 
+        TestBed.resetTestingModule();
+        await montar({ cuerpo: { ...PENDIENTE_API, status: 'expired' } });
         expect(localStorage.getItem('jds_pedido_pendiente')).toBeNull();
     });
 

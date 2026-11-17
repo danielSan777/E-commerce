@@ -23,6 +23,16 @@ export class PedidosAdminService {
     }).pipe(conErrorApi());
   }
 
+  /** Pedido pagado que entra a producción. */
+  enProduccion(numero: string): Observable<PedidoAdmin> {
+    return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/production`, {}).pipe(conErrorApi());
+  }
+
+  /** Pedido enviado, con la guía de Servientrega que verá el comprador. Volver a llamarlo corrige la guía. */
+  enviado(numero: string, guia: string): Observable<PedidoAdmin> {
+    return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/ship`, { tracking_number: guia }).pipe(conErrorApi());
+  }
+
   cancelar(numero: string): Observable<PedidoAdmin> {
     return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/cancel`, {}).pipe(conErrorApi());
   }

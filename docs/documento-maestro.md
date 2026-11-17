@@ -1337,7 +1337,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - [ ] **Corregir un pedido:** Josué edita la personalización o los datos de envío y facturación hasta que el pedido esté "Enviado"; cada cambio queda con autor, antes y después.
 - [ ] Mover un pedido de ciclo, con recálculo de la ventana.
 - [ ] Cancelar con motivo (libera el cupo) y registrar el reembolso manual (el de tarjeta se hace en el panel de PayPhone).
-- [ ] Marcar "En producción" y "Enviado" (con guía), también por lote (Paso 19).
+- [ ] Marcar "En producción" y "Enviado" (con guía), también por lote (Paso 19). *(Hecho uno por uno en `/admin/pedidos`: "Pasar a producción" y "Marcar enviado" con la guía de Servientrega, que el comprador ve en `/pedido/{token}`. Falta el envío por lote (Paso 19) y el correo al comprador (Paso 18).)*
 - [ ] Historial `order_events`, solo de escritura.
 
 **Implementación acordada**

@@ -4,15 +4,17 @@ import { isPlatformBrowser } from '@angular/common';
 export interface PedidoRecordado {
     numero: string;
     token: string;
-    vence: string;   // ISO: cuando vence el plazo de pago
+    guardado: string;   // ISO: cuándo se guardó (pasados 30 días se deja de recordar)
 }
+
+const DIAS_RECORDADO = 30;
 
 const CLAVE = 'jds_pedido_pendiente';
 
 /**
- * Recuerda en este navegador el último pedido por transferencia pendiente de pago, para poder volver a él
- * ("Tienes un pedido pendiente") aunque se cierre la pestaña. Solo guarda número, enlace privado y vencimiento:
- * nada de datos personales. La verdad sobre el pedido sigue en Laravel.
+ * Recuerda en este navegador el último pedido (pendiente de pago, en producción o enviado) para poder volver a su
+ * seguimiento aunque se cierre la pestaña. Solo guarda número y enlace privado: nada de datos personales.
+ * El estado real lo dice Laravel cada vez que se abre el aviso.
  */
 @Injectable({ providedIn: 'root' })
 export class PedidoPendienteRecordadoService {
@@ -25,19 +27,20 @@ export class PedidoPendienteRecordadoService {
         if (!this.esNavegador) return;
         try {
             const g = JSON.parse(localStorage.getItem(CLAVE) ?? 'null') as PedidoRecordado | null;
-            if (g?.token && g.numero && Date.parse(g.vence) > ahora) { this.pedido.set(g); return; }
-            if (g) localStorage.removeItem(CLAVE);   // ya venció: no sirve
+            if (g?.token && g.numero && ahora - Date.parse(g.guardado) < DIAS_RECORDADO * 86_400_000) { this.pedido.set(g); return; }
+            if (g) localStorage.removeItem(CLAVE);   // muy viejo o dañado: no sirve
         } catch { /* almacenamiento bloqueado o dañado */ }
         this.pedido.set(null);
     }
 
-    recordar(p: PedidoRecordado): void {
+    recordar(numero: string, token: string): void {
+        const p: PedidoRecordado = { numero, token, guardado: new Date().toISOString() };
         this.pedido.set(p);
         if (!this.esNavegador) return;
         try { localStorage.setItem(CLAVE, JSON.stringify(p)); } catch { /* sin espacio: queda solo en memoria */ }
     }
 
-    /** El pedido ya se pagó, venció, se canceló o no existe: deja de avisarse. */
+    /** El pedido venció, se canceló o no existe: deja de avisarse. */
     olvidar(): void {
         this.pedido.set(null);
         if (!this.esNavegador) return;

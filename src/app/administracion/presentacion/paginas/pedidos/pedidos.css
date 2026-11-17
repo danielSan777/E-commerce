@@ -29,3 +29,12 @@
 .vacio { color: var(--suave); }
 
 @media (max-width: 560px) { .detalle dl { grid-template-columns: 1fr; } .detalle dt { margin-top: .4rem; } }
+
+.insignia.to_produce { background: #d1fae5; color: #065f46; }
+.insignia.in_production { background: #ede9fe; color: #5b21b6; }
+.insignia.shipped { background: #dbeafe; color: #1e40af; }
+.envio-guia { display: flex; flex-direction: column; gap: .3rem; }
+.fila-guia { display: flex; flex-wrap: wrap; gap: .5rem; }
+.fila-guia input { flex: 1 1 12rem; min-height: 44px; }
+.campo-error { color: var(--peligro); }
+.ayuda { color: var(--suave); }

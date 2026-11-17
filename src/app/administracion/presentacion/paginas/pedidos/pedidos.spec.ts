@@ -5,14 +5,14 @@ import { provideRouter } from '@angular/router';
 import { API_URL } from '../../../../core/configuracion/api';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { PedidoAdmin, estadoDePedido } from '../../../dominio/interfaces/pedidos-admin';
-import { AdminPedidos, ventana } from './pedidos';
+import { AdminPedidos, guiaValida, ventana } from './pedidos';
 
 const pedido = (over: Partial<PedidoAdmin> = {}): PedidoAdmin => ({
   number: 'JDS-1001', channel: 'web', payment_method: 'transfer', payment_status: 'pending_validation', status: 'created',
   customer: { name: 'María Pérez', email: 'm@correo.com', phone: '0991234567' },
   total_cents: 2450, shipping_cents: 350, shipping_zone: 'A', cycle_date: '2026-11-17', dispatch_date: '2026-11-19',
   window: { start: '2026-11-20', end: '2026-11-21', type: 'immediate' },
-  deadline_at: '2026-11-18T03:00:00Z', receipt_uploaded_at: '2026-11-17T20:00:00Z', whatsapp_clicked_at: null, paid_at: null, created_at: '2026-11-17T15:00:00Z',
+  deadline_at: '2026-11-18T03:00:00Z', receipt_uploaded_at: '2026-11-17T20:00:00Z', whatsapp_clicked_at: null, paid_at: null, production_started_at: null, shipped_at: null, tracking_number: null, created_at: '2026-11-17T15:00:00Z',
   items: [{ sku: 'DOC', name: 'Abogada', type: 'personalizable', line_total_cents: 2100, personalization: { name_text: 'Ana', dedication: { mode: 'text', text: 'Gracias' } } }],
   shipping: { name: 'María Pérez', id_number: '0954091989', phone: '0991234567', email: 'm@correo.com', address: 'Av. Principal 123', reference: '', province_name: 'Guayas', canton_name: 'Durán' },
   billing: { same_as_shipping: true },
@@ -117,13 +117,59 @@ describe('AdminPedidos', () => {
 
   it('cambiar de filtro vuelve a pedir la lista', async () => {
     const { c } = await abrir();
-    c.elegirFiltro('paid');
+    c.elegirFiltro('shipped');
 
-    expect(http.expectOne(x => x.url === '/api/v1/admin/orders').request.params.get('status')).toBe('paid');
+    expect(http.expectOne(x => x.url === '/api/v1/admin/orders').request.params.get('status')).toBe('shipped');
+  });
+
+  it('pasar a producción pide confirmación y llama a Laravel; el pedido sale de "Por producir"', async () => {
+    const { c } = await abrir([pedido({ payment_status: 'paid', status: 'ready_for_production' })]);
+    c.filtro.set('to_produce');
+    c.ejecutar(c.pedidos()[0], 'produccion');
+    http.expectOne('/api/v1/admin/orders/JDS-1001/production').flush(pedido({ payment_status: 'paid', status: 'in_production' }));
+
+    expect(c.pedidos()).toEqual([]);
+  });
+
+  it('marcar enviado exige una guía válida y la manda a Laravel', async () => {
+    const { c } = await abrir([pedido({ payment_status: 'paid', status: 'in_production' })]);
+    c.filtro.set('in_production');
+    c.guia.set('ab !');
+    c.enviar(c.pedidos()[0]);
+    http.expectNone('/api/v1/admin/orders/JDS-1001/ship');
+    expect(c.errorGuia()).toContain('guía de Servientrega');
+
+    c.guia.set(' 1234567890 ');
+    c.enviar(c.pedidos()[0]);
+    const r = http.expectOne('/api/v1/admin/orders/JDS-1001/ship');
+    expect(r.request.body).toEqual({ tracking_number: '1234567890' });
+    r.flush(pedido({ payment_status: 'paid', status: 'shipped', tracking_number: '1234567890' }));
+
+    expect(c.pedidos()).toEqual([]);   // ya no está "En producción"
+    expect(c.errorGuia()).toBe('');
+  });
+
+  it('un pedido enviado muestra su guía y permite corregirla', async () => {
+    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'shipped', shipped_at: '2026-11-18T15:00:00Z', tracking_number: '1234567890' })]);
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+
+    expect(el.textContent).toContain('guía 1234567890');
+    expect(el.textContent).toContain('Guardar guía');
+    expect(el.querySelector<HTMLInputElement>('.fila-guia input')?.value).toBe('1234567890');
+  });
+
+  it('la guía se valida como en Laravel', () => {
+    expect(guiaValida('1234567890')).toBe(true);
+    expect(guiaValida(' AB-12345 ')).toBe(true);
+    expect(guiaValida('1234')).toBe(false);
+    expect(guiaValida('12 34 56')).toBe(false);
   });
 
   it('estado y ventana en texto', () => {
-    expect(estadoDePedido({ payment_status: 'paid', status: 'ready_for_production' })).toBe('paid');
+    expect(estadoDePedido({ payment_status: 'paid', status: 'ready_for_production' })).toBe('to_produce');
+    expect(estadoDePedido({ payment_status: 'paid', status: 'in_production' })).toBe('in_production');
+    expect(estadoDePedido({ payment_status: 'paid', status: 'shipped' })).toBe('shipped');
     expect(estadoDePedido({ payment_status: 'pending_validation', status: 'expired' })).toBe('expired');
     expect(estadoDePedido({ payment_status: 'paid', status: 'cancelled' })).toBe('cancelled');
     expect(ventana({ start: '2026-11-20', end: '2026-11-21' })).toBe('20 nov – 21 nov');

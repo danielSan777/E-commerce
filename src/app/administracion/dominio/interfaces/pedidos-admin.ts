@@ -1,6 +1,6 @@
 // Pedidos en el panel (GET /api/v1/admin/orders). Nombres en inglés y snake_case: son los de Laravel. Dinero en centavos.
 
-export type FiltroPedidos = 'pending' | 'paid' | 'expired' | 'cancelled' | 'all';
+export type FiltroPedidos = 'pending' | 'to_produce' | 'in_production' | 'shipped' | 'expired' | 'cancelled' | 'all';
 
 export interface PedidoAdmin {
     number: string;
@@ -19,16 +19,21 @@ export interface PedidoAdmin {
     receipt_uploaded_at: string | null;
     whatsapp_clicked_at: string | null;
     paid_at: string | null;
+    production_started_at: string | null;
+    shipped_at: string | null;
+    tracking_number: string | null;   // guía de Servientrega
     created_at: string;
     items: { sku: string; name: string; type: string; line_total_cents: number; personalization: { name_text?: string; dedication?: { mode: string; text: string } } | null }[];
     shipping: { name: string; id_number: string; phone: string; email: string; address: string; reference: string; province_name?: string; canton_name?: string };
     billing: { same_as_shipping: boolean; name?: string; id_number?: string } | null;
 }
 
-export type EstadoPedidoAdmin = 'paid' | 'cancelled' | 'expired' | 'pending';
+export type EstadoPedidoAdmin = 'to_produce' | 'in_production' | 'shipped' | 'cancelled' | 'expired' | 'pending';
 
 export function estadoDePedido(p: Pick<PedidoAdmin, 'payment_status' | 'status'>): EstadoPedidoAdmin {
     if (p.status === 'cancelled') return 'cancelled';
-    if (p.payment_status === 'paid') return 'paid';
+    if (p.status === 'shipped') return 'shipped';
+    if (p.status === 'in_production') return 'in_production';
+    if (p.payment_status === 'paid') return 'to_produce';
     return p.status === 'expired' ? 'expired' : 'pending';
 }

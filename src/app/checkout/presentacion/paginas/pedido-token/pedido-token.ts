@@ -82,7 +82,10 @@ export class PedidoToken {
   }
 
   mostrar(v: VistaPedido): void {
-    if (esSeguimiento(v) || v.status === 'expired') this.recordado.olvidar();   // ya no hay nada que pagar
+    // Se recuerda para volver a él desde la tienda; vencido o cancelado ya no hay nada que seguir
+    const termino = esSeguimiento(v) ? v.visible_status === 'cancelado' || v.visible_status === 'reembolsado' : v.status === 'expired';
+    if (termino) this.recordado.olvidar();
+    else this.recordado.recordar(v.order_number, this.token);
     if (esSeguimiento(v)) this.estado.set({ tipo: 'seguimiento', vista: v });
     else this.estado.set({ tipo: 'pendiente', vista: v });
 

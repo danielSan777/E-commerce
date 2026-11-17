@@ -92,7 +92,7 @@ export class PedidoService {
             tap(p => {
                 this.guardarPedido(p);
                 // Para poder volver al pedido (y a WhatsApp) aunque se cierre la pestaña
-                this.recordado.recordar({ numero: p.numero, token: p.token, vence: p.limitePago ?? '' });
+                this.recordado.recordar(p.numero, p.token);
             }),
             conErrorApi(),
         );
