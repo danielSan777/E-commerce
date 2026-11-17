@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { API_URL } from '../../../../core/configuracion/api';
 import { precioApi } from '../../../../testing/catalogo-api';
@@ -158,5 +158,33 @@ describe('DetalleProducto (ficha con datos de Laravel)', () => {
   it('un producto con solo un video (sin fotos) lo muestra como lámina junto a la imagen provisional', async () => {
     const f = await montar('doctor', { ...FICHA, media: [{ type: 'video', role: 'video', url: 'http://api/media/v.mp4', poster: null, duration_s: 5 }] });
     expect((f.nativeElement as HTMLElement).querySelector('.miniatura-video')).not.toBeNull();
+  });
+
+  it('al entrar directo a /personalizar (desde las categorías) el personalizador espera al producto: nace ya con su producto y pide su configuración', async () => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      imports: [DetalleProducto],
+      providers: [provideRouter([{ path: '**', children: [] }]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }, {
+        provide: ActivatedRoute,
+        useValue: { paramMap: of(convertToParamMap({ producto: 'doctor' })), snapshot: { paramMap: convertToParamMap({ producto: 'doctor' }) } },
+      }],
+    });
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/producto/doctor/personalizar');
+    const ctrl = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(DetalleProducto);
+    const html = fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+    await esperar();
+
+    // El producto todavía no llegó: no se abre un personalizador sin producto (saldría con la foto genérica y sin ubicaciones)
+    expect(html.querySelector('app-personalizador')).toBeNull();
+
+    ctrl.expectOne('/api/v1/products/doctor').flush(FICHA);
+    await esperar();
+    fixture.detectChanges();
+
+    expect(html.querySelector('app-personalizador')).not.toBeNull();
+    ctrl.expectOne('/api/v1/products/doctor/configurator');
   });
 });

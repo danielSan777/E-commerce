@@ -174,7 +174,7 @@
     }
 </section>
 <!-- Personalizador a pantalla completa -->
-@if (personalizadorAbierto()) {
+@if (personalizadorAbierto() && productoCarrito()) {
 <div class="modal-personalizador" (click)="cerrarPorFondo()">
     <div class="modal-contenido" (click)="$event.stopPropagation()">
 
