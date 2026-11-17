@@ -90,15 +90,29 @@ export class AdminPedidos implements OnInit {
     this.confirmando.set({ numero, accion });
   }
 
+  readonly COLORES: Record<string, string> = { negro: 'negro', cafe: 'café', dorado: 'dorado' };
+  color = (c: string | null | undefined) => (c ? (this.COLORES[c] ?? c) : '');
+
+  /** Abre la foto de la maceta o la del marco en otra pestaña. */
+  verImagen(p: PedidoAdmin, item: number, cual: 'preview' | 'frame-photo'): void {
+    this.trabajando.set(p.number);
+    this.servicio.imagenDelItem(p.number, item, cual).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.trabajando.set(null))).subscribe({
+      next: blob => this.abrirArchivo(blob),
+      error: (e: ErrorApi) => this.avisos.error(e.message),
+    });
+  }
+
+  private abrirArchivo(blob: Blob): void {
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+
   /** Abre el comprobante en otra pestaña. */
   verComprobante(p: PedidoAdmin): void {
     this.trabajando.set(p.number);
     this.servicio.comprobante(p.number).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.trabajando.set(null))).subscribe({
-      next: blob => {
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank', 'noopener');
-        setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      },
+      next: blob => this.abrirArchivo(blob),
       error: (e: ErrorApi) => this.avisos.error(e.message),
     });
   }

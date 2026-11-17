@@ -38,3 +38,10 @@
 .fila-guia input { flex: 1 1 12rem; min-height: 44px; }
 .campo-error { color: var(--peligro); }
 .ayuda { color: var(--suave); }
+
+.items li.item { display: flex; flex-direction: column; gap: .4rem; align-items: stretch; padding: .6rem 0; }
+.item-cabecera { display: flex; justify-content: space-between; gap: 1rem; }
+.personalizacion { display: grid; grid-template-columns: 9rem 1fr; gap: .15rem .75rem; margin: 0; padding: .5rem .75rem; background: #f0fdf4; border-radius: 8px; }
+.personalizacion dt { color: var(--suave); }
+.personalizacion dd { margin: 0; }
+@media (max-width: 560px) { .personalizacion { grid-template-columns: 1fr; } }

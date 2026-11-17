@@ -72,7 +72,7 @@ export class PedidoToken {
 
   cargar(): void {
     this.estado.set({ tipo: 'cargando' });
-    this.servicio.obtener(this.token).subscribe({
+    this.servicio.obtener(this.token, true).subscribe({
       next: v => this.mostrar(v),
       error: e => {
         if (e?.status === 404) this.recordado.olvidar();

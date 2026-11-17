@@ -23,7 +23,19 @@ export interface PedidoAdmin {
     shipped_at: string | null;
     tracking_number: string | null;   // guía de Servientrega
     created_at: string;
-    items: { sku: string; name: string; type: string; line_total_cents: number; personalization: { name_text?: string; dedication?: { mode: string; text: string } } | null }[];
+    items: {
+        id: number; has_preview: boolean; has_frame_photo: boolean;
+        sku: string; name: string; type: string; line_total_cents: number;
+        personalization: {
+            name_text?: string;
+            dedication?: { mode: string; text: string };
+            accessories?: { id: number; name: string; behavior: string | null }[];
+            lens_color?: string | null;
+            glasses_color?: string | null;
+            frame_text?: string | null;
+            has_frame_photo?: boolean;
+        } | null;
+    }[];
     shipping: { name: string; id_number: string; phone: string; email: string; address: string; reference: string; province_name?: string; canton_name?: string };
     billing: { same_as_shipping: boolean; name?: string; id_number?: string } | null;
 }

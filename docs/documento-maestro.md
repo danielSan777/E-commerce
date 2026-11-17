@@ -1202,7 +1202,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - [x] Recalcular precios, descuentos, envío, recargo y total; si difieren de lo mostrado, devolver `price_changed` y mostrar el nuevo total antes de pagar.
 - [x] Asignar ciclo y ventana en una transacción (Pasos 8 y 9), aplicando la gracia si corresponde.
 - [x] Crear el pedido con pago `unpaid` (tarjeta) o `pending_validation` (transferencia), número `JDS-####`, UUID, token privado aleatorio y `event_id` de compra.
-- [ ] Copiar a cada ítem: SKU, nombre del producto, precio, costo, descuento, personalización completa, nombre de placa, gafas o lentes, accesorios con su slot, frase o foto y dedicatoria.
+- [ ] Copiar a cada ítem: SKU, nombre del producto, precio, costo, descuento, personalización completa, nombre de placa, gafas o lentes, accesorios con su slot, frase o foto y dedicatoria. *(Avance: se guardan nombre de placa, dedicatoria, accesorios (nombre y comportamiento tomados de la base de datos), color de lentes o gafas, frase y foto del marco, y la foto de la maceta; el administrador los ve en `/admin/pedidos`. Falta guardar la posición de cada accesorio y validar la cantidad exacta de accesorios que exige el configurador.)*
 
 **Implementación acordada**
 

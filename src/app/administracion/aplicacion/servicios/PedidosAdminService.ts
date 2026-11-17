@@ -23,6 +23,11 @@ export class PedidosAdminService {
     }).pipe(conErrorApi());
   }
 
+  /** Foto de la maceta personalizada (`preview`) o foto del marco que subió el comprador (`frame-photo`). Exige sesión. */
+  imagenDelItem(numero: string, item: number, cual: 'preview' | 'frame-photo'): Observable<Blob> {
+    return this.http.get(`${this.api}/admin/orders/${numero}/items/${item}/${cual}`, { responseType: 'blob' }).pipe(conErrorApi());
+  }
+
   /** Pedido pagado que entra a producción. */
   enProduccion(numero: string): Observable<PedidoAdmin> {
     return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/production`, {}).pipe(conErrorApi());

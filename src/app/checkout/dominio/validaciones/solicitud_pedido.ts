@@ -9,7 +9,15 @@ export const VERSION_TERMINOS = '2026-11';
 export interface SolicitudPedido {
     items: {
         slug: string;
-        personalization: { name_text: string; dedication: { mode: 'text' | 'none'; text: string } } | null;
+        personalization: {
+            name_text: string;
+            dedication: { mode: 'text' | 'none'; text: string };
+            accessory_ids: number[];          // Laravel busca cada accesorio y decide su comportamiento
+            lens_color: string;
+            glasses_color: string;
+            frame_text: string;
+            frame_photo: string | null;       // data URL ya reducido; solo si hay marco con foto
+        } | null;
         preview_image: string | null;
     }[];
     promise_token: string;
@@ -41,6 +49,8 @@ export interface EntradaSolicitud {
     totalCentavos: number;
     entrega: EntregaPedido;
     tracking: Record<string, unknown> | null;
+    /** Foto del marco ya reducida, por uid del ítem del carrito. */
+    fotosMarco?: Record<string, string>;
 }
 
 /**
@@ -60,6 +70,11 @@ export function armarSolicitud(e: EntradaSolicitud, codigos: CodigosUbicacion): 
                     dedication: item.configuracion.sinTarjeta || !item.configuracion.dedicatoria.trim()
                         ? { mode: 'none', text: '' }
                         : { mode: 'text', text: item.configuracion.dedicatoria.trim() },
+                    accessory_ids: [...new Set(item.configuracion.accesorios.map(a => a.accesorioId))],
+                    lens_color: item.configuracion.colorLentes,
+                    glasses_color: item.configuracion.colorGafas,
+                    frame_text: item.configuracion.textoMarco.trim(),
+                    frame_photo: e.fotosMarco?.[item.uid] ?? null,
                 }
                 : null,
             preview_image: item.tipo === 'personalizado' && item.vista ? item.vista : null,

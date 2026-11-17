@@ -127,6 +127,21 @@ describe('Pago', () => {
       expect(http.match(r => r.url === '/api/v1/delivery/promise').length).toBe(1);
     });
 
+    it('un error de una maceta (por ejemplo, falta la foto del marco) se explica con su nombre', async () => {
+      await prepararConfirmacion();
+      TestBed.inject(CarritoService).items.set([{
+        uid: 'u1', tipo: 'personalizado', producto: { id: 'doctora', nombre: 'Doctora', precio: 25 }, vista: '', ruta: '', resumen: [],
+        configuracion: { accesorios: [], nombre: 'Ana', colorLentes: 'negro', colorGafas: 'negro', dedicatoria: '', textoMarco: '', sinTarjeta: true, fotoMarcoNombre: '' },
+      }]);
+      component.confirmar();
+
+      http.expectOne('/api/v1/checkout').flush(
+        { code: 'validation_error', message: 'Datos inválidos.', errors: { 'items.0.personalization.frame_photo': ['Sube la foto del marco.'] } },
+        { status: 422, statusText: 'Unprocessable' });
+
+      expect(component.errorPedido()).toBe('Revisa tu maceta «Doctora»: Sube la foto del marco. Edítala desde el carrito.');
+    });
+
     it('no envía dos veces mientras Laravel responde', async () => {
       await prepararConfirmacion();
       component.confirmar();

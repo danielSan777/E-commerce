@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { API_URL } from '../../../core/configuracion/api';
+import { SIN_CARGANDO } from '../../../shared/interceptores/cargandoInterceptor';
 import { PENDIENTE_API, SEGUIMIENTO_API, TOKEN_PRUEBA } from '../../../testing/pedido-api';
 import { PedidoConsultaService, esSeguimiento } from './PedidoConsultaService';
 
@@ -23,6 +24,18 @@ describe('PedidoConsultaService', () => {
         http.expectOne(`/api/v1/orders/${TOKEN_PRUEBA}`).flush(PENDIENTE_API);
 
         expect(vista).toEqual(PENDIENTE_API);
+    });
+
+    it('la pantalla del pedido muestra el spinner; el aviso de la tienda lo pide en silencio', () => {
+        servicio.obtener(TOKEN_PRUEBA, true).subscribe();
+        const conSpinner = http.expectOne(`/api/v1/orders/${TOKEN_PRUEBA}`);
+        expect(conSpinner.request.context.get(SIN_CARGANDO)).toBe(false);
+        conSpinner.flush(PENDIENTE_API);
+
+        servicio.obtener(TOKEN_PRUEBA).subscribe();
+        const enSilencio = http.expectOne(`/api/v1/orders/${TOKEN_PRUEBA}`);
+        expect(enSilencio.request.context.get(SIN_CARGANDO)).toBe(true);
+        enSilencio.flush(PENDIENTE_API);
     });
 
     it('distingue el pedido pendiente del seguimiento', () => {

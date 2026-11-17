@@ -23,8 +23,9 @@ export class PedidoConsultaService {
     private http = inject(HttpClient);
     private api = inject(API_URL);
 
-    obtener(token: string): Observable<VistaPedido> {
-        return this.http.get<VistaPedido>(`${this.api}/orders/${encodeURIComponent(token)}`, { context: new HttpContext().set(SIN_CARGANDO, true) })
+    /** `conSpinner`: la pantalla del pedido espera con la pantalla de carga; el aviso de la tienda lo pide en silencio. */
+    obtener(token: string, conSpinner = false): Observable<VistaPedido> {
+        return this.http.get<VistaPedido>(`${this.api}/orders/${encodeURIComponent(token)}`, { context: new HttpContext().set(SIN_CARGANDO, !conSpinner) })
             .pipe(conErrorApi());
     }
 

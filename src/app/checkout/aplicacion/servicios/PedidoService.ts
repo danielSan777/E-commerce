@@ -1,15 +1,17 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, map, of, tap } from 'rxjs';
-import { ItemCarrito } from '../../../carrito/aplicacion/servicios/CarritoService';
+import { Observable, catchError, from, map, of, switchMap, tap, throwError } from 'rxjs';
+import { CarritoService, ItemCarrito } from '../../../carrito/aplicacion/servicios/CarritoService';
 import { API_URL } from '../../../core/configuracion/api';
 import { AtribucionService } from '../../../core/seguimiento/AtribucionService';
+import { ErrorApi } from '../../../cuenta/dominio/interfaces/sesion';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
 import { DatosCheckout } from './CheckoutService';
 import { PedidoPendienteRecordadoService } from './PedidoPendienteRecordadoService';
 import { UbicacionesService } from './UbicacionesService';
 import { EntregaPedido } from '../../dominio/interfaces/promesa';
 import { PedidoPendiente } from '../../dominio/interfaces/pedido_pendiente';
+import { reducirFoto } from '../reducirFoto';
 import { armarSolicitud } from '../../dominio/validaciones/solicitud_pedido';
 
 export type MetodoPago = DatosCheckout['metodoPago'];
@@ -62,6 +64,7 @@ export class PedidoService {
     private ubicaciones = inject(UbicacionesService);
     private atribucion = inject(AtribucionService);
     private recordado = inject(PedidoPendienteRecordadoService);
+    private carrito = inject(CarritoService);
 
     // sessionStorage: son datos personales y se borran al cerrar la pestaña
     private readonly CLAVE = 'pedido-jardin-de-sele';
@@ -76,26 +79,41 @@ export class PedidoService {
     crear(nuevo: NuevoPedido): Observable<Pedido> {
         if (nuevo.metodo === 'payphone') return of(this.guardarPedido(this.simulado(nuevo)));
 
-        const solicitud = armarSolicitud({
-            items: nuevo.items,
-            datos: nuevo.datos,
-            totalCentavos: Math.round(nuevo.total * 100),
-            entrega: nuevo.entrega,
-            tracking: { first_touch: this.atribucion.first(), last_touch: this.atribucion.last() },
-        }, {
-            provincia: n => this.ubicaciones.codigoProvincia(n),
-            canton: (p, c) => this.ubicaciones.codigoCanton(p, c),
-        });
-
-        return this.http.post<RespuestaCheckout>(`${this.api}/checkout`, solicitud).pipe(
+        return this.fotosDelMarco(nuevo.items).pipe(
+            map(fotosMarco => armarSolicitud({
+                items: nuevo.items,
+                datos: nuevo.datos,
+                totalCentavos: Math.round(nuevo.total * 100),
+                entrega: nuevo.entrega,
+                tracking: { first_touch: this.atribucion.first(), last_touch: this.atribucion.last() },
+                fotosMarco,
+            }, {
+                provincia: n => this.ubicaciones.codigoProvincia(n),
+                canton: (p, c) => this.ubicaciones.codigoCanton(p, c),
+            })),
+            switchMap(solicitud => this.http.post<RespuestaCheckout>(`${this.api}/checkout`, solicitud).pipe(conErrorApi())),
             map(r => this.desdeApi(nuevo, r)),
             tap(p => {
                 this.guardarPedido(p);
                 // Para poder volver al pedido (y a WhatsApp) aunque se cierre la pestaña
                 this.recordado.recordar(p.numero, p.token);
             }),
-            conErrorApi(),
         );
+    }
+
+    /**
+     * La foto del marco vive en memoria (no cabe en localStorage): se reduce y se manda con el pedido para que
+     * Josué la tenga al producir. Sin foto en memoria no se manda nada y Laravel avisa si el marco la exige.
+     */
+    private fotosDelMarco(items: ItemCarrito[]): Observable<Record<string, string>> {
+        const conFoto = items.filter(i => this.carrito.archivosDe(i.uid).fotoMarco);
+        if (!conFoto.length) return of({});
+        return from(Promise.all(conFoto.map(async i => [i.uid, await reducirFoto(this.carrito.archivosDe(i.uid).fotoMarco!)] as const)))
+            .pipe(
+                map(pares => Object.fromEntries(pares)),
+                // Error al leer o reducir la foto: se explica tal cual (no es un problema de conexión)
+                catchError((e: Error) => throwError(() => ({ status: 0, code: 'frame_photo_error', message: e.message }) satisfies ErrorApi)),
+            );
     }
 
     // Se llama ya en el navegador (después del primer render) para que servidor y cliente pinten lo mismo

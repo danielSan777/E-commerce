@@ -13,7 +13,14 @@ const pedido = (over: Partial<PedidoAdmin> = {}): PedidoAdmin => ({
   total_cents: 2450, shipping_cents: 350, shipping_zone: 'A', cycle_date: '2026-11-17', dispatch_date: '2026-11-19',
   window: { start: '2026-11-20', end: '2026-11-21', type: 'immediate' },
   deadline_at: '2026-11-18T03:00:00Z', receipt_uploaded_at: '2026-11-17T20:00:00Z', whatsapp_clicked_at: null, paid_at: null, production_started_at: null, shipped_at: null, tracking_number: null, created_at: '2026-11-17T15:00:00Z',
-  items: [{ sku: 'DOC', name: 'Abogada', type: 'personalizable', line_total_cents: 2100, personalization: { name_text: 'Ana', dedication: { mode: 'text', text: 'Gracias' } } }],
+  items: [{
+    id: 55, has_preview: true, has_frame_photo: true, sku: 'DOC', name: 'Abogada', type: 'personalizable', line_total_cents: 2100,
+    personalization: {
+      name_text: 'Ana', dedication: { mode: 'text', text: 'Gracias' },
+      accessories: [{ id: 1, name: 'Lentes', behavior: 'lentes' }, { id: 2, name: 'Marco con frase', behavior: 'marco_frase' }, { id: 3, name: 'Marco con foto', behavior: 'marco_foto' }],
+      lens_color: 'cafe', glasses_color: null, frame_text: 'Mi abogada favorita', has_frame_photo: true,
+    },
+  }],
   shipping: { name: 'María Pérez', id_number: '0954091989', phone: '0991234567', email: 'm@correo.com', address: 'Av. Principal 123', reference: '', province_name: 'Guayas', canton_name: 'Durán' },
   billing: { same_as_shipping: true },
   ...over,
@@ -49,9 +56,35 @@ describe('AdminPedidos', () => {
     c.alternar('JDS-1001');
     fixture.detectChanges();
 
-    expect(el.textContent).toContain('Nombre: «Ana»');
-    expect(el.textContent).toContain('Dedicatoria: «Gracias»');
+    expect(el.textContent).toContain('«Ana»');
+    expect(el.textContent).toContain('«Gracias»');
     expect(el.textContent).toContain('Av. Principal 123, Durán, Guayas');
+  });
+
+  it('muestra los accesorios, el color de los lentes, la frase y la foto del marco', async () => {
+    const { c, fixture, el } = await abrir();
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+    const texto = el.textContent!.replace(/\s+/g, ' ');
+
+    expect(texto).toContain('Lentes, Marco con frase, Marco con foto');
+    expect(texto).toMatch(/Lentes\s*café/);
+    expect(texto).toContain('«Mi abogada favorita»');
+    expect(texto).toContain('Subida por el comprador');
+    expect(texto).toContain('Ver foto de la maceta');
+    expect(texto).toContain('Ver foto del marco');
+  });
+
+  it('ver foto del marco la descarga con la sesión del administrador y la abre', async () => {
+    const { c } = await abrir();
+    const abrirVentana = vi.spyOn(window, 'open').mockReturnValue(null);
+    URL.createObjectURL = vi.fn(() => 'blob:marco');
+    c.verImagen(c.pedidos()[0], 55, 'frame-photo');
+    const r = http.expectOne('/api/v1/admin/orders/JDS-1001/items/55/frame-photo');
+    expect(r.request.responseType).toBe('blob');
+    r.flush(new Blob(['x'], { type: 'image/jpeg' }));
+
+    expect(abrirVentana).toHaveBeenCalledWith('blob:marco', '_blank', 'noopener');
   });
 
   it('marcar pagado pide confirmación y luego llama a Laravel; el pedido sale de "Por validar"', async () => {

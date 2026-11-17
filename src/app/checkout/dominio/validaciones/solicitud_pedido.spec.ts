@@ -38,8 +38,21 @@ describe('armarSolicitud (POST /checkout)', () => {
         const [i] = armarSolicitud({ items: [item()], datos: datos(), totalCentavos: 1, entrega, tracking: null }, codigos).items;
 
         expect(i.slug).toBe('doctor');
-        expect(i.personalization).toEqual({ name_text: 'Josué', dedication: { mode: 'text', text: 'Gracias' } });
+        expect(i.personalization).toMatchObject({ name_text: 'Josué', dedication: { mode: 'text', text: 'Gracias' } });
         expect(i.preview_image).toBe('data:image/jpeg;base64,AA');
+    });
+
+    it('manda accesorios, colores, frase y la foto del marco ya reducida', () => {
+        const conMarco = item({ configuracion: { ...item().configuracion!, accesorios: [{ id: 1, accesorioId: 7, nombre: 'Lentes' }, { id: 2, accesorioId: 9, nombre: 'Marco' }, { id: 3, accesorioId: 7, nombre: 'Lentes' }] as never, colorLentes: 'cafe', colorGafas: 'negro', textoMarco: ' Mi doctora ' } });
+        const [i] = armarSolicitud({ items: [conMarco], datos: datos(), totalCentavos: 1, entrega, tracking: null, fotosMarco: { u: 'data:image/jpeg;base64,BB' } }, codigos).items;
+
+        expect(i.personalization).toMatchObject({ accessory_ids: [7, 9], lens_color: 'cafe', glasses_color: 'negro', frame_text: 'Mi doctora', frame_photo: 'data:image/jpeg;base64,BB' });
+    });
+
+    it('sin foto en memoria no manda foto del marco', () => {
+        const [i] = armarSolicitud({ items: [item()], datos: datos(), totalCentavos: 1, entrega, tracking: null }, codigos).items;
+
+        expect(i.personalization?.frame_photo).toBeNull();
     });
 
     it('"No quiero dedicatoria" manda modo none; un complemento no lleva personalización ni foto', () => {

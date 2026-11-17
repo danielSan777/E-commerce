@@ -48,13 +48,35 @@
             </dl>
 
             <ul class="items">
-              @for (i of p.items; track $index) {
-                <li>
-                  <span>{{ i.name }}
-                    @if (i.personalization?.name_text) { <small>· Nombre: «{{ i.personalization?.name_text }}»</small> }
-                    @if (i.personalization?.dedication?.mode === 'text') { <small>· Dedicatoria: «{{ i.personalization?.dedication?.text }}»</small> }
-                  </span>
-                  <b>{{ i.line_total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b>
+              @for (i of p.items; track i.id) {
+                <li class="item">
+                  <div class="item-cabecera">
+                    <strong>{{ i.name }}</strong>
+                    <b>{{ i.line_total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b>
+                  </div>
+
+                  @if (i.personalization; as z) {
+                    <dl class="personalizacion">
+                      <dt>Nombre en la placa</dt><dd>{{ z.name_text ? '«' + z.name_text + '»' : 'Sin nombre' }}</dd>
+                      <dt>Accesorios</dt>
+                      <dd>
+                        @for (a of z.accessories ?? []; track a.id; let ultimo = $last) { {{ a.name }}{{ ultimo ? '' : ',' }} } @empty { Ninguno }
+                      </dd>
+                      @if (z.lens_color) { <dt>Lentes</dt><dd>{{ color(z.lens_color) }}</dd> }
+                      @if (z.glasses_color) { <dt>Gafas</dt><dd>{{ color(z.glasses_color) }}</dd> }
+                      @if (z.frame_text) { <dt>Frase del marco</dt><dd>«{{ z.frame_text }}»</dd> }
+                      @if (z.has_frame_photo) { <dt>Foto del marco</dt><dd>Subida por el comprador</dd> }
+                      <dt>Dedicatoria</dt><dd>{{ z.dedication?.mode === 'text' ? '«' + z.dedication?.text + '»' : 'Sin tarjeta' }}</dd>
+                    </dl>
+                    <div class="acciones">
+                      @if (i.has_preview) {
+                        <button type="button" (click)="verImagen(p, i.id, 'preview')" [disabled]="trabajando() === p.number">Ver foto de la maceta</button>
+                      }
+                      @if (i.has_frame_photo) {
+                        <button type="button" (click)="verImagen(p, i.id, 'frame-photo')" [disabled]="trabajando() === p.number">Ver foto del marco</button>
+                      }
+                    </div>
+                  }
                 </li>
               }
               <li class="envio"><span>Envío (zona {{ p.shipping_zone }})</span><b>{{ p.shipping_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b></li>

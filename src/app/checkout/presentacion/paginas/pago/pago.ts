@@ -223,8 +223,14 @@ export class Pago {
         if (e.code === 'window_changed' && typeof d['label'] === 'string') texto = `${e.message} Ahora: ${d['label']}.`;
         break;
       case 'validation_error': {
-        const primero = Object.values(e.errors ?? {})[0]?.[0];
-        texto = primero ? `${e.message} ${primero}` : e.message;
+        const [clave, mensajes] = Object.entries(e.errors ?? {})[0] ?? ['', []];
+        const primero = mensajes[0];
+        // Un error de una maceta (accesorios, colores, frase o foto del marco) se explica con su nombre
+        const maceta = /^items\.(\d+)\./.exec(clave);
+        const nombre = maceta ? this.items()[Number(maceta[1])]?.producto.nombre : undefined;
+        texto = !primero ? e.message
+          : nombre ? `Revisa tu maceta «${nombre}»: ${primero} Edítala desde el carrito.`
+          : `${e.message} ${primero}`;
         break;
       }
     }
