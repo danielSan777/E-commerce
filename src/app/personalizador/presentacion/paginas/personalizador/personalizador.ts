@@ -191,6 +191,8 @@ export class Personalizador implements OnDestroy {
   private aplicarConfiguracion(guardado: ConfiguracionGuardada): void {
     try {
       this.imagenBase.set(guardado.imagenBase || IMAGEN_BASE_GENERICA);
+      // La foto de la maceta se descarga ya (con CORS) para que "Agregar al carrito" no tenga que esperarla
+      if (guardado.imagenBase) void this.cargarImagen(guardado.imagenBase);
       this.ajusteImagen.set(guardado.ajusteImagen ?? { escala: 100, x: 0, y: 0 });
       this.colorTextoPlaca.set(guardado.colorTexto || COLOR_DORADO_PLACA);
       this.sinConfiguracion.set(!guardado.configurado || !(guardado.catalogo ?? []).length);
@@ -1232,8 +1234,24 @@ export class Personalizador implements OnDestroy {
   }
 
   // ----- Foto de la maceta ya personalizada (para el carrito) -----
+  // Cada foto se descarga una sola vez (con CORS, que es lo que permite exportar): las siguientes veces sale de aquí al instante
+  private fotosListas = new Map<string, Promise<HTMLImageElement | null>>();
+  // Si /media no envía CORS, se recuerda para pedir directo por la API y no gastar un intento que siempre falla
+  private mediaSinCors = false;
+
+  // Cada accesorio de imagen que se elige empieza a descargarse en ese momento, no al pulsar "Agregar al carrito"
+  private precargaDeAccesorios = effect(() => {
+    if (!isPlatformBrowser(this.platformId)) return;
+    for (const a of this.accesoriosSeleccionados()) {
+      if (a.tipo !== 'texto' && a.imagen) void this.cargarImagen(a.imagen);
+    }
+  });
+
   private cargarImagen(src: string): Promise<HTMLImageElement | null> {
     const url = this.urlDeImagen(src);
+    const guardada = this.fotosListas.get(url);
+    if (guardada) return guardada;
+
     const intentar = (direccion: string) => new Promise<HTMLImageElement | null>(resolve => {
       const img = new Image();
       img.crossOrigin = 'anonymous';   // las imágenes vienen de la API (otro dominio): sin esto el canvas no deja exportar la foto
@@ -1242,8 +1260,17 @@ export class Personalizador implements OnDestroy {
       img.src = direccion;
     });
 
-    // Si /media no envía la cabecera CORS, la misma foto se pide por la API (que sí la envía)
-    return intentar(url).then(img => img ?? (this.porLaApi(url) ? intentar(this.porLaApi(url)!) : null));
+    const porApi = this.porLaApi(url);
+    const pedida = (this.mediaSinCors && porApi ? intentar(porApi) : intentar(url).then(img => {
+      if (img || !porApi) return img;
+      this.mediaSinCors = true;
+      return intentar(porApi);
+    })).then(img => {
+      if (!img) this.fotosListas.delete(url);   // un fallo no se recuerda: se vuelve a intentar la próxima vez
+      return img;
+    });
+    this.fotosListas.set(url, pedida);
+    return pedida;
   }
 
   /** http://sitio/media/accessories/a.webp → {api}/media/accessories/a.webp ; null si no es una foto de /media. */
@@ -1286,7 +1313,7 @@ export class Personalizador implements OnDestroy {
 
     c.drawImage(img, 0, 0, ancho, alto);
 
-    if (a.accesorioId === this.ID_LENTES || a.accesorioId === this.ID_GAFAS) {
+    if (this.esLentesOGafas(a.accesorioId)) {
       c.globalCompositeOperation = 'source-atop';
       c.fillStyle = this.colorDe(a.accesorioId);
       c.fillRect(0, 0, ancho, alto);
@@ -1309,6 +1336,10 @@ export class Personalizador implements OnDestroy {
       ctx.fillStyle = '#fff';
       ctx.fillRect(0, 0, T, T);
 
+      // Todo se descarga a la vez (antes era una foto tras otra) y lo que ya se descargó sale de la memoria
+      const orden = [...this.accesoriosSeleccionados()]
+        .sort((a, b) => this.capaDe(a.ubicacionId) - this.capaDe(b.ubicacionId));
+      const dibujos = Promise.all(orden.map(a => this.dibujoDe(a, T * a.ancho / 100, T * a.alto / 100)));
       const base = await this.cargarImagen(this.imagenBase());
       // Sin la foto de la maceta (p. ej. /media sin cabecera CORS) la vista saldría en blanco: mejor que el carrito muestre su icono
       if (!base) return '';
@@ -1333,13 +1364,11 @@ export class Personalizador implements OnDestroy {
       }
 
       // De atrás hacia adelante, según la capa de cada ubicación
-      const orden = [...this.accesoriosSeleccionados()]
-        .sort((a, b) => this.capaDe(a.ubicacionId) - this.capaDe(b.ubicacionId));
-
-      for (const a of orden) {
+      const listos = await dibujos;
+      for (const [i, a] of orden.entries()) {
         const w = T * a.ancho / 100;
         const h = T * a.alto / 100;
-        const origen = await this.dibujoDe(a, w, h);
+        const origen = listos[i];
         if (!origen) continue;
 
         const grados = Math.PI / 180;
