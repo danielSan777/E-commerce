@@ -136,6 +136,22 @@ describe('AdminPedidos', () => {
     expect(c.pedidos()).toEqual([]);
   });
 
+  it('cancelar sin marcar «Notificar» no pide correo; con la casilla envía notify_buyer y el motivo', async () => {
+    const { c } = await abrir();
+    c.ejecutar(c.pedidos()[0], 'cancelar');
+    const sin = http.expectOne('/api/v1/admin/orders/JDS-1001/cancel');
+    expect(sin.request.body).toEqual({});
+    sin.flush({ message: 'x' }, { status: 409, statusText: 'Conflict' });
+
+    c.notificarCancelacion.set(true);
+    c.motivoCancelacion.set('  Sin stock  ');
+    c.ejecutar(c.pedidos()[0], 'cancelar');
+    const con = http.expectOne('/api/v1/admin/orders/JDS-1001/cancel');
+    expect(con.request.body).toEqual({ notify_buyer: true, reason: 'Sin stock' });
+    con.flush(pedido({ status: 'cancelled' }));
+    expect(c.notificarCancelacion()).toBe(false);
+  });
+
   it('ver comprobante descarga el archivo con la sesión del administrador y lo abre', async () => {
     const { c } = await abrir();
     const abrirVentana = vi.spyOn(window, 'open').mockReturnValue(null);

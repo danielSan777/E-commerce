@@ -56,6 +56,8 @@ export class AdminPedidos implements OnInit {
   error = signal('');
   trabajando = signal<string | null>(null);              // número del pedido con una acción en curso
   confirmando = signal<{ numero: string; accion: Accion } | null>(null);
+  notificarCancelacion = signal(false);                    // «Notificar al comprador» al cancelar
+  motivoCancelacion = signal('');
   guia = signal('');                                       // guía escrita para marcar «Enviado»
   errorGuia = signal('');
   sobrecupo = signal<{ numero: string; mensaje: string } | null>(null);   // Laravel pidió confirmar que se pasa del límite
@@ -119,7 +121,7 @@ export class AdminPedidos implements OnInit {
 
   ejecutar(p: PedidoAdmin, accion: Accion, confirmarSobrecupo = false): void {
     this.trabajando.set(p.number);
-    const llamada = accion === 'cancelar' ? this.servicio.cancelar(p.number)
+    const llamada = accion === 'cancelar' ? this.servicio.cancelar(p.number, { notificar: this.notificarCancelacion(), motivo: this.motivoCancelacion() })
       : accion === 'produccion' ? this.servicio.enProduccion(p.number)
       : this.servicio.marcarPagado(p.number, { fueraDePlazo: accion === 'pagar_tarde', confirmarSobrecupo });
 
@@ -127,6 +129,8 @@ export class AdminPedidos implements OnInit {
       next: nuevo => {
         this.confirmando.set(null);
         this.sobrecupo.set(null);
+        this.notificarCancelacion.set(false);
+        this.motivoCancelacion.set('');
         this.avisos.exito(accion === 'cancelar' ? `Pedido ${p.number} cancelado.` : accion === 'produccion' ? `Pedido ${p.number} en producción.` : `Pedido ${p.number} marcado como pagado.`);
         this.reemplazar(nuevo);
       },

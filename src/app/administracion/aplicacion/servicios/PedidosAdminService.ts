@@ -38,8 +38,10 @@ export class PedidosAdminService {
     return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/ship`, { tracking_number: guia }).pipe(conErrorApi());
   }
 
-  cancelar(numero: string): Observable<PedidoAdmin> {
-    return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/cancel`, {}).pipe(conErrorApi());
+  /** Con `notificar` Laravel avisa al comprador por correo, con el motivo breve que se escriba. */
+  cancelar(numero: string, aviso?: { notificar: boolean; motivo: string }): Observable<PedidoAdmin> {
+    const cuerpo = aviso?.notificar ? { notify_buyer: true, reason: aviso.motivo.trim() || null } : {};
+    return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/cancel`, cuerpo).pipe(conErrorApi());
   }
 
   /** El comprobante está en un disco privado y exige sesión: se descarga con el token y se abre como archivo local. */

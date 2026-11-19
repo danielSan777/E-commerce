@@ -123,7 +123,18 @@
                     @case ('pagar') { <p>Confirma que <b>revisaste el banco</b> y el dinero ({{ p.total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}) llegó. El pedido entra a producción en su ciclo.</p> }
                     @case ('pagar_tarde') { <p>El pago llegó después del plazo: se le asigna el <b>siguiente ciclo disponible</b> y cambia su fecha de entrega.</p> }
                     @case ('produccion') { <p>¿Pasar el pedido {{ p.number }} a <b>En producción</b>? El comprador verá ese estado.</p> }
-                    @case ('cancelar') { <p>¿Cancelar el pedido {{ p.number }}? Libera su cupo y no se puede deshacer.</p> }
+                    @case ('cancelar') {
+                      <p>¿Cancelar el pedido {{ p.number }}? Libera su cupo y no se puede deshacer.</p>
+                      <label class="casilla">
+                        <input type="checkbox" [checked]="notificarCancelacion()" (change)="notificarCancelacion.set($any($event.target).checked)" />
+                        Notificar al comprador por correo
+                      </label>
+                      @if (notificarCancelacion()) {
+                        <input type="text" maxlength="200" [value]="motivoCancelacion()" (input)="motivoCancelacion.set($any($event.target).value)"
+                          placeholder="Motivo breve (opcional)" aria-label="Motivo de la cancelación" />
+                        @if (p.payment_status === 'paid') { <small class="ayuda">Como ya pagó, el correo le avisa que lo contactarán para el reembolso.</small> }
+                      }
+                    }
                   }
                   @if (sobrecupo(); as s) {
                     @if (s.numero === p.number) { <p class="aviso">{{ s.mensaje }}</p> }
