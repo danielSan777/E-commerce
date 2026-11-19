@@ -95,6 +95,18 @@ describe('AdminCampanas', () => {
     expect(texto).toContain('llega en 2027');
   });
 
+  it('filtra los productos de la campaña por nombre o por código, sin importar mayúsculas ni tildes', async () => {
+    const c = (await montar()).componentInstance;
+    c.nueva();
+    expect(c.productosFiltrados().length).toBe(2);
+    c.busqueda.set('uno');
+    expect(c.productosFiltrados().map(p => p.sku)).toEqual(['A-1']);
+    c.busqueda.set('a-2');
+    expect(c.productosFiltrados().map(p => p.sku)).toEqual(['A-2']);
+    c.busqueda.set('zzz');
+    expect(c.productosFiltrados()).toEqual([]);
+  });
+
   it('crea una campaña enviando fechas MM-DD y los productos en el orden elegido, sin slug', async () => {
     const fixture = await montar();
     const c = fixture.componentInstance;

@@ -123,14 +123,16 @@
           }
         </ol>
       }
+      <input type="search" class="buscador" [value]="busqueda()" (input)="busqueda.set($any($event.target).value)"
+        placeholder="Buscar por nombre o código (ej. JDS-004)" aria-label="Buscar producto por nombre o código" autocomplete="off" />
       <div class="opciones" role="group" aria-label="Elegir productos">
-        @for (p of productos(); track p.sku) {
+        @for (p of productosFiltrados(); track p.sku) {
           <label class="casilla">
             <input type="checkbox" [checked]="estaElegido(p.sku)" (change)="alternar(p.sku)" />
             {{ p.name }} <small class="ayuda">({{ p.sku }}){{ p.is_active ? '' : ' · inactivo' }}</small>
           </label>
         } @empty {
-          <small class="ayuda">Todavía no hay productos. Crea uno primero.</small>
+          <small class="ayuda">{{ busqueda().trim() ? 'Ningún producto coincide con la búsqueda.' : 'Todavía no hay productos. Crea uno primero.' }}</small>
         }
       </div>
 

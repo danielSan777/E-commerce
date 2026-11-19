@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -144,6 +144,13 @@ export class AdminCampanas implements OnInit {
 
   campanas = signal<CampanaAdmin[]>([]);
   productos = signal<ProductoAdmin[]>([]);
+  busqueda = signal('');
+  /** Productos que coinciden con la búsqueda por nombre o código (sin tildes ni mayúsculas). Los ya elegidos siguen listados abajo en "elegidos". */
+  productosFiltrados = computed(() => {
+    const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const q = norm(this.busqueda().trim());
+    return q ? this.productos().filter(p => norm(p.name).includes(q) || norm(p.sku).includes(q)) : this.productos();
+  });
   cargando = signal(true);
   guardando = signal(false);
   /** null = formulario cerrado; '' = nueva; otro valor = slug de la que se edita. */
