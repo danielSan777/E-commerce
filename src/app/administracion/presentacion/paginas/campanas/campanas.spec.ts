@@ -131,6 +131,20 @@ describe('AdminCampanas', () => {
     expect(c.resultados()).toEqual([]);
   });
 
+  it('al volver a una categoría ya vista se muestra al instante, sin pedirla otra vez', async () => {
+    const c = (await montar()).componentInstance;
+    c.nueva();
+    pedidosDeProductos()[0].flush(pagina([['A-1', 'Uno']], 1));
+    c.alCambiarCategoria('familia');
+    pedidosDeProductos()[0].flush(pagina([['F-1', 'Familiar']], 1));
+    c.alCambiarCategoria('');
+    expect(pedidosDeProductos().length).toBe(0);
+    expect(c.resultados().map(p => p.sku)).toEqual(['A-1']);
+    c.alCambiarCategoria('familia');
+    expect(pedidosDeProductos().length).toBe(0);
+    expect(c.resultados().map(p => p.sku)).toEqual(['F-1']);
+  });
+
   it('"Cargar más" pide la siguiente página y la suma a la lista; los elegidos conservan su nombre', async () => {
     const c = (await montar()).componentInstance;
     c.nueva();

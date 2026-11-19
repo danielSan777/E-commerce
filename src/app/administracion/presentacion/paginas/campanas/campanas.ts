@@ -158,6 +158,8 @@ export class AdminCampanas implements OnInit {
   hayMas = computed(() => this.resultados().length < this.totalResultados());
   /** Nombre de cada producto elegido (el listado solo trae una parte, así que se recuerdan aquí). */
   private nombres = signal<Record<string, string>>({});
+  /** Lo ya pedido por categoría y texto: al volver a una categoría se muestra al instante, sin preguntar otra vez a Laravel. */
+  private memoria = new Map<string, { lista: ProductoAdmin[]; total: number; pagina: number }>();
   private consulta?: Subscription;
   private temporizador?: ReturnType<typeof setTimeout>;
   cargando = signal(true);
@@ -190,6 +192,7 @@ export class AdminCampanas implements OnInit {
   }
 
   cargar(): void {
+    this.memoria.clear();
     this.cargando.set(true);
     forkJoin({ campanas: this.servicio.listar(), categorias: this.categoriasApi.listar() }).pipe(
       takeUntilDestroyed(this.destroyRef),
@@ -283,6 +286,14 @@ export class AdminCampanas implements OnInit {
   buscarProductos(): void {
     clearTimeout(this.temporizador);
     this.consulta?.unsubscribe();
+    this.buscando.set(false);
+    const guardado = this.memoria.get(this.clave());
+    if (guardado) {
+      this.resultados.set(guardado.lista);
+      this.totalResultados.set(guardado.total);
+      this.paginaActual.set(guardado.pagina);
+      return;
+    }
     this.paginaActual.set(0);
     this.resultados.set([]);
     this.totalResultados.set(0);
@@ -295,7 +306,12 @@ export class AdminCampanas implements OnInit {
     this.pedirPagina(this.paginaActual() + 1);
   }
 
+  private clave(): string {
+    return `${this.categoriaFiltro()}|${this.busqueda().trim().toLowerCase()}`;
+  }
+
   private pedirPagina(pagina: number): void {
+    const clave = this.clave();
     this.buscando.set(true);
     this.consulta = this.productosApi.listarPagina({
       categoria: this.categoriaFiltro() || undefined, texto: this.busqueda(), pagina, porPagina: this.POR_PAGINA,
@@ -304,6 +320,7 @@ export class AdminCampanas implements OnInit {
         this.resultados.update(l => pagina === 1 ? r.data : [...l, ...r.data]);
         this.totalResultados.set(r.meta.total);
         this.paginaActual.set(r.meta.page);
+        this.memoria.set(clave, { lista: this.resultados(), total: r.meta.total, pagina: r.meta.page });
       },
       error: (e: ErrorApi) => this.error.set(e.message),
     });
