@@ -82,7 +82,7 @@ describe('AdminCampanas', () => {
     const fixture = TestBed.createComponent(AdminCampanas);
     fixture.detectChanges();
     ctrl.expectOne('/api/v1/admin/campaigns').flush({ data: [campana()] });
-    ctrl.expectOne(r => r.url === '/api/v1/admin/products').flush({ data: [prod('A-1', 'Uno'), prod('A-2', 'Dos')] });
+    ctrl.expectOne('/api/v1/admin/categories').flush({ data: [{ slug: 'familia', name: 'Familia' }] });
     await esperar();
     fixture.detectChanges();
     return fixture;
@@ -95,16 +95,68 @@ describe('AdminCampanas', () => {
     expect(texto).toContain('llega en 2027');
   });
 
-  it('filtra los productos de la campaña por nombre o por código, sin importar mayúsculas ni tildes', async () => {
+  const pagina = (skus: [string, string][], total: number, page = 1) => ({
+    data: skus.map(([sku, name]) => prod(sku, name)), meta: { total, page, per_page: 20, last_page: Math.ceil(total / 20) },
+  });
+  const pedidosDeProductos = () => ctrl.match(r => r.url === '/api/v1/admin/products');
+
+  it('al abrir el formulario pide solo la primera parte de los productos', async () => {
     const c = (await montar()).componentInstance;
     c.nueva();
-    expect(c.productosFiltrados().length).toBe(2);
-    c.busqueda.set('uno');
-    expect(c.productosFiltrados().map(p => p.sku)).toEqual(['A-1']);
-    c.busqueda.set('a-2');
-    expect(c.productosFiltrados().map(p => p.sku)).toEqual(['A-2']);
+    const [req] = pedidosDeProductos();
+    expect(req.request.params.get('per_page')).toBe('20');
+    expect(req.request.params.get('page')).toBe('1');
+    req.flush(pagina([['A-1', 'Uno'], ['A-2', 'Dos']], 45));
+    expect(c.resultados().length).toBe(2);
+    expect(c.hayMas()).toBe(true);
+  });
+
+  it('busca por nombre o código y por categoría en Laravel, sin traer todo', async () => {
+    const c = (await montar()).componentInstance;
+    c.nueva();
+    pedidosDeProductos()[0].flush(pagina([['A-1', 'Uno']], 1));
+
+    c.busqueda.set('jds-004');
+    c.buscarProductos();
+    const [porCodigo] = pedidosDeProductos();
+    expect(porCodigo.request.params.get('q')).toBe('jds-004');
+    porCodigo.flush(pagina([['JDS-004', 'abogada']], 1));
+    expect(c.resultados().map(p => p.sku)).toEqual(['JDS-004']);
+
+    c.alCambiarCategoria('familia');
+    const [porCategoria] = pedidosDeProductos();
+    expect(porCategoria.request.params.get('category')).toBe('familia');
+    expect(porCategoria.request.params.get('q')).toBe('jds-004');
+    porCategoria.flush(pagina([], 0));
+    expect(c.resultados()).toEqual([]);
+  });
+
+  it('"Cargar más" pide la siguiente página y la suma a la lista; los elegidos conservan su nombre', async () => {
+    const c = (await montar()).componentInstance;
+    c.nueva();
+    pedidosDeProductos()[0].flush(pagina([['A-1', 'Uno']], 2));
+    c.alternar('A-1', 'Uno');
+    c.cargarMasProductos();
+    const [sig] = pedidosDeProductos();
+    expect(sig.request.params.get('page')).toBe('2');
+    sig.flush(pagina([['A-2', 'Dos']], 2, 2));
+    expect(c.resultados().map(p => p.sku)).toEqual(['A-1', 'A-2']);
+    expect(c.hayMas()).toBe(false);
+
+    // una búsqueda nueva reemplaza la lista, pero el producto elegido sigue con su nombre
     c.busqueda.set('zzz');
-    expect(c.productosFiltrados()).toEqual([]);
+    c.buscarProductos();
+    pedidosDeProductos()[0].flush(pagina([], 0));
+    expect(c.nombreProducto('A-1')).toBe('Uno');
+  });
+
+  it('no deja guardar una campaña sin productos', async () => {
+    const c = (await montar()).componentInstance;
+    c.nueva();
+    c.form.name = 'Navidad';
+    c.guardar(new Event('submit'));
+    expect(c.errores().productos).toBe('Elige al menos un producto para la campaña.');
+    ctrl.expectNone('/api/v1/admin/campaigns');
   });
 
   it('crea una campaña enviando fechas MM-DD y los productos en el orden elegido, sin slug', async () => {
@@ -129,7 +181,7 @@ describe('AdminCampanas', () => {
     req.flush(campana({ slug: 'dia-de-la-madre' }), { status: 201, statusText: 'Created' });
     await esperar();
     ctrl.expectOne('/api/v1/admin/campaigns').flush({ data: [] });
-    ctrl.expectOne(r => r.url === '/api/v1/admin/products').flush({ data: [] });
+    ctrl.expectOne('/api/v1/admin/categories').flush({ data: [] });
     await p;
     expect(c.editando()).toBeNull();
   });
@@ -153,6 +205,7 @@ describe('AdminCampanas', () => {
         const c = fixture.componentInstance;
         c.nueva();
         c.form.name = 'Navidad';
+        c.alternar('A-1', 'Uno');
         c.form.color = '#1b5e20';
         c.form.emoji = ' 🎄 ';
         c.guardar(new Event('submit'));
@@ -162,7 +215,7 @@ describe('AdminCampanas', () => {
         req.flush(campana({ slug: 'navidad' }), { status: 201, statusText: 'Created' });
         await esperar();
         ctrl.expectOne('/api/v1/admin/campaigns').flush({ data: [] });
-        ctrl.expectOne(r => r.url === '/api/v1/admin/products').flush({ data: [] });
+        ctrl.expectOne('/api/v1/admin/categories').flush({ data: [] });
 
         c.nueva();
         c.form.name = 'Otra';
@@ -221,6 +274,7 @@ describe('AdminCampanas', () => {
     const c = fixture.componentInstance;
     c.nueva();
     c.form.name = 'Otra';
+    c.alternar('A-1', 'Uno');
     c.form.closing_message = '  Otra regresará pronto ';
     c.form.cierra = { dia: 10, mes: 3 };
     c.guardar(new Event('submit'));

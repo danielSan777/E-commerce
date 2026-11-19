@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
-import { DatosProducto, PrevisualizacionPrecio, ProductoAdmin } from '../../dominio/interfaces/producto-admin';
+import { DatosProducto, PaginaProductos, PrevisualizacionPrecio, ProductoAdmin } from '../../dominio/interfaces/producto-admin';
 
 // Productos del panel: todo viene de Laravel (que calcula y valida). El código (SKU) lo asigna Laravel y la dirección (slug) sale del nombre.
 @Injectable({ providedIn: 'root' })
@@ -21,6 +21,15 @@ export class ProductosAdminService {
     if (categoria) params = params.set('category', categoria);
     if (texto?.trim()) params = params.set('q', texto.trim());
     return this.http.get<{ data: ProductoAdmin[] }>(this.url(), { params }).pipe(map(r => r.data), conErrorApi());
+  }
+
+  /** Una parte del listado (para no traer cientos de productos de una vez). Laravel responde cuántos hay en total. */
+  listarPagina(filtros: { categoria?: string; texto?: string; tipo?: 'personalizable' | 'complemento'; pagina: number; porPagina: number }): Observable<PaginaProductos> {
+    let params = new HttpParams().set('page', filtros.pagina).set('per_page', filtros.porPagina);
+    if (filtros.tipo) params = params.set('type', filtros.tipo);
+    if (filtros.categoria) params = params.set('category', filtros.categoria);
+    if (filtros.texto?.trim()) params = params.set('q', filtros.texto.trim());
+    return this.http.get<PaginaProductos>(this.url(), { params }).pipe(conErrorApi());
   }
 
   ver(sku: string): Observable<ProductoAdmin> {

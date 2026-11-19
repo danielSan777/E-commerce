@@ -55,3 +55,9 @@ export interface PrevisualizacionPrecio {
   discount_cents: number;
   final_price_cents: number;
 }
+
+/** Una parte del listado de productos y cuántos hay en total (lo calcula Laravel). */
+export interface PaginaProductos {
+  data: ProductoAdmin[];
+  meta: { total: number; page: number; per_page: number; last_page: number };
+}

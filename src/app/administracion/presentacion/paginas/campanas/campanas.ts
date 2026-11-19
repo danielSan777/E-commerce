@@ -1,14 +1,16 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize, forkJoin } from 'rxjs';
+import { Subscription, finalize, forkJoin } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { CampanaBanner } from '../../../../campanas/presentacion/componentes/campana-banner/campana-banner';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { CampanasAdminService } from '../../../aplicacion/servicios/CampanasAdminService';
+import { CategoriasAdminService } from '../../../aplicacion/servicios/CategoriasAdminService';
 import { ProductosAdminService } from '../../../aplicacion/servicios/ProductosAdminService';
 import { CampanaAdmin } from '../../../dominio/interfaces/campana-admin';
+import { CategoriaAdmin } from '../../../dominio/interfaces/categoria-admin';
 import { ProductoAdmin } from '../../../dominio/interfaces/producto-admin';
 import { generarSlug } from '../../../aplicacion/slug';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
@@ -38,7 +40,7 @@ interface Fecha { dia: number; mes: number }
 /** Días de cada mes (febrero con 29: la fecha se repite todos los años, incluidos los bisiestos). */
 const DIAS_DEL_MES = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-export type ErroresCampana = Partial<Record<'name' | 'inicio' | 'fin' | 'evento' | 'cierre' | 'color', string>>;
+export type ErroresCampana = Partial<Record<'name' | 'inicio' | 'fin' | 'evento' | 'cierre' | 'color' | 'productos', string>>;
 
 /** Revisa el formulario en Angular, sin llamar a la API: nombre, categoría y que las tres fechas tengan sentido. */
 /** Código Hex escrito a mano ("C2185B", "#c2185b" o "#c15") → "#c2185b"; null si no es un color válido. */
@@ -109,6 +111,7 @@ const VACIO: Formulario = {
 export class AdminCampanas implements OnInit {
   private servicio = inject(CampanasAdminService);
   private productosApi = inject(ProductosAdminService);
+  private categoriasApi = inject(CategoriasAdminService);
   private avisos = inject(AvisosService);
   private destroyRef = inject(DestroyRef);
 
@@ -143,14 +146,20 @@ export class AdminCampanas implements OnInit {
   tinteVistaPrevia(): string { return `color-mix(in srgb, ${this.colorVistaPrevia()} 14%, white)`; }
 
   campanas = signal<CampanaAdmin[]>([]);
-  productos = signal<ProductoAdmin[]>([]);
+  // ----- Buscador de productos: se pide a Laravel por partes (nombre, código y categoría) -----
+  readonly POR_PAGINA = 20;
+  categorias = signal<CategoriaAdmin[]>([]);
   busqueda = signal('');
-  /** Productos que coinciden con la búsqueda por nombre o código (sin tildes ni mayúsculas). Los ya elegidos siguen listados abajo en "elegidos". */
-  productosFiltrados = computed(() => {
-    const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const q = norm(this.busqueda().trim());
-    return q ? this.productos().filter(p => norm(p.name).includes(q) || norm(p.sku).includes(q)) : this.productos();
-  });
+  categoriaFiltro = signal('');
+  resultados = signal<ProductoAdmin[]>([]);
+  totalResultados = signal(0);
+  paginaActual = signal(0);
+  buscando = signal(false);
+  hayMas = computed(() => this.resultados().length < this.totalResultados());
+  /** Nombre de cada producto elegido (el listado solo trae una parte, así que se recuerdan aquí). */
+  private nombres = signal<Record<string, string>>({});
+  private consulta?: Subscription;
+  private temporizador?: ReturnType<typeof setTimeout>;
   cargando = signal(true);
   guardando = signal(false);
   /** null = formulario cerrado; '' = nueva; otro valor = slug de la que se edita. */
@@ -182,13 +191,13 @@ export class AdminCampanas implements OnInit {
 
   cargar(): void {
     this.cargando.set(true);
-    forkJoin({ campanas: this.servicio.listar(), productos: this.productosApi.listar() }).pipe(
+    forkJoin({ campanas: this.servicio.listar(), categorias: this.categoriasApi.listar() }).pipe(
       takeUntilDestroyed(this.destroyRef),
       finalize(() => this.cargando.set(false)),
     ).subscribe({
       next: r => {
         this.campanas.set(r.campanas);
-        this.productos.set(r.productos);
+        this.categorias.set(r.categorias);
       },
       error: (e: ErrorApi) => this.error.set(e.message),
     });
@@ -202,6 +211,8 @@ export class AdminCampanas implements OnInit {
     this.portadaVideo.set(null);
     this.vistaCierre.set(false);
     this.elegidos.set([]);
+    this.nombres.set({});
+    this.reiniciarBuscador();
     this.intento.set(false);
     this.editando.set('');
   }
@@ -217,6 +228,8 @@ export class AdminCampanas implements OnInit {
     this.portadaFoto.set(c.cover_url);
     this.portadaVideo.set(c.video_url);
     this.elegidos.set(c.products.map(p => p.sku));
+    this.nombres.set(Object.fromEntries(c.products.map(p => [p.sku, p.name])));
+    this.reiniciarBuscador();
     this.intento.set(false);
     this.editando.set(c.slug);
   }
@@ -231,7 +244,8 @@ export class AdminCampanas implements OnInit {
     return this.elegidos().includes(sku);
   }
 
-  alternar(sku: string): void {
+  alternar(sku: string, nombre?: string): void {
+    if (nombre) this.nombres.update(n => ({ ...n, [sku]: nombre }));
     this.elegidos.update(l => l.includes(sku) ? l.filter(s => s !== sku) : [...l, sku]);
   }
 
@@ -246,8 +260,57 @@ export class AdminCampanas implements OnInit {
     });
   }
 
+  /** Abre el buscador sin filtros y trae la primera parte. */
+  private reiniciarBuscador(): void {
+    this.busqueda.set('');
+    this.categoriaFiltro.set('');
+    this.buscarProductos();
+  }
+
+  /** Mientras se escribe se espera un momento antes de preguntar a Laravel (no una vez por letra). */
+  alEscribirBusqueda(texto: string): void {
+    this.busqueda.set(texto);
+    clearTimeout(this.temporizador);
+    this.temporizador = setTimeout(() => this.buscarProductos(), 300);
+  }
+
+  alCambiarCategoria(slug: string): void {
+    this.categoriaFiltro.set(slug);
+    this.buscarProductos();
+  }
+
+  /** Primera parte con los filtros de ahora (reemplaza la lista). */
+  buscarProductos(): void {
+    clearTimeout(this.temporizador);
+    this.consulta?.unsubscribe();
+    this.paginaActual.set(0);
+    this.resultados.set([]);
+    this.totalResultados.set(0);
+    this.pedirPagina(1);
+  }
+
+  /** Siguiente parte, que se suma a la que ya se ve. */
+  cargarMasProductos(): void {
+    if (this.buscando() || !this.hayMas()) return;
+    this.pedirPagina(this.paginaActual() + 1);
+  }
+
+  private pedirPagina(pagina: number): void {
+    this.buscando.set(true);
+    this.consulta = this.productosApi.listarPagina({
+      categoria: this.categoriaFiltro() || undefined, texto: this.busqueda(), pagina, porPagina: this.POR_PAGINA,
+    }).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.buscando.set(false))).subscribe({
+      next: r => {
+        this.resultados.update(l => pagina === 1 ? r.data : [...l, ...r.data]);
+        this.totalResultados.set(r.meta.total);
+        this.paginaActual.set(r.meta.page);
+      },
+      error: (e: ErrorApi) => this.error.set(e.message),
+    });
+  }
+
   nombreProducto(sku: string): string {
-    return this.productos().find(p => p.sku === sku)?.name ?? sku;
+    return this.nombres()[sku] ?? sku;
   }
 
   guardar(evento: Event): void {
@@ -296,6 +359,7 @@ export class AdminCampanas implements OnInit {
     const e = validarCampana(this.form);
     const escrito = this.hexTexto();
     if (escrito?.trim() && !normalizarHex(escrito)) e.color = 'El color debe ser un código Hex como #C2185B (6 letras o números).';
+    if (this.intento() && !this.elegidos().length) e.productos = 'Elige al menos un producto para la campaña.';
     if (!this.intento()) { delete e.name; }
     return e;
   }

@@ -109,8 +109,8 @@
         </p>
       </fieldset>
 
-      <label>Productos de la campaña</label>
-      <small class="ayuda">En temporada se muestran estos productos, en este orden. Si no eliges ninguno, se muestran los de la categoría relacionada.</small>
+      <label for="buscar-producto">Productos de la campaña</label>
+      <small class="ayuda">Obligatorio: elige los productos que mostrará la campaña, en este orden. La campaña solo muestra los que elijas aquí.</small>
       @if (elegidos().length) {
         <ol class="elegidos" aria-label="Productos elegidos, en orden">
           @for (sku of elegidos(); track sku; let i = $index; let ultimo = $last) {
@@ -123,18 +123,35 @@
           }
         </ol>
       }
-      <input type="search" class="buscador" [value]="busqueda()" (input)="busqueda.set($any($event.target).value)"
-        placeholder="Buscar por nombre o código (ej. JDS-004)" aria-label="Buscar producto por nombre o código" autocomplete="off" />
+      @if (errores().productos; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+
+      <div class="filtros-productos">
+        <input id="buscar-producto" type="search" class="buscador" [value]="busqueda()" (input)="alEscribirBusqueda($any($event.target).value)"
+          placeholder="Buscar por nombre o código (ej. JDS-004)" aria-label="Buscar producto por nombre o código" autocomplete="off" />
+        <select class="filtro-categoria" aria-label="Filtrar por categoría" [value]="categoriaFiltro()" (change)="alCambiarCategoria($any($event.target).value)">
+          <option value="">Todas las categorías</option>
+          @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
+        </select>
+      </div>
       <div class="opciones" role="group" aria-label="Elegir productos">
-        @for (p of productosFiltrados(); track p.sku) {
+        @for (p of resultados(); track p.sku) {
           <label class="casilla">
-            <input type="checkbox" [checked]="estaElegido(p.sku)" (change)="alternar(p.sku)" />
-            {{ p.name }} <small class="ayuda">({{ p.sku }}){{ p.is_active ? '' : ' · inactivo' }}</small>
+            <input type="checkbox" [checked]="estaElegido(p.sku)" (change)="alternar(p.sku, p.name)" />
+            {{ p.name }} <small class="ayuda">({{ p.sku }}){{ p.category_name ? ' · ' + p.category_name : '' }}{{ p.is_active ? '' : ' · inactivo' }}</small>
           </label>
         } @empty {
-          <small class="ayuda">{{ busqueda().trim() ? 'Ningún producto coincide con la búsqueda.' : 'Todavía no hay productos. Crea uno primero.' }}</small>
+          @if (!buscando()) {
+            <small class="ayuda">{{ busqueda().trim() || categoriaFiltro() ? 'Ningún producto coincide con la búsqueda.' : 'Todavía no hay productos. Crea uno primero.' }}</small>
+          }
         }
+        @if (buscando()) { <small class="ayuda" role="status">Buscando…</small> }
       </div>
+      @if (totalResultados() > 0) {
+        <div class="mas-productos">
+          <small class="ayuda">Mostrando {{ resultados().length }} de {{ totalResultados() }}</small>
+          @if (hayMas()) { <button type="button" class="btn btn-borde" (click)="cargarMasProductos()" [disabled]="buscando()">Cargar más</button> }
+        </div>
+      }
 
       <fieldset class="google">
         <legend>Cómo aparece en Google (opcional)</legend>
