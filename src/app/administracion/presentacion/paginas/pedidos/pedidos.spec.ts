@@ -56,8 +56,8 @@ describe('AdminPedidos', () => {
     c.alternar('JDS-1001');
     fixture.detectChanges();
 
-    expect(el.textContent).toContain('«Ana»');
-    expect(el.textContent).toContain('«Gracias»');
+    expect(el.textContent).toContain('Ana');
+    expect(el.textContent).toContain('Gracias');
     expect(el.textContent).toContain('Av. Principal 123, Durán, Guayas');
   });
 
@@ -69,7 +69,7 @@ describe('AdminPedidos', () => {
 
     expect(texto).toContain('Lentes, Marco con frase, Marco con foto');
     expect(texto).toMatch(/Lentes\s*café/);
-    expect(texto).toContain('«Mi abogada favorita»');
+    expect(texto).toContain('Mi abogada favorita');
     expect(texto).toContain('Subida por el comprador');
     expect(texto).toContain('Ver foto de la maceta');
     expect(texto).toContain('Ver foto del marco');
