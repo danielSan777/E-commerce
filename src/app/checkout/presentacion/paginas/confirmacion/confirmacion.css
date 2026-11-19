@@ -172,6 +172,7 @@ h1 {
 /* ===== Resumen ===== */
 .producto {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     align-items: flex-start;
     padding: 8px 0;
@@ -502,6 +503,6 @@ h1 {
 
 .mensaje-texto { white-space: pre-line; }
 
-.fotos-pedido { margin-top: 1rem; display: grid; gap: .5rem; }
-.fotos-pedido p { margin: 0; font-size: .9rem; }
+.producto-descarga { flex: 1 1 100%; display: grid; gap: .35rem; margin-top: .5rem; }
+.producto-descarga small { text-align: center; color: #6b6b6b; }
 .descargar { display: flex; align-items: center; justify-content: center; gap: .5rem; }

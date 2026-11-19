@@ -72,6 +72,14 @@
                 }
             </div>
             <span class="producto-precio">{{ item.producto.precio | currency:'USD':'symbol':'1.2-2' }}</span>
+            @if (fotoDe(item.uid); as f) {
+            <div class="producto-descarga">
+                <a class="btn btn-borde descargar" [href]="f.item.vista" [attr.download]="f.nombre">
+                    <i class="bi bi-download" aria-hidden="true"></i> Descargar foto de tu maceta
+                </a>
+                <small>Guárdala y adjúntala en el chat de WhatsApp junto al comprobante.</small>
+            </div>
+            }
         </div>
         }
 
@@ -167,16 +175,6 @@
             </button>
         </div>
 
-        @if (fotos().length) {
-        <div class="fotos-pedido">
-            <p><strong>¿Quieres enviar también la foto de tu pedido?</strong> Descárgala y adjúntala en el chat, junto al comprobante.</p>
-            @for (f of fotos(); track f.item.uid) {
-            <a class="btn btn-borde descargar" [href]="f.item.vista" [attr.download]="f.nombre">
-                <i class="bi bi-download" aria-hidden="true"></i> Descargar foto: {{ f.item.producto.nombre }}
-            </a>
-            }
-        </div>
-        }
     </section>
 
     <a class="btn btn-primario" [href]="enlaceWhatsapp()" target="_blank" rel="noopener">

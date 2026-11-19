@@ -77,11 +77,15 @@ describe('Confirmacion', () => {
     expect(enlaces.length).toBe(1);
     expect(enlaces[0].getAttribute('href')).toBe('data:image/jpeg;base64,AAAA');
     expect(enlaces[0].getAttribute('download')).toMatch(/^jardin-de-sele-JDS-\d+-amigo-guitarrista\.jpg$/);
-    expect(enlaces[0].textContent).toContain('Amigo guitarrista');
+    expect(enlaces[0].textContent).toContain('Descargar foto de tu maceta');
+    // El botón queda dentro del producto, en el resumen
+    const productos = html.querySelectorAll('.producto');
+    expect(productos[0].querySelector('a.descargar')).not.toBeNull();
+    expect(productos[1].querySelector('a.descargar')).toBeNull();
   });
 
   it('no muestra la sección de descarga si ningún producto tiene foto', async () => {
     const { html } = await montar([item('a', 'Doctor', '')]);
-    expect(html.querySelector('.fotos-pedido')).toBeNull();
+    expect(html.querySelector('a.descargar')).toBeNull();
   });
 });

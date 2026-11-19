@@ -40,6 +40,8 @@ export class Confirmacion {
     return p ? itemsConFoto(p.items).map((item, i) => ({ item, nombre: nombreArchivoFoto(p.numero, item, i + 1) })) : [];
   });
 
+  fotoDe(uid: string) { return this.fotos().find(f => f.item.uid === uid) ?? null; }
+
   // Qué se acaba de copiar (para mostrar ✓ un momento)
   copiado = signal('');
 
