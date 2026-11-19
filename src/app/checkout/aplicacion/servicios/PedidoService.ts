@@ -74,10 +74,10 @@ export class PedidoService {
     /**
      * Transferencia: Laravel crea el pedido (precio, ventana y cupo se validan allá) y devuelve número, token y plazo.
      * Si algo cambió responde un error (`price_changed`, `window_changed`, `capacity_full`…) que la pantalla muestra.
-     * Tarjeta (PayPhone): todavía no hay cobro real, sigue siendo una simulación local (Paso 13).
+     * Tarjeta (PayPhone): Laravel crea el pedido con el recargo y aparta el cupo; el pedido queda SIN pagar hasta que
+     * Laravel confirme el cobro con PayPhone (`marcarPagadoConTarjeta`). Nada se calcula ni se confirma aquí.
      */
     crear(nuevo: NuevoPedido): Observable<Pedido> {
-        if (nuevo.metodo === 'payphone') return of(this.guardarPedido(this.simulado(nuevo)));
 
         return this.fotosDelMarco(nuevo.items).pipe(
             map(fotosMarco => armarSolicitud({
@@ -95,8 +95,8 @@ export class PedidoService {
             map(r => this.desdeApi(nuevo, r)),
             tap(p => {
                 this.guardarPedido(p);
-                // Para poder volver al pedido (y a WhatsApp) aunque se cierre la pestaña
-                this.recordado.recordar(p.numero, p.token);
+                // Para poder volver al pedido (y a WhatsApp) aunque se cierre la pestaña; con tarjeta se recuerda al pagar
+                if (p.metodo !== 'payphone') this.recordado.recordar(p.numero, p.token);
             }),
         );
     }
@@ -138,28 +138,24 @@ export class PedidoService {
             token: r.token,
             eventId: r.event_id,
             fecha: new Date().toISOString(),
-            limitePago: r.order.deadline_at,
+            limitePago: nuevo.metodo === 'payphone' ? null : r.order.deadline_at,
             entrega: { ...nuevo.entrega, window: r.order.window },
-            pendiente: r.order,
+            pendiente: nuevo.metodo === 'payphone' ? null : r.order,
             pagoConfirmado: false,
             pagoSimulado: false,
         };
     }
 
-    // IMPORTANTE: todavía no hay cobro real con PayPhone. Se muestra como "Pago confirmado (pruebas)".
-    // Con el Paso 13, Laravel crea el pedido y solo confirma el pago cuando PayPhone lo confirme.
-    private simulado(nuevo: NuevoPedido): Pedido {
-        return {
-            ...nuevo,
-            numero: `JDS-${String(Date.now()).slice(-5)}`,
-            token: `${crypto.randomUUID()}${crypto.randomUUID()}`.replaceAll('-', ''),
-            eventId: null,
-            fecha: new Date().toISOString(),
-            limitePago: null,
-            pendiente: null,
-            pagoConfirmado: true,
-            pagoSimulado: true,
-        };
+    /**
+     * Laravel confirmó el cobro con PayPhone: el pedido guardado en esta pestaña pasa a pagado.
+     * Devuelve false si el pedido de la pestaña no es ese (otro navegador o sesión cerrada).
+     */
+    marcarPagadoConTarjeta(numero: string, simulado: boolean): boolean {
+        const p = this.pedido();
+        if (!p || p.numero !== numero) return false;
+        this.guardarPedido({ ...p, pagoConfirmado: true, pagoSimulado: simulado });
+        this.recordado.recordar(p.numero, p.token);
+        return true;
     }
 
     private guardarPedido(pedido: Pedido): Pedido {

@@ -1,6 +1,6 @@
 import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { distintivoBanco } from '../../../dominio/interfaces/datos_transferencia';
 import { itemsConFoto, nombreArchivoFoto } from '../../../dominio/validaciones/foto_pedido';
@@ -18,6 +18,7 @@ export class Confirmacion {
   readonly RUTA_SEGUIR = '/categorias';   // "Seguir comprando"
 
   private pedidos = inject(PedidoService);
+  private router = inject(Router);
 
   pedido = this.pedidos.pedido;
 
@@ -49,6 +50,9 @@ export class Confirmacion {
     afterNextRender(() => {
       this.pedidos.restaurar();
       this.cargado.set(true);
+      // Un pedido con tarjeta que todavía no se pagó no es una compra confirmada: vuelve a la Cajita
+      const p = this.pedido();
+      if (p && p.metodo === 'payphone' && !p.pagoConfirmado) this.router.navigateByUrl('/checkout/tarjeta', { replaceUrl: true });
     });
   }
 

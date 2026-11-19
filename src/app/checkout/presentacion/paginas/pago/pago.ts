@@ -32,6 +32,7 @@ export class Pago {
   // ===== EDITABLES =====
   readonly RUTA_VOLVER = '/checkout';
   readonly RUTA_CONFIRMAR = '/checkout/confirmacion';  // "Confirmar pedido"
+  readonly RUTA_TARJETA = '/checkout/tarjeta';          // Cajita de PayPhone
   readonly RUTA_CATALOGO = '/categorias';
 
   // Las tarifas y la zona de cada cantón las edita el administrador (panel > Envíos) y llegan desde Laravel
@@ -190,6 +191,11 @@ export class Pago {
       entrega,
     }).subscribe({
       next: () => {
+        // Con tarjeta el pedido queda sin pagar: se sigue a la Cajita y el carrito se vacía cuando PayPhone confirme el cobro
+        if (payphone) {
+          this.router.navigateByUrl(this.RUTA_TARJETA).then(() => this.enviando.set(false));
+          return;
+        }
         // El carrito se vacía cuando ya se llegó a la confirmación (el pedido quedó guardado aparte)
         this.router.navigateByUrl(this.RUTA_CONFIRMAR).then(ok => {
           this.enviando.set(false);

@@ -137,6 +137,18 @@ export const routes: Routes = [
                         .then(m => m.Confirmacion)
             },
             {
+                path: 'checkout/tarjeta',
+                loadComponent: () =>
+                    import('./checkout/presentacion/paginas/pago-tarjeta/pago-tarjeta')
+                        .then(m => m.PagoTarjeta)
+            },
+            {
+                path: 'checkout/tarjeta/respuesta',
+                loadComponent: () =>
+                    import('./checkout/presentacion/paginas/respuesta-payphone/respuesta-payphone')
+                        .then(m => m.RespuestaPayphone)
+            },
+            {
                 path: 'checkout/pago',
                 loadComponent: () =>
                     import('./checkout/presentacion/paginas/pago/pago')

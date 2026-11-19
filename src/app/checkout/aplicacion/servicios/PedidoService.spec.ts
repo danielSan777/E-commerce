@@ -63,13 +63,25 @@ describe('PedidoService.crear', () => {
         expect(servicio.pedido()).toBeNull();
     });
 
-    it('PayPhone: sigue siendo una simulación local, sin llamar a Laravel', () => {
+    it('PayPhone: Laravel crea el pedido con tarjeta SIN pagar; solo la confirmación del cobro lo marca pagado', () => {
         let creado: ReturnType<PedidoService['pedido']> = null;
         servicio.crear(nuevo('payphone')).subscribe(p => (creado = p));
 
-        http.expectNone('/api/v1/checkout');
-        expect(creado!.pagoSimulado).toBe(true);
+        const r = http.expectOne('/api/v1/checkout');
+        expect(r.request.body.payment_method).toBe('card');
+        expect(r.request.body.expected_total_cents).toBe(2850);
+        r.flush(CHECKOUT_API, { status: 201, statusText: 'Created' });
+
+        expect(creado!.metodo).toBe('payphone');
+        expect(creado!.pagoConfirmado).toBe(false);
+        expect(creado!.pagoSimulado).toBe(false);
         expect(creado!.limitePago).toBeNull();
         expect(creado!.pendiente).toBeNull();
+        expect(localStorage.getItem('jds_pedido_pendiente')).toBeNull(); // todavía no hay pago que recordar
+
+        expect(servicio.marcarPagadoConTarjeta('OTRO-1', false)).toBe(false);
+        expect(servicio.marcarPagadoConTarjeta(creado!.numero, true)).toBe(true);
+        expect(servicio.pedido()!.pagoConfirmado).toBe(true);
+        expect(servicio.pedido()!.pagoSimulado).toBe(true);
     });
 });

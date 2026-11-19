@@ -1235,12 +1235,12 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Tabla de intentos de pago por pedido, con `clientTransactionId` único (máximo 50 caracteres; por ejemplo `JDS-2048-1`) y monto esperado en centavos.
-- [ ] Integrar la Cajita en Angular con los datos que entrega Laravel.
-- [ ] Ruta de respuesta que recibe `id` y `clientTransactionId` y llama al backend.
-- [ ] Confirmación en Laravel contra PayPhone.
+- [x] Tabla de intentos de pago por pedido, con `clientTransactionId` único (máximo 50 caracteres; por ejemplo `JDS-2048-1`) y monto esperado en centavos. *(`payment_attempts`; un solo intento activo por pedido, la Cajita vence a los 10 min y el cupo se aparta 15 min.)*
+- [x] Integrar la Cajita en Angular con los datos que entrega Laravel. *(Hecho según la documentación de PayPhone; falta probarla con la app de Pruebas de PayPhone. Mientras no haya credenciales, Laravel responde en modo simulado, solo fuera de producción.)*
+- [x] Ruta de respuesta que recibe `id` y `clientTransactionId` y llama al backend. *(`/checkout/tarjeta/respuesta`.)*
+- [x] Confirmación en Laravel contra PayPhone. *(Valida estado 3, referencia y monto; guarda `transactionId` único y código de autorización; pago duplicado o monto distinto queda en revisión.)*
 - [ ] Endpoint de Notificación Externa (webhook), según la respuesta de PayPhone.
-- [ ] Pantalla de error amable con opción de reintentar.
+- [x] Pantalla de error amable con opción de reintentar.
 
 **Implementación acordada**
 

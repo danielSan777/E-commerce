@@ -28,7 +28,8 @@ async function montar(items: ItemCarrito[], metodo: 'transferencia' | 'payphone'
     providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }],
   });
   TestBed.inject(PedidoService).crear(pedido(items, metodo)).subscribe();
-  if (metodo === 'transferencia') TestBed.inject(HttpTestingController).expectOne('/api/v1/checkout').flush(CHECKOUT_API, { status: 201, statusText: 'Created' });
+  TestBed.inject(HttpTestingController).expectOne('/api/v1/checkout').flush(CHECKOUT_API, { status: 201, statusText: 'Created' });
+  if (metodo === 'payphone') TestBed.inject(PedidoService).marcarPagadoConTarjeta(CHECKOUT_API.order_number, true);
   const fixture = TestBed.createComponent(Confirmacion);
   await fixture.whenStable();
   fixture.detectChanges();
@@ -62,13 +63,13 @@ describe('Confirmacion', () => {
     expect(html.querySelector('.mensaje-texto')?.textContent).toContain(`/pedido/${TOKEN_PRUEBA}`);
   });
 
-  it('PayPhone (simulado): no ofrece subir comprobante ni enlazar a un seguimiento que Laravel no tiene', async () => {
+  it('PayPhone aprobado: muestra pago confirmado, sin comprobante por WhatsApp', async () => {
     const { html } = await montar([item('a', 'Doctor', '')], 'payphone');
 
-    expect(html.textContent).toContain('Pago simulado');
-    expect(html.querySelector('a[href^="/pedido/"]')).toBeNull();
+    expect(html.textContent).toContain('Pago simulado');   // en pruebas Laravel avisa que fue simulado
     expect(html.textContent).not.toContain('Subir comprobante por WhatsApp');
   });
+
 
   it('ofrece descargar la foto de cada maceta personalizada con un nombre de archivo claro', async () => {
     const { html } = await montar([item('a', 'Amigo guitarrista', 'data:image/jpeg;base64,AAAA'), item('b', 'Sin foto', '')]);
