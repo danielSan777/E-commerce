@@ -7,9 +7,9 @@
 
 .pedidos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
 .pedido { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; overflow: hidden; }
-.resumen { display: flex; flex-wrap: nowrap; align-items: center; gap: .4rem .6rem; width: 100%; padding: .7rem 1rem; background: transparent; border: 0; text-align: left; cursor: pointer; color: inherit; }
+.resumen { display: flex; flex-wrap: nowrap; align-items: center; gap: .4rem .6rem; width: 100%; height: 5rem; padding: .7rem 1rem; background: transparent; border: 0; text-align: left; cursor: pointer; color: inherit; }
 .resumen > * { flex: none; white-space: nowrap; }
-.resumen .cliente { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--suave); }
+.resumen .cliente { flex: 1 1 0; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--suave); }
 .insignia { border-radius: 999px; padding: .1rem .6rem; font-size: .78rem; font-weight: 600; background: #e5e7eb; color: #374151; }
 .insignia.pending { background: #fef3c7; color: #92400e; }
 .insignia.paid { background: #d1fae5; color: #065f46; }
