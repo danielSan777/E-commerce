@@ -74,7 +74,11 @@ describe('validarCampana (sin llamar a la API)', () => {
 });
 
 describe('AdminCampanas', () => {
+  const pagina = (skus: [string, string][], total: number, page = 1) => ({
+    data: skus.map(([sku, name]) => prod(sku, name)), meta: { total, page, per_page: 20, last_page: Math.ceil(total / 20) },
+  });
   let ctrl: HttpTestingController;
+  let precargas: ReturnType<HttpTestingController['match']> = [];
 
   async function montar() {
     TestBed.configureTestingModule({ imports: [AdminCampanas], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
@@ -83,6 +87,11 @@ describe('AdminCampanas', () => {
     fixture.detectChanges();
     ctrl.expectOne('/api/v1/admin/campaigns').flush({ data: [campana()] });
     ctrl.expectOne('/api/v1/admin/categories').flush({ data: [{ slug: 'familia', name: 'Familia' }] });
+    // Al entrar se precargan los primeros 20 de "Todas" y de cada categoría
+    precargas = ctrl.match(r => r.url === '/api/v1/admin/products');
+    for (const r of precargas) {
+      r.flush(r.request.params.get('category') === 'familia' ? pagina([['F-1', 'Familiar']], 1) : pagina([['A-1', 'Uno'], ['A-2', 'Dos']], 45));
+    }
     await esperar();
     fixture.detectChanges();
     return fixture;
@@ -95,27 +104,27 @@ describe('AdminCampanas', () => {
     expect(texto).toContain('llega en 2027');
   });
 
-  const pagina = (skus: [string, string][], total: number, page = 1) => ({
-    data: skus.map(([sku, name]) => prod(sku, name)), meta: { total, page, per_page: 20, last_page: Math.ceil(total / 20) },
-  });
   const pedidosDeProductos = () => ctrl.match(r => r.url === '/api/v1/admin/products');
 
-  it('al abrir el formulario pide solo la primera parte de los productos', async () => {
+  it('al entrar precarga los primeros 20 de "Todas" y de cada categoría, sin esperar a que se elijan', async () => {
     const c = (await montar()).componentInstance;
+    expect(precargas.length).toBe(2);
+    expect(precargas.every(r => r.request.params.get('per_page') === '20' && r.request.params.get('page') === '1')).toBe(true);
+    expect(precargas.map(r => r.request.params.get('category'))).toEqual([null, 'familia']);
+
     c.nueva();
-    const [req] = pedidosDeProductos();
-    expect(req.request.params.get('per_page')).toBe('20');
-    expect(req.request.params.get('page')).toBe('1');
-    req.flush(pagina([['A-1', 'Uno'], ['A-2', 'Dos']], 45));
-    expect(c.resultados().length).toBe(2);
+    expect(pedidosDeProductos().length).toBe(0); // ya estaban cargados
+    expect(c.resultados().map(p => p.sku)).toEqual(['A-1', 'A-2']);
     expect(c.hayMas()).toBe(true);
+
+    c.alCambiarCategoria('familia');
+    expect(pedidosDeProductos().length).toBe(0);
+    expect(c.resultados().map(p => p.sku)).toEqual(['F-1']);
   });
 
-  it('busca por nombre o código y por categoría en Laravel, sin traer todo', async () => {
+  it('busca por nombre o código en Laravel, sin traer todo', async () => {
     const c = (await montar()).componentInstance;
     c.nueva();
-    pedidosDeProductos()[0].flush(pagina([['A-1', 'Uno']], 1));
-
     c.busqueda.set('jds-004');
     c.buscarProductos();
     const [porCodigo] = pedidosDeProductos();
@@ -124,40 +133,28 @@ describe('AdminCampanas', () => {
     expect(c.resultados().map(p => p.sku)).toEqual(['JDS-004']);
 
     c.alCambiarCategoria('familia');
-    const [porCategoria] = pedidosDeProductos();
-    expect(porCategoria.request.params.get('category')).toBe('familia');
-    expect(porCategoria.request.params.get('q')).toBe('jds-004');
-    porCategoria.flush(pagina([], 0));
+    const [mixta] = pedidosDeProductos();
+    expect(mixta.request.params.get('category')).toBe('familia');
+    expect(mixta.request.params.get('q')).toBe('jds-004');
+    mixta.flush(pagina([], 0));
     expect(c.resultados()).toEqual([]);
   });
 
-  it('al volver a una categoría ya vista se muestra al instante, sin pedirla otra vez', async () => {
+  it('"Cargar más" suma la siguiente página a lo ya cargado y al volver a la categoría se ve todo; los elegidos conservan su nombre', async () => {
     const c = (await montar()).componentInstance;
     c.nueva();
-    pedidosDeProductos()[0].flush(pagina([['A-1', 'Uno']], 1));
-    c.alCambiarCategoria('familia');
-    pedidosDeProductos()[0].flush(pagina([['F-1', 'Familiar']], 1));
-    c.alCambiarCategoria('');
-    expect(pedidosDeProductos().length).toBe(0);
-    expect(c.resultados().map(p => p.sku)).toEqual(['A-1']);
-    c.alCambiarCategoria('familia');
-    expect(pedidosDeProductos().length).toBe(0);
-    expect(c.resultados().map(p => p.sku)).toEqual(['F-1']);
-  });
-
-  it('"Cargar más" pide la siguiente página y la suma a la lista; los elegidos conservan su nombre', async () => {
-    const c = (await montar()).componentInstance;
-    c.nueva();
-    pedidosDeProductos()[0].flush(pagina([['A-1', 'Uno']], 2));
     c.alternar('A-1', 'Uno');
     c.cargarMasProductos();
     const [sig] = pedidosDeProductos();
     expect(sig.request.params.get('page')).toBe('2');
-    sig.flush(pagina([['A-2', 'Dos']], 2, 2));
-    expect(c.resultados().map(p => p.sku)).toEqual(['A-1', 'A-2']);
-    expect(c.hayMas()).toBe(false);
+    sig.flush(pagina([['A-3', 'Tres']], 45, 2));
+    expect(c.resultados().map(p => p.sku)).toEqual(['A-1', 'A-2', 'A-3']);
 
-    // una búsqueda nueva reemplaza la lista, pero el producto elegido sigue con su nombre
+    c.alCambiarCategoria('familia');
+    c.alCambiarCategoria('');
+    expect(pedidosDeProductos().length).toBe(0);
+    expect(c.resultados().map(p => p.sku)).toEqual(['A-1', 'A-2', 'A-3']); // lo cargado antes sigue ahí
+
     c.busqueda.set('zzz');
     c.buscarProductos();
     pedidosDeProductos()[0].flush(pagina([], 0));

@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subscription, finalize, forkJoin } from 'rxjs';
+import { EMPTY, Subscription, catchError, finalize, forkJoin, from, map, mergeMap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
@@ -201,6 +201,7 @@ export class AdminCampanas implements OnInit {
       next: r => {
         this.campanas.set(r.campanas);
         this.categorias.set(r.categorias);
+        this.precargar(r.categorias);
       },
       error: (e: ErrorApi) => this.error.set(e.message),
     });
@@ -304,6 +305,22 @@ export class AdminCampanas implements OnInit {
   cargarMasProductos(): void {
     if (this.buscando() || !this.hayMas()) return;
     this.pedirPagina(this.paginaActual() + 1);
+  }
+
+  /** Al entrar se piden de una vez los primeros 20 de "Todas" y de cada categoría (de 3 en 3), para que al elegir una ya esté cargada. */
+  private precargar(categorias: CategoriaAdmin[]): void {
+    const slugs = ['', ...categorias.map(c => c.slug)];
+    from(slugs).pipe(
+      mergeMap(slug => this.productosApi.listarPagina({ categoria: slug || undefined, pagina: 1, porPagina: this.POR_PAGINA }).pipe(
+        map(r => ({ slug, r })),
+        catchError(() => EMPTY), // si falla, esa categoría se pedirá al elegirla
+      ), 3),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(({ slug, r }) => {
+      const clave = `${slug}|`;
+      if (!this.memoria.has(clave)) this.memoria.set(clave, { lista: r.data, total: r.meta.total, pagina: r.meta.page });
+      if (this.clave() === clave && this.editando() !== null && !this.resultados().length && !this.buscando()) this.buscarProductos();
+    });
   }
 
   private clave(): string {
