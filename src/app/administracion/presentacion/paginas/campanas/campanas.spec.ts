@@ -219,6 +219,7 @@ describe('AdminCampanas', () => {
 
         c.nueva();
         c.form.name = 'Otra';
+        c.alternar('A-1', 'Uno');
         c.guardar(new Event('submit'));
         const sin = ctrl.expectOne('/api/v1/admin/campaigns');
         expect(sin.request.body.theme_color).toBeNull();
