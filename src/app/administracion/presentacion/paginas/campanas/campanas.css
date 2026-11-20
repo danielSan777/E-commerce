@@ -28,3 +28,8 @@
 .vista-previa .alternar .activo { background: #175437; color: #fff; }
 
 .color-hex { flex: 0 1 9rem; min-width: 7rem; font-family: ui-monospace, monospace; text-transform: uppercase; }
+.buscador { width: 100%; min-height: 44px; margin: .5rem 0; }
+.filtros-productos { display: grid; gap: .5rem; margin: .5rem 0; }
+.filtros-productos .buscador { margin: 0; }
+.filtros-productos .filtro-categoria { min-height: 44px; width: 100%; }
+.mas-productos { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; margin-top: .5rem; }

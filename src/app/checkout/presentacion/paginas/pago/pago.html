@@ -60,7 +60,7 @@
         </div>
     </section>
 
-    <!-- ===== Fecha de entrega (la promesa y las ventanas las entrega Laravel; hoy, un mock) ===== -->
+    <!-- ===== Fecha de entrega (la promesa y las ventanas las calcula Laravel) ===== -->
     <section class="tarjeta entrega" aria-labelledby="t-entrega">
         <h2 id="t-entrega" class="titulo-metodos"><i class="bi bi-truck" aria-hidden="true"></i> Fecha de entrega</h2>
 
@@ -70,8 +70,8 @@
                     (change)="elegirEntrega('inmediata')">
                 <span class="punto" aria-hidden="true"></span>
                 <span class="opcion-texto">
-                    <strong>{{ promesa.label }}</strong>
-                    <small>{{ promesa.countdown_label }}</small>
+                    <strong>{{ promesa()?.label }}</strong>
+                    <small>{{ contador() }}</small>
                 </span>
             </label>
 
@@ -87,10 +87,10 @@
         </div>
 
         @if (entrega() === 'programada') {
-        <app-calendario-ventanas [ventanas]="ventanas" [elegida]="ventanaElegida()" (elegir)="elegirVentana($event)" />
+        <app-calendario-ventanas [ventanas]="ventanas()" [elegida]="ventanaElegida()" (elegir)="elegirVentana($event)" />
         }
 
-        @if (esAmazonia()) { <p class="nota-amazonia">{{ promesa.amazon_note }}</p> }
+        @if (esAmazonia()) { <p class="nota-amazonia">{{ promesa()?.amazon_note }}</p> }
 
         @if (errorEntrega()) {
         <p class="error" role="alert">Elige una fecha de entrega disponible.</p>
@@ -180,13 +180,6 @@
     </p>
     }
 
-    @if (metodo() === 'payphone') {
-    <p class="aviso-simulacion" role="note">
-        <i class="bi bi-info-circle" aria-hidden="true"></i>
-        Modo de prueba: el pago con tarjeta todavía no cobra. El pedido se marca como simulado.
-    </p>
-    }
-
     <!-- ===== Casillas ===== -->
     <div class="casillas">
         <label class="casilla">
@@ -207,7 +200,11 @@
         <span><b>Revisa bien:</b> después de confirmar no se puede editar tu pedido.</span>
     </p>
 
-    <button type="button" class="btn-confirmar" [disabled]="faltanDatos() || sinEnvio()" (click)="confirmar()">
+    @if (errorPedido()) {
+    <p class="error error-pedido" role="alert">{{ errorPedido() }}</p>
+    }
+
+    <button type="button" class="btn-confirmar" [disabled]="faltanDatos() || sinEnvio() || enviando()" (click)="confirmar()">
         Confirmar pedido <i class="bi bi-arrow-right" aria-hidden="true"></i>
     </button>
 

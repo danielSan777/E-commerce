@@ -1,15 +1,16 @@
-import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
-import { PedidoPendienteService } from '../../../aplicacion/servicios/PedidoPendienteService';
+import { RouterLink } from '@angular/router';
+import { PedidoPendiente as VistaPendiente } from '../../../dominio/interfaces/pedido_pendiente';
+import { PedidoConsultaService, VistaPedido } from '../../../aplicacion/servicios/PedidoConsultaService';
 import { enlaceWhatsapp } from '../../../../core/configuracion/tienda';
-import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 
 // Pedido pendiente de pago por transferencia (/pedido/{token}). Lee el contrato "Pedido pendiente de pago" del Paso 0.
+// Laravel entrega el plazo, las cuentas y el estado; aquí solo se muestran y se sube el comprobante.
 @Component({
   selector: 'app-pedido-pendiente',
-  imports: [CurrencyPipe, RouterLink, NoEncontrada],
+  imports: [CurrencyPipe, RouterLink],
   templateUrl: './pedido-pendiente.html',
   styleUrl: './pedido-pendiente.css',
 })
@@ -18,58 +19,54 @@ export class PedidoPendiente {
   // ===== EDITABLES =====
   readonly RUTA_COMPRAR = '/categorias';
   readonly TIPOS_COMPROBANTE = ['image/jpeg', 'image/png', 'application/pdf'];   // JPG, PNG o PDF
+  readonly MAX_COMPROBANTE_MB = 5;                                                // Laravel también lo valida
 
-  private route = inject(ActivatedRoute);
-  private pedidos = inject(PedidoService);
-  private servicio = inject(PedidoPendienteService);
+  private servicio = inject(PedidoConsultaService);
+  private avisos = inject(AvisosService);
 
-  // Hasta leer el pedido guardado no se sabe si existe
-  cargado = signal(false);
+  readonly vista = input.required<VistaPendiente>();
+  readonly token = input.required<string>();
+  /** Laravel devolvió el pedido actualizado (por ejemplo, con el comprobante recibido). */
+  readonly actualizada = output<VistaPedido>();
 
-  private token = this.route.snapshot.paramMap.get('token') ?? '';
+  vencido = computed(() => this.vista().status === 'expired');
 
-  // Solo se muestra si el token es el del pedido por transferencia que está guardado
-  pedido = computed(() => {
-    const p = this.pedidos.pedido();
-    return p && p.token === this.token && p.metodo === 'transferencia' ? p : null;
-  });
-
-  vista = computed(() => (this.pedido() ? this.servicio.desdePedido(this.pedido()!) : null));
-  vencido = computed(() => this.vista()?.status === 'expired');
-  comprobante = computed(() => this.pedido()?.comprobante ?? null);
-
+  subiendo = signal(false);
   errorArchivo = signal('');
   copiado = signal('');
 
   // Ayuda por WhatsApp (mensaje prellenado del Paso 1)
-  enlaceAyuda = computed(() => {
-    const p = this.pedido();
-    if (!p) return '';
-    const texto = `Hola 🌿 Te escribo por mi pedido ${p.numero}. Tengo la siguiente consulta:`;
-    return enlaceWhatsapp(texto);
-  });
-
-  constructor() {
-    afterNextRender(() => {
-      this.pedidos.restaurar();
-      this.cargado.set(true);
-    });
-  }
+  enlaceAyuda = computed(() =>
+    enlaceWhatsapp(`Hola 🌿 Te escribo por mi pedido ${this.vista().order_number}. Tengo la siguiente consulta:`));
 
   elegirComprobante(evento: Event): void {
     const campo = evento.target as HTMLInputElement;
     const archivo = campo.files?.[0];
     if (!archivo) return;
+    campo.value = '';
 
     if (!this.TIPOS_COMPROBANTE.includes(archivo.type)) {
       this.errorArchivo.set('El comprobante debe ser una imagen JPG o PNG, o un PDF.');
-      campo.value = '';
+      return;
+    }
+    if (archivo.size > this.MAX_COMPROBANTE_MB * 1024 * 1024) {
+      this.errorArchivo.set(`El comprobante no puede pesar más de ${this.MAX_COMPROBANTE_MB} MB.`);
       return;
     }
 
     this.errorArchivo.set('');
-    this.pedidos.adjuntarComprobante(archivo.name);
-    campo.value = '';
+    this.subiendo.set(true);
+    this.servicio.subirComprobante(this.token(), archivo).subscribe({
+      next: v => {
+        this.subiendo.set(false);
+        this.avisos.exito('Recibimos tu comprobante.');
+        this.actualizada.emit(v);
+      },
+      error: e => {
+        this.subiendo.set(false);
+        this.errorArchivo.set(e?.errors?.receipt?.[0] ?? e?.message ?? 'No pudimos subir el comprobante. Inténtalo de nuevo.');
+      },
+    });
   }
 
   async copiar(clave: string, texto: string): Promise<void> {

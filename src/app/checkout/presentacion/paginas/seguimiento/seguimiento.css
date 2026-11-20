@@ -11,3 +11,5 @@
 .productos li { display: flex; flex-direction: column; padding: 8px 0; border-top: 1px solid var(--borde); }
 .productos li:first-child { border-top: 0; }
 .productos small, .sin-guia { color: var(--gris); }
+
+.copiar-guia { margin-left: .5rem; padding: .15rem .6rem; border: 1px solid currentColor; border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: .85rem; cursor: pointer; }

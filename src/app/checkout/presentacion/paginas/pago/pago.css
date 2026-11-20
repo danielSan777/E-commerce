@@ -500,3 +500,5 @@ h1 {
 
 .aviso-revisar { background: #fff4d6; border: 1px solid #ecd28a; color: #5a4300; }
 .aviso-simulacion { background: #eef2fb; border: 1px solid #c4cff0; color: #2a3a6b; }
+
+.error-pedido { padding: 0.7rem 0.9rem; border: 1px solid #f0b8b4; border-radius: 0.6rem; background: #fdf0ef; font-size: 0.9rem; }

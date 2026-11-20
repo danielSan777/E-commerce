@@ -24,7 +24,7 @@
 
 <!-- Franja de promesa -->
 <section class="promesa" aria-label="Entrega y envío">
-    <p><i class="bi bi-truck" aria-hidden="true"></i> <b>{{ promesa.label }}</b> · {{ promesa.countdown_label }}</p>
+    <p><i class="bi bi-truck" aria-hidden="true"></i> <b>{{ promesa()?.label }}</b> · {{ contador() }}</p>
     <p><i class="bi bi-gift" aria-hidden="true"></i> Envío gratis llevando {{ macetasEnvioGratis }} macetas</p>
 </section>
 

@@ -1,0 +1,13 @@
+:host { display: block; width: 100%; height: 100%; container-type: inline-size; }
+
+.vista { position: relative; width: 100%; height: 100%; overflow: hidden; isolation: isolate; background: #fff; }
+
+/* Copia difuminada de la foto detrás de ella: tapa el blanco de los lados */
+.fondo { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; filter: blur(3cqw); transform: scale(1.15); }
+
+.escena { position: relative; width: 100%; height: 100%; }
+.maceta { position: relative; z-index: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
+
+.accesorio { position: absolute; }
+.contenido-3d { width: 100%; height: 100%; transform-origin: center center; }
+.accesorio img { display: block; width: 100%; height: 100%; object-fit: fill; }

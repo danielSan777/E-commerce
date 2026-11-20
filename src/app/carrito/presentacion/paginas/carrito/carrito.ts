@@ -11,6 +11,8 @@ import { catchError, of } from 'rxjs';
 import { CategoriaService } from '../../../../categorias/aplicacion/servicios/CategoriaService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { macetaIgualSinConfirmar } from '../../../dominio/iguales';
+import { VistaMaceta } from '../../../../shared/componentes/vista-maceta/vista-maceta';
+import { ConfiguradorService } from '../../../../personalizador/aplicacion/servicios/ConfiguradorService';
 import { Personalizador } from '../../../../personalizador/presentacion/paginas/personalizador/personalizador';
 
 interface Sugerencia {
@@ -18,7 +20,7 @@ interface Sugerencia {
   nombre: string;
   precio: number;
   imagen: string;
-  categoria?: string;  // para filtrar en las hojas "Elige otra maceta" / "Complementa tu regalo"
+  categoria?: string;  // solo macetas: para filtrar en la hoja "Elige otra maceta" (los complementos no tienen categoría)
   slug?: string;       // solo macetas: producto al que corresponde
 }
 
@@ -29,7 +31,7 @@ interface Categoria {
 
 @Component({
   selector: 'app-carrito',
-  imports: [CurrencyPipe, NgTemplateOutlet, RouterLink, Personalizador],
+  imports: [CurrencyPipe, NgTemplateOutlet, RouterLink, Personalizador, VistaMaceta],
   templateUrl: './carrito.html',
   styleUrl: './carrito.css',
 })
@@ -41,7 +43,7 @@ export class Carrito implements AfterViewInit, OnDestroy {
   readonly RUTA_CONTINUAR = '/checkout';  // "Continuar"
 
   // ===== Otras macetas: los productos activos y disponibles que entrega Laravel =====
-  private productosApi = toSignal(inject(CategoriaService).productos().pipe(catchError(() => of([]))), { initialValue: [] });
+  private productosApi = toSignal(inject(CategoriaService).productos(undefined, true).pipe(catchError(() => of([]))), { initialValue: [] });
 
   /** Precio en dólares para mostrarlo y guardarlo en el carrito; el precio final lo calculó Laravel. */
   readonly macetas = computed<Sugerencia[]>(() => this.productosApi()
@@ -55,19 +57,12 @@ export class Carrito implements AfterViewInit, OnDestroy {
       slug: p.slug,
     })));
 
-  // ===== EDITABLE: complementos (rutas de tus accesorios; el precio de cada uno es de ejemplo) =====
-  readonly complementos: Sugerencia[] = [
-    { id: 'acc-1', nombre: 'Lentes', imagen: 'accesorios/lentes.png', categoria: 'Moda', precio: 2 },
-    { id: 'acc-5', nombre: 'Gafas', imagen: 'accesorios/gafas-sin-fondo.png', categoria: 'Moda', precio: 2 },
-    { id: 'acc-3', nombre: 'Marco con foto', imagen: 'accesorios/marco-foto.png', categoria: 'Objetos', precio: 3 },
-    { id: 'acc-4', nombre: 'Marco con frase', imagen: 'accesorios/marco-frase.png', categoria: 'Objetos', precio: 3 },
-    { id: 'acc-6', nombre: 'Herramienta', imagen: 'accesorios/caja_herramientas.png', categoria: 'Objetos', precio: 3 },
-    { id: 'acc-7', nombre: 'Regalo', imagen: 'accesorios/regalo.png', categoria: 'Objetos', precio: 2 },
-    { id: 'acc-8', nombre: 'Vaso de café', imagen: 'accesorios/vaso_cafe.png', categoria: 'Objetos', precio: 2 },
-    { id: 'acc-9', nombre: 'Gato amarillo', imagen: 'accesorios/gatito.png', categoria: 'Animales', precio: 3 },
-    { id: 'acc-10', nombre: 'Perro', imagen: 'accesorios/perro.png', categoria: 'Animales', precio: 3 },
-    { id: 'acc-11', nombre: 'Flor', imagen: 'accesorios/flores.png', categoria: 'Flores', precio: 2 },
-  ];
+  // ===== Complementos: los productos activos de tipo "complemento" que entrega Laravel (sin categoría) =====
+  private complementosApi = toSignal(inject(CategoriaService).complementos(true).pipe(catchError(() => of([]))), { initialValue: [] });
+
+  readonly complementos = computed<Sugerencia[]>(() => this.complementosApi()
+    .filter(p => p.available)
+    .map(p => ({ id: p.sku, nombre: p.name, precio: p.price.final_cents / 100, imagen: p.image })));
 
   private carrito = inject(CarritoService);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -114,21 +109,11 @@ export class Carrito implements AfterViewInit, OnDestroy {
     return [...vistas].map(([clave, etiqueta]) => ({ clave, etiqueta }));
   });
 
-  catsComplementos = computed<Categoria[]>(() =>
-    [...new Set(this.complementos.map(c => c.categoria as string))].map(c => ({ clave: c, etiqueta: c }))
-  );
-
   catMaceta = signal('');
-  catComplemento = signal('');
 
   macetasDeCategoria = computed(() => {
     const cat = this.catMaceta() || this.catsMacetas()[0]?.clave;
     return this.macetas().filter(m => m.categoria === cat);
-  });
-
-  complementosDeCategoria = computed(() => {
-    const cat = this.catComplemento() || this.catsComplementos()[0]?.clave;
-    return this.complementos.filter(c => c.categoria === cat);
   });
 
   // ----- Hojas que suben de abajo hacia arriba -----
@@ -145,6 +130,15 @@ export class Carrito implements AfterViewInit, OnDestroy {
     effect(() => {
       const abierta = this.hoja() !== null || this.personalizando() !== null;
       this.document.body.style.overflow = abierta ? 'hidden' : '';
+    });
+
+    // Las macetas del carrito adelantan su configuración en segundo plano: al tocar "Editar" abre al instante, sin esperar a la API
+    const configurador = inject(ConfiguradorService);
+    effect(() => {
+      const macetas = this.items().filter(i => i.tipo === 'personalizado');
+      untracked(() => {
+        if (this.esNavegador) new Set(macetas.map(i => String(i.producto.id))).forEach(slug => configurador.adelantar(slug));
+      });
     });
 
     // Cuando el personalizador guarda el detalle en el carrito (nuevo o editado), la hoja se cierra sola
@@ -235,7 +229,8 @@ export class Carrito implements AfterViewInit, OnDestroy {
   }
 
   agregarComplemento(s: Sugerencia): void {
-    if (this.enCarrito(s.id)) return;
+    // Un complemento acompaña a una maceta: sin al menos una en el carrito no se agrega
+    if (!this.hayMacetas() || this.enCarrito(s.id)) return;
 
     this.carrito.guardar({
       uid: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`,

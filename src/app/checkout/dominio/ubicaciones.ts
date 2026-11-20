@@ -1,48 +1,37 @@
 import { normalizar } from './validaciones/validaciones';
-import inec from './datos/ubicaciones-inec.json';
-import zonaA from './datos/sectores-zona-a.json';
 
 /*
- * Provincias y cantones de Ecuador: Clasificador Geográfico Estadístico 2026 del INEC
- * (actualizado al 31 de diciembre de 2025), guardado dentro del proyecto en datos/ubicaciones-inec.json.
- * No se usa ningún servicio externo. Ese mismo archivo alimentará después el seeder de Laravel.
- *
- * Las "zonas en estudio" (código 90) no son provincias ni cantones y no se incluyen.
+ * Provincias, cantones y zonas de envío: vienen de la base de datos (GET /api/v1/locations) y el administrador
+ * los edita desde el panel (Envíos). Aquí solo están los tipos y las búsquedas sobre lo ya descargado.
+ * Los cantones son los del INEC y solo de Ecuador: todas las ventas son dentro del país.
  */
 
-export interface Canton { codigo: string; nombre: string }
+export type CodigoZona = 'A' | 'B' | 'C' | 'no_disponible';
+
+export interface ZonaDeEnvio { codigo: CodigoZona; nombre: string; centavos: number; diasAdicionales: number; disponible: boolean }
+
+/** Un cantón de la lista, o un sector ("La Aurora - Daule") que se muestra como un cantón más. */
+export interface Canton { codigo: string; nombre: string; zona: CodigoZona; sector: boolean }
 export interface Provincia { codigo: string; nombre: string; cantones: Canton[] }
 
-export const PROVINCIAS: readonly Provincia[] = inec.provincias;
+export interface CatalogoUbicaciones { zonas: ZonaDeEnvio[]; provincias: Provincia[] }
 
-// Sectores que se muestran como un cantón más en la lista ("La Aurora - Daule") y se cobran como Zona A.
-export interface Sector { provincia: string; canton: string; nombre: string }
+export const CATALOGO_VACIO: CatalogoUbicaciones = { zonas: [], provincias: [] };
 
-export const SECTORES_ZONA_A: readonly Sector[] = zonaA.sectores;
-
-export function buscarSector(provincia: string, nombre: string): Sector | undefined {
-    const prov = buscarProvincia(provincia);
+export function buscarProvincia(catalogo: CatalogoUbicaciones, nombre: string): Provincia | undefined {
     const n = normalizar(nombre.trim());
-    return prov ? SECTORES_ZONA_A.find(s => s.provincia === prov.codigo && normalizar(s.nombre) === n) : undefined;
+    return catalogo.provincias.find(p => normalizar(p.nombre) === n);
 }
 
-export function buscarProvincia(nombre: string): Provincia | undefined {
-    const n = normalizar(nombre.trim());
-    return PROVINCIAS.find(p => normalizar(p.nombre) === n);
-}
-
-export function buscarCanton(provincia: string, canton: string): Canton | undefined {
+export function buscarCanton(catalogo: CatalogoUbicaciones, provincia: string, canton: string): Canton | undefined {
     const n = normalizar(canton.trim());
-    return buscarProvincia(provincia)?.cantones.find(c => normalizar(c.nombre) === n);
+    return buscarProvincia(catalogo, provincia)?.cantones.find(c => normalizar(c.nombre) === n);
 }
 
-export function nombresDeProvincias(): string[] {
-    return PROVINCIAS.map(p => p.nombre);
+export function nombresDeProvincias(catalogo: CatalogoUbicaciones): string[] {
+    return catalogo.provincias.map(p => p.nombre);
 }
 
-export function nombresDeCantones(provincia: string): string[] {
-    const prov = buscarProvincia(provincia);
-    if (!prov) return [];
-    const sectores = SECTORES_ZONA_A.filter(s => s.provincia === prov.codigo).map(s => s.nombre);
-    return [...prov.cantones.map(c => c.nombre), ...sectores];
+export function nombresDeCantones(catalogo: CatalogoUbicaciones, provincia: string): string[] {
+    return buscarProvincia(catalogo, provincia)?.cantones.map(c => c.nombre) ?? [];
 }

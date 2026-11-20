@@ -29,23 +29,42 @@
         <option value="complemento">Complemento</option>
       </select>
 
-      <label for="category">Categoría</label>
-      <select id="category" name="category" [(ngModel)]="form.category" (ngModelChange)="quitarError('category'); cambiarCategoria()" [attr.aria-invalid]="errores()['category'] ? true : null">
-        <option value="">Elige una categoría</option>
-        @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
-      </select>
-      @if (errores()['category']) { <small class="campo-error">{{ errores()['category'] }}</small> }
-
-      <label for="subcategory">Subcategoría</label>
-      <select id="subcategory" name="subcategory" [(ngModel)]="form.subcategory" (ngModelChange)="quitarError('subcategory')" [disabled]="!form.category || cargandoSubcategorias() || !subcategorias().length" [attr.aria-invalid]="errores()['subcategory'] ? true : null">
-        <option value="">{{ cargandoSubcategorias() ? 'Cargando…' : form.category ? 'Elige una subcategoría' : 'Primero elige la categoría' }}</option>
-        @for (s of subcategorias(); track s.slug) { <option [value]="s.slug">{{ s.name }}</option> }
-      </select>
-      @if (form.category && subcategoriasListas() && !subcategorias().length) {
-        <small class="campo-error">Esta categoría todavía no tiene subcategorías.
-          <a [routerLink]="['/admin/categorias', form.category, 'subcategorias']">Crear una subcategoría</a></small>
+      @if (pideImagenBase) {
+        <label for="imagen-base">Imagen para personalizar (obligatoria)</label>
+      } @else {
+        <label for="imagen-base">Foto del complemento (obligatoria)</label>
       }
-      @if (errores()['subcategory']) { <small class="campo-error">{{ errores()['subcategory'] }}</small> }
+      <input id="imagen-base" name="imagen-base" type="file" accept="image/png,image/jpeg,image/webp" (change)="elegirImagenBase($event)"
+        [attr.aria-invalid]="errores()['imagen'] ? true : null" />
+      @if (vistaPreviaBase(); as foto) {
+        <div class="vista-previa"><img [src]="foto" alt="Vista previa de la foto" /></div>
+      }
+      @if (pideImagenBase) {
+        <small class="ayuda">Es la foto que el cliente ve en el personalizador y sobre la que se colocan los accesorios (la maceta sin accesorios; PNG, JPG o WebP). Es distinta de las fotos de la ficha del producto.</small>
+      } @else {
+        <small class="ayuda">Un complemento lleva una sola foto (PNG, JPG o WebP): sin galería ni video. Es la que ve el cliente al complementar su regalo.</small>
+      }
+      @if (errores()['imagen']) { <small class="campo-error">{{ errores()['imagen'] }}</small> }
+
+      @if (pideCategoria) {
+        <label for="category">Categoría</label>
+        <select id="category" name="category" [(ngModel)]="form.category" (ngModelChange)="quitarError('category'); cambiarCategoria()" [attr.aria-invalid]="errores()['category'] ? true : null">
+          <option value="">Elige una categoría</option>
+          @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
+        </select>
+        @if (errores()['category']) { <small class="campo-error">{{ errores()['category'] }}</small> }
+
+        <label for="subcategory">Subcategoría</label>
+        <select id="subcategory" name="subcategory" [(ngModel)]="form.subcategory" (ngModelChange)="quitarError('subcategory')" [disabled]="!form.category || cargandoSubcategorias() || !subcategorias().length" [attr.aria-invalid]="errores()['subcategory'] ? true : null">
+          <option value="">{{ cargandoSubcategorias() ? 'Cargando…' : form.category ? 'Elige una subcategoría' : 'Primero elige la categoría' }}</option>
+          @for (s of subcategorias(); track s.slug) { <option [value]="s.slug">{{ s.name }}</option> }
+        </select>
+        @if (form.category && subcategoriasListas() && !subcategorias().length) {
+          <small class="campo-error">Esta categoría todavía no tiene subcategorías.
+            <a [routerLink]="['/admin/categorias', form.category, 'subcategorias']">Crear una subcategoría</a></small>
+        }
+        @if (errores()['subcategory']) { <small class="campo-error">{{ errores()['subcategory'] }}</small> }
+      }
 
       <label for="precio">Precio de venta (USD)</label>
       <input id="precio" name="precio" inputmode="decimal" placeholder="21.50" [(ngModel)]="form.precio" (ngModelChange)="quitarError('precio'); verPrecio()" [attr.aria-invalid]="errores()['precio'] ? true : null" />
@@ -110,7 +129,9 @@
       </div>
     </form>
 
-    @if (esNuevo) {
+    @if (form.type === 'complemento') {
+      <!-- La única foto del complemento se sube en el formulario: sin galería ni video -->
+    } @else if (esNuevo) {
       <p class="ayuda">Guarda el producto y luego podrás subir sus imágenes.</p>
     } @else {
       <app-galeria-imagenes dueno="products" [clave]="sku!" />

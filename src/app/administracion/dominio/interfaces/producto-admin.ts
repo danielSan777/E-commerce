@@ -4,8 +4,9 @@ export interface ProductoAdmin {
   slug: string;
   name: string;
   type: 'personalizable' | 'complemento';
-  category_slug: string;
-  category_name: string;
+  /** null en los complementos: no tienen categoría ni subcategoría. */
+  category_slug: string | null;
+  category_name: string | null;
   subcategory_slug: string | null;
   base_price_cents: number;
   cost_cents: number | null;
@@ -20,6 +21,10 @@ export interface ProductoAdmin {
   seo_description: string | null;
   is_available: boolean;
   is_active: boolean;
+  /** Imagen para personalizar (obligatoria en los personalizables); null si aún no se sube. */
+  personalization_image: string | null;
+  /** Única foto de un complemento (obligatoria); null si aún no se sube o si no es complemento. */
+  complement_image: string | null;
   search_synonyms: string[];
   updated_at: string;
 }
@@ -27,8 +32,9 @@ export interface ProductoAdmin {
 export interface DatosProducto {
   name: string;
   type: 'personalizable' | 'complemento';
-  category: string;
-  subcategory: string;
+  /** Se omiten en los complementos. */
+  category?: string;
+  subcategory?: string;
   base_price_cents: number;
   cost_cents: number | null;
   discount_percent: number;
@@ -48,4 +54,10 @@ export interface PrevisualizacionPrecio {
   discount_percent: number;
   discount_cents: number;
   final_price_cents: number;
+}
+
+/** Una parte del listado de productos y cuántos hay en total (lo calcula Laravel). */
+export interface PaginaProductos {
+  data: ProductoAdmin[];
+  meta: { total: number; page: number; per_page: number; last_page: number };
 }

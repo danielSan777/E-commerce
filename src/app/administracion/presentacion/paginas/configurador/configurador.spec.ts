@@ -1,0 +1,744 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { API_URL } from '../../../../core/configuracion/api';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
+import { AdminConfigurador } from './configurador';
+
+const BASE = '/api/v1/admin';
+const GEO = { x: 40, y: 25, width: 20, height: 10, rot_x: 0, rot_y: 0, rot_z: 0, mirror: false };
+
+const ACCESORIOS = [
+  { id: 20, name: 'Gafas', type: 'imagen', behavior: 'gafas', text: null, category_id: 1, category: 'Moda', image: 'https://api/g.webp', thumb: null, alt: 'Gafas', sort_order: 1, is_active: true },
+  { id: 21, name: 'Regalo', type: 'imagen', behavior: null, text: null, category_id: 2, category: 'Objetos', image: 'https://api/r.webp', thumb: null, alt: 'Regalo', sort_order: 2, is_active: true },
+  { id: 22, name: 'Nombre', type: 'texto', behavior: null, text: 'Ingrese su nombre.', category_id: 3, category: 'Personalización', image: null, thumb: null, alt: null, sort_order: 3, is_active: true },
+];
+
+const ubicacion = (id: number, name: string, extra = {}) => ({
+  location_id: id, name, allowed_categories: [], excluded_categories: [], state: 'libre', priority: id, layer: 1, fixed_accessory_id: null, preset: null, ...extra,
+});
+
+const configuracion = (extra = {}) => ({
+  locations: [ubicacion(7, 'Cabeza', { allowed_categories: ['Moda'], preset: GEO }), ubicacion(8, 'Pie', { excluded_categories: ['Moda', 'Personalización'] })],
+  accessory_ids: [20, 21],
+  exceptions: [],
+  ...extra,
+});
+
+const categoria = (extra = {}) => ({
+  scope: 'category', slug: 'profesiones', name: 'Profesiones', has_config: true,
+  products: [{ sku: 'PRO-DOCTOR', name: 'Doctor', uses_own_configurator: false, base_image: 'https://api/doctor.webp', base_adjust: { scale: 100, x: 0, y: 0, text_color: null } }, { sku: 'PRO-ENFERMERA', name: 'Enfermera', uses_own_configurator: false, base_image: null, base_adjust: { scale: 100, x: 0, y: 0, text_color: null } }],
+  config: configuracion(), ...extra,
+});
+
+const producto = (extra = {}) => ({
+  scope: 'product', sku: 'PRO-DOCTOR', name: 'Doctor', category_slug: 'profesiones', category_name: 'Profesiones',
+  uses_own_configurator: false, source: 'category', has_config: true, base_image: 'https://api/doctor.webp', base_adjust: { scale: 100, x: 0, y: 0, text_color: null }, fixed_accessories: [], config: configuracion(), ...extra,
+});
+
+const esperar = () => new Promise<void>(r => setTimeout(r));
+
+describe('AdminConfigurador', () => {
+  let ctrl: HttpTestingController;
+  let avisos: AvisosService;
+
+  async function montar() {
+    TestBed.configureTestingModule({ imports: [AdminConfigurador], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+    ctrl = TestBed.inject(HttpTestingController);
+    avisos = TestBed.inject(AvisosService);
+    const fixture = TestBed.createComponent(AdminConfigurador);
+    fixture.detectChanges();
+    ctrl.expectOne(`${BASE}/categories`).flush({ data: [{ slug: 'profesiones', name: 'Profesiones', sort_order: 1, is_active: true }] });
+    await esperar();
+    ctrl.expectOne(`${BASE}/configurator/last-edit`).flush({ category_slug: null, product_sku: null });
+    await esperar();
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  /** Elige la categoría y contesta la configuración y los accesorios. */
+  async function abrirCategoria(fixture: Awaited<ReturnType<typeof montar>>, cat = categoria()) {
+    fixture.componentInstance.elegirCategoria('profesiones');
+    ctrl.expectOne(`${BASE}/configurator/categories/profesiones`).flush(cat);
+    await esperar();
+    ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+    await esperar();
+    fixture.detectChanges();
+  }
+
+  /** Tras guardar, el editor recarga los accesorios: se contesta esa petición. */
+  async function terminarGuardado() {
+    await esperar();
+    ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+    await esperar();
+  }
+
+  /** Al elegir un producto se pide su configuración y luego los accesorios (también sirven de guía si usa la de la categoría). */
+  async function elegirProductoYResponder(c: AdminConfigurador, sku: string, respuesta: object) {
+    c.elegirProducto(sku);
+    ctrl.expectOne(`${BASE}/configurator/products/${sku}`).flush(respuesta);
+    await esperar();
+    ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+    await esperar();
+  }
+
+  // Cada vez que se elige categoría o producto se guarda en la base de datos qué se está configurando
+  afterEach(() => {
+    ctrl.match(r => r.method === 'PUT' && r.url === `${BASE}/configurator/last-edit`).forEach(r => r.flush({ category_slug: null, product_sku: null }));
+    ctrl.verify();
+  });
+
+  it('sin categoria elegida pide elegir una y no muestra el editor', async () => {
+    const fixture = await montar();
+    expect(fixture.nativeElement.textContent).toContain('Elige una categoría');
+    expect(fixture.nativeElement.querySelector('.visor')).toBeNull();
+  });
+
+  it('al elegir una categoría carga su configuración y sus accesorios desde la API y muestra el editor', async () => {
+    const fixture = await montar();
+    await abrirCategoria(fixture);
+    const c = fixture.componentInstance;
+
+    expect(fixture.nativeElement.querySelector('.visor')).not.toBeNull();
+    expect(c.ubicaciones().map(u => u.nombre)).toEqual(['Cabeza', 'Pie']);
+    expect(c.ubicacionActual()).toBe(7);
+    expect(c.idsMarcados()).toEqual([20, 21]);
+    expect(c.presetActual()).toMatchObject({ x: 40, y: 25, ancho: 20, alto: 10 });
+    expect(c.valoresGuardados()).toBe(true);
+    // La cabeza solo admite Moda (regla que viene de la base de datos)
+    expect(c.categorias()).toEqual(['Moda']);
+    expect(fixture.nativeElement.textContent).toContain('Esta configuración la usan todos los productos de «Profesiones» (2)');
+  });
+
+  it('guarda la configuración de la categoría con el contrato de Laravel', async () => {
+    const fixture = await montar();
+    await abrirCategoria(fixture);
+    const c = fixture.componentInstance;
+
+    c.cambiarConfig('prioridad', 5);
+    void c.guardarConfiguracion();
+    const put = ctrl.expectOne(`${BASE}/configurator/categories/profesiones`);
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual({
+      locations: [
+        { location_id: 7, state: 'libre', priority: 5, layer: 1, fixed_accessory_id: null, preset: GEO },
+        { location_id: 8, state: 'libre', priority: 8, layer: 1, fixed_accessory_id: null, preset: null },
+      ],
+      accessory_ids: [20, 21],
+      exceptions: [],
+    });
+    put.flush(categoria());
+    await esperar();
+    ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+    await esperar();
+
+    expect(avisos.lista().at(-1)?.texto).toBe('La configuración se guardó correctamente.');
+    expect(c.guardando()).toBe(false);
+  });
+
+  it('no guarda si una ubicación fija no tiene elemento fijo y lo avisa', async () => {
+    const fixture = await montar();
+    await abrirCategoria(fixture);
+    const c = fixture.componentInstance;
+
+    c.cambiarConfig('estado', 'fija');
+    await c.guardarConfiguracion();
+
+    ctrl.expectNone(`${BASE}/configurator/categories/profesiones`);
+    expect(avisos.lista().at(-1)?.texto).toBe('La ubicación "Cabeza" es fija: elige su elemento fijo y define sus valores.');
+  });
+
+  it('muestra el mensaje de Laravel si rechaza lo guardado', async () => {
+    const fixture = await montar();
+    await abrirCategoria(fixture);
+
+    void fixture.componentInstance.guardarConfiguracion();
+    ctrl.expectOne(`${BASE}/configurator/categories/profesiones`).flush(
+      { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { 'locations.0.priority': ['La prioridad debe estar entre 1 y 99.'] } },
+      { status: 422, statusText: 'Unprocessable' },
+    );
+    await esperar();
+    fixture.detectChanges();
+
+    const alerta = fixture.nativeElement.querySelector('[role=alert]').textContent;
+    expect(alerta).toContain('Revisa los datos ingresados.');
+    expect(alerta).toContain('La prioridad debe estar entre 1 y 99.');
+  });
+
+  describe('excepciones y marcados', () => {
+    it('crea una excepción con los valores de la ubicación y se guarda con ellos', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+
+      c.crearExcepcion(c.accesorios().find(a => a.id === 20)!);
+
+      expect(c.estaColocado(20)).toBe(true);
+      expect(c.resumenUbicacion(7)).toBe('libre · con valores · 1 excepción(es)');
+      expect(c.ubicacionesDe(20)).toBe('Cabeza');
+
+      void c.guardarConfiguracion();
+      const put = ctrl.expectOne(`${BASE}/configurator/categories/profesiones`);
+      expect(put.request.body.exceptions).toEqual([{ accessory_id: 20, location_id: 7, ...GEO }]);
+      put.flush(categoria());
+      await terminarGuardado();
+    });
+
+    it('no crea una excepción en una ubicación deshabilitada, sin valores o repetida y explica por qué', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      const gafas = c.accesorios().find(a => a.id === 20)!;
+
+      c.cambiarConfig('estado', 'deshabilitada');
+      c.crearExcepcion(gafas);
+      expect(avisos.lista().at(-1)?.texto).toBe('No se puede: La ubicación está deshabilitada.');
+
+      c.cambiarConfig('estado', 'libre');
+      c.crearExcepcion(gafas);
+      c.crearExcepcion(gafas);
+      expect(avisos.lista().at(-1)?.texto).toBe('No se puede: Este accesorio ya tiene una excepción en esta ubicación.');
+      expect(c.accesoriosColocados().filter(a => a.accesorioId === 20).length).toBe(1);
+
+      c.cambiarUbicacion(8);
+      c.crearExcepcion(c.accesorios().find(a => a.id === 21)!);
+      expect(avisos.lista().at(-1)?.texto).toBe('No se puede: Primero define los valores de la ubicación.');
+    });
+
+    it('al desmarcar un accesorio se quitan sus excepciones y deja de ser elemento fijo', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      const gafas = c.accesorios().find(a => a.id === 20)!;
+
+      c.crearExcepcion(gafas);
+      c.cambiarConfig('estado', 'fija');
+      c.cambiarConfig('fijoId', 20);
+
+      c.alternarMarcado(gafas, false);
+
+      expect(c.estaMarcado(20)).toBe(false);
+      expect(c.estaColocado(20)).toBe(false);
+      expect(c.configUbicaciones()[7].fijoId).toBeNull();
+    });
+
+    it('definir y guardar los valores de una ubicación nueva habilita elegir accesorios', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+
+      c.cambiarUbicacion(8);
+      expect(c.valoresGuardados()).toBe(false);
+      c.definirPreset();
+      expect(c.presetActual()).toMatchObject({ x: 42.5, y: 42.5, ancho: 15, alto: 15 });
+      c.guardarValoresUbicacion();
+
+      expect(c.valoresGuardados()).toBe(true);
+      expect(c.categorias()).toEqual(['Objetos']);
+      expect(c.marcadosDeUbicacion().map(a => a.id)).toEqual([21]);
+    });
+
+    it('escribir un valor fuera de rango lo corrige al confirmar', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+
+      c.seleccionarAccesorio(c.presetActual()!);
+      const entrada = { target: { value: '200' } } as unknown as Event;
+      c.editarValor(entrada, 'ancho');
+      expect(c.porcentajeAncho()).toBe(20);
+      c.confirmarValor(entrada, 'ancho');
+      expect(c.porcentajeAncho()).toBe(80);
+      expect(c.presetActual()?.ancho).toBe(80);
+    });
+  });
+
+  describe('muestra de un accesorio en cada ubicación', () => {
+    it('al cargar la configuración cada ubicación con valores muestra el primer accesorio marcado que admite', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const m = fixture.componentInstance.muestrasDeUbicaciones();
+
+      // «Pie» no tiene valores (no hay cuadro) y «Cabeza» solo admite Moda: se ve Gafas, no el Regalo
+      expect(m.length).toBe(1);
+      expect(m[0]).toEqual(expect.objectContaining({ ubicacionId: 7, accesorioId: 20, imagen: 'https://api/g.webp', x: 40, y: 25 }));
+      expect(fixture.nativeElement.querySelectorAll('.visor .vista-previa img').length).toBe(1);
+    });
+
+    it('usa la excepción del accesorio en esa ubicación y respeta el elemento fijo', async () => {
+      const fixture = await montar();
+      const cfg = configuracion({
+        locations: [ubicacion(7, 'Cabeza', { preset: { ...GEO, x: 5 } }), ubicacion(8, 'Pie', { state: 'fija', fixed_accessory_id: 21, preset: GEO })],
+        exceptions: [{ accessory_id: 21, location_id: 8, ...GEO, x: 12 }],
+      });
+      await abrirCategoria(fixture, categoria({ config: cfg }));
+      const m = fixture.componentInstance.muestrasDeUbicaciones();
+
+      expect(m.find(x => x.ubicacionId === 8)).toEqual(expect.objectContaining({ accesorioId: 21, x: 12 }));
+      expect(m.find(x => x.ubicacionId === 7)).toEqual(expect.objectContaining({ accesorioId: 20, x: 5 }));
+    });
+
+    it('no muestra muestra en una ubicación deshabilitada', async () => {
+      const fixture = await montar();
+      const cfg = configuracion({ locations: [ubicacion(7, 'Cabeza', { state: 'deshabilitada', preset: GEO })] });
+      await abrirCategoria(fixture, categoria({ config: cfg }));
+
+      expect(fixture.componentInstance.muestrasDeUbicaciones()).toEqual([]);
+    });
+  });
+
+  describe('accesorio propio del producto en una ubicación', () => {
+    const lista = (valor: string) => ({ value: valor }) as HTMLSelectElement;
+
+    it('ofrece las ubicaciones que la categoría ya define y solo los accesorios que admiten', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+      fixture.detectChanges();
+
+      // «Pie» no tiene valores en la categoría: no se ofrece. «Cabeza» solo admite Moda.
+      expect(c.ubicacionesParaFijo().map(u => u.name)).toEqual(['Cabeza']);
+      expect(c.opcionesDeFijo(7).map(a => a.id)).toEqual([20]);
+      expect(fixture.nativeElement.querySelector('#fijo-7')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('#fijo-8')).toBeNull();
+    });
+
+    it('al elegirlo lo guarda en el producto y la ubicación se ve fija con ese accesorio', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+
+      c.elegirFijo(7, lista('20'));
+      const put = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/fixed-accessories/7`);
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ accessory_id: 20 });
+      put.flush(producto({
+        fixed_accessories: [{ location_id: 7, accessory_id: 20 }],
+        config: configuracion({ locations: [ubicacion(7, 'Cabeza', { state: 'fija', fixed_accessory_id: 20, preset: GEO }), ubicacion(8, 'Pie')] }),
+      }));
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+
+      expect(c.fijoDe(7)).toBe(20);
+      expect(c.guardandoFijo()).toBe(false);
+      expect(c.muestrasDeUbicaciones().find(m => m.ubicacionId === 7)?.accesorioId).toBe(20);
+
+      // «El de la categoría» lo quita
+      c.elegirFijo(7, lista(''));
+      const quitar = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/fixed-accessories/7`);
+      expect(quitar.request.body).toEqual({ accessory_id: null });
+      quitar.flush(producto());
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      expect(c.fijoDe(7)).toBeNull();
+    });
+
+    it('el selector de accesorio fijo se puede filtrar por categoría y buscar por nombre', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto({
+        config: configuracion({ locations: [ubicacion(7, 'Cabeza', { preset: GEO })] }),
+      }));
+      // Sin filtros se ofrece todo lo que la ubicación admite
+      const todos = c.opcionesDeFijo(7).map(a => a.id);
+      expect(todos.length).toBeGreaterThan(1);
+      expect(c.categoriasParaFijo(7).length).toBeGreaterThan(0);
+
+      c.ponerFiltroFijo(7, 'texto', 'GAF');
+      expect(c.opcionesDeFijo(7).map(a => a.nombre)).toEqual(['Gafas']);
+      c.ponerFiltroFijo(7, 'texto', 'zzz');
+      expect(c.opcionesDeFijo(7)).toEqual([]);
+      c.ponerFiltroFijo(7, 'texto', '');
+      c.ponerFiltroFijo(7, 'categoria', c.categoriasParaFijo(7)[0]);
+      expect(c.opcionesDeFijo(7).every(a => (a.categoria ?? 'Otros') === c.categoriasParaFijo(7)[0])).toBe(true);
+      // Los filtros de una ubicación no afectan a otra
+      expect(c.filtroFijo(8)).toEqual({ categoria: '', texto: '' });
+    });
+
+    it('permite marcar el accesorio fijo como exclusivo de los productos que lo tienen, y desmarcarlo', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+
+      c.elegirFijo(7, lista('20'));
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/fixed-accessories/7`).flush(producto({
+        fixed_accessories: [{ location_id: 7, accessory_id: 20 }],
+        config: configuracion({ locations: [ubicacion(7, 'Cabeza', { state: 'fija', fixed_accessory_id: 20, preset: GEO }), ubicacion(8, 'Pie')] }),
+      }));
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('#excl-7')).not.toBeNull();
+      expect(c.esExclusivo(20)).toBe(false);
+
+      c.cambiarExclusivo(20, { checked: true } as HTMLInputElement);
+      const put = ctrl.expectOne(`${BASE}/accessories/20`);
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ is_exclusive: true });
+      put.flush({ ...ACCESORIOS.find(a => a.id === 20), is_exclusive: true });
+      await esperar();
+      expect(c.esExclusivo(20)).toBe(true);
+
+      c.cambiarExclusivo(20, { checked: false } as HTMLInputElement);
+      ctrl.expectOne(`${BASE}/accessories/20`).flush({ ...ACCESORIOS.find(a => a.id === 20), is_exclusive: false });
+      await esperar();
+      expect(c.esExclusivo(20)).toBe(false);
+    });
+
+    it('muestra el mensaje de Laravel si no se puede guardar y deja lo anterior', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+
+      const l = lista('20');
+      c.elegirFijo(7, l);
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/fixed-accessories/7`)
+        .flush({ code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { accessory_id: ['«Cabeza» no admite accesorios de la categoría «Objetos».'] } }, { status: 422, statusText: 'Unprocessable' });
+      await esperar();
+
+      expect(c.error()).toBe('Revisa los datos ingresados.');
+      expect(c.detalle()).toEqual(['«Cabeza» no admite accesorios de la categoría «Objetos».']);
+      expect(c.guardandoFijo()).toBe(false);
+      expect(l.value).toBe('');
+    });
+  });
+
+  describe('volver al configurador', () => {
+    it('reabre el último producto configurado (lo trae de la base de datos) con su configuración propia', async () => {
+      TestBed.configureTestingModule({ imports: [AdminConfigurador], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+      ctrl = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(AdminConfigurador);
+      fixture.detectChanges();
+      ctrl.expectOne(`${BASE}/categories`).flush({ data: [{ slug: 'profesiones', name: 'Profesiones', sort_order: 1, is_active: true }] });
+      await esperar();
+      ctrl.expectOne(`${BASE}/configurator/last-edit`).flush({ category_slug: 'profesiones', product_sku: 'PRO-DOCTOR' });
+      await esperar();
+      ctrl.expectOne(`${BASE}/configurator/categories/profesiones`).flush(categoria());
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`).flush(producto({ uses_own_configurator: true, source: 'product', config: configuracion({ accessory_ids: [21] }) }));
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      fixture.detectChanges();
+
+      const c = fixture.componentInstance;
+      expect(c.categoriaSlug()).toBe('profesiones');
+      expect(c.productoSku()).toBe('PRO-DOCTOR');
+      expect(c.editable()).toBe(true);
+      expect(c.idsMarcados()).toEqual([21]);
+    });
+
+    it('al elegir un producto lo guarda en la base de datos para la próxima vez', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      await elegirProductoYResponder(fixture.componentInstance, 'PRO-DOCTOR', producto());
+
+      const peticiones = ctrl.match(r => r.method === 'PUT' && r.url === `${BASE}/configurator/last-edit`);
+      expect(peticiones.map(r => r.request.body)).toEqual([
+        { category_slug: 'profesiones', product_sku: null },
+        { category_slug: 'profesiones', product_sku: 'PRO-DOCTOR' },
+      ]);
+      peticiones.forEach(r => r.flush({ category_slug: 'profesiones', product_sku: 'PRO-DOCTOR' }));
+    });
+
+    it('si no se puede leer lo último, el configurador abre vacío sin error', async () => {
+      TestBed.configureTestingModule({ imports: [AdminConfigurador], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+      ctrl = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(AdminConfigurador);
+      fixture.detectChanges();
+      ctrl.expectOne(`${BASE}/categories`).flush({ data: [] });
+      await esperar();
+      ctrl.expectOne(`${BASE}/configurator/last-edit`).flush({ message: 'x' }, { status: 500, statusText: 'Error' });
+      await esperar();
+      fixture.detectChanges();
+      expect(fixture.componentInstance.error()).toBe('');
+      expect(fixture.componentInstance.cargando()).toBe(false);
+    });
+  });
+
+  describe('productos de la categoría', () => {
+    it('un producto que usa la configuración de la categoría no muestra el editor y ofrece cambiar a propia', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+      fixture.detectChanges();
+
+      expect(c.editable()).toBe(false);
+      // No se muestra el editor, solo la vista para encuadrar la foto con las cajas de las ubicaciones
+      expect(fixture.nativeElement.textContent).not.toContain('Vista del producto');
+      expect(fixture.nativeElement.textContent).toContain('con la configuración de la categoría');
+      expect(fixture.nativeElement.querySelectorAll('.visor .caja-ubicacion').length).toBe(c.guiasDeUbicaciones().length);
+      expect(c.guiasDeUbicaciones().length).toBeGreaterThan(0);
+      expect(fixture.nativeElement.textContent).toContain('Usa la misma configuración de la categoría «Profesiones»');
+      expect(fixture.nativeElement.textContent).toContain('Tiene una configuración diferente');
+    });
+
+    it('al marcar configuración propia pide partir de una copia de la categoría y abre el editor del producto', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto({ has_config: false }));
+
+      c.cambiarModo(true, true);
+      const modo = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/mode`);
+      expect(modo.request.body).toEqual({ uses_own_configurator: true, copy_from_category: true });
+      modo.flush(producto({ uses_own_configurator: true, source: 'product', config: configuracion({ accessory_ids: [21] }) }));
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      fixture.detectChanges();
+
+      expect(c.editable()).toBe(true);
+      expect(c.idsMarcados()).toEqual([21]);
+      expect(c.conPropia()).toBe(1);
+      expect(fixture.nativeElement.querySelector('.visor')).not.toBeNull();
+    });
+
+    it('guardar un producto con configuración propia usa el endpoint del producto, no el de la categoría', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto({ uses_own_configurator: true, source: 'product' }));
+
+      void c.guardarConfiguracion();
+      const put = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR`);
+      expect(put.request.method).toBe('PUT');
+      put.flush(producto({ uses_own_configurator: true, source: 'product' }));
+      await terminarGuardado();
+    });
+
+    it('elegir "toda la categoría" vuelve a editar la configuración de la categoría', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+
+      c.elegirProducto('');
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+
+      expect(c.editable()).toBe(true);
+      expect(c.productoSku()).toBe('');
+    });
+  });
+
+  describe('buscar producto por nombre o código', () => {
+    const muchos = () => categoria({ products: [
+      { sku: 'JDS-012', name: 'Médico Cirujano', uses_own_configurator: false, base_image: null, base_adjust: { scale: 100, x: 0, y: 0, text_color: null } },
+      { sku: 'JDS-007', name: 'Abogada', uses_own_configurator: true, base_image: null, base_adjust: { scale: 100, x: 0, y: 0, text_color: null } },
+      { sku: 'JDS-003', name: 'Doctor', uses_own_configurator: false, base_image: null, base_adjust: { scale: 100, x: 0, y: 0, text_color: null } },
+    ] });
+
+    it('la lista conserva el orden de Laravel (el más reciente primero) y muestra nombre y código', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture, muchos());
+      const opciones = [...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLOptionElement>('#producto-config option')].map(o => o.textContent!.trim());
+
+      expect(opciones[0]).toContain('Toda la categoría');
+      expect(opciones.slice(1)).toEqual([
+        'Solo el producto: Médico Cirujano (JDS-012)',
+        'Solo el producto: Abogada (JDS-007) · configuración propia',
+        'Solo el producto: Doctor (JDS-003)',
+      ]);
+      expect(fixture.nativeElement.textContent).toContain('Del más reciente al más antiguo.');
+    });
+
+    it('busca por nombre sin importar mayúsculas ni tildes, y por código', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture, muchos());
+      const c = fixture.componentInstance;
+
+      c.busquedaProducto.set('medico');
+      expect(c.productosFiltrados().map(p => p.sku)).toEqual(['JDS-012']);
+      c.busquedaProducto.set('ABOG');
+      expect(c.productosFiltrados().map(p => p.sku)).toEqual(['JDS-007']);
+      c.busquedaProducto.set('jds-00');
+      expect(c.productosFiltrados().map(p => p.sku)).toEqual(['JDS-007', 'JDS-003']); // mismo orden: más reciente primero
+      c.busquedaProducto.set('  ');
+      expect(c.productosFiltrados().length).toBe(3);
+
+      c.busquedaProducto.set('zzz');
+      fixture.detectChanges();
+      expect(c.productosFiltrados()).toEqual([]);
+      expect(fixture.nativeElement.textContent).toContain('Ningún producto coincide con «zzz».');
+    });
+
+    it('el producto elegido no desaparece de la lista aunque deje de coincidir con la búsqueda', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture, muchos());
+      const c = fixture.componentInstance;
+      c.productoSku.set('JDS-003');
+      c.busquedaProducto.set('abogada');
+      expect(c.productosFiltrados().map(p => p.sku)).toEqual(['JDS-007', 'JDS-003']);
+    });
+
+    it('al cambiar de categoría se borra la búsqueda', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture, muchos());
+      const c = fixture.componentInstance;
+      c.busquedaProducto.set('doc');
+      c.elegirCategoria('profesiones');
+      ctrl.expectOne(`${BASE}/configurator/categories/profesiones`).flush(muchos());
+      await esperar();
+      ctrl.expectOne(`${BASE}/accessories`).flush({ data: ACCESORIOS });
+      await esperar();
+      expect(c.busquedaProducto()).toBe('');
+    });
+  });
+
+  describe('encuadre de la foto', () => {
+    it('mover los deslizadores cambia la foto al instante, sin tocar las cajas, y reiniciar vuelve a 100 % / 0', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+      fixture.detectChanges();
+
+      expect(c.ajusteBase()).toEqual({ scale: 100, x: 0, y: 0, text_color: null });
+      expect(c.ajusteSinGuardar()).toBe(false);
+      c.cambiarAjuste('scale', 112);
+      c.cambiarAjuste('x', -4.5);
+      c.cambiarAjuste('y', 99); // fuera de rango: se corrige a 50
+      fixture.detectChanges();
+
+      expect(c.ajusteBase()).toEqual({ scale: 112, x: -4.5, y: 50, text_color: null });
+      expect(c.transformBase()).toBe('translate(-4.5%, 50%) scale(1.12)');
+      expect((fixture.nativeElement.querySelector('.visor .maceta') as HTMLImageElement).style.transform).toContain('scale(1.12)');
+      expect(c.ajusteSinGuardar()).toBe(true);
+
+      c.reiniciarAjuste();
+      expect(c.ajusteBase()).toEqual({ scale: 100, x: 0, y: 0, text_color: null });
+    });
+
+    it('guardar envía escala y desplazamiento al endpoint del producto y deja el encuadre guardado', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+      c.cambiarAjuste('scale', 110);
+      c.cambiarAjuste('x', 2);
+
+      c.guardarAjuste();
+      const put = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/base-adjust`);
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ scale: 110, x: 2, y: 0, text_color: null });
+      put.flush(producto({ base_adjust: { scale: 110, x: 2, y: 0, text_color: null } }));
+      await esperar();
+
+      expect(c.categoria()?.products.find(p => p.sku === 'PRO-DOCTOR')?.base_adjust).toEqual({ scale: 110, x: 2, y: 0, text_color: null });
+      expect(c.ajusteSinGuardar()).toBe(false);
+      expect(avisos.lista().at(-1)?.texto).toBe('El encuadre de la imagen se guardó correctamente.');
+      expect(c.guardandoAjuste()).toBe(false);
+    });
+
+    it('el color del texto de la placa se elige por producto, se ve en el visor y se guarda con el encuadre', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+      expect(c.colorTexto()).toBe(c.colorDoradoPlaca);
+      expect(c.ajusteSinGuardar()).toBe(false);
+
+      c.cambiarColorTexto('#111111');
+      fixture.detectChanges();
+      expect(c.colorTexto()).toBe('#111111');
+      expect(c.ajusteSinGuardar()).toBe(true);
+      expect(fixture.nativeElement.querySelector('#aj-color')).not.toBeNull();
+
+      c.guardarAjuste();
+      const put = ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/base-adjust`);
+      expect(put.request.body).toEqual({ scale: 100, x: 0, y: 0, text_color: '#111111' });
+      put.flush(producto({ base_adjust: { scale: 100, x: 0, y: 0, text_color: '#111111' } }));
+      await esperar();
+      expect(c.ajusteSinGuardar()).toBe(false);
+      expect(c.colorTexto()).toBe('#111111');
+
+      // Volver al dorado por defecto
+      c.cambiarColorTexto(null);
+      expect(c.colorTexto()).toBe(c.colorDoradoPlaca);
+      expect(c.ajusteSinGuardar()).toBe(true);
+    });
+
+    it('si Laravel rechaza el encuadre muestra su mensaje', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      await elegirProductoYResponder(c, 'PRO-DOCTOR', producto());
+      c.cambiarAjuste('scale', 120);
+
+      c.guardarAjuste();
+      ctrl.expectOne(`${BASE}/configurator/products/PRO-DOCTOR/base-adjust`).flush(
+        { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { scale: ['La escala debe estar entre 50 % y 200 %.'] } },
+        { status: 422, statusText: 'Unprocessable' },
+      );
+      await esperar();
+
+      expect(c.detalle()).toContain('La escala debe estar entre 50 % y 200 %.');
+      expect(c.guardandoAjuste()).toBe(false);
+      expect(c.ajusteSinGuardar()).toBe(true); // lo movido no se pierde
+    });
+
+    it('con «toda la categoría» se ve el encuadre guardado del producto cuya foto se muestra y no hay deslizadores', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture, categoria({ products: [
+        { sku: 'PRO-DOCTOR', name: 'Doctor', uses_own_configurator: false, base_image: 'https://api/doctor.webp', base_adjust: { scale: 120, x: 1, y: -2, text_color: null } },
+      ] }));
+      expect(fixture.componentInstance.transformBase()).toBe('translate(1%, -2%) scale(1.2)');
+      expect(fixture.nativeElement.querySelector('input[type=range]#aj-escala')).toBeNull();
+    });
+  });
+
+  describe('imagen para personalizar (solo lectura: se sube desde el producto)', () => {
+    it('con «toda la categoría» muestra la del primer producto que la tenga; con un producto, la suya', async () => {
+      const fixture = await montar();
+      await abrirCategoria(fixture);
+      const c = fixture.componentInstance;
+      expect(c.imagenBase()).toBe('https://api/doctor.webp');
+      expect((fixture.nativeElement.querySelector('.visor .maceta') as HTMLImageElement).src).toContain('doctor.webp');
+      expect(fixture.nativeElement.querySelector('input[type=file]')).toBeNull(); // el configurador no sube nada
+
+      // Enfermera no tiene imagen: no se le presta la de otro producto, se avisa y se usa la genérica
+      await elegirProductoYResponder(c, 'PRO-ENFERMERA', producto({ sku: 'PRO-ENFERMERA', name: 'Enfermera', base_image: null }));
+      fixture.detectChanges();
+      expect(c.imagenBase()).toBeNull();
+      expect(c.imagenBaseVisor()).toBe('/imagenes/maceta_vacia.png');
+      const texto = fixture.nativeElement.textContent;
+      expect(texto).toContain('todavía no tiene imagen para personalizar');
+      expect(texto).toContain('La imagen se sube al editar el producto');
+      expect(fixture.nativeElement.querySelector('input[type=file]')).toBeNull();
+    });
+  });
+
+  it('vaciar la configuración guarda todas las ubicaciones libres y sin valores, y ningún accesorio', async () => {
+    const fixture = await montar();
+    await abrirCategoria(fixture);
+    const c = fixture.componentInstance;
+
+    c.vaciarConfiguracion();
+    const put = ctrl.expectOne(`${BASE}/configurator/categories/profesiones`);
+    expect(put.request.body).toEqual({
+      locations: [
+        { location_id: 7, state: 'libre', priority: 1, layer: 1, fixed_accessory_id: null, preset: null },
+        { location_id: 8, state: 'libre', priority: 2, layer: 1, fixed_accessory_id: null, preset: null },
+      ],
+      accessory_ids: [],
+      exceptions: [],
+    });
+    put.flush(categoria({ has_config: true, config: configuracion({ accessory_ids: [], locations: [ubicacion(7, 'Cabeza'), ubicacion(8, 'Pie')] }) }));
+    await terminarGuardado();
+  });
+});

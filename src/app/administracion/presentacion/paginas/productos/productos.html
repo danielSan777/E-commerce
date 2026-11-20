@@ -10,10 +10,16 @@
 
   <form class="filtros" (submit)="buscar($event)">
     <input name="texto" type="search" placeholder="Buscar por nombre o código (SKU)" [(ngModel)]="texto" />
-    <select name="categoria" [(ngModel)]="categoria" (ngModelChange)="cargar()" aria-label="Filtrar por categoría">
-      <option value="">Todas las categorías</option>
-      @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
+    <select name="tipo" [(ngModel)]="tipo" (ngModelChange)="cambiarTipo()" aria-label="Filtrar por tipo">
+      <option value="personalizable">Productos</option>
+      <option value="complemento">Complementos</option>
     </select>
+    @if (tipo === 'personalizable') {
+      <select name="categoria" [(ngModel)]="categoria" (ngModelChange)="cargar()" aria-label="Filtrar por categoría">
+        <option value="">Todas las categorías</option>
+        @for (c of categorias(); track c.slug) { <option [value]="c.slug">{{ c.name }}</option> }
+      </select>
+    }
     <button type="submit">Buscar</button>
   </form>
 
@@ -25,12 +31,15 @@
         <li>
           <div class="datos">
             <strong>{{ p.name }}</strong>
-            <small>{{ p.sku }} · {{ p.category_name }}@if (p.subcategory_slug) { / {{ p.subcategory_slug }} } · ${{ dolares(p.final_price_cents) }}@if (p.discount_cents > 0) { <s>${{ dolares(p.base_price_cents) }}</s> (−{{ p.discount_percent }}%) }</small>
+            <small>{{ p.sku }} · {{ p.category_name ?? 'Complemento' }}@if (p.subcategory_slug) { / {{ p.subcategory_slug }} } · ${{ dolares(p.final_price_cents) }}@if (p.discount_cents > 0) { <s>${{ dolares(p.base_price_cents) }}</s> (−{{ p.discount_percent }}%) }</small>
             @if (!p.is_active) { <span class="inactiva">Inactivo</span> }
             @else if (!p.is_available) { <span class="inactiva">Agotado</span> }
           </div>
           <div class="acciones">
             <a class="boton" [routerLink]="['/admin/productos', p.sku]">Editar</a>
+            @if (p.type === 'personalizable') {
+              <a class="boton" routerLink="/admin/configurador" [queryParams]="{ producto: p.sku }">Configurador</a>
+            }
             @if (porEliminar() === p.sku) {
               <span>¿Eliminar?</span>
               <button type="button" class="peligro" (click)="eliminar(p.sku)">Sí, eliminar</button>

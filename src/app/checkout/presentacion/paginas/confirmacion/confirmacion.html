@@ -72,6 +72,14 @@
                 }
             </div>
             <span class="producto-precio">{{ item.producto.precio | currency:'USD':'symbol':'1.2-2' }}</span>
+            @if (fotoDe(item.uid); as f) {
+            <div class="producto-descarga">
+                <a class="btn btn-borde descargar" [href]="f.item.vista" [attr.download]="f.nombre">
+                    <i class="bi bi-download" aria-hidden="true"></i> Descargar foto de tu maceta
+                </a>
+                <small>Guárdala y adjúntala en el chat de WhatsApp junto al comprobante.</small>
+            </div>
+            }
         </div>
         }
 
@@ -92,7 +100,7 @@
         </div>
     </section>
 
-    @if (esTransferencia()) {
+    @if (esTransferencia() && pendiente() && titular(); as t) {
 
     <!-- ===== Datos para la transferencia ===== -->
     <section class="tarjeta blanca" aria-labelledby="t-transf">
@@ -113,9 +121,9 @@
             <div class="dato">
                 <i class="bi bi-person" aria-hidden="true"></i>
                 <span class="dato-etq">Titular:</span>
-                <strong>{{ TITULAR.titular }}</strong>
+                <strong>{{ t.holder }}</strong>
                 <button type="button" class="copiar" aria-label="Copiar titular"
-                    (click)="copiar('titular', TITULAR.titular)">
+                    (click)="copiar('titular', t.holder)">
                     <i class="bi" [class.bi-copy]="copiado() !== 'titular'" [class.bi-check2]="copiado() === 'titular'"
                         aria-hidden="true"></i>
                 </button>
@@ -123,27 +131,26 @@
             <div class="dato">
                 <i class="bi bi-card-heading" aria-hidden="true"></i>
                 <span class="dato-etq">Cédula:</span>
-                <strong>{{ TITULAR.cedula }}</strong>
+                <strong>{{ t.id_number }}</strong>
                 <button type="button" class="copiar" aria-label="Copiar cédula"
-                    (click)="copiar('cedula', TITULAR.cedula)">
+                    (click)="copiar('cedula', t.id_number)">
                     <i class="bi" [class.bi-copy]="copiado() !== 'cedula'" [class.bi-check2]="copiado() === 'cedula'"
                         aria-hidden="true"></i>
                 </button>
             </div>
         </div>
 
-        @for (c of CUENTAS; track c.numero) {
+        @for (c of cuentas(); track c.number) {
         <div class="cuenta">
-            <span class="sigla" [style.background]="c.fondo" [style.color]="c.texto" aria-hidden="true">{{ c.sigla
-                }}</span>
-            <strong class="banco">{{ c.banco }}</strong>
+            <span class="sigla" [style.background]="c.fondo" [style.color]="c.texto" aria-hidden="true">{{ c.sigla }}</span>
+            <strong class="banco">{{ c.bank }}</strong>
             <span class="cuenta-datos">
-                <small>{{ c.tipo }}</small>
-                <b>{{ c.numero }}</b>
+                <small>{{ c.type }}</small>
+                <b>{{ c.number }}</b>
             </span>
-            <button type="button" class="copiar" [attr.aria-label]="'Copiar cuenta de ' + c.banco"
-                (click)="copiar(c.numero, c.numero)">
-                <i class="bi" [class.bi-copy]="copiado() !== c.numero" [class.bi-check2]="copiado() === c.numero"
+            <button type="button" class="copiar" [attr.aria-label]="'Copiar cuenta de ' + c.bank"
+                (click)="copiar(c.number, c.number)">
+                <i class="bi" [class.bi-copy]="copiado() !== c.number" [class.bi-check2]="copiado() === c.number"
                     aria-hidden="true"></i>
             </button>
         </div>
@@ -156,7 +163,7 @@
             <i class="bi bi-whatsapp wa-logo" aria-hidden="true"></i>
             <div>
                 <h2 id="t-wa">Envía tu comprobante por WhatsApp</h2>
-                <p>Toca el botón para abrir el chat con el mensaje listo y adjunta ahí la foto o el PDF de tu comprobante.</p>
+                <p>Toca el botón para abrir el chat con el mensaje listo y adjunta ahí la foto o el PDF de tu comprobante. El enlace de tu pedido se verá como una tarjeta con la foto de tu maceta.</p>
             </div>
         </div>
 
@@ -168,16 +175,6 @@
             </button>
         </div>
 
-        @if (fotos().length) {
-        <div class="fotos-pedido">
-            <p><strong>¿Quieres enviar también la foto de tu pedido?</strong> Descárgala y adjúntala en el chat, junto al comprobante.</p>
-            @for (f of fotos(); track f.item.uid) {
-            <a class="btn btn-borde descargar" [href]="f.item.vista" [attr.download]="f.nombre">
-                <i class="bi bi-download" aria-hidden="true"></i> Descargar foto: {{ f.item.producto.nombre }}
-            </a>
-            }
-        </div>
-        }
     </section>
 
     <a class="btn btn-primario" [href]="enlaceWhatsapp()" target="_blank" rel="noopener">
@@ -199,7 +196,6 @@
         </div>
     </section>
 
-    <a class="btn btn-borde" [routerLink]="['/pedido', p.token]">Ver el seguimiento de mi pedido</a>
     <a class="btn btn-primario" [routerLink]="RUTA_SEGUIR">Seguir comprando <i class="bi bi-arrow-right"
             aria-hidden="true"></i></a>
     }

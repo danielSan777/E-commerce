@@ -1,3 +1,4 @@
+import { API_URL } from '../../../../core/configuracion/api';
 import {
   Component, DestroyRef, OnInit, OnDestroy, signal, ViewChild, ElementRef, HostListener,
   computed,
@@ -7,16 +8,21 @@ import {
   output,
   PLATFORM_ID
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Accesorio, AccesorioColocado } from '../../../dominio/Accesorios';
+import { Accesorio, AccesorioColocado, ComportamientoAccesorio } from '../../../dominio/Accesorios';
+import { ConfiguracionGuardada } from '../../../dominio/configurador';
+import { ConfiguradorService } from '../../../aplicacion/servicios/ConfiguradorService';
 import { ActivatedRoute, Router } from '@angular/router';
+import type { EscenaMaceta } from '../../../../shared/componentes/vista-maceta/vista-maceta';
 import { TextoPlaca } from '../../../../shared/componentes/texto-placa/texto-placa';
+import { CATEGORIA_MODA, CATEGORIA_PERSONALIZACION, categoriaCanonica } from '../../../dominio/categorias';
 import { COLOR_DORADO_PLACA, PLACA_CAJA_ALTO, PLACA_CAJA_ANCHO, PLACA_LINEA_BASE, tamanoLetra } from '../../../dominio/placa';
 import { ExcepcionGuardada, Geometria, UbicacionGuardada } from '../../../dominio/ubicaciones';
 import { contarCaracteres, recortarCaracteres, sinEmojis } from '../../../dominio/texto';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+
+const IMAGEN_BASE_GENERICA = 'imagenes/maceta_vacia.png';
 // AJUSTA la ruta según donde dejes carrito.service.ts
 import {
   CarritoService, ConfigGuardada, LineaResumen, ProductoCarrito
@@ -44,13 +50,6 @@ export interface ConfiguracionPersonalizada {
   sinTarjeta: boolean;          // "No quiero dedicatoria"
 }
 
-/** Contenido de `configuracion-producto.json` (lo que guardó el editor). */
-interface ConfiguracionGuardada {
-  ubicaciones?: UbicacionGuardada[];
-  excepciones?: ExcepcionGuardada[];
-  catalogo?: Accesorio[];
-}
-
 @Component({
   imports: [FormsModule,
     TextoPlaca,
@@ -73,12 +72,32 @@ export class Personalizador implements OnDestroy {
 
   // Accesorios disponibles para el cliente (los marcados en el editor)
   catalogo = signal<Accesorio[]>([]);
+  /** Foto base del producto (la sube el administrador). Si aún no tiene, se usa la maceta genérica. */
+  imagenBase = signal(IMAGEN_BASE_GENERICA);
+  /** Encuadre de la foto del producto (lo define el administrador para que los accesorios caigan en su sitio). */
+  ajusteImagen = signal({ escala: 100, x: 0, y: 0 });
+  /** Color del nombre en la placa: el que eligió el administrador para este producto o, si no, el dorado. */
+  colorTextoPlaca = signal(COLOR_DORADO_PLACA);
+  transformBase = computed(() => {
+    const a = this.ajusteImagen();
+    return `translate(${a.x}%, ${a.y}%) scale(${a.escala / 100})`;
+  });
 
   colorSeleccionado = 'negro';   // color de los lentes (accesorio 1)
   colorGafas = 'negro';          // color de las gafas (accesorio 5)
 
-  private readonly ID_LENTES = 1;
-  private readonly ID_GAFAS = 5;
+  // Los lentes y las gafas se reconocen por el comportamiento que el administrador les marca (no por su número)
+  private get ID_LENTES(): number { return this.idDe('lentes'); }
+  private get ID_GAFAS(): number { return this.idDe('gafas'); }
+
+  /** true si el accesorio es los lentes o las gafas (se dibujan en un lienzo y se pintan del color elegido). Se reconocen por su comportamiento, nunca por su número. */
+  esLentesOGafas(accesorioId: number): boolean {
+    return accesorioId === this.ID_LENTES || accesorioId === this.ID_GAFAS;
+  }
+
+  private idDe(comportamiento: ComportamientoAccesorio): number {
+    return this.catalogo().find(a => a.comportamiento === comportamiento)?.id ?? -1;
+  }
 
   // Colores disponibles (los lentes usan negro y cafe; las gafas tambien dorado)
   private readonly COLORES: Record<string, string> = {
@@ -101,6 +120,11 @@ export class Personalizador implements OnDestroy {
 
   nombreCliente = signal('');
 
+  // true si no se pudo leer la configuración del producto (Laravel no respondió)
+  errorConfiguracion = signal(false);
+  // true cuando el producto no tiene ningún accesorio configurado todavía
+  sinConfiguracion = signal(false);
+
   // true cuando el accesorio de texto está agregado al visor
   hayTexto = computed(() =>
     this.accesoriosSeleccionados().some(a => a.tipo === 'texto')
@@ -109,7 +133,8 @@ export class Personalizador implements OnDestroy {
   private siguienteId = 1;
 
   private platformId = inject(PLATFORM_ID);
-  private http = inject(HttpClient);
+  private api = inject(API_URL);
+  private configurador = inject(ConfiguradorService);
   private destroyRef = inject(DestroyRef);
 
   private router = inject(Router);
@@ -154,22 +179,32 @@ export class Personalizador implements OnDestroy {
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    this.http.get<ConfiguracionGuardada>('/configuracion-producto.json').pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    // Todo sale de Laravel: la configuración propia del producto o, si no la tiene, la de su categoría
+    const slug = this.producto()?.id;
+    if (slug === undefined || slug === null || slug === 'detalle') return;
+
+    this.configurador.configuracion(String(slug)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: guardado => this.aplicarConfiguracion(guardado),
-      error: error => console.error('Error al cargar la configuración:', error),
+      error: () => this.errorConfiguracion.set(true),
     });
   }
 
   private aplicarConfiguracion(guardado: ConfiguracionGuardada): void {
     try {
-      this.ubicaciones.set((guardado.ubicaciones ?? []) as UbicacionGuardada[]);
+      this.imagenBase.set(guardado.imagenBase || IMAGEN_BASE_GENERICA);
+      // La foto de la maceta se descarga ya (con CORS) para que "Agregar al carrito" no tenga que esperarla
+      if (guardado.imagenBase) void this.cargarImagen(guardado.imagenBase);
+      this.ajusteImagen.set(guardado.ajusteImagen ?? { escala: 100, x: 0, y: 0 });
+      this.colorTextoPlaca.set(guardado.colorTexto || COLOR_DORADO_PLACA);
+      this.sinConfiguracion.set(!guardado.configurado || !(guardado.catalogo ?? []).length);
+      // Las categorías de cada ubicación se escriben igual que las de los accesorios, para que coincidan
+      const listaCanonica = (l?: string[]) => l?.map(c => categoriaCanonica(c) ?? c);
+      this.ubicaciones.set(((guardado.ubicaciones ?? []) as UbicacionGuardada[]).map(u => ({
+        ...u, categorias: listaCanonica(u.categorias), excluidas: listaCanonica(u.excluidas),
+      })));
       this.excepciones.set((guardado.excepciones ?? []) as ExcepcionGuardada[]);
-      // La categoria se normaliza (sin espacios y con la primera letra en mayuscula)
-      // para que "moda" cuente igual que "Moda"
-      const normalizar = (c?: string) => {
-        const t = c?.trim();
-        return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
-      };
+      // La categoría se escribe siempre igual (sin espacios, con mayúscula y reconociendo «personalizacion» sin tilde)
+      const normalizar = categoriaCanonica;
       this.catalogo.set(
         ((guardado.catalogo ?? []) as Accesorio[]).map(a => ({ ...a, categoria: normalizar(a.categoria) }))
       );
@@ -292,7 +327,7 @@ export class Personalizador implements OnDestroy {
   // NO cuentan: los de categoría Moda (lentes), el nombre (Personalización) ni los elementos fijos.
   private cuenta(accesorio: { categoria?: string }): boolean {
     const c = accesorio.categoria ?? 'Otros';
-    return c !== 'Moda' && c !== 'Personalización';
+    return c !== this.CATEGORIA_MODA && c !== this.CATEGORIA_PERSONALIZACION;
   }
 
   // Cuántos accesorios que cuentan hay puestos
@@ -310,8 +345,8 @@ export class Personalizador implements OnDestroy {
   }
 
   // ----- Accesorios que no se pueden elegir juntos: el 3 y el 4 -----
-  private readonly ID_MARCO_FOTO = 3;   // marco con foto
-  private readonly ID_MARCO_FRASE = 4;  // marco con frase
+  private get ID_MARCO_FOTO(): number { return this.idDe('marco_foto'); }    // marco con foto
+  private get ID_MARCO_FRASE(): number { return this.idDe('marco_frase'); }  // marco con frase
 
   private companeroExcluyente(id: number): number | null {
     if (id === this.ID_MARCO_FOTO) return this.ID_MARCO_FRASE;
@@ -385,8 +420,8 @@ export class Personalizador implements OnDestroy {
   // PESTAÑAS: Nombre · Lentes / Gafas · Accesorios · Dedicatoria / Marcos
   // ==========================================
 
-  private readonly CATEGORIA_MODA = 'Moda';
-  private readonly CATEGORIA_PERSONALIZACION = 'Personalización';
+  private readonly CATEGORIA_MODA = CATEGORIA_MODA;
+  private readonly CATEGORIA_PERSONALIZACION = CATEGORIA_PERSONALIZACION;
 
   readonly pestanas: Pestana[] = [
     {
@@ -1014,14 +1049,16 @@ export class Personalizador implements OnDestroy {
     const uid = this.editandoUid
       ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 
-    const vista = await this.capturarVista();
+    // El carrito pinta la maceta con la misma foto y las mismas medidas del visor: no hay que armar ninguna imagen para mostrarla
+    const escena = this.escenaParaElCarrito();
 
     this.carrito.guardar(
       {
         uid,
         tipo: 'personalizado',
         producto,
-        vista,
+        vista: '',            // la foto del pedido se arma en segundo plano, ya en el carrito
+        escena,
         ruta: this.editandoRuta ?? this.rutaDelProducto(),
         resumen: this.resumenPedido(),
         configuracion: this.configuracionGuardada(),
@@ -1032,7 +1069,29 @@ export class Personalizador implements OnDestroy {
     );
 
     this.borrarBorradorGuardado();   // ya está en el carrito: el borrador sobra
+
+    // La imagen única (JPG) que se adjunta al pedido se arma ahora, sin hacer esperar a la persona
+    void this.capturarVista().then(vista => this.carrito.ponerVista(uid, vista)).catch(() => undefined);
+
     await this.router.navigate(['carrito']);
+  }
+
+  /** La maceta, sus accesorios (de atrás hacia adelante) y los colores de lentes y gafas, tal como se ven en el visor. */
+  private escenaParaElCarrito(): EscenaMaceta {
+    const accesorios = [...this.accesoriosSeleccionados()]
+      .sort((a, b) => this.capaDe(a.ubicacionId) - this.capaDe(b.ubicacionId))
+      .map(a => ({ ...a }));
+    const tintes: Record<number, string> = {};
+    for (const a of accesorios) if (this.esLentesOGafas(a.accesorioId)) tintes[a.accesorioId] = this.colorDe(a.accesorioId);
+
+    return {
+      imagenBase: this.urlDeImagen(this.imagenBase()),
+      ajuste: { ...this.ajusteImagen() },
+      accesorios: accesorios.map(a => ({ ...a, imagen: a.tipo === 'texto' ? a.imagen : this.urlDeImagen(a.imagen) })),
+      nombre: this.nombreCliente(),
+      colorTexto: this.colorTextoPlaca(),
+      tintes,
+    };
   }
 
   // Ruta a la que vuelve "Editar" desde el carrito. Si se personalizó desde el propio carrito,
@@ -1194,14 +1253,55 @@ export class Personalizador implements OnDestroy {
     try { localStorage.removeItem(this.claveBorrador()); } catch { /* nada */ }
   }
 
+  /** Las imágenes de accesorios llegan como URL completa; las de la tienda (maceta) son rutas de la carpeta pública. */
+  private urlDeImagen(src: string): string {
+    return /^(https?:|data:|blob:|\/)/.test(src) ? src : '/' + src;
+  }
+
   // ----- Foto de la maceta ya personalizada (para el carrito) -----
+  // Cada foto se descarga una sola vez (con CORS, que es lo que permite exportar): las siguientes veces sale de aquí al instante
+  private fotosListas = new Map<string, Promise<HTMLImageElement | null>>();
+  // Si /media no envía CORS, se recuerda para pedir directo por la API y no gastar un intento que siempre falla
+  private mediaSinCors = false;
+
+  // Cada accesorio de imagen que se elige empieza a descargarse en ese momento, no al pulsar "Agregar al carrito"
+  private precargaDeAccesorios = effect(() => {
+    if (!isPlatformBrowser(this.platformId)) return;
+    for (const a of this.accesoriosSeleccionados()) {
+      if (a.tipo !== 'texto' && a.imagen) void this.cargarImagen(a.imagen);
+    }
+  });
+
   private cargarImagen(src: string): Promise<HTMLImageElement | null> {
-    return new Promise(resolve => {
+    const url = this.urlDeImagen(src);
+    const guardada = this.fotosListas.get(url);
+    if (guardada) return guardada;
+
+    const intentar = (direccion: string) => new Promise<HTMLImageElement | null>(resolve => {
       const img = new Image();
+      img.crossOrigin = 'anonymous';   // las imágenes vienen de la API (otro dominio): sin esto el canvas no deja exportar la foto
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
-      img.src = /^(https?:|data:|blob:|\/)/.test(src) ? src : '/' + src;
+      img.src = direccion;
     });
+
+    const porApi = this.porLaApi(url);
+    const pedida = (this.mediaSinCors && porApi ? intentar(porApi) : intentar(url).then(img => {
+      if (img || !porApi) return img;
+      this.mediaSinCors = true;
+      return intentar(porApi);
+    })).then(img => {
+      if (!img) this.fotosListas.delete(url);   // un fallo no se recuerda: se vuelve a intentar la próxima vez
+      return img;
+    });
+    this.fotosListas.set(url, pedida);
+    return pedida;
+  }
+
+  /** http://sitio/media/accessories/a.webp → {api}/media/accessories/a.webp ; null si no es una foto de /media. */
+  private porLaApi(url: string): string | null {
+    const i = url.indexOf('/media/');
+    return i >= 0 ? `${this.api}/media/${url.slice(i + '/media/'.length)}` : null;
   }
 
   // Dibuja un accesorio del tamaño que ocupa en la foto (texto, lentes/gafas con su color, o imagen)
@@ -1228,7 +1328,7 @@ export class Personalizador implements OnDestroy {
       c.font = `${letra}px Lobster, cursive`;
       c.textAlign = 'center';
       c.textBaseline = 'alphabetic';
-      c.fillStyle = COLOR_DORADO_PLACA;
+      c.fillStyle = this.colorTextoPlaca();
       c.fillText(texto, PLACA_CAJA_ANCHO / 2, PLACA_LINEA_BASE);
       return lienzo;
     }
@@ -1238,7 +1338,7 @@ export class Personalizador implements OnDestroy {
 
     c.drawImage(img, 0, 0, ancho, alto);
 
-    if (a.accesorioId === this.ID_LENTES || a.accesorioId === this.ID_GAFAS) {
+    if (this.esLentesOGafas(a.accesorioId)) {
       c.globalCompositeOperation = 'source-atop';
       c.fillStyle = this.colorDe(a.accesorioId);
       c.fillRect(0, 0, ancho, alto);
@@ -1261,8 +1361,14 @@ export class Personalizador implements OnDestroy {
       ctx.fillStyle = '#fff';
       ctx.fillRect(0, 0, T, T);
 
-      const base = await this.cargarImagen('imagenes/maceta_vacia.png');
-      if (base) {
+      // Todo se descarga a la vez (antes era una foto tras otra) y lo que ya se descargó sale de la memoria
+      const orden = [...this.accesoriosSeleccionados()]
+        .sort((a, b) => this.capaDe(a.ubicacionId) - this.capaDe(b.ubicacionId));
+      const dibujos = Promise.all(orden.map(a => this.dibujoDe(a, T * a.ancho / 100, T * a.alto / 100)));
+      const base = await this.cargarImagen(this.imagenBase());
+      // Sin la foto de la maceta (p. ej. /media sin cabecera CORS) la vista saldría en blanco: mejor que el carrito muestre su icono
+      if (!base) return '';
+      {
         // Igual que el visor: la foto difuminada rellena los lados y la foto completa va encima
         const cubrir = Math.max(T / base.width, T / base.height) * 1.15;
         ctx.save();
@@ -1271,19 +1377,23 @@ export class Personalizador implements OnDestroy {
           base.width * cubrir, base.height * cubrir);
         ctx.restore();
 
+        // La foto completa lleva el mismo encuadre que en el visor (escala y desplazamiento alrededor del centro)
         const caber = Math.min(T / base.width, T / base.height);
-        ctx.drawImage(base, (T - base.width * caber) / 2, (T - base.height * caber) / 2,
+        const ajuste = this.ajusteImagen();
+        ctx.save();
+        ctx.translate(T / 2 + T * ajuste.x / 100, T / 2 + T * ajuste.y / 100);
+        ctx.scale(ajuste.escala / 100, ajuste.escala / 100);
+        ctx.drawImage(base, -base.width * caber / 2, -base.height * caber / 2,
           base.width * caber, base.height * caber);
+        ctx.restore();
       }
 
       // De atrás hacia adelante, según la capa de cada ubicación
-      const orden = [...this.accesoriosSeleccionados()]
-        .sort((a, b) => this.capaDe(a.ubicacionId) - this.capaDe(b.ubicacionId));
-
-      for (const a of orden) {
+      const listos = await dibujos;
+      for (const [i, a] of orden.entries()) {
         const w = T * a.ancho / 100;
         const h = T * a.alto / 100;
-        const origen = await this.dibujoDe(a, w, h);
+        const origen = listos[i];
         if (!origen) continue;
 
         const grados = Math.PI / 180;
@@ -1632,21 +1742,36 @@ export class Personalizador implements OnDestroy {
 
     if (!contexto) return;
 
-    const imagenNueva = new Image();
+    const url = this.urlDeImagen(imagen);
 
-    imagenNueva.onload = () => {
-      this.imagenLentes = imagenNueva;
-      canvas.width = anchoPx;
-      canvas.height = altoPx;
+    const cargar = (conCors: boolean): void => {
+      const imagenNueva = new Image();
 
-      this.pintar(contexto, canvas, imagenNueva, this.colorDe(accesorioId));
+      imagenNueva.onload = () => {
+        this.imagenLentes = imagenNueva;
+        canvas.width = anchoPx;
+        canvas.height = altoPx;
+
+        this.pintar(contexto, canvas, imagenNueva, this.colorDe(accesorioId));
+      };
+
+      imagenNueva.onerror = () => {
+        if (conCors) {
+          // El servidor de /media aún no envía la cabecera CORS: se dibuja igual sin ella
+          // (solo cambia que el canvas queda "marcado" y no se exporta desde ahí).
+          cargar(false);
+          return;
+        }
+        console.error('No se pudo cargar la imagen de los lentes o las gafas');
+      };
+
+      if (conCors) {
+        imagenNueva.crossOrigin = 'anonymous';
+      }
+      imagenNueva.src = url;
     };
 
-    imagenNueva.onerror = () => {
-      console.error('No se pudo cargar la imagen de los lentes o las gafas');
-    };
-
-    imagenNueva.src = '/' + imagen.replace(/^\//, '');
+    cargar(true);
   }
 
   // Color (en hexadecimal) que le toca a lentes o gafas

@@ -8,6 +8,11 @@
         </span>
     </div>
     }
+    @if (errorConfiguracion()) {
+    <div class="alert alert-warning" role="alert">No pudimos cargar los accesorios de este producto. Recarga la página en unos segundos.</div>
+    } @else if (sinConfiguracion()) {
+    <div class="alert alert-info" role="status">Este producto todavía no tiene accesorios configurados.</div>
+    }
     <div class="row g-3 g-lg-4">
 
         <!-- ================= PRODUCTO ================= -->
@@ -20,12 +25,13 @@
                     (dragstart)="$event.preventDefault()">
 
                     <!-- Fondo difuminado de la misma foto: rellena los lados en vez de dejarlos en blanco -->
-                    <img src="imagenes/maceta_vacia.png" class="maceta-fondo" alt="" aria-hidden="true">
+                    <img [src]="imagenBase()" class="maceta-fondo" alt="" aria-hidden="true">
 
                     <div class="visor" #visor [style.transform]="transformVisor()"
                         [style.transition]="gesto() ? 'none' : 'transform .2s ease-out'">
 
-                        <img src="imagenes/maceta_vacia.png" class="maceta">
+                        <!-- Sin «crossorigin»: la foto que se ve no debe depender de las cabeceras CORS del servidor de imágenes. Para exportar la vista, cargarImagen() la pide aparte con CORS. -->
+                        <img [src]="imagenBase()" class="maceta" [style.transform]="transformBase()" alt="">
 
                         @for (accesorio of accesoriosSeleccionados(); track accesorio.id){
 
@@ -37,11 +43,11 @@
                             [style.outline]="contorno(accesorio.accesorioId)"
                             (click)="seleccionarPuesto(accesorio.accesorioId)">
                             <div class="contenido-3d" [style.transform]="transformar(accesorio)">
-                                <app-texto-placa [texto]="nombreCliente() || (accesorio.texto ?? '')" />
+                                <app-texto-placa [texto]="nombreCliente() || (accesorio.texto ?? '')" [color]="colorTextoPlaca()" />
                             </div>
                         </div>
 
-                        }@else if(accesorio.accesorioId==1 || accesorio.accesorioId==5){
+                        }@else if (esLentesOGafas(accesorio.accesorioId)) {
 
                         <div class="accesorio-colocado" [style.left.%]="accesorio.x" [style.top.%]="accesorio.y"
                             [style.width.%]="accesorio.ancho" [style.height.%]="accesorio.alto"
@@ -482,7 +488,7 @@
 
             <span class="tile-img">
                 @if (item.tipo === 'texto') {
-                <app-texto-placa class="tile-canvas" [texto]="item.texto ?? ''" />
+                <app-texto-placa class="tile-canvas" [texto]="item.texto ?? ''" [color]="colorTextoPlaca()" />
                 } @else {
                 <img [src]="item.imagen" [alt]="item.nombre">
                 }

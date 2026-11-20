@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable, Subject, Subscription, catchError, finalize, from, map, of, switchMap, tap, timer } from 'rxjs';
+import { EMPTY, Observable, Subject, Subscription, catchError, finalize, from, map, of, switchMap, tap, timer } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -76,6 +76,11 @@ export class AdminProductoForm implements OnInit {
   detalle = signal<string[]>([]);
   errores = signal<Record<string, string>>({});
 
+  /** Imagen para personalizar: la foto recién elegida o, al editar, la que ya tiene el producto. */
+  archivoBase: File | null = null;
+  vistaPreviaBase = signal<string | null>(null);
+  private imagenGuardada: string | null = null;
+
   private destroyRef = inject(DestroyRef);
   /** Consultas de precio: `switchMap` descarta la anterior (espera y petición) cuando llega una nueva. */
   private consultaPrecio$ = new Subject<{ base: number; porcentaje: number } | null>();
@@ -108,6 +113,8 @@ export class AdminProductoForm implements OnInit {
             this.slugActual = p.slug;
             this.skuMostrado.set(p.sku);
             this.form = this.aFormulario(p);
+            this.imagenGuardada = (p.type === 'complemento' ? p.complement_image : p.personalization_image) ?? null;
+            this.vistaPreviaBase.set(this.imagenGuardada);
           }),
           switchMap(() => this.subcategoriasDeLaCategoria()),
           tap(() => this.verPrecio()),
@@ -169,6 +176,32 @@ export class AdminProductoForm implements OnInit {
     this.errores.update(e => Object.fromEntries(Object.entries(e).filter(([k]) => k !== campo)));
   }
 
+  /** El producto personalizable necesita su imagen para personalizar; el complemento no. */
+  /** Un complemento no tiene categoría ni subcategoría. */
+  get pideCategoria(): boolean {
+    return this.form.type !== 'complemento';
+  }
+
+  get pideImagenBase(): boolean {
+    return this.form.type === 'personalizable';
+  }
+
+  /** Cada tipo tiene su propia foto obligatoria: la imagen para personalizar o la foto del complemento. Sube la que corresponda. */
+  private subirFoto(sku: string, archivo: File): Observable<unknown> {
+    return this.form.type === 'complemento'
+      ? this.productosApi.subirFotoDeComplemento(sku, archivo)
+      : this.productosApi.subirImagenParaPersonalizar(sku, archivo);
+  }
+
+  elegirImagenBase(evento: Event): void {
+    const campo = evento.target as HTMLInputElement;
+    this.archivoBase = campo.files?.[0] ?? null;
+    const anterior = this.vistaPreviaBase();
+    if (anterior?.startsWith('blob:')) URL.revokeObjectURL(anterior);
+    this.vistaPreviaBase.set(this.archivoBase ? URL.createObjectURL(this.archivoBase) : this.imagenGuardada);
+    if (this.archivoBase) this.quitarError('imagen');
+  }
+
   dolares(centavos: number): string {
     return centavosADolares(centavos);
   }
@@ -181,11 +214,13 @@ export class AdminProductoForm implements OnInit {
 
     const errores: Record<string, string> = {};
     if (!this.form.name.trim()) errores['name'] = 'Escribe el nombre del producto.';
-    if (!this.form.category) errores['category'] = 'Elige la categoría.';
-    if (this.form.category && this.subcategoriasListas() && this.subcategorias().length === 0) {
-      errores['subcategory'] = 'Esta categoría todavía no tiene subcategorías. Crea una primero.';
-    } else if (!this.form.subcategory) {
-      errores['subcategory'] = 'Elige la subcategoría.';
+    if (this.pideCategoria) {
+      if (!this.form.category) errores['category'] = 'Elige la categoría.';
+      if (this.form.category && this.subcategoriasListas() && this.subcategorias().length === 0) {
+        errores['subcategory'] = 'Esta categoría todavía no tiene subcategorías. Crea una primero.';
+      } else if (!this.form.subcategory) {
+        errores['subcategory'] = 'Elige la subcategoría.';
+      }
     }
     const precio = dolaresACentavos(this.form.precio);
     if (precio === null) errores['precio'] = 'Escribe un precio válido, por ejemplo 21.50.';
@@ -193,14 +228,18 @@ export class AdminProductoForm implements OnInit {
     if (this.form.costo.trim() && costo === null) errores['costo'] = 'Escribe un costo válido, por ejemplo 9.00, o déjalo vacío.';
     const descuento = leerDescuento(this.form.descuento);
     if (descuento === null) errores['descuento'] = `Escribe un descuento entre 0 y ${DESCUENTO_MAXIMO}, por ejemplo 10 o 12.5, o déjalo vacío.`;
+    // La imagen para personalizar es obligatoria. Al editar basta con que el producto ya la tenga, o con que esté inactivo.
+    if (!this.archivoBase && (this.esNuevo || (!this.imagenGuardada && this.form.is_active))) {
+      const que = this.form.type === 'complemento' ? 'la foto del complemento' : 'la imagen para personalizar';
+      errores['imagen'] = this.esNuevo ? `Sube ${que}: es obligatoria.` : `Sube ${que} antes de dejar el producto activo.`;
+    }
     this.errores.set(errores);
     if (Object.keys(errores).length) return this.avisos.faltanDatos(); // no se llama a la API con datos incompletos
 
     const datos: DatosProducto = {
       name: this.form.name.trim(),
       type: this.form.type,
-      category: this.form.category,
-      subcategory: this.form.subcategory,
+      ...(this.pideCategoria ? { category: this.form.category, subcategory: this.form.subcategory } : {}),
       base_price_cents: precio!,
       cost_cents: costo,
       discount_percent: descuento!,
@@ -215,9 +254,8 @@ export class AdminProductoForm implements OnInit {
     };
 
     this.guardando.set(true);
-    const peticion = this.esNuevo
-      ? this.productosApi.crear(datos).pipe(tap(creado => this.avisos.exito(`Producto creado con el código ${creado.sku}.`)))
-      : this.productosApi.editar(this.sku!, datos).pipe(tap(() => this.avisos.exito('Cambios guardados.')));
+    const imagen = this.archivoBase;
+    const peticion = this.esNuevo ? this.crearProducto(datos, imagen) : this.editarProducto(datos, imagen);
     peticion.pipe(
       switchMap(() => from(this.router.navigate(['/admin/productos']))),
       takeUntilDestroyed(this.destroyRef),
@@ -230,9 +268,39 @@ export class AdminProductoForm implements OnInit {
     });
   }
 
+  /**
+   * Producto nuevo. Un personalizable no puede estar activo sin su imagen, así que se crea inactivo, se sube la imagen
+   * y solo entonces se activa (si la persona lo dejó activo). Si la imagen falla el producto queda inactivo y se
+   * continúa en su pantalla de edición para volver a intentarlo.
+   */
+  private crearProducto(datos: DatosProducto, imagen: File | null): Observable<unknown> {
+    if (!imagen) {
+      return this.productosApi.crear(datos).pipe(tap(creado => this.avisos.exito(`Producto creado con el código ${creado.sku}.`)));
+    }
+    return this.productosApi.crear({ ...datos, is_active: false }).pipe(
+      switchMap(creado => this.subirFoto(creado.sku, imagen).pipe(
+        catchError((err: Partial<ErrorApi>) => {
+          this.avisos.error(`El producto se creó con el código ${creado.sku}, pero la imagen no se pudo subir: ${err.errors?.['image']?.[0] ?? err.message ?? 'inténtalo de nuevo'}. Súbela al editarlo.`);
+          return from(this.router.navigate(['/admin/productos', creado.sku])).pipe(switchMap(() => EMPTY));
+        }),
+        switchMap(() => datos.is_active ? this.productosApi.editar(creado.sku, datos) : of(creado)),
+        tap(() => this.avisos.exito(`Producto creado con el código ${creado.sku}.`)),
+      )),
+    );
+  }
+
+  /** Al editar, la imagen nueva (si se eligió) se sube primero: así el producto puede quedar activo. */
+  private editarProducto(datos: DatosProducto, imagen: File | null): Observable<unknown> {
+    const subida: Observable<unknown> = imagen ? this.subirFoto(this.sku!, imagen) : of(null);
+    return subida.pipe(
+      switchMap(() => this.productosApi.editar(this.sku!, datos)),
+      tap(() => this.avisos.exito('Cambios guardados.')),
+    );
+  }
+
   private aFormulario(p: ProductoAdmin): Formulario {
     return {
-      name: p.name, type: p.type, category: p.category_slug, subcategory: p.subcategory_slug ?? '',
+      name: p.name, type: p.type, category: p.category_slug ?? '', subcategory: p.subcategory_slug ?? '',
       precio: centavosADolares(p.base_price_cents), costo: p.cost_cents === null ? '' : centavosADolares(p.cost_cents),
       descuento: p.discount_percent > 0 ? String(p.discount_percent) : '',
       size_text: p.size_text ?? '', material_text: p.material_text ?? '', incluye: p.includes.join('\n'),

@@ -34,6 +34,8 @@ export interface ErrorApi {
   code: string;
   message: string;
   errors?: Record<string, string[]>;
+  /** Datos extra del rechazo (pedidos): `price_changed` trae total_cents; `window_changed` trae window y label. */
+  details?: Record<string, unknown>;
   /** Solo en `category_has_products` (409): los productos que impiden borrar la categoría. */
   products?: { sku: string; slug: string; name: string }[];
   products_count?: number;

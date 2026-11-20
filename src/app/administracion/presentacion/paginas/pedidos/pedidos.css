@@ -1,0 +1,48 @@
+@import '../../estilos/admin-tema.css';
+
+.contenido { max-width: 960px; }
+.filtros { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .75rem; }
+.filtros button { min-height: 40px; }
+.filtros button.activo { background: var(--primario); color: #fff; }
+
+.pedidos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+.pedido { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; overflow: hidden; }
+.resumen { display: flex; flex-wrap: nowrap; align-items: center; gap: .4rem .6rem; width: 100%; height: 5rem; padding: .7rem 1rem; background: transparent; border: 0; text-align: left; cursor: pointer; color: inherit; }
+.resumen > * { flex: none; white-space: nowrap; }
+.resumen .cliente { flex: 1 1 0; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--suave); }
+.insignia { border-radius: 999px; padding: .1rem .6rem; font-size: .78rem; font-weight: 600; background: #e5e7eb; color: #374151; }
+.insignia.pending { background: #fef3c7; color: #92400e; }
+.insignia.paid { background: #d1fae5; color: #065f46; }
+.insignia.expired, .insignia.cancelled { background: #fee2e2; color: #991b1b; }
+.insignia.con-comprobante { background: #dbeafe; color: #1e40af; }
+
+.detalle { padding: .5rem 1rem 1rem; border-top: 1px solid #d1fae5; display: flex; flex-direction: column; gap: .75rem; }
+.detalle dl { display: grid; grid-template-columns: 9rem 1fr; gap: .25rem .75rem; margin: 0; }
+.detalle dt { color: var(--suave); }
+.detalle dd { margin: 0; }
+.items { list-style: none; margin: 0; padding: 0; }
+.items li { display: flex; justify-content: space-between; gap: 1rem; padding: .25rem 0; border-top: 1px dashed #d1fae5; }
+.items small { color: var(--suave); }
+.acciones, .botones { display: flex; flex-wrap: wrap; gap: .5rem; }
+.confirmacion { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: .75rem 1rem; }
+.confirmacion p { margin: 0 0 .5rem; }
+.confirmacion .aviso { color: #991b1b; font-weight: 600; }
+.vacio { color: var(--suave); }
+
+@media (max-width: 560px) { .detalle dl { grid-template-columns: 1fr; } .detalle dt { margin-top: .4rem; } }
+
+.insignia.to_produce { background: #d1fae5; color: #065f46; }
+.insignia.in_production { background: #ede9fe; color: #5b21b6; }
+.insignia.shipped { background: #dbeafe; color: #1e40af; }
+.envio-guia { display: flex; flex-direction: column; gap: .3rem; }
+.fila-guia { display: flex; flex-wrap: wrap; gap: .5rem; }
+.fila-guia input { flex: 1 1 12rem; min-height: 44px; }
+.campo-error { color: var(--peligro); }
+.ayuda { color: var(--suave); }
+
+.items li.item { display: flex; flex-direction: column; gap: .4rem; align-items: stretch; padding: .6rem 0; }
+.item-cabecera { display: flex; justify-content: space-between; gap: 1rem; }
+.personalizacion { display: grid; grid-template-columns: 9rem 1fr; gap: .15rem .75rem; margin: 0; padding: .5rem .75rem; background: #f0fdf4; border-radius: 8px; }
+.personalizacion dt { color: var(--suave); }
+.personalizacion dd { margin: 0; }
+@media (max-width: 560px) { .personalizacion { grid-template-columns: 1fr; } }

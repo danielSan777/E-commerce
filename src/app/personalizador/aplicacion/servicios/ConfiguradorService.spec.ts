@@ -1,0 +1,119 @@
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { SIN_CARGANDO } from '../../../shared/interceptores/cargandoInterceptor';
+import { API_URL } from '../../../core/configuracion/api';
+import { ConfiguradorApi } from '../../dominio/configurador';
+import { ConfiguradorService } from './ConfiguradorService';
+
+const GEO = { x: 10, y: 20, width: 30, height: 15, rot_x: 5, rot_y: -10, rot_z: 90, mirror: true };
+
+const RESPUESTA: ConfiguradorApi = {
+    source: 'category',
+    configured: true,
+    base_image: 'https://api.test/media/personalization/pro-doctor-1080.webp',
+    base_adjust: { scale: 110, x: -2.5, y: 4, text_color: '#111111' },
+    locations: [
+        { location_id: 7, name: 'Cabeza', allowed_categories: ['Moda'], excluded_categories: [], state: 'libre', priority: 1, layer: 2, fixed_accessory_id: null, preset: GEO },
+        { location_id: 8, name: 'Pie', allowed_categories: [], excluded_categories: ['Moda'], state: 'fija', priority: 2, layer: 1, fixed_accessory_id: 20, preset: null },
+    ],
+    accessories: [
+        { id: 20, name: 'Gafas', type: 'imagen', behavior: 'gafas', text: null, category: 'Moda', image: 'https://api.test/media/accessories/20-1080.webp', thumb: null, alt: 'Gafas' },
+        { id: 21, name: 'Nombre', type: 'texto', behavior: null, text: 'Ingrese su nombre.', category: 'Personalización', image: null, thumb: null, alt: null },
+    ],
+    exceptions: [{ accessory_id: 20, location_id: 7, ...GEO }],
+};
+
+describe('ConfiguradorService', () => {
+    let http: HttpTestingController;
+    let servicio: ConfiguradorService;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: 'https://api.test/api/v1' }],
+        });
+        http = TestBed.inject(HttpTestingController);
+        servicio = TestBed.inject(ConfiguradorService);
+    });
+
+    afterEach(() => http.verify());
+
+    it('pide el configurador del producto por su dirección y traduce el contrato a los modelos del personalizador', () => {
+        let resultado: Awaited<ReturnType<() => unknown>> | undefined;
+        servicio.configuracion('doctor').subscribe(c => (resultado = c));
+        http.expectOne('https://api.test/api/v1/products/doctor/configurator').flush(RESPUESTA);
+
+        expect(resultado).toEqual({
+            configurado: true,
+            imagenBase: 'https://api.test/media/personalization/pro-doctor-1080.webp',
+            ajusteImagen: { escala: 110, x: -2.5, y: 4 },
+            colorTexto: '#111111',
+            ubicaciones: [
+                { id: 7, nombre: 'Cabeza', categorias: ['Moda'], excluidas: undefined, estado: 'libre', prioridad: 1, capa: 2, fijoId: null,
+                    preset: { x: 10, y: 20, ancho: 30, alto: 15, rotX: 5, rotY: -10, rotZ: 90, espejo: true } },
+                { id: 8, nombre: 'Pie', categorias: undefined, excluidas: ['Moda'], estado: 'fija', prioridad: 2, capa: 1, fijoId: 20, preset: null },
+            ],
+            excepciones: [{ accesorioId: 20, ubicacionId: 7, x: 10, y: 20, ancho: 30, alto: 15, rotX: 5, rotY: -10, rotZ: 90, espejo: true }],
+            catalogo: [
+                { id: 20, nombre: 'Gafas', imagen: 'https://api.test/media/accessories/20-1080.webp', tipo: 'imagen', texto: undefined, categoria: 'Moda', comportamiento: 'gafas' },
+                { id: 21, nombre: 'Nombre', imagen: '', tipo: 'texto', texto: 'Ingrese su nombre.', categoria: 'Personalización', comportamiento: null },
+            ],
+        });
+    });
+
+    it('un producto sin configuración llega con configurado = false y sin accesorios', () => {
+        let resultado: { configurado?: boolean; catalogo?: unknown[] } | undefined;
+        servicio.configuracion('homero').subscribe(c => (resultado = c));
+        http.expectOne('https://api.test/api/v1/products/homero/configurator').flush({ source: 'category', configured: false, base_image: null, base_adjust: { scale: 100, x: 0, y: 0 }, locations: [], accessories: [], exceptions: [] });
+
+        expect(resultado?.configurado).toBe(false);
+        expect(resultado?.catalogo).toEqual([]);
+        expect((resultado as { imagenBase?: string }).imagenBase).toBeUndefined();
+    });
+
+    it('reutiliza la configuración ya descargada: la segunda vez no consume la API', () => {
+        const URL = 'https://api.test/api/v1/products/doctor/configurator';
+        const veces: boolean[] = [];
+        servicio.configuracion('doctor').subscribe(() => veces.push(true));
+        http.expectOne(URL).flush(RESPUESTA);
+
+        let instantaneo = false;
+        servicio.configuracion('doctor').subscribe(() => (instantaneo = true));
+        expect(instantaneo).toBe(true); // llegó en el mismo instante
+        http.expectNone(URL);
+    });
+
+    it('dos pantallas que la piden a la vez comparten una sola petición, y un error no se guarda', () => {
+        const URL = 'https://api.test/api/v1/products/doctor/configurator';
+        servicio.configuracion('doctor').subscribe({ error: () => undefined });
+        servicio.configuracion('doctor').subscribe({ error: () => undefined });
+        http.expectOne(URL).flush({}, { status: 500, statusText: 'Error' });
+
+        servicio.configuracion('doctor').subscribe();
+        http.expectOne(URL).flush(RESPUESTA); // tras el error se vuelve a pedir
+    });
+
+    it('vuelve a pedirla cuando pasaron más de 5 minutos, para que lleguen los cambios del panel', () => {
+        const URL = 'https://api.test/api/v1/products/doctor/configurator';
+        const ahora = Date.now();
+        const reloj = vi.spyOn(Date, 'now').mockReturnValue(ahora);
+        servicio.configuracion('doctor').subscribe();
+        http.expectOne(URL).flush(RESPUESTA);
+
+        reloj.mockReturnValue(ahora + 5 * 60 * 1000 + 1);
+        servicio.configuracion('doctor').subscribe();
+        http.expectOne(URL).flush(RESPUESTA);
+        reloj.mockRestore();
+    });
+
+    it('lo que se adelanta en segundo plano no muestra la pantalla de carga; lo que la persona espera, sí', () => {
+        const URL = 'https://api.test/api/v1/products';
+        servicio.adelantar('doctor');
+        const adelantada = http.expectOne(`${URL}/doctor/configurator`);
+        expect(adelantada.request.context.get(SIN_CARGANDO)).toBe(true);
+        adelantada.flush(RESPUESTA);
+
+        servicio.configuracion('abogada').subscribe();
+        expect(http.expectOne(`${URL}/abogada/configurator`).request.context.get(SIN_CARGANDO)).toBe(false);
+    });
+});

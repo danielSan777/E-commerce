@@ -1,0 +1,44 @@
+@import '../../estilos/admin-tema.css';
+
+.contenido { max-width: 900px; }
+.bloque { display: flex; flex-direction: column; gap: .75rem; }
+.bloque h2 { font-size: 1.3rem; margin: 1rem 0 0; }
+.fila { flex-direction: row; flex-wrap: wrap; align-items: flex-end; }
+.fila .campo { display: flex; flex-direction: column; flex: 1 1 14rem; }
+.fila .campo.corto { flex: 0 0 6rem; }
+fieldset { border: 1px solid var(--borde); border-radius: 10px; padding: .6rem .9rem; }
+legend { font-weight: 700; font-size: .92rem; padding: 0 .4rem; }
+.con-miniatura { display: flex; align-items: center; gap: .75rem; }
+.miniatura { width: 56px; height: 56px; object-fit: contain; background: #f1f5f4; border-radius: 8px; flex-shrink: 0; }
+.miniatura.sin { display: flex; align-items: center; justify-content: center; color: var(--suave); font-weight: 700; }
+.apagado { opacity: .65; }
+.error { background: #fee2e2; color: var(--peligro); padding: .75rem 1rem; border-radius: 10px; }
+.error p { margin: 0; }
+.detalle { font-size: .9rem; }
+
+.vista-previa { display: flex; justify-content: center; padding: .75rem; background: #f1f5f4; border-radius: 10px; }
+.vista-previa img { max-width: 100%; max-height: 220px; object-fit: contain; }
+
+/* Campo de archivo: muestra el nombre de la imagen guardada, que el campo nativo no puede mostrar */
+.campo-archivo { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.archivo-oculto { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip-path: inset(50%); }
+.boton-archivo { margin: 0; padding: .35rem .7rem; border: 1px solid #767676; border-radius: 4px; background: #efefef; color: #111; font-weight: 400; cursor: pointer; }
+.archivo-oculto:focus-visible + .boton-archivo { outline: 2px solid #0b7a55; outline-offset: 2px; }
+.nombre-archivo { min-width: 0; overflow-wrap: anywhere; font-size: .9rem; }
+.nombre-archivo em { color: #5b6b66; font-style: normal; }
+
+.error-campo { display: block; margin-top: .25rem; color: #b00020; font-weight: 600; }
+
+/* Máximo 4 accesorios a la vista; el resto, con scroll. Las filas nunca se achican (así no se cortan los botones). */
+.lista-accesorios { --alto-fila: 7.25rem; max-height: calc(4 * var(--alto-fila) + 3 * .75rem + .5rem); overflow-y: auto; padding-right: .35rem; overscroll-behavior: contain; }
+.lista-accesorios li { flex-shrink: 0; min-height: var(--alto-fila); box-sizing: border-box; }
+.lista-accesorios li.vacio { flex-shrink: 0; min-height: 0; justify-content: center; color: #4b5563; }
+/* En pantallas angostas los botones bajan a otra línea y cada fila es más alta */
+@media (max-width: 640px) { .lista-accesorios { --alto-fila: 11rem; } }
+.filtro-categorias { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .75rem; }
+.filtro-categorias button { padding: .35rem .8rem; border-radius: 999px; font-size: .9rem; }
+.filtro-categorias button.activo { background: #047857; color: #fff; border-color: #047857; }
+
+.buscador { margin: 0 0 .6rem; }
+.buscador input { width: 100%; box-sizing: border-box; padding: .5rem .75rem; border: 1px solid var(--borde, #a7d8c3); border-radius: 10px; font: inherit; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

@@ -1,0 +1,49 @@
+<main class="pago-tarjeta">
+  <h1>Pago con tarjeta</h1>
+
+  @if (hayPedido() && pedido(); as p) {
+    <section class="resumen" aria-label="Resumen del pedido">
+      <span>Pedido {{ p.numero }}</span>
+      <strong>{{ p.total | currency:'USD':'symbol':'1.2-2' }}</strong>
+      @if (p.recargo > 0) { <small>Incluye el recargo por pago con tarjeta ({{ p.recargo | currency:'USD':'symbol':'1.2-2' }})</small> }
+    </section>
+
+    @switch (estado()) {
+      @case ('cargando') { <p class="estado" role="status">Preparando tu pago seguro…</p> }
+
+      @case ('listo') {
+        @if (intento(); as i) {
+          @if (i.simulated) {
+            <section class="pruebas" role="note">
+              <p><i class="bi bi-flask" aria-hidden="true"></i> <strong>Modo de prueba.</strong> PayPhone todavía no está conectado: aquí no se cobra nada. Elige qué resultado quieres simular.</p>
+              <div class="botones">
+                <button type="button" class="btn btn-primario" (click)="simular(true)">Simular pago aprobado</button>
+                <button type="button" class="btn btn-borde" (click)="simular(false)">Simular pago rechazado</button>
+              </div>
+            </section>
+          } @else {
+            <div id="pp-button" class="cajita"></div>
+          }
+          <p class="vigencia" role="timer">Esta caja de pago vence en <strong>{{ minutos() }}</strong>.</p>
+        }
+        <p class="seguro"><i class="bi bi-shield-lock" aria-hidden="true"></i> Pagas de forma segura con PayPhone. No guardamos los datos de tu tarjeta.</p>
+      }
+
+      @case ('vencida') {
+        <section class="aviso" role="alert">
+          <p>La caja de pago venció. No te cobramos nada. Genera una nueva para pagar.</p>
+          <button type="button" class="btn btn-primario" (click)="iniciar()">Generar nueva caja de pago</button>
+        </section>
+      }
+
+      @case ('error') {
+        <section class="aviso" role="alert">
+          <p>{{ error() }}</p>
+          <button type="button" class="btn btn-primario" (click)="iniciar()">Reintentar</button>
+        </section>
+      }
+    }
+
+    <a class="volver" [routerLink]="RUTA_PAGO">← Elegir otro método de pago</a>
+  }
+</main>

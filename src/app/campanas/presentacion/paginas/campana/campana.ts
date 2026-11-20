@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of, switchMap, tap } from 'rxjs';
 import { CurrencyPipe } from '@angular/common';
@@ -25,7 +25,9 @@ export class Campana {
   private route = inject(ActivatedRoute);
   private servicio = inject(CampanaService);
 
-  readonly promesa = inject(PromesaService).promesa();
+  private promesas = inject(PromesaService);
+  readonly promesa = this.promesas.promesa;
+  readonly contador = this.promesas.contador;
   readonly macetasEnvioGratis = inject(EnvioGratisService).MACETAS_PARA_ENVIO_GRATIS;
 
   private titulo = inject(Title);
@@ -63,6 +65,7 @@ export class Campana {
   portadaUrl = computed(() => { const s = this.campana()?.theme.cover?.srcset; return s ? (s['1080'] ?? Object.values(s)[0] ?? null) : null; });
 
   constructor() {
+    afterNextRender(() => this.promesas.cargar());
     effect(() => {
       const c = this.campana();
       if (!c) return;

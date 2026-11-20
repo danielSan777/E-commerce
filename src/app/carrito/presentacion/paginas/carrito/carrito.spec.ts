@@ -13,6 +13,11 @@ const PRODUCTOS = [
   productoListadoApi('agotado', 'Agotado', { available: false, category: { slug: 'familia', name: 'Familia' } }),
 ];
 
+const COMPLEMENTOS = [
+  { ...productoListadoApi('tarjeta', 'Tarjeta de regalo'), price: { ...productoListadoApi('x').price, final_cents: 300 } },
+  { ...productoListadoApi('caja', 'Caja'), available: false },
+];
+
 describe('Carrito', () => {
   let component: Carrito;
   let fixture: ComponentFixture<Carrito>;
@@ -24,13 +29,23 @@ describe('Carrito', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(Carrito);
-    TestBed.inject(HttpTestingController).expectOne('/api/v1/products').flush({ data: PRODUCTOS });
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/v1/products').flush({ data: PRODUCTOS });
+    http.expectOne('/api/v1/products?type=complemento').flush({ data: COMPLEMENTOS });
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('"Complementa tu regalo" sale de los productos de tipo complemento de Laravel, sin categorías', () => {
+    expect(component.complementos().map(c => c.nombre)).toEqual(['Tarjeta de regalo']);
+    expect(component.complementos()[0]).toMatchObject({ id: 'JDS-tarjeta', precio: 3 });
+    fixture.detectChanges();
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('.franja-rosa')).toBeNull(); // el carrito está vacío: la franja solo sale con productos en el carrito
   });
 
   it('"Otras macetas" salen de los productos de Laravel: solo los disponibles, con su precio final y sus categorías', () => {
@@ -52,6 +67,46 @@ describe('Carrito', () => {
 
     beforeEach(() => TestBed.inject(CarritoService).vaciar());
     afterEach(() => TestBed.inject(CarritoService).vaciar());
+
+    it('la maceta del carrito se pinta al instante con sus accesorios (sin esperar ninguna imagen armada); la foto del pedido llega después', async () => {
+      const servicio = TestBed.inject(CarritoService);
+      const html = fixture.nativeElement as HTMLElement;
+      const escena = { imagenBase: 'http://api/media/base.webp', ajuste: { escala: 100, x: 0, y: 0 }, accesorios: [], nombre: 'Ana', colorTexto: '#C7B084', tintes: {} };
+
+      servicio.guardar({ ...maceta('m1'), escena });
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(html.querySelector('.item-foto app-vista-maceta')).not.toBeNull();
+      expect(html.querySelector('.item-foto > img')).toBeNull();
+
+      servicio.ponerVista('m1', 'data:image/jpeg;base64,AAA');
+      expect(servicio.buscar('m1')?.vista).toBe('data:image/jpeg;base64,AAA');
+      expect(servicio.buscar('m1')?.escena).toEqual(escena);
+
+      servicio.ponerVista('no-existe', 'data:image/jpeg;base64,BBB'); // un item que ya no está: no hace nada
+      expect(servicio.items().length).toBe(1);
+    });
+
+    it('la franja "Complementa tu regalo" solo sale con al menos una maceta en el carrito', async () => {
+      const servicio = TestBed.inject(CarritoService);
+      const html = fixture.nativeElement as HTMLElement;
+
+      servicio.guardar(maceta('m1'));
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(html.querySelector('.franja-rosa')).not.toBeNull();
+
+      servicio.quitar('m1');
+      servicio.guardar(complemento);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(html.querySelector('.franja-rosa')).toBeNull();
+
+      // y sin maceta no se puede agregar un complemento aunque se intente
+      servicio.vaciar();
+      component.agregarComplemento(component.complementos()[0]);
+      expect(servicio.items().length).toBe(0);
+    });
 
     it('con solo complementos bloquea el checkout y muestra el mensaje', async () => {
       TestBed.inject(CarritoService).guardar(complemento);

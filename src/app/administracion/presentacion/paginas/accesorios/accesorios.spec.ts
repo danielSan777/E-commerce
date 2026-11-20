@@ -1,0 +1,221 @@
+import { SIN_CARGANDO } from '../../../../shared/interceptores/cargandoInterceptor';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { API_URL } from '../../../../core/configuracion/api';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
+import { AdminAccesorios } from './accesorios';
+
+const BASE = '/api/v1/admin';
+const esperar = () => new Promise<void>(r => setTimeout(r, 0));
+const BALANZA = {
+  id: 5, name: 'Balanza', type: 'imagen' as const, behavior: null, text: null, category_id: 1, category: 'objetos',
+  image: 'https://api/media/accessories/5-aaa-1080.webp', image_name: 'balanza.png', thumb: null, alt: 'balanza', sort_order: 1, is_active: true, is_exclusive: false,
+};
+
+describe('AdminAccesorios · imagen del accesorio', () => {
+  let ctrl: HttpTestingController;
+
+  async function montar() {
+    TestBed.configureTestingModule({ imports: [AdminAccesorios], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+    ctrl = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(AdminAccesorios);
+    fixture.detectChanges();
+    await responderCarga();
+    ctrl.expectOne(`${BASE}/upload-limits`).flush({ max_file_bytes: 2 * 1024 * 1024, min_image_side: 64, max_image_pixels: 40_000_000 });
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  async function responderCarga() {
+    ctrl.expectOne(`${BASE}/accessory-categories`).flush({ data: [{ id: 1, name: 'objetos', sort_order: 1, accessories_count: 1 }] });
+    ctrl.expectOne(`${BASE}/accessories`).flush({ data: [BALANZA] });
+    ctrl.expectOne(`${BASE}/locations`).flush({ data: [] });
+    await esperar();
+  }
+
+  const eleccion = (archivo: File) => ({ target: { files: [archivo] } }) as unknown as Event;
+
+  afterEach(() => ctrl.verify());
+
+  it('al subir otra imagen se envía la nueva (Laravel borra la anterior) y el formulario no conserva el archivo', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.editarAccesorio(BALANZA);
+    fixture.detectChanges();
+    expect(c.vistaPrevia()).toBe(BALANZA.image);
+
+    const nueva = new File(['x'], 'balanza-nueva.png', { type: 'image/png' });
+    c.elegirImagen(eleccion(nueva));
+    expect(c.vistaPrevia()?.startsWith('blob:')).toBe(true);
+    c.formAccesorio.alt = 'balanza dorada';
+    c.guardarAccesorio();
+
+    ctrl.expectOne(r => r.method === 'PUT' && r.url === `${BASE}/accessories/5`).flush(BALANZA);
+    const subida = ctrl.expectOne(`${BASE}/accessories/5/image`);
+    const datos = subida.request.body as FormData;
+    expect((datos.get('image') as File).name).toBe('balanza-nueva.png');
+    expect(datos.get('alt')).toBe('balanza dorada');
+    subida.flush({ ...BALANZA, image: 'https://api/media/accessories/5-bbb-1080.webp' });
+    await responderCarga();
+
+    expect(c.archivoImagen).toBeNull();
+    expect(c.vistaPrevia()).toBeNull();
+    expect(c.editandoAccesorio()).toBeNull();
+  });
+
+  it('al editar muestra el nombre de la imagen guardada y, al elegir otra, el de la nueva', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.editarAccesorio(BALANZA);
+    fixture.detectChanges();
+    const texto = () => (fixture.nativeElement.querySelector('.nombre-archivo') as HTMLElement).textContent!.replace(/\s+/g, ' ');
+
+    expect(c.nombreGuardado()).toBe('balanza.png');
+    expect(texto()).toContain('balanza.png (guardada)');
+    expect(texto()).not.toContain('Ningún archivo');
+
+    c.elegirImagen(eleccion(new File(['x'], 'balanza-nueva.png', { type: 'image/png' })));
+    fixture.detectChanges();
+    expect(texto()).toContain('balanza-nueva.png');
+    expect(texto()).not.toContain('balanza.png (guardada)');
+
+    // Si se cancela la elección vuelve a verse la guardada
+    c.elegirImagen({ target: { files: [] } } as unknown as Event);
+    fixture.detectChanges();
+    expect(texto()).toContain('balanza.png (guardada)');
+    expect(c.vistaPrevia()).toBe(BALANZA.image);
+
+    // Una imagen anterior a este dato (sin nombre original) muestra el nombre del archivo guardado
+    c.editarAccesorio({ ...BALANZA, image_name: null });
+    fixture.detectChanges();
+    expect(texto()).toContain('5-aaa-1080.webp (guardada)');
+
+    // Un accesorio nuevo no tiene archivo
+    c.nuevoAccesorio();
+    fixture.detectChanges();
+    expect(texto()).toContain('Ningún archivo seleccionado');
+  });
+
+  it('si falla la subida de la imagen avisa con un mensaje flotante y deja el formulario abierto', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    const avisos = TestBed.inject(AvisosService);
+    c.editarAccesorio(BALANZA);
+    c.elegirImagen(eleccion(new File(['x'], 'grande.png', { type: 'image/png' })));
+    c.guardarAccesorio();
+
+    ctrl.expectOne(r => r.method === 'PUT' && r.url === `${BASE}/accessories/5`).flush(BALANZA);
+    ctrl.expectOne(`${BASE}/accessories/5/image`).flush(
+      { code: 'validation_error', message: 'Revisa los datos ingresados.', errors: { image: ['El archivo pesa más de lo que permite este servidor (límite actual: 2M).'] } },
+      { status: 422, statusText: 'Unprocessable' });
+    await esperar();
+    await responderCarga();
+
+    expect(avisos.lista().some(a => a.tipo === 'error' && a.texto.includes('límite actual: 2M'))).toBe(true);
+    expect(c.editandoAccesorio()).toBe(5);
+    expect(avisos.lista().some(a => a.tipo === 'exito')).toBe(false);
+  });
+
+  it('después de guardar la lista se refresca en segundo plano, sin pantalla de carga, para poder leer el mensaje', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    const avisos = TestBed.inject(AvisosService);
+    c.editarAccesorio(BALANZA);
+    c.guardarAccesorio();
+
+    // El guardado sí muestra la pantalla de carga (es una consulta normal)
+    const put = ctrl.expectOne(r => r.method === 'PUT' && r.url === `${BASE}/accessories/5`);
+    expect(put.request.context.get(SIN_CARGANDO)).toBe(false);
+    put.flush(BALANZA);
+    await esperar();
+    expect(avisos.lista().some(a => a.tipo === 'exito')).toBe(true);
+
+    // El refresco de la lista no la muestra
+    for (const ruta of ['accessory-categories', 'accessories', 'locations']) {
+      const r = ctrl.expectOne(`${BASE}/${ruta}`);
+      expect(r.request.context.get(SIN_CARGANDO)).toBe(true);
+      r.flush({ data: [] });
+    }
+    await esperar();
+  });
+
+  it('al elegir una imagen que pesa más que el servidor lo avisa de inmediato, sin guardar ni pedir nada', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    const avisos = TestBed.inject(AvisosService);
+    c.editarAccesorio(BALANZA);
+    fixture.detectChanges();
+
+    c.elegirImagen(eleccion(new File([new Uint8Array(3 * 1024 * 1024)], 'Balanza_sin_fondo.png', { type: 'image/png' })));
+    fixture.detectChanges();
+
+    expect(c.archivoImagen).toBeNull();
+    expect(c.errorImagen()).toBe('La imagen «Balanza_sin_fondo.png» pesa 3 MB y este servidor permite hasta 2 MB. Elige una más liviana.');
+    expect(avisos.lista().some(a => a.tipo === 'error' && a.texto === c.errorImagen())).toBe(true);
+    expect(c.vistaPrevia()).toBe(BALANZA.image);
+    expect(fixture.nativeElement.querySelector('.error-campo')?.textContent).toContain('pesa 3 MB');
+    expect(fixture.nativeElement.querySelector('.ayuda')?.textContent ?? '').toBeDefined();
+
+    // Una imagen que sí cabe limpia el aviso y se acepta; un archivo que no es imagen se rechaza
+    c.elegirImagen(eleccion(new File(['x'], 'liviana.png', { type: 'image/png' })));
+    expect(c.errorImagen()).toBe('');
+    expect(c.archivoImagen?.name).toBe('liviana.png');
+    c.elegirImagen(eleccion(new File(['x'], 'documento.pdf', { type: 'application/pdf' })));
+    expect(c.archivoImagen).toBeNull();
+    expect(c.errorImagen()).toContain('no es una imagen PNG, JPG o WebP');
+  });
+
+  it('filtra los accesorios por categoría sin volver a consultar la API', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    const total = c.accesorios().length;
+    expect(c.accesoriosVisibles().length).toBe(total);
+    const idCategoria = c.accesorios()[0].category_id;
+
+    c.filtroCategoria.set(idCategoria);
+    fixture.detectChanges();
+    expect(c.accesoriosVisibles().every(a => a.category_id === idCategoria)).toBe(true);
+    expect(c.cantidadPorCategoria().get(idCategoria)).toBe(c.accesoriosVisibles().length);
+    expect(fixture.nativeElement.querySelectorAll('.lista-accesorios li:not(.vacio)').length).toBe(c.accesoriosVisibles().length);
+
+    c.filtroCategoria.set(999999);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.lista-accesorios .vacio')).not.toBeNull();
+
+    c.filtroCategoria.set(0);
+    expect(c.accesoriosVisibles().length).toBe(total);
+
+    // Buscar por nombre (sin tildes ni mayúsculas) y combinado con la categoría
+    c.busqueda.set('BALAN');
+    fixture.detectChanges();
+    expect(c.accesoriosVisibles().map(a => a.name)).toEqual(['Balanza']);
+    c.busqueda.set('zzz');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.lista-accesorios .vacio')?.textContent).toContain('«zzz»');
+    c.busqueda.set('');
+    ctrl.expectNone(`${BASE}/accessories`); // cambiar de categoría no pide nada
+  });
+
+  it('si cancelas, el archivo elegido se olvida también en el campo y no se sube al editar otro accesorio', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    c.editarAccesorio(BALANZA);
+    fixture.detectChanges();
+    const campo = fixture.nativeElement.querySelector('#a-imagen') as HTMLInputElement;
+    expect(campo).not.toBeNull();
+
+    c.elegirImagen(eleccion(new File(['x'], 'otra.png', { type: 'image/png' })));
+    c.cancelarAccesorio();
+    expect(c.archivoImagen).toBeNull();
+
+    c.editarAccesorio({ ...BALANZA, id: 6, name: 'Corazón' });
+    fixture.detectChanges();
+    c.guardarAccesorio();
+    ctrl.expectOne(r => r.method === 'PUT' && r.url === `${BASE}/accessories/6`).flush({ ...BALANZA, id: 6 });
+    await responderCarga();
+    // Sin archivo nuevo no hay subida: se conserva la imagen actual
+    ctrl.expectNone(`${BASE}/accessories/6/image`);
+  });
+});

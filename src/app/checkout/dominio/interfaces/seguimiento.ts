@@ -1,3 +1,5 @@
+import { VistaPrevia } from './pedido_pendiente';
+
 // Contrato del Paso 0: pedido pagado (vista de seguimiento).
 // Nombres en inglés y snake_case: son idénticos a la respuesta de Laravel. Dinero en centavos.
 // Angular solo muestra estos campos; no decide el estado ni calcula el total.
@@ -9,7 +11,8 @@ export interface PedidoSeguimiento {
     visible_status: EstadoVisible;
     payment: { method: 'transfer' | 'card'; status: 'paid'; paid_at: string };
     window: { start: string; end: string };
-    shipment: { carrier: string; tracking_number: string | null };
+    shipment: { carrier: string; tracking_number: string | null; tracking_url: string | null };
     items: { name: string; name_text: string | null }[];
     total_cents: number;
+    share: VistaPrevia;
 }

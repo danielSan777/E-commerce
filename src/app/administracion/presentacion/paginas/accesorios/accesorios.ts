@@ -1,0 +1,404 @@
+import { coincide } from '../../../aplicacion/busqueda';
+import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild, computed } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { Meta, Title } from '@angular/platform-browser';
+import { RouterLink } from '@angular/router';
+import { Observable, forkJoin } from 'rxjs';
+import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
+import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
+import { ConfiguradorAdminService } from '../../../aplicacion/servicios/ConfiguradorAdminService';
+import {
+  AccesorioAdmin, CategoriaAccesorioAdmin, ComportamientoAccesorioAdmin, UbicacionAdmin,
+} from '../../../dominio/interfaces/configurador-admin';
+
+export const COMPORTAMIENTOS: { valor: ComportamientoAccesorioAdmin; nombre: string }[] = [
+  { valor: 'lentes', nombre: 'Lentes (el cliente elige el color)' },
+  { valor: 'gafas', nombre: 'Gafas (el cliente elige el color)' },
+  { valor: 'marco_foto', nombre: 'Marco con foto (el cliente sube su foto)' },
+  { valor: 'marco_frase', nombre: 'Marco con frase (el cliente escribe la frase)' },
+];
+
+interface FormAccesorio {
+  name: string; accessory_category_id: number; type: 'imagen' | 'texto'; behavior: ComportamientoAccesorioAdmin | ''; default_text: string;
+  sort_order: number; is_active: boolean; is_exclusive: boolean; alt: string;
+}
+interface FormUbicacion { name: string; sort_order: number; allowed: number[]; excluded: number[] }
+
+const ACCESORIO_VACIO: FormAccesorio = { name: '', accessory_category_id: 0, type: 'imagen', behavior: '', default_text: '', sort_order: 0, is_active: true, is_exclusive: false, alt: '' };
+const UBICACION_VACIA: FormUbicacion = { name: '', sort_order: 0, allowed: [], excluded: [] };
+
+/**
+ * Accesorios, sus categorías y las ubicaciones del configurador. Todo se guarda en la base de datos por Laravel, que valida
+ * y responde con sus mensajes; aquí solo se escribe y se muestra.
+ */
+@Component({
+  selector: 'app-admin-accesorios',
+  imports: [FormsModule, RouterLink],
+  templateUrl: './accesorios.html',
+  styleUrl: './accesorios.css',
+})
+export class AdminAccesorios implements OnInit {
+  private servicio = inject(ConfiguradorAdminService);
+  private avisos = inject(AvisosService);
+  private destroyRef = inject(DestroyRef);
+
+  readonly comportamientos = COMPORTAMIENTOS;
+
+  categorias = signal<CategoriaAccesorioAdmin[]>([]);
+  accesorios = signal<AccesorioAdmin[]>([]);
+  /** Categoría elegida para filtrar la lista de accesorios (0 = todas). El filtro se hace aquí, sin pedirle nada a la API. */
+  filtroCategoria = signal(0);
+  /** Lo que se escribió en el buscador (por nombre; se combina con la categoría elegida). */
+  busqueda = signal('');
+  accesoriosVisibles = computed(() => {
+    const id = this.filtroCategoria();
+    const texto = this.busqueda();
+    return this.accesorios().filter(a => (!id || a.category_id === id) && coincide(a.name, texto));
+  });
+  /** Cuántos accesorios tiene cada categoría, para mostrarlo en los botones del filtro. */
+  cantidadPorCategoria = computed(() => {
+    const cuenta = new Map<number, number>();
+    for (const a of this.accesorios()) cuenta.set(a.category_id, (cuenta.get(a.category_id) ?? 0) + 1);
+    return cuenta;
+  });
+  ubicaciones = signal<UbicacionAdmin[]>([]);
+  cargando = signal(true);
+  guardando = signal(false);
+  error = signal('');
+  detalle = signal<string[]>([]);
+  /** Lo que se está confirmando para eliminar: `categoria:3`, `accesorio:5`, `ubicacion:2`. */
+  porEliminar = signal<string | null>(null);
+
+  // Categorías
+  formCategoria = { name: '', sort_order: 0 };
+  editandoCategoria = signal<number | null>(null);
+
+  // Accesorios
+  formAccesorio: FormAccesorio = { ...ACCESORIO_VACIO };
+  editandoAccesorio = signal<number | '' | null>(null);   // null = cerrado; '' = nuevo; número = editando
+  archivoImagen: File | null = null;
+  /** Lo que se ve en el formulario: la foto recién elegida o, al editar, la que ya tiene el accesorio. */
+  vistaPrevia = signal<string | null>(null);
+  /** Imagen ya guardada del accesorio que se edita (null si no tiene): su nombre se muestra en lugar de «Ningún archivo seleccionado». */
+  imagenGuardada = signal<string | null>(null);
+  nombreArchivo = signal('');
+  /** Lo más que pesa un archivo en el servidor; 0 mientras no se sepa. */
+  limiteBytes = signal(0);
+  private ladoMinimo = 0;
+  private pixelesMaximos = 0;
+  errorImagen = signal('');
+  private nombreOriginal = signal<string | null>(null);
+  /** El nombre con el que se subió; en imágenes anteriores a ese dato, el nombre del archivo guardado. */
+  nombreGuardado = computed(() => this.nombreOriginal() ?? decodeURIComponent((this.imagenGuardada() ?? '').split('?')[0].split('/').pop() ?? ''));
+  private campoImagen = viewChild<ElementRef<HTMLInputElement>>('campoImagen');
+
+  // Ubicaciones
+  formUbicacion: FormUbicacion = { ...UBICACION_VACIA };
+  editandoUbicacion = signal<number | '' | null>(null);
+
+  constructor() {
+    inject(Title).setTitle('Accesorios y ubicaciones | Panel de Jardín de Sele');
+    inject(Meta).updateTag({ name: 'robots', content: 'noindex, nofollow' });
+  }
+
+  ngOnInit(): void {
+    this.cargar();
+  }
+
+  private limitesPedidos = false;
+
+  /** Una sola vez y después de cargar la lista (no en paralelo, para no saturar un servidor local de un solo hilo). */
+  private pedirLimitesDeSubida(): void {
+    if (this.limitesPedidos) return;
+    this.limitesPedidos = true;
+    // Si no se puede consultar el límite, simplemente no se avisa antes: Laravel lo valida al guardar
+    this.servicio.limitesDeSubida().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: l => {
+        this.limiteBytes.set(l.max_file_bytes);
+        this.ladoMinimo = l.min_image_side ?? 0;
+        this.pixelesMaximos = l.max_image_pixels ?? 0;
+      },
+      error: () => undefined,
+    });
+  }
+
+  /**
+   * Carga la lista. Al abrir la pantalla muestra la pantalla de carga; después de guardar o eliminar se refresca en
+   * segundo plano, para que el spinner se vaya apenas responde el guardado y se alcance a leer el mensaje.
+   */
+  private cargar(segundoPlano = false): void {
+    forkJoin({ c: this.servicio.categoriasDeAccesorios(segundoPlano), a: this.servicio.accesorios(segundoPlano), u: this.servicio.ubicaciones(segundoPlano) })
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: ({ c, a, u }) => {
+          this.categorias.set(c);
+          this.accesorios.set(a);
+          this.ubicaciones.set(u);
+          this.cargando.set(false);
+          this.pedirLimitesDeSubida();
+        },
+        // Si falla el refresco en segundo plano, se queda la lista de antes (el guardado ya salió bien)
+        error: e => { if (!segundoPlano) this.fallo(e); },
+      });
+  }
+
+  private fallo(e: unknown): void {
+    const api = e as ErrorApi;
+    this.cargando.set(false);
+    this.guardando.set(false);
+    this.error.set(api?.message ?? 'No se pudo completar la acción. Inténtalo de nuevo.');
+    this.detalle.set(api?.errors ? Object.values(api.errors).flat() : []);
+    // El aviso flotante se ve aunque el formulario esté abajo en la pantalla (el cuadro rojo de arriba, en el celular, no)
+    this.avisos.error([this.error(), ...this.detalle()].join(' '));
+  }
+
+  private limpiar(): void {
+    this.error.set('');
+    this.detalle.set([]);
+    this.porEliminar.set(null);
+  }
+
+  /** Ejecuta una petición de guardado: avisa, recarga las listas y llama a `luego`. */
+  private ejecutar(peticion: Observable<unknown>, mensaje: string, luego: () => void): void {
+    this.guardando.set(true);
+    this.limpiar();
+    peticion.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.avisos.exito(mensaje);
+        luego();
+        this.cargar(true);
+      },
+      error: e => this.fallo(e),
+    });
+  }
+
+  confirmarEliminar(clave: string): void { this.porEliminar.set(clave); }
+  cancelarEliminar(): void { this.porEliminar.set(null); }
+
+  // ----- Categorías de accesorios
+
+  guardarCategoria(): void {
+    const id = this.editandoCategoria();
+    const datos = { name: this.formCategoria.name.trim(), sort_order: Number(this.formCategoria.sort_order) || 0 };
+    const peticion = id === null ? this.servicio.crearCategoriaDeAccesorio(datos) : this.servicio.editarCategoriaDeAccesorio(id, datos);
+    this.ejecutar(peticion, id === null ? 'Categoría creada.' : 'Categoría guardada.', () => this.cancelarCategoria());
+  }
+
+  editarCategoria(c: CategoriaAccesorioAdmin): void {
+    this.editandoCategoria.set(c.id);
+    this.formCategoria = { name: c.name, sort_order: c.sort_order };
+  }
+
+  cancelarCategoria(): void {
+    this.editandoCategoria.set(null);
+    this.formCategoria = { name: '', sort_order: 0 };
+  }
+
+  eliminarCategoria(id: number): void {
+    this.ejecutar(this.servicio.eliminarCategoriaDeAccesorio(id), 'Categoría eliminada.', () => undefined);
+  }
+
+  // ----- Accesorios
+
+  nuevoAccesorio(): void {
+    this.formAccesorio = { ...ACCESORIO_VACIO, accessory_category_id: this.categorias()[0]?.id ?? 0, sort_order: this.accesorios().length + 1 };
+    this.vaciarArchivo();
+    this.imagenGuardada.set(null);
+    this.nombreOriginal.set(null);
+    this.ponerVistaPrevia(null);
+    this.limpiar();
+    this.editandoAccesorio.set('');
+  }
+
+  editarAccesorio(a: AccesorioAdmin): void {
+    this.formAccesorio = {
+      name: a.name, accessory_category_id: a.category_id, type: a.type, behavior: a.behavior ?? '', default_text: a.text ?? '',
+      sort_order: a.sort_order, is_active: a.is_active, is_exclusive: a.is_exclusive, alt: a.alt ?? '',
+    };
+    this.vaciarArchivo();
+    this.imagenGuardada.set(a.image ?? a.thumb ?? null);
+    this.nombreOriginal.set(a.image_name ?? null);
+    this.ponerVistaPrevia(this.imagenGuardada());
+    this.limpiar();
+    this.editandoAccesorio.set(a.id);
+  }
+
+  cancelarAccesorio(): void {
+    this.editandoAccesorio.set(null);
+    this.vaciarArchivo();
+    this.imagenGuardada.set(null);
+    this.nombreOriginal.set(null);
+    this.ponerVistaPrevia(null);
+  }
+
+  /** Olvida el archivo elegido, también en el campo de la pantalla: así no queda un nombre viejo que parece subirse y no se sube. */
+  private vaciarArchivo(): void {
+    this.archivoImagen = null;
+    this.nombreArchivo.set('');
+    this.errorImagen.set('');
+    const campo = this.campoImagen()?.nativeElement;
+    if (campo) campo.value = '';
+  }
+
+  elegirImagen(evento: Event): void {
+    const archivo = (evento.target as HTMLInputElement).files?.[0] ?? null;
+    const motivo = archivo ? this.motivoDeRechazo(archivo) : '';
+    if (motivo) {
+      // Se rechaza al elegirla: no hace falta guardar ni pedirle nada al servidor
+      this.vaciarArchivo();
+      this.errorImagen.set(motivo);
+      this.avisos.error(motivo);
+      this.ponerVistaPrevia(this.imagenGuardada());
+      return;
+    }
+    this.errorImagen.set('');
+    this.archivoImagen = archivo;
+    this.nombreArchivo.set(archivo?.name ?? '');
+    // Si se cancela la elección, vuelve a verse la imagen guardada
+    const url = archivo ? URL.createObjectURL(archivo) : null;
+    this.ponerVistaPrevia(url ?? this.imagenGuardada());
+    if (archivo && url) this.revisarMedidas(archivo, url);
+  }
+
+  /** Lee las medidas de la imagen elegida (solo en el navegador) y la rechaza si no cumple lo que exige el servidor. */
+  private revisarMedidas(archivo: File, url: string): void {
+    if (!this.ladoMinimo && !this.pixelesMaximos) return;
+    const img = new Image();
+    img.onload = () => {
+      if (this.archivoImagen !== archivo) return; // ya eligió otra
+      const { naturalWidth: ancho, naturalHeight: alto } = img;
+      let motivo = '';
+      if (this.ladoMinimo && (ancho < this.ladoMinimo || alto < this.ladoMinimo)) {
+        motivo = `La imagen «${archivo.name}» mide ${ancho} × ${alto} píxeles y es muy pequeña. Debe medir al menos ${this.ladoMinimo} × ${this.ladoMinimo}.`;
+      } else if (this.pixelesMaximos && ancho * alto > this.pixelesMaximos) {
+        motivo = `La imagen «${archivo.name}» mide ${ancho} × ${alto} píxeles y es demasiado grande. Redúcela a menos de ${Math.round(this.pixelesMaximos / 1_000_000)} megapíxeles.`;
+      }
+      if (!motivo) return;
+      this.vaciarArchivo();
+      this.errorImagen.set(motivo);
+      this.avisos.error(motivo);
+      this.ponerVistaPrevia(this.imagenGuardada());
+    };
+    img.src = url;
+  }
+
+  /** Por qué no se puede subir ese archivo (vacío si está bien): tipo y peso, con lo mismo que exige el servidor. */
+  private motivoDeRechazo(archivo: File): string {
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(archivo.type)) {
+      return `«${archivo.name}» no es una imagen PNG, JPG o WebP. Elige otra.`;
+    }
+    const limite = this.limiteBytes();
+    if (limite > 0 && archivo.size > limite) {
+      return `La imagen «${archivo.name}» pesa ${this.pesoLegible(archivo.size)} y este servidor permite hasta ${this.pesoLegible(limite)}. Elige una más liviana.`;
+    }
+    return '';
+  }
+
+  pesoLegible(bytes: number): string {
+    return bytes < 1024 * 1024
+      ? `${Math.max(1, Math.round(bytes / 1024))} KB`
+      : `${(bytes / (1024 * 1024)).toLocaleString('es', { maximumFractionDigits: 1 })} MB`;
+  }
+
+  private ponerVistaPrevia(url: string | null): void {
+    const anterior = this.vistaPrevia();
+    if (anterior?.startsWith('blob:')) URL.revokeObjectURL(anterior);
+    this.vistaPrevia.set(url);
+  }
+
+  guardarAccesorio(): void {
+    const f = this.formAccesorio;
+    const id = this.editandoAccesorio();
+    const datos = {
+      name: f.name.trim(),
+      accessory_category_id: Number(f.accessory_category_id),
+      type: f.type,
+      behavior: f.behavior || null,
+      default_text: f.type === 'texto' ? f.default_text.trim() : null,
+      sort_order: Number(f.sort_order) || 0,
+      is_active: f.is_active,
+      is_exclusive: f.is_exclusive,
+    };
+
+    if (f.type === 'imagen' && this.archivoImagen && !f.alt.trim()) {
+      this.error.set('Escribe el texto alternativo de la imagen (lo que se ve en ella).');
+      this.avisos.error(this.error());
+      return;
+    }
+
+    const guardado = id === '' || id === null ? this.servicio.crearAccesorio(datos) : this.servicio.editarAccesorio(id, datos);
+    this.guardando.set(true);
+    this.limpiar();
+    guardado.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: a => {
+        const archivo = f.type === 'imagen' ? this.archivoImagen : null;
+        if (!archivo) { this.terminarAccesorio(id === '' ? 'Accesorio creado.' : 'Accesorio guardado.'); return; }
+        // El accesorio ya existe; falta subir su imagen
+        this.servicio.subirImagenDeAccesorio(a.id, archivo, f.alt).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+          next: () => this.terminarAccesorio('Accesorio guardado con su imagen.'),
+          error: e => { this.editandoAccesorio.set(a.id); this.fallo(e); this.cargar(true); },
+        });
+      },
+      error: e => this.fallo(e),
+    });
+  }
+
+  private terminarAccesorio(mensaje: string): void {
+    this.guardando.set(false);
+    this.avisos.exito(mensaje);
+    this.cancelarAccesorio();
+    this.cargar(true);
+  }
+
+  eliminarAccesorio(id: number): void {
+    this.ejecutar(this.servicio.eliminarAccesorio(id), 'Accesorio eliminado.', () => undefined);
+  }
+
+  // ----- Ubicaciones
+
+  nuevaUbicacion(): void {
+    this.formUbicacion = { ...UBICACION_VACIA, sort_order: this.ubicaciones().length + 1, allowed: [], excluded: [] };
+    this.limpiar();
+    this.editandoUbicacion.set('');
+  }
+
+  editarUbicacion(u: UbicacionAdmin): void {
+    this.formUbicacion = { name: u.name, sort_order: u.sort_order, allowed: [...u.allowed_category_ids], excluded: [...u.excluded_category_ids] };
+    this.limpiar();
+    this.editandoUbicacion.set(u.id);
+  }
+
+  cancelarUbicacion(): void { this.editandoUbicacion.set(null); }
+
+  /** Marca o desmarca una categoría como permitida o excluida (no puede estar en las dos). */
+  alternarRegla(lista: 'allowed' | 'excluded', categoria: number, marcada: boolean): void {
+    const otra = lista === 'allowed' ? 'excluded' : 'allowed';
+    const f = this.formUbicacion;
+    f[lista] = marcada ? [...new Set([...f[lista], categoria])] : f[lista].filter(c => c !== categoria);
+    if (marcada) f[otra] = f[otra].filter(c => c !== categoria);
+  }
+
+  guardarUbicacion(): void {
+    const f = this.formUbicacion;
+    const id = this.editandoUbicacion();
+    const datos = { name: f.name.trim(), sort_order: Number(f.sort_order) || 0, allowed_category_ids: f.allowed, excluded_category_ids: f.excluded };
+    const peticion = id === '' || id === null ? this.servicio.crearUbicacion(datos) : this.servicio.editarUbicacion(id, datos);
+    this.ejecutar(peticion, id === '' ? 'Ubicación creada.' : 'Ubicación guardada.', () => this.cancelarUbicacion());
+  }
+
+  eliminarUbicacion(id: number): void {
+    this.ejecutar(this.servicio.eliminarUbicacion(id), 'Ubicación eliminada.', () => undefined);
+  }
+
+  /** Resumen de las reglas de categoría de una ubicación, para la lista. */
+  reglas(u: UbicacionAdmin): string {
+    if (u.allowed_categories.length) return `Solo: ${u.allowed_categories.join(', ')}`;
+    if (u.excluded_categories.length) return `Todas menos: ${u.excluded_categories.join(', ')}`;
+    return 'Todas las categorías';
+  }
+
+  nombreComportamiento(b: ComportamientoAccesorioAdmin | null): string {
+    return COMPORTAMIENTOS.find(c => c.valor === b)?.nombre.split(' (')[0] ?? '';
+  }
+}

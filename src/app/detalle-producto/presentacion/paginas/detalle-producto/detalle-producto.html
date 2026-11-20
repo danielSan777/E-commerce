@@ -71,14 +71,14 @@
             <!-- Línea de envío -->
             <p class="linea-envio"><i class="bi bi-truck" aria-hidden="true"></i> {{ lineaEnvio() }}</p>
 
-            <!-- Promesa de entrega (la calcula Laravel; hoy, un mock): Angular solo la muestra -->
+            <!-- Promesa de entrega (la calcula Laravel): Angular solo la muestra -->
             <div class="promesa" role="note">
                 <i class="bi bi-box-seam" aria-hidden="true"></i>
                 <div>
                     <small>Envío por Servientrega</small>
-                    <strong>{{ promesa.label }}</strong>
-                    <small>{{ promesa.countdown_label }}</small>
-                    <small>{{ promesa.amazon_note }}</small>
+                    <strong>{{ promesa()?.label }}</strong>
+                    <small>{{ contador() }}</small>
+                    <small>{{ promesa()?.amazon_note }}</small>
                 </div>
             </div>
 
@@ -90,7 +90,7 @@
             </button>
             @if (calendarioAbierto()) {
             <div id="calendario-ficha">
-                <app-calendario-ventanas [ventanas]="ventanas" [elegida]="ventanaElegida()" (elegir)="elegirVentana($event)" />
+                <app-calendario-ventanas [ventanas]="ventanas()" [elegida]="ventanaElegida()" (elegir)="elegirVentana($event)" />
             </div>
             }
 
@@ -174,7 +174,7 @@
     }
 </section>
 <!-- Personalizador a pantalla completa -->
-@if (personalizadorAbierto()) {
+@if (personalizadorAbierto() && productoCarrito()) {
 <div class="modal-personalizador" (click)="cerrarPorFondo()">
     <div class="modal-contenido" (click)="$event.stopPropagation()">
 

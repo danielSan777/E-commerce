@@ -9,8 +9,7 @@ import { UbicacionesService } from '../../../aplicacion/servicios/UbicacionesSer
 import {
   correoValido, documentoValido, normalizar, soloDigitos, telefonoValido
 } from '../../../dominio/validaciones/validaciones';
-import { envioDisponible, MENSAJE_SIN_ENVIO } from '../../../dominio/validaciones/envio';
-import { buscarProvincia } from '../../../dominio/ubicaciones';
+import { MENSAJE_SIN_ENVIO } from '../../../dominio/validaciones/envio';
 
 type Lista = 'provincia' | 'canton' | 'fProvincia' | 'fCanton';
 
@@ -36,8 +35,10 @@ export class EnvioFacturacion {
   datos = this.checkout.datos;
   cantidadCarrito = inject(CarritoService).cantidad;
 
-  // ----- Provincias y cantones (archivo del INEC dentro del proyecto) -----
-  provincias = this.ubicaciones.provincias();
+  // ----- Provincias y cantones: se piden una vez a Laravel y quedan en memoria para filtrar al instante -----
+  provincias = this.ubicaciones.provincias;
+  listo = this.ubicaciones.listo;
+  fallo = this.ubicaciones.fallo;
   cantones = computed(() => this.ubicaciones.cantones(this.datos().provincia));
   fCantones = computed(() => this.ubicaciones.cantones(this.datos().fProvincia));
 
@@ -46,9 +47,9 @@ export class EnvioFacturacion {
   consulta = signal('');
   activo = signal(0);
 
-  opcionesProvincia = computed(() => this.filtrar(this.provincias, this.consulta()));
+  opcionesProvincia = computed(() => this.filtrar(this.provincias(), this.consulta()));
   opcionesCanton = computed(() => this.filtrar(this.cantones(), this.consulta()));
-  opcionesFProvincia = computed(() => this.filtrar(this.provincias, this.consulta()));
+  opcionesFProvincia = computed(() => this.filtrar(this.provincias(), this.consulta()));
   opcionesFCanton = computed(() => this.filtrar(this.fCantones(), this.consulta()));
 
   // ----- Validación -----
@@ -68,9 +69,9 @@ export class EnvioFacturacion {
     if (!telefonoValido(d.celular, '+593')) e['celular'] = 'Escribe un celular válido. Ej. 099 123 4567';
     if (!correoValido(d.correo)) e['correo'] = 'Ingresa un correo válido';
     if (!d.provincia) e['provincia'] = 'Elige una provincia';
-    else if (buscarProvincia(d.provincia)?.codigo === '20') e['provincia'] = MENSAJE_SIN_ENVIO;
+    else if (this.ubicaciones.esProvinciaSinEnvio(d.provincia)) e['provincia'] = MENSAJE_SIN_ENVIO;
     if (!d.canton) e['canton'] = 'Elige un cantón';
-    else if (!envioDisponible(d.provincia, d.canton)) e['canton'] = MENSAJE_SIN_ENVIO;
+    else if (!this.ubicaciones.disponible(d.provincia, d.canton)) e['canton'] = MENSAJE_SIN_ENVIO;
     if (d.direccion.trim().length < 5) e['direccion'] = 'Escribe tu dirección completa';
 
     // Otros datos de facturación: los mismos campos del envío, menos la referencia
@@ -99,6 +100,7 @@ export class EnvioFacturacion {
 
   constructor() {
     this.analytics.track('begin_checkout');
+    this.ubicaciones.cargar();
     // Solo en el navegador: así el servidor y el cliente pintan lo mismo en el primer render
     afterNextRender(() => {
       this.checkout.restaurar();
@@ -251,7 +253,7 @@ export class EnvioFacturacion {
   }
 
   // Sin tildes, mayúsculas ni orden: "g" encuentra Guayaquil, "guayaquil" y "Guáyaquil". Primero las que empiezan igual.
-  private filtrar(lista: string[], consulta: string): string[] {
+  private filtrar(lista: readonly string[], consulta: string): readonly string[] {
     const q = normalizar(consulta.trim());
     if (!q) return lista;
 

@@ -1,3 +1,5 @@
+export type ComportamientoAccesorio = 'lentes' | 'gafas' | 'marco_foto' | 'marco_frase';
+
 export interface Accesorio {
 
   id: number;
@@ -11,6 +13,9 @@ export interface Accesorio {
   texto?: string;
 
   categoria?: string;
+
+  /** Comportamiento especial que reconoce el personalizador (lo marca el administrador en el accesorio). */
+  comportamiento?: ComportamientoAccesorio | null;
 
 }
 

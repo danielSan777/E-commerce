@@ -68,4 +68,32 @@ describe('AdminProductos', () => {
     expect(c.aviso()).toBe('Producto eliminado.');
     expect(c.productos().length).toBe(1);
   });
+
+  it('la lista de tipo permite ver solo complementos: pide type=complemento, sin categoría y oculta el filtro de categorías', async () => {
+    const f = await montar();
+    const c = f.componentInstance;
+
+    c.categoria = 'familia';
+    c.tipo = 'complemento';
+    c.cambiarTipo();
+    const r = ctrl.expectOne(x => x.url === '/api/v1/admin/products' && x.params.get('type') === 'complemento');
+    expect(r.request.params.has('category')).toBe(false);
+    r.flush({ data: [prod('C-1', 'Tarjeta de regalo')] });
+    await f.whenStable();
+    f.detectChanges();
+    expect((f.nativeElement as HTMLElement).querySelector('select[name=categoria]')).toBeNull();
+    expect((f.nativeElement as HTMLElement).textContent).toContain('Tarjeta de regalo');
+  });
+
+  it('los complementos no tienen botón Configurador (no se personalizan); los productos sí', async () => {
+    const f = await montar();
+    const c = f.componentInstance;
+    c.productos.set([prod('D-1', 'Doctor', { type: 'personalizable' }), prod('C-1', 'Llavero', { type: 'complemento', category_name: null })] as never);
+    f.detectChanges();
+    const filas = Array.from((f.nativeElement as HTMLElement).querySelectorAll('ul.lista > li'));
+    const tiene = (i: number) => filas[i].textContent!.includes('Configurador');
+    expect(tiene(0)).toBe(true);
+    expect(tiene(1)).toBe(false);
+    expect(filas[1].textContent).toContain('Editar');
+  });
 });

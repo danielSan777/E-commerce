@@ -31,7 +31,8 @@ export class Categorias {
   private parametros = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
 
   readonly tarjetas = toSignal(this.servicio.categorias().pipe(catchError(() => of([]))), { initialValue: [] });
-  readonly promesa = inject(PromesaService).promesa();
+  private promesas = inject(PromesaService);
+  readonly promesa = this.promesas.promesa;
 
   /** true si la API no respondió (distinto de "no existe": eso es un 404). */
   readonly fallo = signal(false);
@@ -85,6 +86,7 @@ export class Categorias {
   }
 
   constructor() {
+    afterNextRender(() => this.promesas.cargar());
     afterNextRender(() => setTimeout(() => this.revisarFlechas(this.document.querySelector('nav.pestanas'))));
     // SEO por estado: título, descripción, imagen para compartir y canonical (sin UTMs)
     // Con la categoría ya en pantalla, adelanta las demás subcategorías en segundo plano (solo en el navegador)

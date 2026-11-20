@@ -228,7 +228,7 @@ Todos se editan desde el panel; ninguno va fijo en el código.
 - [ ] Definir los recursos: producto, categoría con subcategorías, campaña, precio, medios, configurador, cotización del carrito, promesa, ventanas, checkout, pedido, pedido pendiente, pago, estados, tracking y errores.
 - [ ] Definir primero checkout, pedido, pedido pendiente y pago, porque son las pantallas que siguen.
 - [ ] Unificar los datos de prueba en una sola fuente con la forma de los contratos. Hoy hay productos en `muestra_producto.ts`, `productos.ts` y `carrito.ts`, y accesorios en `configuracion-producto.json` y `carrito.ts` con nombres distintos.
-- [ ] Configuración del configurador **por producto** (hoy es una sola, `productoId: 1`), con las variantes de color como imágenes separadas.
+- [ ] Configuración del configurador **por producto** (hoy es una sola, `productoId: 1`), con las variantes de color como imágenes separadas. *(Avance del 12 nov: el personalizador ya lee de Laravel la configuración de la categoría o la propia del producto; accesorios y ubicaciones salen de la base de datos. Falta las variantes de color como imágenes separadas, por eso sigue sin marcar.)*
 - [ ] Exportar las interfaces de dominio (hoy son globales sin `export`) y resolver el choque de nombres de `Producto`.
 - [ ] Capa de servicios en Angular (`ProductApi`, `CartApi`, `PromiseApi`, `OrderApi`) que hoy lee mocks y mañana la API, sin tocar los componentes.
 
@@ -515,13 +515,13 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 
 - [x] Quitar toda opción de enviar algo por WhatsApp después: "Prefiero enviar mi tarjeta de dedicatoria por WhatsApp", enviar la foto o la frase del marco por WhatsApp, el bloque "Pendiente por WhatsApp" de la confirmación y la frase "Te enviaré por aquí…" del mensaje. Todo se completa en la web antes de pagar.
 - [x] Quitar la foto de la tarjeta de dedicatoria: la dedicatoria es solo texto, o "No quiero dedicatoria".
-- [ ] Provincias, cantones y localidades desde el JSON del INEC dentro del proyecto (Paso 10). *(Hecho: provincias y cantones del INEC 2026 y sin countriesnow.space. Hecho también: La Aurora, La Joya, Villa Club y Villa Italia salen en la lista de cantones como "La Aurora - Daule" etc., desde `sectores-zona-a.json`, sin selector aparte. Falta: el panel que las edite.)* Eliminar el uso de countriesnow.space en `UbicacionesService`: no trae cantones como Durán y, si falla, nadie puede comprar.
-- [ ] Zona y tarifa por localidad > cantón > provincia (Paso 10), no por nombre de ciudad. Amazonía $6,25. *(Hecho por cantón y provincia con códigos del INEC; Galápagos bloqueado; esos cuatro sectores de Daule son Zona A $3,50.)*
+- [x] Provincias, cantones y localidades desde el JSON del INEC dentro del proyecto (Paso 10). *(Hecho: provincias y cantones del INEC 2026 sin countriesnow.space, ahora guardados en la base de datos (`GET /api/v1/locations`); Angular los pide una vez al abrir el checkout y filtra en memoria. La Aurora, La Joya, Villa Club y Villa Italia salen como "La Aurora - Daule" etc. (sectores en la misma tabla `cantons`, `is_locality`).)* Eliminar el uso de countriesnow.space en `UbicacionesService`: no trae cantones como Durán y, si falla, nadie puede comprar.
+- [x] Zona y tarifa por localidad > cantón > provincia (Paso 10), no por nombre de ciudad. Amazonía $6,25. *(Hecho: la zona de cada cantón o sector y las tarifas salen de la base de datos y se editan en el panel, pantalla Envíos (`/admin/envios`). Galápagos bloqueado; los cuatro sectores de Daule son Zona A $3,50.)*
 - [x] Lista de países del número de contacto fija dentro del proyecto (sin restcountries.com), con Ecuador (+593) primero. *(Decisión del 3 nov: solo se envía a Ecuador, así que se quita el selector y el número queda fijo en +593.)*
 - [x] Una sola casilla obligatoria y desmarcada, "Acepto los términos y condiciones de Jardín de Sele", con enlace a `/terminos-y-condiciones` (Paso 12). Decisión de Josué (5 nov): no hay casilla de marketing. *(Hecho en `/checkout/pago`.)*
 - [x] Resumen final con la personalización completa de cada maceta y el aviso "Revisa bien: después de confirmar no se puede editar".
 - [x] Fecha de entrega desde la promesa del mock (Paso 0), no el texto fijo "jueves a viernes"; elección de ventana inmediata o programada en el checkout. *(Hecho en pago y confirmación con `PromesaService`, un mock con la forma exacta del Paso 0. Falta mostrarla en la ficha y la página principal.)*
-- [x] Transferencia: después de confirmar, mostrar la hora límite de 12 horas y el botón "Subir comprobante" (pedido pendiente, Paso 14). El mensaje de WhatsApp es corto: "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." con el total y hasta 3 productos, sin datos personales ni dirección. *(El botón abre WhatsApp con el mensaje corto; la subida del comprobante en la web llega con el Paso 14.)* *(Actualización del 7 nov: el enlace `wa.me` solo lleva texto, no puede adjuntar imágenes. En la confirmación, cada maceta personalizada tiene el botón "Descargar foto" para adjuntarla a mano en el chat (hecho, con la foto que guarda el personalizador). Pendiente con backend: el enlace `/pedido/{token}` dentro del mensaje, con etiquetas `og:image`/`og:title` generadas en el servidor para que WhatsApp muestre la vista previa; la imagen debe ser pública solo por token largo y sin datos personales.)*
+- [x] Transferencia: después de confirmar, mostrar la hora límite de 12 horas y el botón "Subir comprobante" (pedido pendiente, Paso 14). El mensaje de WhatsApp es corto: "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." con el total y hasta 3 productos, sin datos personales ni dirección. *(El botón abre WhatsApp con el mensaje corto; la subida del comprobante en la web llega con el Paso 14.)* *(Actualización del 7 nov: el enlace `wa.me` solo lleva texto, no puede adjuntar imágenes. En la confirmación, cada maceta personalizada tiene el botón "Descargar foto" para adjuntarla a mano en el chat (hecho, con la foto que guarda el personalizador). Hecho con el backend (Pasos 12 y 14): el enlace `/pedido/{token}` va dentro del mensaje, con etiquetas `og:image`/`og:title` generadas en el servidor para que WhatsApp muestre la vista previa; la imagen es pública solo por token largo y sin datos personales. Falta probarlo en WhatsApp real con el dominio publicado.)*
 - [x] "Usar otros datos de facturación": agregar los campos (nombre, cédula o RUC, correo y dirección).
 - [x] Logos de tarjetas: mostrar solo las marcas que PayPhone acepte en la cuenta de Josué. *(Visa, Mastercard, Diners Club y Discover, confirmadas por Josué.)*
 - [x] PayPhone simulado: hoy el pedido con tarjeta se marca pagado sin cobro. Debe quedar marcado como simulación y nunca llegar así a producción (Paso 13). *(Hecho: el pedido queda con `pagoSimulado` y se avisa en pago y confirmación.)*
@@ -855,7 +855,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 - [ ] **Subcategorías:** nombre, slug, orden y categoría. Iniciales de Profesiones y Hobbies: Salud, Administrativos, Fuerza Pública, Cocina y Hobbies.
 - [ ] **Productos:** tipo (`personalizable` o `complemento`), SKU, slug, nombre, categoría, subcategoría, precio base, costo interno, tamaño, "qué incluye", descripción, disponibilidad, activo o inactivo, relacionados, sinónimos de búsqueda, SEO e imagen social.
 - [ ] **Accesorios y opciones:** SKU, pestaña (Hobbies, Amor, Mascotas, Marcos, Lentes/gafas), variante de color real, precio extra (0 por defecto), costo, disponibilidad (agotado) y productos compatibles.
-- [ ] **Configurador por producto:** foto base con el elemento fijo integrado, slots (posición, tamaño, rotación, espejo) y overrides por accesorio o slot, editables con formulario y vista previa; cantidad de accesorios elegibles (2 por defecto).
+- [ ] **Configurador por producto (avance del 12 nov: editor de administrador en `/admin/configurador` —ubicaciones, valores, accesorios marcados, excepciones, por categoría o propio de cada producto— y `/admin/accesorios` para crear y editar accesorios; falta vista previa con variantes de color y overrides por slot completos):** foto base con el elemento fijo integrado, slots (posición, tamaño, rotación, espejo) y overrides por accesorio o slot, editables con formulario y vista previa; cantidad de accesorios elegibles (2 por defecto).
 - [ ] Botón **"Duplicar producto"**, que copia ficha, medios y configurador para crear un modelo nuevo en minutos.
 - [ ] **Complementos:** productos tipo `complemento` con cantidad editable y, si los necesitan, campos de personalización: etiqueta, tipo (texto u opción), obligatorio, largo máximo, opciones y recargo. Todo se completa antes de pagar.
 - [ ] **Favoritos de la página principal:** selección y orden manual de 6–8 productos.
@@ -863,7 +863,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 - [ ] **Relacionados:** selección manual de 3–4; si no hay, misma subcategoría; si tampoco, misma categoría.
 - [ ] **Edición masiva:** filtros, búsqueda, selección múltiple, activar o desactivar, cambiar categoría o subcategoría y aplicar promoción (Paso 7).
 - [ ] **Redirecciones 301:** al cambiar un slug se crea la redirección automáticamente, sin cadenas (la URL vieja apunta directo a la nueva), y se actualizan enlaces internos, canonical y sitemap. Un slug usado nunca se reutiliza.
-- [ ] **API pública** de categoría, subcategoría, producto, campaña y manifiesto del configurador con los contratos del Paso 0; Angular SSR obtiene los datos en el servidor. *(En curso: la tienda ya lee de Laravel el menú, las categorías y subcategorías —también las nuevas, sin tocar código—, la ficha del producto, los favoritos —por ahora los 6 más nuevos— y la búsqueda; el HTML del servidor trae nombre y precio. Hechas también la campaña `/san-valentin` —en temporada muestra los productos elegidos y, mientras nadie los elija, los de su categoría relacionada— y las "Otras macetas" del carrito. Falta el manifiesto del configurador; los componentes viejos de `/catalogo` ya no tienen ruta.)*
+- [ ] **API pública** de categoría, subcategoría, producto, campaña y manifiesto del configurador con los contratos del Paso 0; Angular SSR obtiene los datos en el servidor. *(En curso: la tienda ya lee de Laravel el menú, las categorías y subcategorías —también las nuevas, sin tocar código—, la ficha del producto, los favoritos —por ahora los 6 más nuevos— y la búsqueda; el HTML del servidor trae nombre y precio. Hechas también la campaña `/san-valentin` —en temporada muestra solo los productos que se eligieron, que son obligatorios— y las "Otras macetas" del carrito. Falta el manifiesto del configurador; los componentes viejos de `/catalogo` ya no tienen ruta.)*
 - [ ] Cargar el producto modelo Doctor con datos reales.
 
 **Implementación acordada**
@@ -1000,10 +1000,10 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 
 **Tareas**
 
-- [ ] Tabla de días no hábiles con tipo (feriado nacional, feriado local de Guayaquil, cierre propio) y a qué afecta (producción, despacho o ambos).
+- [x] Tabla de días no hábiles con tipo (feriado nacional, feriado local de Guayaquil, cierre propio) y a qué afecta (producción, despacho o ambos). *(Tabla `non_working_days` con API de administración (`/admin/non-working-days`); solo trae Navidad y Año Nuevo 2027. Falta la pantalla del panel y que Josué cargue los feriados del año.)*
 - [ ] En el panel: bloquear un día, varios días o un rango; ver cada ciclo con pedidos pagados, pendientes y capacidad restante; cambiar la capacidad de un ciclo puntual.
 - [ ] Botón **"Pasar las ventas al siguiente ciclo"** y su reverso, "Reabrir ciclo".
-- [ ] Servicio de ciclo: dado un instante, devuelve ciclo, día de despacho y ventana.
+- [x] Servicio de ciclo: dado un instante, devuelve ciclo, día de despacho y ventana. *(`MotorDeEntrega` en Laravel, probado con cada fila de la tabla y los cortes 19:59:59, 20:00:00, 20:00:01 y sábado 16:00:00/16:00:01. Falta la capacidad de 8 y 10 pedidos: todavía no existen pedidos.)*
 - [ ] Servicio de capacidad con asignación dentro de una transacción que bloquea la fila del ciclo.
 - [ ] Aviso en el panel si no hay feriados cargados para el año siguiente.
 
@@ -1064,12 +1064,12 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Endpoint de promesa para la ficha (contrato del Paso 0), con `server_now` y `promise_token` firmado.
-- [ ] Contador en Angular basado en la diferencia con `server_now`, nunca en el reloj del teléfono.
-- [ ] La ficha vuelve a pedir la promesa al llegar el corte y al volver a la pestaña.
+- [x] Endpoint de promesa para la ficha (contrato del Paso 0), con `server_now` y `promise_token` firmado. *(`GET /api/v1/delivery/promise?canton=`; la Amazonía suma un día; Galápagos responde 422; `Cache-Control: no-store`.)*
+- [x] Contador en Angular basado en la diferencia con `server_now`, nunca en el reloj del teléfono. *(`PromesaService`: hora del servidor + reloj monótono.)*
+- [x] La ficha vuelve a pedir la promesa al llegar el corte y al volver a la pestaña.
 - [ ] Guardar el `promise_token` al tocar "Personalizar" y enviarlo al crear el pedido.
 - [ ] Validar la gracia al crear el pedido.
-- [ ] Endpoint de ventanas disponibles para "Programar para otra fecha".
+- [x] Endpoint de ventanas disponibles para "Programar para otra fecha". *(`GET /api/v1/delivery/windows?canton=`: 8 semanas desde la primera ventana posible, sin domingos ni feriados, nunca en el pasado. Angular además descarta una ventana guardada que Laravel ya no ofrece. Hoy todas salen disponibles: falta la capacidad.)*
 - [ ] Mensaje tranquilo cuando la fecha cambió: "Actualizamos tu fecha estimada".
 - [ ] Fecha límite de campaña.
 
@@ -1112,11 +1112,11 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Precargar el Clasificador Geográfico Estadístico del INEC (versión 2026) con sus códigos (por ejemplo, Guayas `09`, Guayaquil `0901`). Mientras el backend no exista, convertirlo en un JSON para la pantalla de envío; ese mismo archivo alimenta después el seeder de Laravel.
-- [ ] Localidades opcionales por cantón (por ejemplo, La Aurora, La Joya y Villa Club en Daule), editables desde el panel.
+- [x] Precargar el Clasificador Geográfico Estadístico del INEC (versión 2026) con sus códigos (por ejemplo, Guayas `09`, Guayaquil `0901`). *(Cargado por la migración `2026_11_17_100001` desde `database/data/*.json`.)*
+- [x] Localidades opcionales por cantón (por ejemplo, La Aurora, La Joya y Villa Club en Daule), editables desde el panel. *(Se asignan de zona igual que un cantón; no hay alta ni baja de sectores desde el panel todavía.)*
 - [ ] Alias para el buscador: "La Puntilla" → Samborondón, "Vía a la Costa" → Guayaquil, "La Aurora" → localidad de Daule.
 - [ ] API de búsqueda para los selectores escribibles de provincia, cantón y localidad.
-- [ ] Zonas: tarifa, días de tránsito adicionales y disponibilidad; asignación por localidad, cantón o provincia.
+- [x] Zonas: tarifa, días de tránsito adicionales y disponibilidad; asignación por localidad, cantón o provincia. *(Asignación por sector y cantón, individual o en bloque filtrando por provincia; no hay regla «toda la provincia» aparte.)*
 - [ ] Ajuste manual del envío de un pedido puntual desde el panel, con motivo y registro en el historial.
 
 **Implementación acordada**
@@ -1136,7 +1136,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - El envío gratis desde 2 macetas es una regla del Paso 7, no una tarifa.
 - Nunca texto libre para provincia, cantón ni localidad. Fuente única: el JSON del INEC dentro del proyecto; no se usan APIs externas de ubicaciones (countriesnow.space, por ejemplo, no trae cantones como Durán).
 
-**Datos y configuración.** Tablas `provinces`, `cantons`, `localities`, `location_aliases`, `shipping_zones`, `zone_assignments`.
+**Datos y configuración.** Tablas `provinces`, `cantons`, `localities`, `location_aliases`, `shipping_zones`, `zone_assignments`. *(Implementado con tres tablas: `provinces`, `cantons` (con `is_locality` para los sectores y `shipping_zone_id` como asignación) y `shipping_zones`. `location_aliases` queda pendiente.)*
 
 **Acción de Josué.** Confirmar con Servientrega el cantón de Santa Rosa (hoy Zona B provisional). Villa Italia ya no importa: todo Daule es Zona A.
 
@@ -1192,17 +1192,17 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Validaciones en el servidor de todos los campos: cédula (10 dígitos con dígito verificador) o RUC (13 dígitos, con la validación de su tipo); teléfono y correo normalizados (+593…, minúsculas, sin espacios). No se acepta pasaporte.
-- [ ] Facturación: por defecto, los datos de envío; si el comprador elige "otros datos", se guardan aparte (nombre, cédula o RUC, correo, dirección).
-- [ ] Número de contacto: por defecto, el celular de envío; si elige "otro número", se guarda ese.
+- [x] Validaciones en el servidor de todos los campos: cédula (10 dígitos con dígito verificador) o RUC (13 dígitos, con la validación de su tipo); teléfono y correo normalizados (+593…, minúsculas, sin espacios). No se acepta pasaporte.
+- [x] Facturación: por defecto, los datos de envío; si el comprador elige "otros datos", se guardan aparte (nombre, cédula o RUC, correo, dirección).
+- [x] Número de contacto: por defecto, el celular de envío; si elige "otro número", se guarda ese.
 - [ ] Validar que haya al menos una maceta y que cada maceta tenga sus accesorios completos, la frase o la foto si el marco la requiere, y dedicatoria o "No quiero dedicatoria".
-- [ ] Rechazar el pedido sin la casilla de términos (`terms_required`).
-- [ ] Crear o actualizar el cliente (Paso 23).
-- [ ] Guardar el tracking del Paso 0 más la IP real y el user agent que toma Laravel.
-- [ ] Recalcular precios, descuentos, envío, recargo y total; si difieren de lo mostrado, devolver `price_changed` y mostrar el nuevo total antes de pagar.
-- [ ] Asignar ciclo y ventana en una transacción (Pasos 8 y 9), aplicando la gracia si corresponde.
-- [ ] Crear el pedido con pago `unpaid` (tarjeta) o `pending_validation` (transferencia), número `JDS-####`, UUID, token privado aleatorio y `event_id` de compra.
-- [ ] Copiar a cada ítem: SKU, nombre del producto, precio, costo, descuento, personalización completa, nombre de placa, gafas o lentes, accesorios con su slot, frase o foto y dedicatoria.
+- [x] Rechazar el pedido sin la casilla de términos (`terms_required`).
+- [x] Crear o actualizar el cliente (Paso 23).
+- [x] Guardar el tracking del Paso 0 más la IP real y el user agent que toma Laravel.
+- [x] Recalcular precios, descuentos, envío, recargo y total; si difieren de lo mostrado, devolver `price_changed` y mostrar el nuevo total antes de pagar.
+- [x] Asignar ciclo y ventana en una transacción (Pasos 8 y 9), aplicando la gracia si corresponde.
+- [x] Crear el pedido con pago `unpaid` (tarjeta) o `pending_validation` (transferencia), número `JDS-####`, UUID, token privado aleatorio y `event_id` de compra.
+- [ ] Copiar a cada ítem: SKU, nombre del producto, precio, costo, descuento, personalización completa, nombre de placa, gafas o lentes, accesorios con su slot, frase o foto y dedicatoria. *(Avance: se guardan nombre de placa, dedicatoria, accesorios (nombre y comportamiento tomados de la base de datos), color de lentes o gafas, frase y foto del marco, y la foto de la maceta; el administrador los ve en `/admin/pedidos`. Falta guardar la posición de cada accesorio y validar la cantidad exacta de accesorios que exige el configurador.)*
 
 **Implementación acordada**
 
@@ -1235,12 +1235,12 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Tabla de intentos de pago por pedido, con `clientTransactionId` único (máximo 50 caracteres; por ejemplo `JDS-2048-1`) y monto esperado en centavos.
-- [ ] Integrar la Cajita en Angular con los datos que entrega Laravel.
-- [ ] Ruta de respuesta que recibe `id` y `clientTransactionId` y llama al backend.
-- [ ] Confirmación en Laravel contra PayPhone.
+- [x] Tabla de intentos de pago por pedido, con `clientTransactionId` único (máximo 50 caracteres; por ejemplo `JDS-2048-1`) y monto esperado en centavos. *(`payment_attempts`; un solo intento activo por pedido, la Cajita vence a los 10 min y el cupo se aparta 15 min.)*
+- [x] Integrar la Cajita en Angular con los datos que entrega Laravel. *(Hecho según la documentación de PayPhone; falta probarla con la app de Pruebas de PayPhone. Mientras no haya credenciales, Laravel responde en modo simulado, solo fuera de producción.)*
+- [x] Ruta de respuesta que recibe `id` y `clientTransactionId` y llama al backend. *(`/checkout/tarjeta/respuesta`.)*
+- [x] Confirmación en Laravel contra PayPhone. *(Valida estado 3, referencia y monto; guarda `transactionId` único y código de autorización; pago duplicado o monto distinto queda en revisión.)*
 - [ ] Endpoint de Notificación Externa (webhook), según la respuesta de PayPhone.
-- [ ] Pantalla de error amable con opción de reintentar.
+- [x] Pantalla de error amable con opción de reintentar.
 
 **Implementación acordada**
 
@@ -1290,13 +1290,13 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Al elegir transferencia: pedido con pago `pending_validation`, cupo apartado y plazo = creación + 12 h.
-- [ ] Página de pedido pendiente (Paso 1) con cuentas, hora límite, "Subir comprobante" y WhatsApp.
-- [ ] Subida del comprobante (JPG, PNG o PDF) al disco privado, con límite de intentos; se guarda la hora de subida.
-- [ ] Botón de WhatsApp que pasa por un endpoint propio, registra el clic y abre `wa.me` con "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." y el total.
+- [x] Al elegir transferencia: pedido con pago `pending_validation`, cupo apartado y plazo = creación + 12 h. *(Hecho: Laravel crea el pedido desde `/checkout/pago`; Angular maneja `price_changed`, `window_changed` y `capacity_full`.)*
+- [x] Página de pedido pendiente (Paso 1) con cuentas, hora límite, "Subir comprobante" y WhatsApp. *(Hecho: `/pedido/{token}` lee `GET /orders/{token}`.)*
+- [x] Subida del comprobante (JPG, PNG o PDF) al disco privado, con límite de intentos; se guarda la hora de subida. *(Hecho: 5 MB y 5 intentos por defecto; el tamaño máximo no estaba definido, confirmar con Josué.)*
+- [x] Botón de WhatsApp que pasa por un endpoint propio, registra el clic y abre `wa.me` con "Hola 🌿 Te envío el comprobante de mi pedido JDS-2048." y el total. *(Hecho: el mensaje incluye el enlace `/pedido/{token}` y la vista previa `og:*` se genera en el servidor.)*
 - [ ] Aviso a Josué al subirse un comprobante (Paso 18).
-- [ ] Acciones en el panel: "Marcar pagado", "Pagado fuera de plazo" y "Cancelar".
-- [ ] Vencimiento automático al cumplirse el plazo.
+- [x] Acciones en el panel: "Marcar pagado", "Pagado fuera de plazo" y "Cancelar". *(Hecho en `/admin/pedidos`: lista por estado, detalle, ver comprobante, y las tres acciones con confirmación; si el ciclo pasa de 10 pide confirmar. El historial de cambios y el aviso a Josué siguen pendientes, Paso 15 y 18.)*
+- [x] Vencimiento automático al cumplirse el plazo.
 
 **Implementación acordada**
 
@@ -1337,7 +1337,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - [ ] **Corregir un pedido:** Josué edita la personalización o los datos de envío y facturación hasta que el pedido esté "Enviado"; cada cambio queda con autor, antes y después.
 - [ ] Mover un pedido de ciclo, con recálculo de la ventana.
 - [ ] Cancelar con motivo (libera el cupo) y registrar el reembolso manual (el de tarjeta se hace en el panel de PayPhone).
-- [ ] Marcar "En producción" y "Enviado" (con guía), también por lote (Paso 19).
+- [ ] Marcar "En producción" y "Enviado" (con guía), también por lote (Paso 19). *(Hecho uno por uno en `/admin/pedidos`: "Pasar a producción" y "Marcar enviado" con la guía de Servientrega, que el comprador ve en `/pedido/{token}`. Falta el envío por lote (Paso 19) y el correo al comprador (Paso 18).)*
 - [ ] Historial `order_events`, solo de escritura.
 
 **Implementación acordada**
@@ -1395,9 +1395,9 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 - [ ] Configurar el correo con SMTP autenticado de Hostinger (nunca `mail()`).
 - [ ] Crear los registros DNS de correo en Cloudflare.
-- [ ] Plantillas fijas de la tabla de abajo, con textos aprobados por Josué.
-- [ ] Clave de idempotencia por correo: pedido + motivo.
-- [ ] Registrar en `order_events` cada correo enviado.
+- [ ] Plantillas fijas de la tabla de abajo, con textos aprobados por Josué. *(En curso: los cinco correos ya se envían —pedido recibido, pago confirmado, enviado, vencido y cancelado— con un texto provisional que Josué debe aprobar; falta configurar el SMTP real y los DNS.)*
+- [x] Clave de idempotencia por correo: pedido + motivo. (`order_events.idempotency_key` única «correo:{pedido}:{motivo}»; un reintento o doble clic no reenvía; corregir la guía tampoco)
+- [x] Registrar en `order_events` cada correo enviado. (destinatario y asunto; si el envío falla se libera la clave para reintentar)
 
 **Correos del lanzamiento**
 

@@ -1,0 +1,14 @@
+.pago-tarjeta { max-width: 32rem; margin: 1.5rem auto 3rem; padding: 0 1rem; display: grid; gap: 1rem; }
+.pago-tarjeta h1 { margin: 0; font-size: 1.5rem; }
+.resumen { display: grid; gap: .15rem; padding: .9rem 1rem; border-radius: 12px; background: #ecfdf5; }
+.resumen strong { font-size: 1.5rem; }
+.resumen small { color: #4b5563; }
+.estado, .vigencia, .seguro { margin: 0; text-align: center; color: #4b5563; font-size: .95rem; }
+.cajita { min-height: 4rem; }
+.pruebas { padding: 1rem; border-radius: 12px; background: #eef2fb; border: 1px solid #c4cff0; color: #2a3a6b; display: grid; gap: .75rem; }
+.pruebas p { margin: 0; }
+.botones { display: grid; gap: .5rem; }
+.aviso { padding: 1rem; border-radius: 12px; background: #fff7e6; border: 1px solid #f3d9a4; display: grid; gap: .75rem; }
+.aviso p { margin: 0; }
+.volver { text-align: center; }
+.btn { min-height: 44px; }

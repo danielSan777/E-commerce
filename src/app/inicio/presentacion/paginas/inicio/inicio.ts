@@ -1,4 +1,4 @@
-import { Component, PLATFORM_ID, computed, effect, inject, signal } from '@angular/core';
+import { Component, PLATFORM_ID, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe, isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
@@ -45,7 +45,9 @@ export class Inicio {
   readonly campana = toSignal(inject(CampanaService).vigente().pipe(catchError(() => of(null))), { initialValue: null });
   /** Color de la campaña si es un #RRGGBB válido; si no, el banner usa el color de la tienda. */
   readonly portadaCampana = computed(() => { const s = this.campana()?.theme.cover?.srcset; return s ? (s['600'] ?? Object.values(s)[0] ?? null) : null; });
-  readonly promesa = inject(PromesaService).promesa();
+  private promesas = inject(PromesaService);
+  readonly promesa = this.promesas.promesa;
+  readonly contador = this.promesas.contador;
   readonly macetasEnvioGratis = inject(EnvioGratisService).MACETAS_PARA_ENVIO_GRATIS;
   readonly enlaceAyuda = enlaceWhatsapp();
 
@@ -77,6 +79,7 @@ export class Inicio {
   irA(i: number): void { this.indice.set(i); }
 
   constructor() {
+    afterNextRender(() => this.promesas.cargar());
     // Imagen suelta (o video con "reducir movimiento"): pasa sola a la siguiente a los 6 s
     if (isPlatformBrowser(inject(PLATFORM_ID))) {
       effect(onCleanup => {

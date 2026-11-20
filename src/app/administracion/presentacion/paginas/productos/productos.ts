@@ -36,6 +36,8 @@ export class AdminProductos implements OnInit {
 
   texto = '';
   categoria = '';
+  /** Lista de productos personalizables o de complementos (los complementos no tienen categoría). */
+  tipo: 'personalizable' | 'complemento' = 'personalizable';
 
   readonly dolares = centavosADolares;
 
@@ -61,13 +63,18 @@ export class AdminProductos implements OnInit {
     this.busqueda?.unsubscribe();
     this.cargando.set(true);
     this.error.set('');
-    this.busqueda = this.productosApi.listar(this.categoria, this.texto).pipe(
+    this.busqueda = this.productosApi.listar(this.tipo === 'complemento' ? '' : this.categoria, this.texto, this.tipo).pipe(
       takeUntilDestroyed(this.destroyRef),
       finalize(() => this.cargando.set(false)),
     ).subscribe({
       next: lista => this.productos.set(lista),
       error: (e: ErrorApi) => this.error.set(e.message),
     });
+  }
+
+  cambiarTipo(): void {
+    this.categoria = '';
+    this.cargar();
   }
 
   buscar(evento: Event): void {

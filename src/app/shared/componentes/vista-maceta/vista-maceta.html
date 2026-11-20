@@ -1,0 +1,30 @@
+<div class="vista" role="img" [attr.aria-label]="alt()">
+  <img [src]="escena().imagenBase" class="fondo" alt="" aria-hidden="true">
+
+  <div class="escena">
+    <img [src]="escena().imagenBase" class="maceta" [style.transform]="transformBase()" alt="">
+
+    @for (a of escena().accesorios; track a.id) {
+      <div class="accesorio" [style.left.%]="a.x" [style.top.%]="a.y" [style.width.%]="a.ancho" [style.height.%]="a.alto" [style.z-index]="$index + 1">
+        <div class="contenido-3d" [style.transform]="transformar(a)">
+          @if (a.tipo === 'texto') {
+            <app-texto-placa [texto]="escena().nombre || (a.texto ?? '')" [color]="escena().colorTexto" />
+          } @else {
+            <img [src]="a.imagen" alt="" [style.filter]="filtroDe(a.accesorioId)">
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (colores().length) {
+    <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+      @for (c of colores(); track c.id) {
+        <filter [attr.id]="c.id" color-interpolation-filters="sRGB">
+          <feFlood [attr.flood-color]="c.hex" result="color" />
+          <feComposite in="color" in2="SourceAlpha" operator="in" />
+        </filter>
+      }
+    </svg>
+  }
+</div>

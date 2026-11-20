@@ -4,11 +4,12 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter, map } from 'rxjs';
 import { TIENDA, enlaceWhatsapp } from '../../../configuracion/tienda';
 import { Navbar } from '../../navbar/navbar/navbar';
+import { AvisoPedidoPendiente } from '../../../../checkout/presentacion/componentes/aviso-pedido-pendiente/aviso-pedido-pendiente';
 import { Footer } from '../../footer/footer/footer';
 
 
 @Component({
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Navbar, Footer],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Navbar, Footer, AvisoPedidoPendiente],
   selector: 'app-main-layout',
   styleUrl: './main-layout.css',
   templateUrl: './main-layout.html',

@@ -74,7 +74,11 @@ describe('validarCampana (sin llamar a la API)', () => {
 });
 
 describe('AdminCampanas', () => {
+  const pagina = (skus: [string, string][], total: number, page = 1) => ({
+    data: skus.map(([sku, name]) => prod(sku, name)), meta: { total, page, per_page: 20, last_page: Math.ceil(total / 20) },
+  });
   let ctrl: HttpTestingController;
+  let precargas: ReturnType<HttpTestingController['match']> = [];
 
   async function montar() {
     TestBed.configureTestingModule({ imports: [AdminCampanas], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
@@ -82,7 +86,12 @@ describe('AdminCampanas', () => {
     const fixture = TestBed.createComponent(AdminCampanas);
     fixture.detectChanges();
     ctrl.expectOne('/api/v1/admin/campaigns').flush({ data: [campana()] });
-    ctrl.expectOne(r => r.url === '/api/v1/admin/products').flush({ data: [prod('A-1', 'Uno'), prod('A-2', 'Dos')] });
+    ctrl.expectOne('/api/v1/admin/categories').flush({ data: [{ slug: 'familia', name: 'Familia' }] });
+    // Al entrar se precargan los primeros 20 de "Todas" y de cada categoría
+    precargas = ctrl.match(r => r.url === '/api/v1/admin/products');
+    for (const r of precargas) {
+      r.flush(r.request.params.get('category') === 'familia' ? pagina([['F-1', 'Familiar']], 1) : pagina([['A-1', 'Uno'], ['A-2', 'Dos']], 45));
+    }
     await esperar();
     fixture.detectChanges();
     return fixture;
@@ -93,6 +102,72 @@ describe('AdminCampanas', () => {
     expect(texto).toContain('San Valentín');
     expect(texto).toContain('15 de enero al 14 de febrero');
     expect(texto).toContain('llega en 2027');
+  });
+
+  const pedidosDeProductos = () => ctrl.match(r => r.url === '/api/v1/admin/products');
+
+  it('al entrar precarga los primeros 20 de "Todas" y de cada categoría, sin esperar a que se elijan', async () => {
+    const c = (await montar()).componentInstance;
+    expect(precargas.length).toBe(2);
+    expect(precargas.every(r => r.request.params.get('per_page') === '20' && r.request.params.get('page') === '1')).toBe(true);
+    expect(precargas.map(r => r.request.params.get('category'))).toEqual([null, 'familia']);
+
+    c.nueva();
+    expect(pedidosDeProductos().length).toBe(0); // ya estaban cargados
+    expect(c.resultados().map(p => p.sku)).toEqual(['A-1', 'A-2']);
+    expect(c.hayMas()).toBe(true);
+
+    c.alCambiarCategoria('familia');
+    expect(pedidosDeProductos().length).toBe(0);
+    expect(c.resultados().map(p => p.sku)).toEqual(['F-1']);
+  });
+
+  it('busca por nombre o código en Laravel, sin traer todo', async () => {
+    const c = (await montar()).componentInstance;
+    c.nueva();
+    c.busqueda.set('jds-004');
+    c.buscarProductos();
+    const [porCodigo] = pedidosDeProductos();
+    expect(porCodigo.request.params.get('q')).toBe('jds-004');
+    porCodigo.flush(pagina([['JDS-004', 'abogada']], 1));
+    expect(c.resultados().map(p => p.sku)).toEqual(['JDS-004']);
+
+    c.alCambiarCategoria('familia');
+    const [mixta] = pedidosDeProductos();
+    expect(mixta.request.params.get('category')).toBe('familia');
+    expect(mixta.request.params.get('q')).toBe('jds-004');
+    mixta.flush(pagina([], 0));
+    expect(c.resultados()).toEqual([]);
+  });
+
+  it('"Cargar más" suma la siguiente página a lo ya cargado y al volver a la categoría se ve todo; los elegidos conservan su nombre', async () => {
+    const c = (await montar()).componentInstance;
+    c.nueva();
+    c.alternar('A-1', 'Uno');
+    c.cargarMasProductos();
+    const [sig] = pedidosDeProductos();
+    expect(sig.request.params.get('page')).toBe('2');
+    sig.flush(pagina([['A-3', 'Tres']], 45, 2));
+    expect(c.resultados().map(p => p.sku)).toEqual(['A-1', 'A-2', 'A-3']);
+
+    c.alCambiarCategoria('familia');
+    c.alCambiarCategoria('');
+    expect(pedidosDeProductos().length).toBe(0);
+    expect(c.resultados().map(p => p.sku)).toEqual(['A-1', 'A-2', 'A-3']); // lo cargado antes sigue ahí
+
+    c.busqueda.set('zzz');
+    c.buscarProductos();
+    pedidosDeProductos()[0].flush(pagina([], 0));
+    expect(c.nombreProducto('A-1')).toBe('Uno');
+  });
+
+  it('no deja guardar una campaña sin productos', async () => {
+    const c = (await montar()).componentInstance;
+    c.nueva();
+    c.form.name = 'Navidad';
+    c.guardar(new Event('submit'));
+    expect(c.errores().productos).toBe('Elige al menos un producto para la campaña.');
+    ctrl.expectNone('/api/v1/admin/campaigns');
   });
 
   it('crea una campaña enviando fechas MM-DD y los productos en el orden elegido, sin slug', async () => {
@@ -117,7 +192,7 @@ describe('AdminCampanas', () => {
     req.flush(campana({ slug: 'dia-de-la-madre' }), { status: 201, statusText: 'Created' });
     await esperar();
     ctrl.expectOne('/api/v1/admin/campaigns').flush({ data: [] });
-    ctrl.expectOne(r => r.url === '/api/v1/admin/products').flush({ data: [] });
+    ctrl.expectOne('/api/v1/admin/categories').flush({ data: [] });
     await p;
     expect(c.editando()).toBeNull();
   });
@@ -141,6 +216,7 @@ describe('AdminCampanas', () => {
         const c = fixture.componentInstance;
         c.nueva();
         c.form.name = 'Navidad';
+        c.alternar('A-1', 'Uno');
         c.form.color = '#1b5e20';
         c.form.emoji = ' 🎄 ';
         c.guardar(new Event('submit'));
@@ -150,10 +226,11 @@ describe('AdminCampanas', () => {
         req.flush(campana({ slug: 'navidad' }), { status: 201, statusText: 'Created' });
         await esperar();
         ctrl.expectOne('/api/v1/admin/campaigns').flush({ data: [] });
-        ctrl.expectOne(r => r.url === '/api/v1/admin/products').flush({ data: [] });
+        ctrl.expectOne('/api/v1/admin/categories').flush({ data: [] });
 
         c.nueva();
         c.form.name = 'Otra';
+        c.alternar('A-1', 'Uno');
         c.guardar(new Event('submit'));
         const sin = ctrl.expectOne('/api/v1/admin/campaigns');
         expect(sin.request.body.theme_color).toBeNull();
@@ -209,6 +286,7 @@ describe('AdminCampanas', () => {
     const c = fixture.componentInstance;
     c.nueva();
     c.form.name = 'Otra';
+    c.alternar('A-1', 'Uno');
     c.form.closing_message = '  Otra regresará pronto ';
     c.form.cierra = { dia: 10, mes: 3 };
     c.guardar(new Event('submit'));

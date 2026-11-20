@@ -12,8 +12,8 @@
         <h2 id="t-estado">Estado de tu pedido</h2>
         <ol class="pasos">
             @for (paso of PASOS; track paso.clave; let i = $index) {
-            <li [class.hecho]="i < indice()" [class.actual]="i === indice()">
-                <i class="bi" [class]="i < indice() ? 'bi-check-circle-fill' : paso.icono" aria-hidden="true"></i>
+            <li [class.hecho]="completado(i)" [class.actual]="i === indice()">
+                <i class="bi" [class]="completado(i) ? 'bi-check-circle-fill' : paso.icono" aria-hidden="true"></i>
                 <span>{{ paso.etiqueta }}</span>
             </li>
             }
@@ -42,7 +42,17 @@
     <section class="tarjeta" aria-labelledby="t-envio">
         <h2 id="t-envio"><i class="bi bi-truck" aria-hidden="true"></i> Envío por {{ pedido().shipment.carrier }}</h2>
         @if (pedido().shipment.tracking_number; as guia) {
-        <p>Guía: <b>{{ guia }}</b></p>
+        <p>Guía: <b>{{ guia }}</b>
+            <button type="button" class="copiar-guia" (click)="copiarGuia(guia)" [attr.aria-label]="'Copiar guía ' + guia">
+                <i class="bi" [class.bi-copy]="!copiada()" [class.bi-check2]="copiada()" aria-hidden="true"></i>
+                {{ copiada() ? 'Copiada' : 'Copiar' }}
+            </button></p>
+        @if (pedido().shipment.tracking_url; as enlace) {
+        <a class="btn btn-primario" [href]="enlace" target="_blank" rel="noopener noreferrer">
+            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> Rastrear en {{ pedido().shipment.carrier }}
+        </a>
+        <small class="sin-guia">Se abre la página de {{ pedido().shipment.carrier }}: pega tu guía en el buscador.</small>
+        }
         } @else {
         <p class="sin-guia">Te mostraremos aquí la guía cuando tu pedido sea enviado.</p>
         }

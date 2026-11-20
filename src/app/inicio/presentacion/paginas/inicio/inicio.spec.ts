@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { API_URL } from '../../../../core/configuracion/api';
 import { RESUMEN_CATEGORIAS_API, productoListadoApi } from '../../../../testing/catalogo-api';
 import { provideRouter } from '@angular/router';
+import { PROMESA_API, VENTANAS_API } from '../../../../testing/entrega-api';
 import { Inicio } from './inicio';
 
 describe('Inicio (/)', () => {
@@ -23,6 +24,9 @@ describe('Inicio (/)', () => {
         ctrl.expectOne('/api/v1/home/hero').flush({ data: items[0] ?? null, items });
         ctrl.expectOne('/api/v1/products?limit=6').flush({ data: ['a', 'b', 'c', 'd', 'e', 'f'].map(s => productoListadoApi(s)) });
         await fixture.whenStable();
+        ctrl.match(r => r.url === '/api/v1/delivery/promise').forEach(r => r.flush(PROMESA_API));
+        ctrl.match(r => r.url === '/api/v1/delivery/windows').forEach(r => r.flush({ windows: VENTANAS_API }));
+        await fixture.whenStable();
         return fixture.nativeElement as HTMLElement;
     }
 
@@ -34,7 +38,7 @@ describe('Inicio (/)', () => {
         expect(boton.getAttribute('href')).toBe('/categorias');
     });
 
-    it('muestra la promesa del mock y el envío gratis desde 2 macetas', async () => {
+    it('muestra la promesa que calcula Laravel y el envío gratis desde 2 macetas', async () => {
         const html = await montar();
 
         expect(html.querySelector('.promesa')?.textContent).toContain('Recíbelo entre jueves 12 y viernes 13 de noviembre');

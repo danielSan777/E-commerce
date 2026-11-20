@@ -1,12 +1,12 @@
 <div class="pagina">
 
-    @if (vista(); as v) {
+    @let v = vista();
 
     <div class="cabecera">
         <h1>Pedido {{ v.order_number }}</h1>
         @if (vencido()) {
         <span class="insignia vencido"><i class="bi bi-x-circle" aria-hidden="true"></i> Pedido vencido</span>
-        } @else if (comprobante()) {
+        } @else if (v.receipt.uploaded) {
         <span class="insignia revision"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Comprobante en revisión</span>
         } @else {
         <span class="insignia pendiente"><i class="bi bi-clock" aria-hidden="true"></i> Pendiente de pago</span>
@@ -71,19 +71,17 @@
 
         @if (v.receipt.uploaded) {
         <p class="recibido"><i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-            Recibimos tu comprobante<b> {{ comprobante()?.nombre }}</b>. Lo revisaremos y te avisaremos cuando confirmemos el pago.</p>
+            Recibimos tu comprobante. Lo revisaremos y te avisaremos cuando confirmemos el pago.</p>
         }
 
         <input #archivo type="file" hidden accept="image/jpeg,image/png,application/pdf" (change)="elegirComprobante($event)">
-        <button type="button" class="btn btn-primario" (click)="archivo.click()">
+        <button type="button" class="btn btn-primario" [disabled]="subiendo()" (click)="archivo.click()">
             <i class="bi bi-upload" aria-hidden="true"></i>
-            {{ v.receipt.uploaded ? 'Cambiar comprobante' : 'Subir comprobante' }}
+            {{ subiendo() ? 'Subiendo…' : v.receipt.uploaded ? 'Cambiar comprobante' : 'Subir comprobante' }}
         </button>
-        <small class="ayuda-archivo">JPG, PNG o PDF.</small>
+        <small class="ayuda-archivo">JPG, PNG o PDF, de hasta {{ MAX_COMPROBANTE_MB }} MB.</small>
         @if (errorArchivo()) { <p class="error" role="alert">{{ errorArchivo() }}</p> }
 
-        <p class="simulado" role="note"><i class="bi bi-info-circle" aria-hidden="true"></i>
-            Modo de prueba: el archivo todavía no se envía; la subida real llega con el servidor.</p>
 
         <a class="btn btn-whatsapp" [href]="v.whatsapp_url" target="_blank" rel="noopener">
             <i class="bi bi-whatsapp" aria-hidden="true"></i> Enviar comprobante por WhatsApp
@@ -103,9 +101,4 @@
         </a>
     </section>
 
-    } @else if (cargado()) {
-
-    <app-no-encontrada />
-
-    }
 </div>

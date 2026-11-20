@@ -45,6 +45,26 @@ export const routes: Routes = [
         loadComponent: () => import('./administracion/presentacion/paginas/portada-inicio/portada-inicio').then(m => m.AdminPortadaInicio)
     },
     {
+        path: 'admin/configurador',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/configurador/configurador').then(m => m.AdminConfigurador)
+    },
+    {
+        path: 'admin/pedidos',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/pedidos/pedidos').then(m => m.AdminPedidos)
+    },
+    {
+        path: 'admin/envios',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/envios/envios').then(m => m.AdminEnvios)
+    },
+    {
+        path: 'admin/accesorios',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/accesorios/accesorios').then(m => m.AdminAccesorios)
+    },
+    {
         path: 'admin/campanas',
         canActivate: [adminGuard],
         loadComponent: () => import('./administracion/presentacion/paginas/campanas/campanas').then(m => m.AdminCampanas)
@@ -115,6 +135,18 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('./checkout/presentacion/paginas/confirmacion/confirmacion')
                         .then(m => m.Confirmacion)
+            },
+            {
+                path: 'checkout/tarjeta',
+                loadComponent: () =>
+                    import('./checkout/presentacion/paginas/pago-tarjeta/pago-tarjeta')
+                        .then(m => m.PagoTarjeta)
+            },
+            {
+                path: 'checkout/tarjeta/respuesta',
+                loadComponent: () =>
+                    import('./checkout/presentacion/paginas/respuesta-payphone/respuesta-payphone')
+                        .then(m => m.RespuestaPayphone)
             },
             {
                 path: 'checkout/pago',
