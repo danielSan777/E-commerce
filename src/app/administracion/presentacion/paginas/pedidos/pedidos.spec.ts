@@ -171,6 +171,40 @@ describe('AdminPedidos', () => {
     expect(http.expectOne(x => x.url === '/api/v1/admin/orders').request.params.get('status')).toBe('shipped');
   });
 
+  it('el buscador pide por código dentro del filtro actual, espera a que termine de escribir y se mantiene al cambiar de lista', async () => {
+    const { c, fixture } = await abrir();
+    vi.useFakeTimers();   // después de abrir: whenStable no avanza con el reloj simulado
+    try {
+      const caja = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input[type=search]')!;
+      caja.value = 'jds-10'; caja.dispatchEvent(new Event('input'));
+      caja.value = 'jds-1001'; caja.dispatchEvent(new Event('input'));
+      http.expectNone(x => x.url === '/api/v1/admin/orders');          // aún está escribiendo
+
+      vi.advanceTimersByTime(300);
+      const r = http.expectOne(x => x.url === '/api/v1/admin/orders');
+      expect(r.request.params.get('q')).toBe('jds-1001');
+      expect(r.request.params.get('status')).toBe('pending');
+      r.flush({ data: [] });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('No hay pedidos con ese código en esta lista.');
+
+      c.elegirFiltro('shipped');                                        // otra lista: la búsqueda sigue
+      expect(http.expectOne(x => x.url === '/api/v1/admin/orders').request.params.get('q')).toBe('jds-1001');
+
+      c.limpiarBusqueda();
+      expect(http.expectOne(x => x.url === '/api/v1/admin/orders').request.params.has('q')).toBe(false);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('en cada fila el estado y «Sin comprobante» van uno debajo del otro, junto con el código completo', async () => {
+    const { fixture } = await abrir([pedido({ receipt_uploaded_at: null })]);
+    const fila = (fixture.nativeElement as HTMLElement).querySelector('.resumen')!;
+    const estados = Array.from(fila.querySelectorAll('.estados > .insignia')).map(x => x.textContent?.trim());
+
+    expect(estados).toEqual(['Pendiente de pago', 'Sin comprobante']);
+    expect(fila.querySelector('.codigo strong')?.textContent).toBe('JDS-1001');
+  });
+
   it('pasar a producción pide confirmación y llama a Laravel; el pedido sale de "Por producir"', async () => {
     const { c } = await abrir([pedido({ payment_status: 'paid', status: 'ready_for_production' })]);
     c.filtro.set('to_produce');

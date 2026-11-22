@@ -50,6 +50,8 @@ export class AdminPedidos implements OnInit {
   readonly estado = estadoDePedido;
 
   filtro = signal<FiltroPedidos>('pending');
+  busqueda = signal('');                                   // código escrito en el buscador (se mantiene al cambiar de lista)
+  private espera?: ReturnType<typeof setTimeout>;
   pedidos = signal<PedidoAdmin[]>([]);
   abierto = signal<string | null>(null);
   cargando = signal(true);
@@ -62,7 +64,25 @@ export class AdminPedidos implements OnInit {
   errorGuia = signal('');
   sobrecupo = signal<{ numero: string; mensaje: string } | null>(null);   // Laravel pidió confirmar que se pasa del límite
 
-  ngOnInit(): void { this.cargar(); }
+  ngOnInit(): void {
+    this.destroyRef.onDestroy(() => clearTimeout(this.espera));
+    this.cargar();
+  }
+
+  /** Busca por código mientras se escribe, sin pedir a Laravel en cada letra. */
+  buscar(texto: string): void {
+    this.busqueda.set(texto);
+    this.abierto.set(null);
+    clearTimeout(this.espera);
+    this.espera = setTimeout(() => this.cargar(), 300);
+  }
+
+  limpiarBusqueda(): void {
+    clearTimeout(this.espera);
+    this.busqueda.set('');
+    this.abierto.set(null);
+    this.cargar();
+  }
 
   elegirFiltro(f: FiltroPedidos): void {
     this.filtro.set(f);
@@ -73,7 +93,7 @@ export class AdminPedidos implements OnInit {
   cargar(): void {
     this.cargando.set(true);
     this.error.set('');
-    this.servicio.listar(this.filtro()).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
+    this.servicio.listar(this.filtro(), this.busqueda()).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
       next: p => this.pedidos.set(p),
       error: (e: ErrorApi) => this.error.set(e.message),
     });

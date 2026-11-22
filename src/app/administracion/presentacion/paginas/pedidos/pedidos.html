@@ -10,23 +10,36 @@
     }
   </div>
 
+  <form class="buscador" role="search" (submit)="$event.preventDefault()">
+    <label for="buscar-pedido" class="solo-lectores">Buscar pedido por código</label>
+    <input id="buscar-pedido" name="buscar-pedido" type="search" autocomplete="off" inputmode="search" maxlength="30" placeholder="Buscar por código (JDS-1005)"
+      [value]="busqueda()" (input)="buscar($any($event.target).value)" />
+    @if (busqueda()) { <button type="button" (click)="limpiarBusqueda()" aria-label="Borrar búsqueda">✕</button> }
+  </form>
+
   @if (error()) { <p class="error" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
   @if (cargando()) { <p>Cargando…</p> }
-  @else if (!pedidos().length && !error()) { <p class="vacio">No hay pedidos en esta lista.</p> }
+  @else if (!pedidos().length && !error()) {
+    <p class="vacio">{{ busqueda().trim() ? 'No hay pedidos con ese código en esta lista.' : 'No hay pedidos en esta lista.' }}</p>
+  }
 
   <ul class="pedidos">
     @for (p of pedidos(); track p.number) {
       @let e = estado(p);
       <li class="pedido" [class.abierto]="abierto() === p.number">
         <button type="button" class="resumen" (click)="alternar(p.number)" [attr.aria-expanded]="abierto() === p.number">
-          <strong>{{ p.number }}</strong>
+          <span class="codigo">
+            <strong>{{ p.number }}</strong>
+            <span class="monto">{{ p.total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</span>
+          </span>
           <span class="cliente">{{ p.customer.name }}</span>
-          <span class="monto">{{ p.total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</span>
-          <span class="insignia" [class]="e">{{ ETIQUETAS[e] }}</span>
-          @if (e === 'pending' || e === 'expired') {
-            @if (p.receipt_uploaded_at) { <span class="insignia con-comprobante">Con comprobante</span> }
-            @else { <span class="insignia sin-comprobante">Sin comprobante</span> }
-          }
+          <span class="estados">
+            <span class="insignia" [class]="e">{{ ETIQUETAS[e] }}</span>
+            @if (e === 'pending' || e === 'expired') {
+              @if (p.receipt_uploaded_at) { <span class="insignia con-comprobante">Con comprobante</span> }
+              @else { <span class="insignia sin-comprobante">Sin comprobante</span> }
+            }
+          </span>
         </button>
 
         @if (abierto() === p.number) {

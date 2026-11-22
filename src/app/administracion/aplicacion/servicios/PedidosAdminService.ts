@@ -11,8 +11,11 @@ export class PedidosAdminService {
   private http = inject(HttpClient);
   private api = inject(API_URL);
 
-  listar(filtro: FiltroPedidos): Observable<PedidoAdmin[]> {
-    return this.http.get<{ data: PedidoAdmin[] }>(`${this.api}/admin/orders`, { params: new HttpParams().set('status', filtro) })
+  /** `buscar`: código del pedido (JDS-1005 o solo 1005); Laravel lo busca dentro del filtro elegido. */
+  listar(filtro: FiltroPedidos, buscar = ''): Observable<PedidoAdmin[]> {
+    let params = new HttpParams().set('status', filtro);
+    if (buscar.trim()) params = params.set('q', buscar.trim());
+    return this.http.get<{ data: PedidoAdmin[] }>(`${this.api}/admin/orders`, { params })
       .pipe(map(r => r.data), conErrorApi());
   }
 
