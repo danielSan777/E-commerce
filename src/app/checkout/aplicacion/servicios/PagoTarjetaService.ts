@@ -12,8 +12,9 @@ export class PagoTarjetaService {
   private api = inject(API_URL);
 
   /** Intento activo del pedido (el mismo mientras no venza) y los datos de la Cajita. */
+  /** Cada vez que se abre o recarga la pantalla pide una referencia nueva: PayPhone no deja mostrar dos veces la misma. */
   iniciar(token: string): Observable<IntentoDePago> {
-    return this.http.post<IntentoDePago>(`${this.api}/orders/${token}/payphone`, {}).pipe(conErrorApi());
+    return this.http.post<IntentoDePago>(`${this.api}/orders/${token}/payphone`, { renew: true }).pipe(conErrorApi());
   }
 
   /** Lo que PayPhone devolvió en la URL de respuesta (`id` y `clientTransactionId`). Laravel confirma y decide. */

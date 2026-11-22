@@ -15,11 +15,12 @@ describe('PagoTarjetaService', () => {
     servicio = TestBed.inject(PagoTarjetaService);
   });
 
-  it('iniciar pide el intento del pedido por su token', () => {
+  it('iniciar pide una referencia nueva (PayPhone no acepta mostrar dos veces la misma) por el token del pedido', () => {
     let r: unknown;
     servicio.iniciar('tok').subscribe(x => (r = x));
     const q = http.expectOne('/api/v1/orders/tok/payphone');
     expect(q.request.method).toBe('POST');
+    expect(q.request.body).toEqual({ renew: true });
     q.flush({ client_transaction_id: 'JDS-1001-1', expires_at: 'x', simulated: true, box: null });
     expect((r as { client_transaction_id: string }).client_transaction_id).toBe('JDS-1001-1');
   });
