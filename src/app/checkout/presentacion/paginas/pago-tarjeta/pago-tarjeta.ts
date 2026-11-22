@@ -1,5 +1,5 @@
 import { CurrencyPipe, isPlatformBrowser } from '@angular/common';
-import { Component, DestroyRef, PLATFORM_ID, afterNextRender, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, Injector, PLATFORM_ID, afterNextRender, computed, inject, signal } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
@@ -33,6 +33,7 @@ export class PagoTarjeta {
   private router = inject(Router);
   private platform = inject(PLATFORM_ID);
   private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
 
   pedido = this.pedidos.pedido;
   estado = signal<Estado>('cargando');
@@ -72,7 +73,11 @@ export class PagoTarjeta {
         this.intento.set(intento);
         this.estado.set('listo');
         this.arrancarReloj(intento.expires_at);
-        if (!intento.simulated && intento.box) this.montarCajita(intento.box);
+        // El contenedor #pp-button se crea al pintar el estado «listo»: se monta la Cajita después de ese render
+        if (!intento.simulated && intento.box) {
+          const box = intento.box;
+          afterNextRender(() => this.montarCajita(box), { injector: this.injector });
+        }
       },
       error: (e: ErrorApi) => {
         this.error.set(e.message);
