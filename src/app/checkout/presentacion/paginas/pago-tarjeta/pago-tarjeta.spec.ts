@@ -65,6 +65,29 @@ describe('PagoTarjeta', () => {
     expect(document.querySelector('link[href="https://cdn.example/box.css"]')).not.toBeNull();
   });
 
+  it('al renovar la caja vencida (script ya cargado) la dibuja cuando el contenedor ya existe', async () => {
+    const dibujos: boolean[] = [];
+    window.PPaymentButtonBox = class { render(id: string) { dibujos.push(!!document.getElementById(id)); } } as unknown as typeof window.PPaymentButtonBox;
+    try {
+      const { fixture, http, html } = await montar();
+      const box = { token: 't', store_id: 's', css_url: 'https://cdn.example/renovar.css', js_url: 'https://cdn.example/renovar.js', client_transaction_id: 'JDS-48213-1',
+        amount: 3021, amount_without_tax: 3021, currency: 'USD', reference: 'Pedido', identification_type: 1, lang: 'es', time_zone: -5 };
+      http.expectOne(`/api/v1/orders/${TOKEN_PRUEBA}/payphone`).flush({ ...INTENTO(false), box });
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      fixture.componentInstance.estado.set('vencida');
+      fixture.detectChanges();
+      expect(html.querySelector('#pp-button')).toBeNull();
+      fixture.componentInstance.iniciar();
+      http.expectOne(`/api/v1/orders/${TOKEN_PRUEBA}/payphone`).flush({ ...INTENTO(false), box: { ...box, client_transaction_id: 'JDS-48213-2' } });
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(dibujos).toEqual([true, true]);
+    } finally { delete window.PPaymentButtonBox; }
+  });
+
   it('si Laravel rechaza iniciar el pago (pedido vencido) muestra el motivo y permite reintentar', async () => {
     const { fixture, http, html } = await montar();
     http.expectOne(`/api/v1/orders/${TOKEN_PRUEBA}/payphone`).flush({ code: 'order_closed', message: 'Este pedido venció o fue cancelado.' }, { status: 409, statusText: 'Conflict' });
