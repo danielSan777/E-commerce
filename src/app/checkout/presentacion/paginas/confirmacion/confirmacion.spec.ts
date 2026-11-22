@@ -22,14 +22,14 @@ function pedido(items: ItemCarrito[], metodo: 'transferencia' | 'payphone' = 'tr
   };
 }
 
-async function montar(items: ItemCarrito[], metodo: 'transferencia' | 'payphone' = 'transferencia') {
+async function montar(items: ItemCarrito[], metodo: 'transferencia' | 'payphone' = 'transferencia', simulado = true) {
   TestBed.configureTestingModule({
     imports: [Confirmacion],
     providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }],
   });
   TestBed.inject(PedidoService).crear(pedido(items, metodo)).subscribe();
   TestBed.inject(HttpTestingController).expectOne('/api/v1/checkout').flush(CHECKOUT_API, { status: 201, statusText: 'Created' });
-  if (metodo === 'payphone') TestBed.inject(PedidoService).marcarPagadoConTarjeta(CHECKOUT_API.order_number, true);
+  if (metodo === 'payphone') TestBed.inject(PedidoService).marcarPagadoConTarjeta(CHECKOUT_API.order_number, simulado);
   const fixture = TestBed.createComponent(Confirmacion);
   await fixture.whenStable();
   fixture.detectChanges();
@@ -70,6 +70,15 @@ describe('Confirmacion', () => {
     expect(html.textContent).not.toContain('Subir comprobante por WhatsApp');
   });
 
+
+  it('PayPhone real aprobado: no dice que el pago fue simulado ni que el cobro llegará después', async () => {
+    const { html } = await montar([item('a', 'Doctor', '')], 'payphone', false);
+
+    expect(html.textContent).toContain('Pago confirmado');
+    expect(html.textContent).toContain('Pago con tarjeta aprobado por PayPhone');
+    expect(html.textContent).not.toContain('Pago simulado');
+    expect(html.textContent).not.toContain('llegará con el servidor');
+  });
 
   it('ofrece descargar la foto de cada maceta personalizada con un nombre de archivo claro', async () => {
     const { html } = await montar([item('a', 'Amigo guitarrista', 'data:image/jpeg;base64,AAAA'), item('b', 'Sin foto', '')]);

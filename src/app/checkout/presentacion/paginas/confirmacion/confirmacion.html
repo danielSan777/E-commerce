@@ -192,7 +192,11 @@
         <div>
             <h2>Método de pago</h2>
             <strong>Tarjeta con PayPhone</strong>
-            <small>Pago simulado: todavía no se cobró nada. El cobro real con PayPhone llegará con el servidor.</small>
+            @if (p.pagoSimulado) {
+            <small>Pago simulado: no se cobró nada (modo de pruebas).</small>
+            } @else {
+            <small>Pago con tarjeta aprobado por PayPhone.</small>
+            }
         </div>
     </section>
 
