@@ -68,6 +68,8 @@ describe('Confirmacion', () => {
 
     expect(html.textContent).toContain('Pago simulado');   // en pruebas Laravel avisa que fue simulado
     expect(html.textContent).not.toContain('Subir comprobante por WhatsApp');
+    const ver = Array.from(html.querySelectorAll<HTMLAnchorElement>('a.btn')).find(a => a.textContent?.includes('Ver el estado de mi pedido'));
+    expect(ver?.getAttribute('href')).toBe(`/pedido/${TOKEN_PRUEBA}`);   // desde aquí el cliente ve el estado de su pedido
   });
 
 

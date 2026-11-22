@@ -200,8 +200,9 @@
         </div>
     </section>
 
-    <a class="btn btn-primario" [routerLink]="RUTA_SEGUIR">Seguir comprando <i class="bi bi-arrow-right"
+    <a class="btn btn-primario" [routerLink]="['/pedido', p.token]">Ver el estado de mi pedido <i class="bi bi-arrow-right"
             aria-hidden="true"></i></a>
+    <a class="btn btn-borde" [routerLink]="RUTA_SEGUIR">Seguir comprando</a>
     }
 
     } @else if (cargado()) {
