@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { API_URL } from '../../../../core/configuracion/api';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
-import { AdminEnvios, validarZona } from './envios';
+import { AdminEnvios, porcentajeValido, validarZona } from './envios';
 
 const ZONAS = [
   { code: 'A', name: 'Zona A', price_cents: 350, extra_days: 0, is_available: true, cantons_count: 1 },
@@ -36,28 +36,54 @@ describe('AdminEnvios', () => {
 
   afterEach(() => http?.verify());
 
-  it('muestra el modo de venta activo y lo cambia al guardar (el otro modo queda guardado en Laravel)', async () => {
+  it('el porcentaje de descuento acepta de 0 a 100, con coma o punto y hasta 2 decimales', () => {
+    expect(porcentajeValido('30')).toBe(30);
+    expect(porcentajeValido(' 12,5 ')).toBe(12.5);
+    expect(porcentajeValido('0')).toBe(0);
+    expect(porcentajeValido('100')).toBe(100);
+    for (const malo of ['', 'abc', '-1', '101', '10.123', '30%', '1e2']) expect(porcentajeValido(malo)).toBeNull();
+  });
+
+  it('muestra el modo de venta activo y lo cambia al guardar con su porcentaje (el otro modo queda guardado en Laravel)', async () => {
     const fixture = await abrir();
     const c = fixture.componentInstance;
     const html = fixture.nativeElement as HTMLElement;
     fixture.detectChanges();
 
     expect(html.textContent).toContain('Activo ahora');
+    expect(c.descuentoTexto()).toBe('30');
     expect(c.modoSinGuardar()).toBe(false);
     c.guardarModo();
-    http.expectNone('/api/v1/admin/sales-mode');                      // nada elegido: no llama a la API
+    http.expectNone('/api/v1/admin/sales-mode');                      // nada cambió: no llama a la API
 
     c.modoElegido.set('free_shipping_discount');
+    c.descuentoTexto.set('45,5');
     expect(c.modoSinGuardar()).toBe(true);
     c.guardarModo();
     const r = http.expectOne('/api/v1/admin/sales-mode');
     expect(r.request.method).toBe('PUT');
-    expect(r.request.body).toEqual({ mode: 'free_shipping_discount' });
-    r.flush({ ...AJUSTE_ESTANDAR, mode: 'free_shipping_discount' });
+    expect(r.request.body).toEqual({ mode: 'free_shipping_discount', discount_percent: 45.5 });
+    r.flush({ ...AJUSTE_ESTANDAR, mode: 'free_shipping_discount', discount_percent: 45.5 });
     fixture.detectChanges();
 
     expect(c.ajusteModo()?.mode).toBe('free_shipping_discount');
+    expect(c.descuentoTexto()).toBe('45.5');
     expect(c.modoSinGuardar()).toBe(false);
+  });
+
+  it('cambiar solo el porcentaje también se guarda; un porcentaje inválido no llama a la API', async () => {
+    const fixture = await abrir();
+    const c = fixture.componentInstance;
+
+    c.descuentoTexto.set('150');
+    c.guardarModo();
+    http.expectNone('/api/v1/admin/sales-mode');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Escribe un porcentaje de 0 a 100');
+
+    c.descuentoTexto.set('25');
+    c.guardarModo();
+    expect(http.expectOne('/api/v1/admin/sales-mode').request.body).toEqual({ mode: 'standard', discount_percent: 25 });
   });
 
   it('valida precio y días antes de llamar a la API', () => {

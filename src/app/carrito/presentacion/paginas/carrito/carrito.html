@@ -86,9 +86,9 @@
                 <h2>
                     @if (hayDescuento()) {
                     @if (descuentoActivo()) {
-                    ¡Excelente! Envío GRATIS y {{ porcentajeDescuento() }}% de descuento en tu maceta de menor valor
+                    ¡Excelente! Envío GRATIS y {{ porcentajeDescuento() }}% de descuento en tus demás macetas
                     } @else {
-                    ¡Elige tu segunda maceta con {{ porcentajeDescuento() }}% de descuento en la de menor valor!
+                    ¡Elige tu segunda maceta con {{ porcentajeDescuento() }}% de descuento!
                     }
                     } @else if (envioGratisSiempre()) {
                     ¡Todos tus pedidos tienen envío GRATIS!
@@ -137,7 +137,7 @@
         </div>
         @if (descuentoActivo()) {
         <div class="pie-fila pie-descuento">
-            <span class="pie-etiqueta"><i class="bi bi-percent" aria-hidden="true"></i> Descuento {{ porcentajeDescuento() }}% (maceta de menor valor)</span>
+            <span class="pie-etiqueta"><i class="bi bi-percent" aria-hidden="true"></i> Descuento {{ porcentajeDescuento() }}% (todas menos la de mayor valor)</span>
             <strong class="pie-descuento-valor">−{{ descuento() | currency:'USD':'symbol':'1.2-2' }}</strong>
         </div>
         }
@@ -298,13 +298,13 @@
         <div class="sheet-cab">
             <h2 class="sheet-titulo" id="sheet-macetas-titulo">Elige otra maceta</h2>
             <p class="sheet-sub">
-                @if (hayDescuento()) { Llévate una segunda maceta con {{ porcentajeDescuento() }}% de descuento en la de menor valor. }
+                @if (hayDescuento()) { Llévate una segunda maceta con {{ porcentajeDescuento() }}% de descuento (pagas completa solo la de mayor valor). }
                 @else { Llévate una segunda unidad y obtén envío gratis. }
             </p>
 
             <div class="sheet-banner">
                 <i class="bi bi-truck" aria-hidden="true"></i>
-                <span>{{ hayDescuento() ? 'Envío gratis y ' + porcentajeDescuento() + '% de descuento en la 2da maceta' : 'Envío gratis desde la 2da unidad' }}</span>
+                <span>{{ hayDescuento() ? 'Envío gratis y ' + porcentajeDescuento() + '% de descuento desde la 2da maceta' : 'Envío gratis desde la 2da unidad' }}</span>
                 <i class="bi bi-flower2 sheet-banner-hoja" aria-hidden="true"></i>
             </div>
 

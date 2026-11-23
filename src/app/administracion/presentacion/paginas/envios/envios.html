@@ -26,11 +26,18 @@
         <span>
           <strong>Todo con envío gratis</strong>
           @if (a.mode === 'free_shipping_discount') { <em class="vigente">Activo ahora</em> }
-          <small>Envío gratis en todas las zonas y sin comisión bancaria: el cliente paga el total final. Desde 2 macetas, {{ a.discount_percent }}% de descuento
-            en la de menor valor.</small>
+          <small>Envío gratis en todas las zonas y sin comisión bancaria: el cliente paga el total final. Desde 2 macetas se paga completa solo la de mayor valor
+            y las demás llevan el descuento que escribas aquí.</small>
         </span>
       </label>
-      <button type="submit" [disabled]="!modoSinGuardar() || guardandoModo()">{{ guardandoModo() ? 'Guardando…' : 'Activar modo elegido' }}</button>
+      <div class="descuento">
+        <label for="descuento-modo">Descuento del modo «todo con envío gratis» (%)</label>
+        <input id="descuento-modo" name="descuento-modo" inputmode="decimal" maxlength="6" autocomplete="off" [ngModel]="descuentoTexto()" (ngModelChange)="descuentoTexto.set($event)"
+          [attr.aria-invalid]="errorDescuento() ? true : null" />
+        @if (errorDescuento(); as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+        <small class="ayuda">Ejemplo: 30. Se aplica a todas las macetas menos la de mayor valor, desde 2 macetas.</small>
+      </div>
+      <button type="submit" [disabled]="!modoSinGuardar() || guardandoModo()">{{ guardandoModo() ? 'Guardando…' : 'Guardar modo de venta' }}</button>
     </form>
   }
 

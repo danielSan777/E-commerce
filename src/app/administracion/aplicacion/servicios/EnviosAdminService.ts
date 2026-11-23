@@ -15,8 +15,8 @@ export class EnviosAdminService {
     return this.http.get<AjusteModoVenta>(`${this.api}/admin/sales-mode`).pipe(conErrorApi());
   }
 
-  guardarModoDeVenta(modo: ModoVenta): Observable<AjusteModoVenta> {
-    return this.http.put<AjusteModoVenta>(`${this.api}/admin/sales-mode`, { mode: modo }).pipe(conErrorApi());
+  guardarModoDeVenta(modo: ModoVenta, descuento: number): Observable<AjusteModoVenta> {
+    return this.http.put<AjusteModoVenta>(`${this.api}/admin/sales-mode`, { mode: modo, discount_percent: descuento }).pipe(conErrorApi());
   }
 
   zonas(): Observable<ZonaAdmin[]> {

@@ -10,7 +10,7 @@ export interface PedidoAdmin {
     status: string;                                   // created, expired, cancelled, ready_for_production…
     customer: { name: string; email: string; phone: string | null };
     total_cents: number;
-    discount_cents: number;                           // descuento del modo de venta (30% a la maceta de menor valor)
+    discount_cents: number;                           // descuento del modo de venta (a todas las macetas menos la de mayor valor)
     card_fee_cents: number;                           // recargo por pagar con tarjeta
     shipping_cents: number;
     shipping_zone: string | null;

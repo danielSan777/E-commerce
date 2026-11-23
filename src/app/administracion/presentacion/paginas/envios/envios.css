@@ -31,4 +31,5 @@
 .modo span { display: flex; flex-direction: column; gap: .2rem; }
 .modo small { color: var(--suave); }
 .modo .vigente { font-style: normal; font-size: .8rem; color: var(--primario); font-weight: 700; }
+.modos .descuento { display: flex; flex-direction: column; gap: .3rem; max-width: 22rem; }
 .modos button { align-self: flex-start; min-height: 44px; }

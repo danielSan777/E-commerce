@@ -47,13 +47,13 @@ describe('Carrito', () => {
       mode: 'free_shipping_discount', free_shipping_min_planters: 2, card_surcharge_percent: 0, discount_percent: 30, free_shipping_everywhere: true,
     });
 
-    it('con una maceta invita a elegir la segunda con 30 % de descuento en la de menor valor; el envío ya es gratis', () => {
+    it('con una maceta invita a elegir la segunda con 30 % de descuento; el envío ya es gratis', () => {
       activar();
       TestBed.inject(CarritoService).items.set([maceta('a', 20)]);
       fixture.detectChanges();
       const html = fixture.nativeElement as HTMLElement;
 
-      expect(html.querySelector('.franja-verde h2')?.textContent).toContain('Elige tu segunda maceta con 30% de descuento en la de menor valor');
+      expect(html.querySelector('.franja-verde h2')?.textContent).toContain('Elige tu segunda maceta con 30% de descuento');
       expect(html.querySelector('.pie-envio')?.textContent).toContain('¡Gratis!');
       expect(html.querySelector('.pie-descuento')).toBeNull();
     });
@@ -66,7 +66,28 @@ describe('Carrito', () => {
 
       expect(html.querySelector('.pie-descuento-valor')?.textContent).toContain('5.70');
       expect(html.querySelector('.pie-total .pie-subtotal')?.textContent).toContain('33.30');
-      expect(html.querySelector('.franja-verde h2')?.textContent).toContain('Envío GRATIS y 30% de descuento');
+      expect(html.querySelector('.franja-verde h2')?.textContent).toContain('Envío GRATIS y 30% de descuento en tus demás macetas');
+    });
+
+    it('con 3 macetas ($20, $19 y $18) solo la de $20 se paga completa: descuento $11,10 y total $45,90', () => {
+      activar();
+      TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19), maceta('c', 18)]);
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+
+      expect(html.querySelector('.pie-descuento-valor')?.textContent).toContain('11.10');
+      expect(html.querySelector('.pie-total .pie-subtotal')?.textContent).toContain('45.90');
+    });
+
+    it('usa el porcentaje que el administrador escribió', () => {
+      TestBed.inject(ModoVentaService).precios.set({ mode: 'free_shipping_discount', free_shipping_min_planters: 2, card_surcharge_percent: 0, discount_percent: 50, free_shipping_everywhere: true });
+      TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19)]);
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+
+      expect(html.querySelector('.pie-descuento-valor')?.textContent).toContain('9.50');
+      expect(html.querySelector('.pie-total .pie-subtotal')?.textContent).toContain('29.50');
+      expect(html.querySelector('.franja-verde h2')?.textContent).toContain('50% de descuento');
     });
 
     it('en el modo estándar no hay descuento ni fila de total', () => {

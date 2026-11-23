@@ -44,7 +44,7 @@
         </div>
         @if (descuento() > 0) {
         <div class="fila-monto">
-            <span>Descuento {{ porcentajeDescuento() }}% (maceta de menor valor)</span>
+            <span>Descuento {{ porcentajeDescuento() }}% (todas menos la de mayor valor)</span>
             <span class="descuento">−{{ descuento() | currency:'USD':'symbol':'1.2-2' }}</span>
         </div>
         }

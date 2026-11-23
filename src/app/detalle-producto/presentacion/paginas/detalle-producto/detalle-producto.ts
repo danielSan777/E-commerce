@@ -119,7 +119,7 @@ export class DetalleProducto implements OnDestroy {
   lineaEnvio = computed(() => {
     if (this.envioGratis.envioGratisSiempre()) {
       return this.envioGratis.hayDescuento()
-        ? `Envío gratis a todo el país · ${this.envioGratis.pct()}% de descuento en tu segunda maceta (excepto Galápagos)`
+        ? `Envío gratis a todo el país · ${this.envioGratis.pct()}% de descuento desde tu segunda maceta (excepto Galápagos)`
         : 'Envío gratis a todo el país (excepto Galápagos)';
     }
     const tarifa = this.ubicaciones.tarifaDesde();

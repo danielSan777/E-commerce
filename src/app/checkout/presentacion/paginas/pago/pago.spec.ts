@@ -62,7 +62,7 @@ describe('Pago', () => {
       expect(component.totalPayphone()).toBe(41.34);
     });
 
-    it('modo todo gratis: 30 % a la de menor valor, envío gratis y sin recargo (el total es el final con cualquier método)', () => {
+    it('modo todo gratis: 30 % a las macetas menos la más cara, envío gratis y sin recargo (el total es el final con cualquier método)', () => {
       TestBed.inject(ModoVentaService).precios.set({ mode: 'free_shipping_discount', free_shipping_min_planters: 2, card_surcharge_percent: 0, discount_percent: 30, free_shipping_everywhere: true });
       TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19)]);
       fixture.detectChanges();
@@ -73,7 +73,7 @@ describe('Pago', () => {
       expect(component.totalTransferencia()).toBe(33.3);
       expect(component.recargoPayphone()).toBe(0);
       expect(component.totalPayphone()).toBe(33.3);
-      expect(html.textContent).toContain('Descuento 30% (maceta de menor valor)');
+      expect(html.textContent).toContain('Descuento 30% (todas menos la de mayor valor)');
       expect(html.textContent).toContain('¡Gratis!');
       expect(html.querySelector('.incluye')).toBeNull();   // no hay "Incluye +6%"
     });

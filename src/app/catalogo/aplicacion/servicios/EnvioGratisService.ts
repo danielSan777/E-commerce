@@ -7,7 +7,7 @@ import { ModoVentaService } from './ModoVentaService';
  * Envío gratis y descuento por segunda maceta, según el modo de venta vigente (ver ModoVentaService).
  * La usan el anuncio del navbar, el carrito y el pago, así todos dicen siempre lo mismo.
  *  - Modo estándar: envío gratis desde 2 macetas (o siempre, si todas las zonas cuestan $0).
- *  - Modo "todo gratis": envío gratis siempre y 30 % de descuento a la maceta de menor valor desde 2 macetas.
+ *  - Modo "todo gratis": envío gratis siempre y descuento (editable en el panel) a todas las macetas menos la de mayor valor, desde 2 macetas.
  * Lo que Laravel cobra es lo que manda: aquí solo se muestra lo mismo para que el cliente lo vea antes de pagar.
  * (Los textos dicen "dos unidades"; si cambias el número, cambia también esos textos.)
 */
@@ -37,11 +37,12 @@ export class EnvioGratisService {
     readonly hayDescuento = computed(() => this.descuentoPorcentaje() > 0);
     readonly descuentoActivo = computed(() => this.hayDescuento() && this.macetas() >= 2);
 
-    /** Descuento en dólares: el porcentaje sobre la maceta de menor valor, al centavo (mitad hacia arriba). */
+    /** Descuento en dólares: el porcentaje sobre cada maceta menos la de mayor valor (esa se paga completa), cada una al centavo (mitad hacia arriba). */
     readonly descuento = computed(() => {
         if (!this.descuentoActivo()) return 0;
-        const menor = Math.min(...this.carrito.items().filter(i => i.tipo === 'personalizado').map(i => Math.round((i.producto.precio || 0) * 100)));
-        return Math.floor(menor * this.descuentoPorcentaje() / 100 + 0.5) / 100;
+        const precios = this.carrito.items().filter(i => i.tipo === 'personalizado').map(i => Math.round((i.producto.precio || 0) * 100)).sort((a, b) => b - a);
+        const centavos = precios.slice(1).reduce((suma, p) => suma + Math.floor(p * this.descuentoPorcentaje() / 100 + 0.5), 0);
+        return centavos / 100;
     });
 
     /** ¿Se ofrece la segunda maceta? Con descuento: hasta llevar 2. Sin descuento: mientras el envío no sea gratis. */
@@ -49,7 +50,7 @@ export class EnvioGratisService {
 
     /** Frase corta para la franja de promesa de la portada y de las campañas. */
     readonly textoPromo = computed(() => {
-        if (this.envioGratisSiempre() && this.hayDescuento()) return `Envío gratis en todo y ${this.pct()}% de descuento en tu segunda maceta`;
+        if (this.envioGratisSiempre() && this.hayDescuento()) return `Envío gratis en todo y ${this.pct()}% de descuento en tu segunda maceta y las siguientes`;
         if (this.envioGratisSiempre()) return 'Envío gratis en todos tus pedidos';
         return `Envío gratis llevando ${this.MACETAS_PARA_ENVIO_GRATIS} macetas`;
     });
@@ -58,8 +59,8 @@ export class EnvioGratisService {
     readonly anuncio = computed(() => {
         if (this.hayDescuento()) {
             return this.descuentoActivo()
-                ? { fuerte: '¡Excelente!', resto: `Envío gratis y ${this.pct()}% de descuento en tu maceta de menor valor` }
-                : { fuerte: 'Envío gratis', resto: `en todo y ${this.pct()}% de descuento en tu segunda maceta` };
+                ? { fuerte: '¡Excelente!', resto: `Envío gratis y ${this.pct()}% de descuento en tus demás macetas` }
+                : { fuerte: 'Envío gratis', resto: `en todo y ${this.pct()}% de descuento desde tu segunda maceta` };
         }
         if (this.envioGratisSiempre()) return { fuerte: 'Envío gratis', resto: 'en todos tus pedidos' };
         return this.envioGratis() ? { fuerte: '¡Excelente!', resto: 'Ya tienes envío gratis' } : { fuerte: 'Envío gratis', resto: 'desde dos unidades' };

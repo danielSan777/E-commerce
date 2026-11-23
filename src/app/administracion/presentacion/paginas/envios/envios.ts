@@ -10,6 +10,14 @@ import { centavosADolares, dolaresACentavos } from '../../../aplicacion/dinero';
 import { EnviosAdminService } from '../../../aplicacion/servicios/EnviosAdminService';
 import { AjusteModoVenta, CantonAdmin, CodigoZona, ModoVenta, ZonaAdmin } from '../../../dominio/interfaces/envios-admin';
 
+/** Porcentaje de descuento escrito a mano: 0 a 100, hasta 2 decimales, con coma o punto. null si no es válido. */
+export function porcentajeValido(texto: string): number | null {
+  const limpio = texto.trim().replace(',', '.');
+  if (!/^\d{1,3}(\.\d{1,2})?$/.test(limpio)) return null;
+  const n = Number(limpio);
+  return n >= 0 && n <= 100 ? n : null;
+}
+
 interface FormularioZona { precio: string; dias: number | string; disponible: boolean }
 
 /** Revisa la tarifa de una zona antes de llamar a la API (mismos límites que Laravel). */
@@ -43,7 +51,14 @@ export class AdminEnvios implements OnInit {
   ajusteModo = signal<AjusteModoVenta | null>(null);
   modoElegido = signal<ModoVenta>('standard');
   guardandoModo = signal(false);
-  modoSinGuardar = computed(() => !!this.ajusteModo() && this.ajusteModo()!.mode !== this.modoElegido());
+  descuentoTexto = signal('30');   // porcentaje que escribe el administrador (acepta coma o punto)
+  intentoModo = signal(false);
+  descuentoNumero = computed(() => porcentajeValido(this.descuentoTexto()));
+  errorDescuento = computed(() => this.intentoModo() && this.descuentoNumero() === null ? 'Escribe un porcentaje de 0 a 100. Ejemplo: 30 o 12,5' : '');
+  modoSinGuardar = computed(() => {
+    const a = this.ajusteModo();
+    return !!a && (a.mode !== this.modoElegido() || (this.descuentoNumero() !== null && this.descuentoNumero() !== a.discount_percent));
+  });
 
   zonas = signal<ZonaAdmin[]>([]);
   formularios = signal<Record<string, FormularioZona>>({});
@@ -90,7 +105,7 @@ export class AdminEnvios implements OnInit {
     this.cargando.set(true);
     this.error.set('');
     this.servicio.modoDeVenta().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: a => { this.ajusteModo.set(a); this.modoElegido.set(a.mode); },
+      next: a => { this.ajusteModo.set(a); this.modoElegido.set(a.mode); this.descuentoTexto.set(String(a.discount_percent)); },
       error: (e: ErrorApi) => this.error.set(e.message),
     });
     this.servicio.zonas().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -131,13 +146,19 @@ export class AdminEnvios implements OnInit {
   }
 
   guardarModo(): void {
-    if (this.guardandoModo() || !this.modoSinGuardar()) return;
+    if (this.guardandoModo()) return;
+    this.intentoModo.set(true);
+    const descuento = this.descuentoNumero();
+    if (descuento === null) return this.avisos.faltanDatos();
+    if (!this.modoSinGuardar()) return;
     this.guardandoModo.set(true);
-    this.servicio.guardarModoDeVenta(this.modoElegido()).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.guardandoModo.set(false))).subscribe({
+    this.servicio.guardarModoDeVenta(this.modoElegido(), descuento).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.guardandoModo.set(false))).subscribe({
       next: a => {
         this.ajusteModo.set(a);
         this.modoElegido.set(a.mode);
-        this.avisos.exito(a.mode === 'standard' ? 'Modo estándar activado.' : 'Modo «todo con envío gratis» activado.');
+        this.descuentoTexto.set(String(a.discount_percent));
+        this.intentoModo.set(false);
+        this.avisos.exito(a.mode === 'standard' ? 'Modo estándar activado.' : `Modo «todo con envío gratis» activado con ${a.discount_percent}% de descuento.`);
       },
       error: (e: ErrorApi) => this.avisos.error(e.message),
     });
