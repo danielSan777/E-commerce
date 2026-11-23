@@ -7,8 +7,36 @@
   @if (error()) { <p class="error" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
   @if (cargando() && !zonas().length) { <p>Cargando…</p> }
 
+  @if (ajusteModo(); as a) {
+    <h2>Modo de venta</h2>
+    <p class="ayuda">Elige cómo se vende en la tienda. Puedes cambiar de uno a otro cuando quieras; el que no uses queda guardado. El cambio se ve en el banner, el carrito y el pago al instante.</p>
+
+    <form class="modos" (submit)="$event.preventDefault(); guardarModo()" role="radiogroup" aria-label="Modo de venta">
+      <label class="modo" [class.activo]="modoElegido() === 'standard'">
+        <input type="radio" name="modo-venta" value="standard" [checked]="modoElegido() === 'standard'" (change)="modoElegido.set('standard')" />
+        <span>
+          <strong>Modo estándar</strong>
+          @if (a.mode === 'standard') { <em class="vigente">Activo ahora</em> }
+          <small>Envío por zona (el que pongas abajo; con $0 se muestra «Envío gratis»). Envío gratis desde {{ a.free_shipping_min_planters }} macetas.
+            Recargo del {{ a.card_surcharge_percent }}% al pagar con tarjeta.</small>
+        </span>
+      </label>
+      <label class="modo" [class.activo]="modoElegido() === 'free_shipping_discount'">
+        <input type="radio" name="modo-venta" value="free_shipping_discount" [checked]="modoElegido() === 'free_shipping_discount'" (change)="modoElegido.set('free_shipping_discount')" />
+        <span>
+          <strong>Todo con envío gratis</strong>
+          @if (a.mode === 'free_shipping_discount') { <em class="vigente">Activo ahora</em> }
+          <small>Envío gratis en todas las zonas y sin comisión bancaria: el cliente paga el total final. Desde 2 macetas, {{ a.discount_percent }}% de descuento
+            en la de menor valor.</small>
+        </span>
+      </label>
+      <button type="submit" [disabled]="!modoSinGuardar() || guardandoModo()">{{ guardandoModo() ? 'Guardando…' : 'Activar modo elegido' }}</button>
+    </form>
+  }
+
   <h2>Zonas y tarifas</h2>
-  <p class="ayuda">El precio de envío se cobra por pedido según la zona del cantón elegido. Los cambios se ven en la tienda al instante.</p>
+  <p class="ayuda">El precio de envío se cobra por pedido según la zona del cantón elegido. Los cambios se ven en la tienda al instante. Con $0 en una zona, el cliente ve «Envío gratis» en esa zona
+    (en el modo «todo con envío gratis» el precio de las zonas no se cobra).</p>
 
   <div class="zonas">
     @for (z of zonas(); track z.code) {

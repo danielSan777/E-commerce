@@ -92,7 +92,13 @@
                   }
                 </li>
               }
-              <li class="envio"><span>Envío (zona {{ p.shipping_zone }})</span><b>{{ p.shipping_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b></li>
+              @if (p.discount_cents > 0) {
+                <li class="envio"><span>Descuento</span><b>−{{ p.discount_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b></li>
+              }
+              <li class="envio"><span>Envío (zona {{ p.shipping_zone }})</span><b>{{ p.shipping_cents === 0 ? 'Gratis' : (p.shipping_cents / 100 | currency:'USD':'symbol':'1.2-2') }}</b></li>
+              @if (p.card_fee_cents > 0) {
+                <li class="envio"><span>Recargo por tarjeta</span><b>{{ p.card_fee_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</b></li>
+              }
             </ul>
 
             <div class="acciones">

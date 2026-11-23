@@ -85,6 +85,9 @@
 
         <div class="totales">
             <div><span>Subtotal</span><span>{{ p.subtotal | currency:'USD':'symbol':'1.2-2' }}</span></div>
+            @if ((p.descuento ?? 0) > 0) {
+            <div><span>Descuento</span><span class="descuento">−{{ p.descuento! | currency:'USD':'symbol':'1.2-2' }}</span></div>
+            }
             <div>
                 <span>Envío</span>
                 @if (p.envioGratis) {

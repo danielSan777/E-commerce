@@ -42,9 +42,15 @@
 
         <div class="fila-monto"><span>Subtotal</span><span>{{ subtotal() | currency:'USD':'symbol':'1.2-2' }}</span>
         </div>
+        @if (descuento() > 0) {
+        <div class="fila-monto">
+            <span>Descuento {{ porcentajeDescuento() }}% (maceta de menor valor)</span>
+            <span class="descuento">−{{ descuento() | currency:'USD':'symbol':'1.2-2' }}</span>
+        </div>
+        }
         <div class="fila-monto">
             <span>Envío</span>
-            @if (envioGratis()) {
+            @if (envio() === 0) {
             <span class="gratis">¡Gratis!</span>
             } @else {
             <span>{{ envio() | currency:'USD':'symbol':'1.2-2' }}</span>
@@ -102,22 +108,6 @@
 
     <div class="metodos" role="radiogroup" aria-label="Método de pago">
 
-        <label class="metodo" [class.marcado]="metodo() === 'transferencia'">
-            <input type="radio" name="metodo" value="transferencia" [checked]="metodo() === 'transferencia'"
-                (change)="elegir('transferencia')">
-            <span class="punto" aria-hidden="true"></span>
-            <i class="bi bi-bank2 metodo-ico" aria-hidden="true"></i>
-            <span class="metodo-texto">
-                <strong>Transferencia bancaria</strong>
-                <small>Realiza tu pago directo en nuestra cuenta.</small>
-            </span>
-            <span class="metodo-total">
-                <small>Total</small>
-                <strong>{{ totalTransferencia() | currency:'USD':'symbol':'1.2-2' }}</strong>
-                <em class="sin-cargo">Sin cargo adicional</em>
-            </span>
-        </label>
-
         <label class="metodo" [class.marcado]="metodo() === 'payphone'">
             <input type="radio" name="metodo" value="payphone" [checked]="metodo() === 'payphone'"
                 (change)="elegir('payphone')">
@@ -158,8 +148,28 @@
             <span class="metodo-total">
                 <small>Total</small>
                 <strong>{{ totalPayphone() | currency:'USD':'symbol':'1.2-2' }}</strong>
-                <em class="incluye">Incluye +{{ porcentajeTexto }}%
+                @if (recargoPayphone() > 0) {
+                <em class="incluye">Incluye +{{ porcentajeTexto() }}%
                     <b>(+{{ recargoPayphone() | currency:'USD':'symbol':'1.2-2' }})</b></em>
+                } @else {
+                <em class="sin-cargo">Sin cargo adicional</em>
+                }
+            </span>
+        </label>
+
+        <label class="metodo" [class.marcado]="metodo() === 'transferencia'">
+            <input type="radio" name="metodo" value="transferencia" [checked]="metodo() === 'transferencia'"
+                (change)="elegir('transferencia')">
+            <span class="punto" aria-hidden="true"></span>
+            <i class="bi bi-bank2 metodo-ico" aria-hidden="true"></i>
+            <span class="metodo-texto">
+                <strong>Transferencia bancaria</strong>
+                <small>Realiza tu pago directo en nuestra cuenta.</small>
+            </span>
+            <span class="metodo-total">
+                <small>Total</small>
+                <strong>{{ totalTransferencia() | currency:'USD':'symbol':'1.2-2' }}</strong>
+                <em class="sin-cargo">Sin cargo adicional</em>
             </span>
         </label>
     </div>

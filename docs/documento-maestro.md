@@ -990,6 +990,13 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 - Recargo: 2 macetas de $25 con 10% de descuento y envío gratis → base $45,00, recargo $2,70, total $47,70. 1 maceta de $25 a Zona A → base $28,50, recargo $1,71, total $30,21.
 - Precio modificado desde las herramientas del navegador: el total no cambia.
 
+**Modos de venta (agregado el 2026-11-23 a pedido de Josué).** El administrador elige en `/admin/envios` cuál de las dos formas de vender está activa; el modo que no se usa queda guardado (ajuste `sales_mode`). Laravel calcula todo en un solo lugar (`CalculadoraDeTotales`) y publica los valores vigentes en `GET /api/v1/store/pricing`; Angular solo los muestra.
+
+- **Estándar (el de siempre):** envío por zona, gratis desde 2 macetas, y recargo del 6% con tarjeta. Si una zona se deja en $0, se muestra «Envío gratis» en esa zona; si todas las zonas habilitadas cuestan $0, el banner dice que todo tiene envío gratis.
+- **Todo con envío gratis:** envío gratis en todas las zonas habilitadas, sin recargo por tarjeta (el total es el final con cualquier método de pago) y, desde 2 macetas, 30% de descuento (`second_planter_discount_percent`) a la maceta de menor valor, una sola, sin contar complementos. El carrito muestra el descuento y el total; el banner de la portada, la franja de la portada y de las campañas y la ficha dicen que el envío es gratis.
+- En el pedido, `discount_cents` guarda ese descuento; `total = subtotal − descuento + envío + recargo`.
+- Orden de los métodos de pago: PayPhone primero, transferencia después.
+
 **NO CAMBIAR.** Laravel es la autoridad de precios. Producto y categoría no se acumulan. Envío gratis desde 2 macetas. Recargo del 6% con tarjeta, en línea separada.
 
 ## Paso 8 — Calendario operativo y capacidad

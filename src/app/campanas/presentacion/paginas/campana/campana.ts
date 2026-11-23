@@ -28,7 +28,7 @@ export class Campana {
   private promesas = inject(PromesaService);
   readonly promesa = this.promesas.promesa;
   readonly contador = this.promesas.contador;
-  readonly macetasEnvioGratis = inject(EnvioGratisService).MACETAS_PARA_ENVIO_GRATIS;
+  readonly textoPromo = inject(EnvioGratisService).textoPromo;
 
   private titulo = inject(Title);
   private meta = inject(Meta);

@@ -117,6 +117,11 @@ export class DetalleProducto implements OnDestroy {
 
   // "Envío desde $3,50 según destino · Lleva 2 macetas y el envío es gratis (excepto Galápagos)". Valores desde la configuración.
   lineaEnvio = computed(() => {
+    if (this.envioGratis.envioGratisSiempre()) {
+      return this.envioGratis.hayDescuento()
+        ? `Envío gratis a todo el país · ${this.envioGratis.pct()}% de descuento en tu segunda maceta (excepto Galápagos)`
+        : 'Envío gratis a todo el país (excepto Galápagos)';
+    }
     const tarifa = this.ubicaciones.tarifaDesde();
     const desde = tarifa === null ? 'Envío' : `Envío desde $${tarifa.toFixed(2).replace('.', ',')}`;
     return `${desde} según destino · Lleva ${this.envioGratis.MACETAS_PARA_ENVIO_GRATIS} macetas y el envío es gratis (excepto Galápagos)`;

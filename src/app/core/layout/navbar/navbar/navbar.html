@@ -2,11 +2,7 @@
 @if (mostrarAnuncio()) {
 <div class="anuncio-envio" role="status">
     <p class="anuncio-texto">
-        @if (envio.envioGratis()) {
-        <strong>¡Excelente!</strong> Ya tienes envío gratis
-        } @else {
-        <strong>Envío gratis</strong> desde dos unidades
-        }
+        <strong>{{ envio.anuncio().fuerte }}</strong> {{ envio.anuncio().resto }}
     </p>
     <button type="button" class="anuncio-cerrar" (click)="cerrarAnuncio()" aria-label="Cerrar anuncio">
         <i class="bi bi-x-lg"></i>

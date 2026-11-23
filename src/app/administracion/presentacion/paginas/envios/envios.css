@@ -23,3 +23,12 @@
 .vacio { padding: 1rem; color: var(--suave); }
 
 @media (max-width: 560px) { .tabla li { grid-template-columns: 2rem 1fr; } .tabla li select { grid-column: 2; } }
+
+.modos { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.5rem; }
+.modo { display: flex; gap: .7rem; align-items: flex-start; background: var(--tarjeta); border: 2px solid var(--borde); border-radius: 12px; padding: .8rem 1rem; cursor: pointer; }
+.modo.activo { border-color: var(--primario); }
+.modo input { margin-top: .3rem; min-width: 20px; min-height: 20px; }
+.modo span { display: flex; flex-direction: column; gap: .2rem; }
+.modo small { color: var(--suave); }
+.modo .vigente { font-style: normal; font-size: .8rem; color: var(--primario); font-weight: 700; }
+.modos button { align-self: flex-start; min-height: 44px; }

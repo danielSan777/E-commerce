@@ -10,6 +10,7 @@ import { PromesaService } from '../../../aplicacion/servicios/PromesaService';
 import { CarritoService } from '../../../../carrito/aplicacion/servicios/CarritoService';
 import { CHECKOUT_API } from '../../../../testing/pedido-api';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
+import { ModoVentaService } from '../../../../catalogo/aplicacion/servicios/ModoVentaService';
 import { Pago } from './pago';
 
 describe('Pago', () => {
@@ -34,8 +35,62 @@ describe('Pago', () => {
     await fixture.whenStable();
   });
 
+  // Lo guardado en el navegador (datos del checkout, pedido) no debe pasar de una prueba a la siguiente
+  afterEach(() => { localStorage.clear(); sessionStorage.clear(); });
+
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('PayPhone aparece primero y transferencia bancaria después', () => {
+    TestBed.inject(CarritoService).items.set([{ uid: 'a', tipo: 'personalizado', producto: { id: 'a', nombre: 'a', precio: 20 }, vista: '', ruta: '', resumen: [] }]);
+    fixture.detectChanges();
+    const nombres = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.metodo .metodo-texto > strong')).map(e => e.textContent?.trim());
+
+    expect(nombres).toEqual(['Tarjeta con PayPhone', 'Transferencia bancaria']);
+  });
+
+  describe('modo de venta', () => {
+    const maceta = (uid: string, precio: number) => ({ uid, tipo: 'personalizado' as const, producto: { id: uid, nombre: uid, precio }, vista: '', ruta: '', resumen: [] });
+
+    it('modo estándar: recargo de PayPhone sobre productos + envío', () => {
+      TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19)]);   // 2 macetas: envío gratis
+
+      expect(component.descuento()).toBe(0);
+      expect(component.totalTransferencia()).toBe(39);
+      expect(component.recargoPayphone()).toBe(2.34);
+      expect(component.totalPayphone()).toBe(41.34);
+    });
+
+    it('modo todo gratis: 30 % a la de menor valor, envío gratis y sin recargo (el total es el final con cualquier método)', () => {
+      TestBed.inject(ModoVentaService).precios.set({ mode: 'free_shipping_discount', free_shipping_min_planters: 2, card_surcharge_percent: 0, discount_percent: 30, free_shipping_everywhere: true });
+      TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19)]);
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+
+      expect(component.descuento()).toBe(5.7);
+      expect(component.envio()).toBe(0);
+      expect(component.totalTransferencia()).toBe(33.3);
+      expect(component.recargoPayphone()).toBe(0);
+      expect(component.totalPayphone()).toBe(33.3);
+      expect(html.textContent).toContain('Descuento 30% (maceta de menor valor)');
+      expect(html.textContent).toContain('¡Gratis!');
+      expect(html.querySelector('.incluye')).toBeNull();   // no hay "Incluye +6%"
+    });
+
+    it('una zona con tarifa $0 se muestra como «¡Gratis!»', () => {
+      TestBed.inject(CarritoService).items.set([maceta('a', 20)]);
+      TestBed.inject(CheckoutService).actualizar({ provincia: 'Guayas', canton: 'Durán' });
+      TestBed.inject(UbicacionesService).recargar();
+      http.match(r => r.url === '/api/v1/locations').forEach(r => r.flush({
+        zones: [{ code: 'A', name: 'Zona A', price_cents: 0, extra_days: 0, is_available: true }],
+        provinces: [{ code: '09', name: 'Guayas', cantons: [{ code: '0907', name: 'Durán', zone: 'A', is_locality: false }] }],
+      }));
+      fixture.detectChanges();
+
+      expect(component.envio()).toBe(0);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('¡Gratis!');
+    });
   });
 
   it('la entrega empieza como "lo antes posible" con la promesa de Laravel y los términos desmarcados', () => {

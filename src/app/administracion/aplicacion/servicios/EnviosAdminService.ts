@@ -3,13 +3,21 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
-import { CantonAdmin, CodigoZona, DatosZona, ZonaAdmin } from '../../dominio/interfaces/envios-admin';
+import { AjusteModoVenta, CantonAdmin, CodigoZona, DatosZona, ModoVenta, ZonaAdmin } from '../../dominio/interfaces/envios-admin';
 
 // Envíos del panel: zonas con su tarifa y la zona de cada cantón. Todo se guarda en la base de datos desde Laravel.
 @Injectable({ providedIn: 'root' })
 export class EnviosAdminService {
   private http = inject(HttpClient);
   private api = inject(API_URL);
+
+  modoDeVenta(): Observable<AjusteModoVenta> {
+    return this.http.get<AjusteModoVenta>(`${this.api}/admin/sales-mode`).pipe(conErrorApi());
+  }
+
+  guardarModoDeVenta(modo: ModoVenta): Observable<AjusteModoVenta> {
+    return this.http.put<AjusteModoVenta>(`${this.api}/admin/sales-mode`, { mode: modo }).pipe(conErrorApi());
+  }
 
   zonas(): Observable<ZonaAdmin[]> {
     return this.http.get<{ data: ZonaAdmin[] }>(`${this.api}/admin/shipping/zones`).pipe(map(r => r.data), conErrorApi());

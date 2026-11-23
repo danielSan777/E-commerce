@@ -8,7 +8,7 @@ import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { centavosADolares, dolaresACentavos } from '../../../aplicacion/dinero';
 import { EnviosAdminService } from '../../../aplicacion/servicios/EnviosAdminService';
-import { CantonAdmin, CodigoZona, ZonaAdmin } from '../../../dominio/interfaces/envios-admin';
+import { AjusteModoVenta, CantonAdmin, CodigoZona, ModoVenta, ZonaAdmin } from '../../../dominio/interfaces/envios-admin';
 
 interface FormularioZona { precio: string; dias: number | string; disponible: boolean }
 
@@ -38,6 +38,12 @@ export class AdminEnvios implements OnInit {
 
   readonly nombres = NOMBRES;
   readonly codigos: CodigoZona[] = ['A', 'B', 'C', 'no_disponible'];
+
+  // Modo de venta: cuál está activo en la tienda y cuál está elegido en pantalla (se activa al guardar)
+  ajusteModo = signal<AjusteModoVenta | null>(null);
+  modoElegido = signal<ModoVenta>('standard');
+  guardandoModo = signal(false);
+  modoSinGuardar = computed(() => !!this.ajusteModo() && this.ajusteModo()!.mode !== this.modoElegido());
 
   zonas = signal<ZonaAdmin[]>([]);
   formularios = signal<Record<string, FormularioZona>>({});
@@ -83,6 +89,10 @@ export class AdminEnvios implements OnInit {
   cargar(): void {
     this.cargando.set(true);
     this.error.set('');
+    this.servicio.modoDeVenta().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: a => { this.ajusteModo.set(a); this.modoElegido.set(a.mode); },
+      error: (e: ErrorApi) => this.error.set(e.message),
+    });
     this.servicio.zonas().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: z => this.ponerZonas(z),
       error: (e: ErrorApi) => this.error.set(e.message),
@@ -118,6 +128,19 @@ export class AdminEnvios implements OnInit {
         },
         error: (e: ErrorApi) => this.avisos.error(e.message),
       });
+  }
+
+  guardarModo(): void {
+    if (this.guardandoModo() || !this.modoSinGuardar()) return;
+    this.guardandoModo.set(true);
+    this.servicio.guardarModoDeVenta(this.modoElegido()).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.guardandoModo.set(false))).subscribe({
+      next: a => {
+        this.ajusteModo.set(a);
+        this.modoElegido.set(a.mode);
+        this.avisos.exito(a.mode === 'standard' ? 'Modo estándar activado.' : 'Modo «todo con envío gratis» activado.');
+      },
+      error: (e: ErrorApi) => this.avisos.error(e.message),
+    });
   }
 
   // ----- Cantones -----

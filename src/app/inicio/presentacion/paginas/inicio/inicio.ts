@@ -48,7 +48,7 @@ export class Inicio {
   private promesas = inject(PromesaService);
   readonly promesa = this.promesas.promesa;
   readonly contador = this.promesas.contador;
-  readonly macetasEnvioGratis = inject(EnvioGratisService).MACETAS_PARA_ENVIO_GRATIS;
+  readonly textoPromo = inject(EnvioGratisService).textoPromo;
   readonly enlaceAyuda = enlaceWhatsapp();
 
   // Con "reducir movimiento" solo se ve la portada

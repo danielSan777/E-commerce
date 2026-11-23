@@ -34,6 +34,7 @@ export interface Pedido {
     subtotal: number;
     envio: number;
     envioGratis: boolean;
+    descuento?: number;       // descuento del modo de venta en dólares (pedidos guardados antes no lo traen)
     recargo: number;          // cargo de PayPhone (0 si es transferencia)
     total: number;
 }
@@ -45,6 +46,7 @@ export interface NuevoPedido {
     subtotal: number;
     envio: number;
     envioGratis: boolean;
+    descuento?: number;
     recargo: number;
     total: number;
     entrega: EntregaPedido;

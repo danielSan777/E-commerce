@@ -17,6 +17,8 @@ const CANTONES = [
   { code: '0101', name: 'Cuenca', is_locality: false, province_code: '01', province_name: 'Azuay', zone: 'B' },
 ];
 
+const AJUSTE_ESTANDAR = { mode: 'standard', discount_percent: 30, card_surcharge_percent: 6, free_shipping_min_planters: 2 };
+
 describe('AdminEnvios', () => {
   let http: HttpTestingController;
 
@@ -25,6 +27,7 @@ describe('AdminEnvios', () => {
     http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(AdminEnvios);
     fixture.detectChanges();
+    http.expectOne('/api/v1/admin/sales-mode').flush(AJUSTE_ESTANDAR);
     http.expectOne('/api/v1/admin/shipping/zones').flush({ data: ZONAS });
     http.expectOne('/api/v1/admin/shipping/cantons').flush({ data: CANTONES });
     await fixture.whenStable();
@@ -32,6 +35,30 @@ describe('AdminEnvios', () => {
   }
 
   afterEach(() => http?.verify());
+
+  it('muestra el modo de venta activo y lo cambia al guardar (el otro modo queda guardado en Laravel)', async () => {
+    const fixture = await abrir();
+    const c = fixture.componentInstance;
+    const html = fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+
+    expect(html.textContent).toContain('Activo ahora');
+    expect(c.modoSinGuardar()).toBe(false);
+    c.guardarModo();
+    http.expectNone('/api/v1/admin/sales-mode');                      // nada elegido: no llama a la API
+
+    c.modoElegido.set('free_shipping_discount');
+    expect(c.modoSinGuardar()).toBe(true);
+    c.guardarModo();
+    const r = http.expectOne('/api/v1/admin/sales-mode');
+    expect(r.request.method).toBe('PUT');
+    expect(r.request.body).toEqual({ mode: 'free_shipping_discount' });
+    r.flush({ ...AJUSTE_ESTANDAR, mode: 'free_shipping_discount' });
+    fixture.detectChanges();
+
+    expect(c.ajusteModo()?.mode).toBe('free_shipping_discount');
+    expect(c.modoSinGuardar()).toBe(false);
+  });
 
   it('valida precio y días antes de llamar a la API', () => {
     expect(validarZona({ precio: '3.50', dias: 0, disponible: true })).toEqual({});

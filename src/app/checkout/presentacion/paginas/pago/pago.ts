@@ -36,7 +36,6 @@ export class Pago {
   readonly RUTA_CATALOGO = '/categorias';
 
   // Las tarifas y la zona de cada cantón las edita el administrador (panel > Envíos) y llegan desde Laravel
-  readonly RECARGO_PAYPHONE = 0.06;  // 6 % sobre (subtotal + envío) cuando se paga con tarjeta
 
   private carrito = inject(CarritoService);
   private checkout = inject(CheckoutService);
@@ -49,7 +48,10 @@ export class Pago {
   items = this.carrito.items;
   cantidad = this.carrito.cantidad;
   subtotal = this.carrito.subtotal;
-  envioGratis = inject(EnvioGratisService).envioGratis;
+  private promo = inject(EnvioGratisService);
+  envioGratis = this.promo.envioGratis;
+  // Descuento por segunda maceta (modo "todo gratis"); 0 en el modo estándar
+  descuento = this.promo.descuento;
 
   datos = this.checkout.datos;
   metodo = computed<Metodo>(() => this.datos().metodoPago);
@@ -98,18 +100,19 @@ export class Pago {
   tarifaEnvio = computed(() => this.ubicaciones.costo(this.datos().provincia, this.datos().canton));
   envio = computed(() => (this.envioGratis() ? 0 : this.tarifaEnvio()));
 
-  // Total por transferencia (sin cargo adicional)
-  totalTransferencia = computed(() => this.subtotal() + this.envio());
+  // Total por transferencia (sin cargo adicional): productos − descuento + envío
+  totalTransferencia = computed(() => Math.round((this.subtotal() - this.descuento() + this.envio()) * 100) / 100);
 
-  // Cargo de PayPhone en dólares, redondeado a centavos
-  recargoPayphone = computed(() => Math.round(this.totalTransferencia() * 100 * this.RECARGO_PAYPHONE) / 100);
+  // Cargo de PayPhone en dólares, redondeado a centavos. Su porcentaje lo define el modo de venta (0 en "todo gratis")
+  recargoPayphone = computed(() => Math.round(this.totalTransferencia() * 100 * this.promo.recargoPorcentaje() / 100) / 100);
 
-  totalPayphone = computed(() => this.totalTransferencia() + this.recargoPayphone());
+  totalPayphone = computed(() => Math.round((this.totalTransferencia() + this.recargoPayphone()) * 100) / 100);
 
   // Lo que se muestra en "Tu pedido"
   totalFinal = computed(() => (this.metodo() === 'payphone' ? this.totalPayphone() : this.totalTransferencia()));
 
-  porcentajeTexto = Math.round(this.RECARGO_PAYPHONE * 100);
+  porcentajeTexto = computed(() => Number(this.promo.recargoPorcentaje().toFixed(2)));
+  porcentajeDescuento = computed(() => this.promo.pct());
 
   private analytics = inject(AnalyticsService);
 
@@ -185,7 +188,8 @@ export class Pago {
       datos: this.datos(),
       subtotal: this.subtotal(),
       envio: this.envio(),
-      envioGratis: this.envioGratis(),
+      envioGratis: this.envio() === 0,   // tarifa $0 también se muestra como "Envío gratis"
+      descuento: this.descuento(),
       recargo: payphone ? this.recargoPayphone() : 0,
       total: this.totalFinal(),
       entrega,

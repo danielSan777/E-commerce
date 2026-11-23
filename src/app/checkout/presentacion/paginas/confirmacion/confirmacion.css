@@ -239,6 +239,11 @@ h1 {
     font-weight: 700;
 }
 
+.totales .descuento {
+    color: #b3402a;
+    font-weight: 700;
+}
+
 .totales .total {
     margin-top: 4px;
     font-family: Georgia, 'Times New Roman', serif;

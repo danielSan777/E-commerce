@@ -73,8 +73,18 @@ export class Carrito implements AfterViewInit, OnDestroy {
   subtotal = this.carrito.subtotal;
   cantidad = this.carrito.cantidad;
 
-  // Envío gratis desde 2 macetas (misma regla que el anuncio del navbar)
-  envioGratis = inject(EnvioGratisService).envioGratis;
+  // Envío gratis y descuento por segunda maceta según el modo de venta (misma regla que el anuncio del navbar)
+  private promo = inject(EnvioGratisService);
+  envioGratis = this.promo.envioGratis;
+  envioGratisSiempre = this.promo.envioGratisSiempre;
+  todoGratis = this.promo.todoGratis;
+  hayDescuento = this.promo.hayDescuento;
+  descuentoActivo = this.promo.descuentoActivo;
+  descuento = this.promo.descuento;
+  porcentajeDescuento = computed(() => this.promo.pct());
+  ofertaSegundaMaceta = this.promo.ofertaSegundaMaceta;
+  // Con "todo gratis" el total ya es el final (sin envío ni recargo): se muestra en el carrito
+  totalConDescuento = this.promo.subtotalConDescuento;
 
   // Complementos sin maceta: no se compran solos, así que se bloquea el checkout
   hayMacetas = computed(() => this.items().some(i => i.tipo === 'personalizado'));

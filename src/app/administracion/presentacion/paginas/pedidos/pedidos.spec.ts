@@ -10,7 +10,7 @@ import { AdminPedidos, guiaValida, ventana } from './pedidos';
 const pedido = (over: Partial<PedidoAdmin> = {}): PedidoAdmin => ({
   number: 'JDS-1001', channel: 'web', payment_method: 'transfer', payment_status: 'pending_validation', status: 'created',
   customer: { name: 'María Pérez', email: 'm@correo.com', phone: '0991234567' },
-  total_cents: 2450, shipping_cents: 350, shipping_zone: 'A', cycle_date: '2026-11-17', dispatch_date: '2026-11-19',
+  total_cents: 2450, discount_cents: 0, card_fee_cents: 0, shipping_cents: 350, shipping_zone: 'A', cycle_date: '2026-11-17', dispatch_date: '2026-11-19',
   window: { start: '2026-11-20', end: '2026-11-21', type: 'immediate' },
   deadline_at: '2026-11-18T03:00:00Z', receipt_uploaded_at: '2026-11-17T20:00:00Z', whatsapp_clicked_at: null, paid_at: null, production_started_at: null, shipped_at: null, tracking_number: null, created_at: '2026-11-17T15:00:00Z',
   items: [{

@@ -180,6 +180,11 @@ h1 {
     font-weight: 700;
 }
 
+.fila-monto .descuento {
+    color: #b3402a;
+    font-weight: 700;
+}
+
 .tu-pedido {
     display: flex;
     align-items: center;

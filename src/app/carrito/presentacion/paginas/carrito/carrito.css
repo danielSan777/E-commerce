@@ -512,6 +512,18 @@
     color: var(--verde);
 }
 
+/* Descuento y total cuando el modo de venta lo aplica */
+.pie-descuento-valor {
+    font-size: .95rem;
+    color: #b3402a;
+}
+
+.pie-total {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--borde-suave);
+}
+
 .pie-botones {
     display: grid;
     grid-template-columns: 1fr 1fr;

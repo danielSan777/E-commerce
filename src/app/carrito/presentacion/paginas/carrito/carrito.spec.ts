@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { API_URL } from '../../../../core/configuracion/api';
 import { productoListadoApi } from '../../../../testing/catalogo-api';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ModoVentaService } from '../../../../catalogo/aplicacion/servicios/ModoVentaService';
 import { Carrito } from './carrito';
 import { CarritoService, ItemCarrito } from '../../../aplicacion/servicios/CarritoService';
 
@@ -38,6 +39,45 @@ describe('Carrito', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('modo de venta «todo con envío gratis»', () => {
+    const maceta = (uid: string, precio: number): ItemCarrito => ({ uid, tipo: 'personalizado', producto: { id: uid, nombre: uid, precio }, vista: '', ruta: '', resumen: [] });
+    const activar = () => TestBed.inject(ModoVentaService).precios.set({
+      mode: 'free_shipping_discount', free_shipping_min_planters: 2, card_surcharge_percent: 0, discount_percent: 30, free_shipping_everywhere: true,
+    });
+
+    it('con una maceta invita a elegir la segunda con 30 % de descuento en la de menor valor; el envío ya es gratis', () => {
+      activar();
+      TestBed.inject(CarritoService).items.set([maceta('a', 20)]);
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+
+      expect(html.querySelector('.franja-verde h2')?.textContent).toContain('Elige tu segunda maceta con 30% de descuento en la de menor valor');
+      expect(html.querySelector('.pie-envio')?.textContent).toContain('¡Gratis!');
+      expect(html.querySelector('.pie-descuento')).toBeNull();
+    });
+
+    it('con $20 y $19 muestra el descuento sobre la de $19 y el total final', () => {
+      activar();
+      TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19)]);
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+
+      expect(html.querySelector('.pie-descuento-valor')?.textContent).toContain('5.70');
+      expect(html.querySelector('.pie-total .pie-subtotal')?.textContent).toContain('33.30');
+      expect(html.querySelector('.franja-verde h2')?.textContent).toContain('Envío GRATIS y 30% de descuento');
+    });
+
+    it('en el modo estándar no hay descuento ni fila de total', () => {
+      TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19)]);
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+
+      expect(html.querySelector('.pie-descuento')).toBeNull();
+      expect(html.querySelector('.pie-total')).toBeNull();
+      expect(html.querySelector('.franja-verde h2')?.textContent).toContain('Ya tienes envío GRATIS');
+    });
   });
 
   it('"Complementa tu regalo" sale de los productos de tipo complemento de Laravel, sin categorías', () => {
