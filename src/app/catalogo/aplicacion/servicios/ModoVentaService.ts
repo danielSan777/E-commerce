@@ -42,4 +42,10 @@ export class ModoVentaService {
             error: () => { this.pedido = false; },   // se queda el modo estándar y se reintenta en la próxima pantalla
         });
     }
+
+    /** Vuelve a pedir el modo vigente (por ejemplo, al regresar a la pestaña después de un rato). */
+    recargar(): void {
+        this.pedido = false;
+        this.cargar();
+    }
 }
