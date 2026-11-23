@@ -717,7 +717,7 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 | Google | Cuenta de la empresa (no personal), GA4, GTM, Search Console (Merchant Center, después del lanzamiento) | Measurement ID; API secret de Measurement Protocol | Usuario en cada herramienta; publicar en GTM |
 | Bing | Webmaster Tools importado desde Search Console | — | — |
 | PayPhone | Payphone Business; app de Pruebas y app de Producción | StoreID y Token de cada app | Usuario con rol Desarrollador |
-| Correo | Buzones `pedidos@`, `hola@`, `sistema@`, `alertas@` | Contraseña solo de `pedidos@` y `sistema@` (para SMTP) | — |
+| Correo | Buzones `hola@`, `pedidos@`, `pagos@`, `soporte@`, `notificaciones@` | Contraseña solo de `notificaciones@` (para SMTP) | — |
 | Monitoreo | Cuenta de errores y de aviso de caídas a su correo | — | Invitación |
 | Banco | Cuentas para transferencia | Texto exacto a mostrar | — |
 | WhatsApp | Número oficial | Número en formato +593 | — |
@@ -1419,9 +1419,12 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 **Implementación acordada**
 
 - **Correo al comprador:** host `smtp.hostinger.com`, puerto 465 con SSL (alternativa 587 con STARTTLS); usuario = buzón que envía.
-- **Remitente:** `pedidos@jardindesele.com`, nombre "Jardín de Sele". Responder a: `hola@jardindesele.com`.
+- **Remitente (cambio del 2026-11-23, pedido por Daniel):** `notificaciones@jardindesele.com`, nombre "Jardín de Sele"; es el único buzón con contraseña SMTP. Sustituye a `pedidos@` como remitente.
+- **Buzones y su uso:** `hola@` (contacto general y mensajes de la web), `pedidos@` (comunicación de compras y aviso interno de compra nueva), `pagos@` (PayPhone, transferencias y comprobantes; el cliente tiene 12 h para transferir), `soporte@` (reclamos, errores de personalización, daños y entregas: posventa) y `notificaciones@` (remitente automático).
+- **Responder a, según el correo:** pedido recibido y pedido vencido → `pagos@`; pago confirmado → `pedidos@`; enviado → `soporte@`; cancelado → `pagos@` si ya estaba pagado, si no `pedidos@`. Las direcciones salen de `config/mail.php` (`MAIL_BUZON_*`).
+- **Aviso de compra nueva a `pedidos@`:** una vez por pedido, cuando entra una transferencia (por validar) o se aprueba una tarjeta. Solo número, método, total y enlace al panel, sin datos del comprador.
 - **Avisos al administrador:** salen de `sistema@` hacia `alertas@`, separados del buzón de clientes para no consumir su límite diario ni su reputación.
-- **DNS en Cloudflare:** MX `mx1.hostinger.com` y `mx2.hostinger.com`; SPF `v=spf1 include:_spf.mail.hostinger.com ~all` (un solo registro SPF); DKIM con los tres CNAME `hostingermail-a/b/c._domainkey` y los valores de hPanel; DMARC `v=DMARC1; p=none; rua=mailto:dmarc@jardindesele.com`, que pasa a `quarantine` tras 2–4 semanas de reportes limpios.
+- **DNS en Cloudflare:** MX `mx1.hostinger.com` y `mx2.hostinger.com`; SPF `v=spf1 include:_spf.mail.hostinger.com ~all` (un solo registro SPF); DKIM con los tres CNAME `hostingermail-a/b/c._domainkey` y los valores de hPanel; DMARC `v=DMARC1; p=none; rua=mailto:hola@jardindesele.com`, que pasa a `quarantine` tras 2–4 semanas de reportes limpios.
 - **Solo transaccionales** desde estos buzones. El marketing masivo, cuando exista, irá por una herramienta separada.
 - **Fechas** en español y hora de Guayaquil: "martes 10 de noviembre, 07:50".
 - **Límite diario de envío:** los buzones gratuitos de Hostinger envían hasta 100 correos al día y Business Starter hasta 1.000; con unos 20 pedidos diarios hace falta el plan de pago.
@@ -1431,7 +1434,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Acción de Josué**
 
-- Crear los buzones `pedidos@`, `hola@`, `sistema@`, `alertas@` y `dmarc@`.
+- Crear los buzones `hola@`, `pedidos@`, `pagos@`, `soporte@` y `notificaciones@` (los avisos de Paso 18 `sistema@`→`alertas@` quedan pendientes de decidir).
 - Confirmar en hPanel el límite diario de su plan de correo.
 - Aprobar los textos de cada correo.
 
