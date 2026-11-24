@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Router, provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { API_URL } from '../../../../core/configuracion/api';
-import { CHECKOUT_API, SEGUIMIENTO_API, TOKEN_PRUEBA } from '../../../../testing/pedido-api';
+import { CHECKOUT_API, PENDIENTE_API, SEGUIMIENTO_API, TOKEN_PRUEBA } from '../../../../testing/pedido-api';
 import { Confirmacion } from './confirmacion';
 import { NuevoPedido, PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { DatosCheckout } from '../../../aplicacion/servicios/CheckoutService';
@@ -60,6 +60,17 @@ describe('Confirmacion', () => {
 
     document.dispatchEvent(new Event('visibilitychange'));
     TestBed.inject(HttpTestingController).expectOne(`/api/v1/orders/${TOKEN_PRUEBA}`).flush(SEGUIMIENTO_API);
+    await fixture.whenStable();
+
+    expect(ir).toHaveBeenCalledWith(`/pedido/${TOKEN_PRUEBA}`, { replaceUrl: true });
+  });
+
+  it('al volver a la pestaña, si el pedido venció también abre la página del pedido', async () => {
+    const { fixture } = await montar([item('a', 'Doctor', '')]);
+    const ir = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+    document.dispatchEvent(new Event('visibilitychange'));
+    TestBed.inject(HttpTestingController).expectOne(`/api/v1/orders/${TOKEN_PRUEBA}`).flush({ ...PENDIENTE_API, status: 'expired' });
     await fixture.whenStable();
 
     expect(ir).toHaveBeenCalledWith(`/pedido/${TOKEN_PRUEBA}`, { replaceUrl: true });

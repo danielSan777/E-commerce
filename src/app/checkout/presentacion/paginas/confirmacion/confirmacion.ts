@@ -63,12 +63,12 @@ export class Confirmacion {
     });
   }
 
-  /** Pregunta a Laravel (en silencio) si la transferencia ya fue validada; si sí, abre el seguimiento del pedido. */
+  /** Pregunta a Laravel (en silencio) si la transferencia ya fue validada (o si el pedido venció); si cambió, abre la página del pedido con su estado. */
   revisarPago(): void {
     const p = this.pedido();
     if (!p || p.metodo !== 'transferencia' || p.pagoConfirmado) return;
     this.consulta.obtener(p.token).subscribe({
-      next: v => { if (esSeguimiento(v)) this.router.navigateByUrl(`/pedido/${p.token}`, { replaceUrl: true }); },
+      next: v => { if (esSeguimiento(v) || v.status === 'expired') this.router.navigateByUrl(`/pedido/${p.token}`, { replaceUrl: true }); },
       error: () => { /* se queda la pantalla como estaba */ },
     });
   }
