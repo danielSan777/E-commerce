@@ -47,7 +47,8 @@ export interface CategoriaContrato {
     price_from_cents: number;
     subcategories: SubcategoriaContrato[];
     active_subcategory: string | null;
-    products: ProductoCategoria[];
+    products: ProductoCategoria[];   // la primera tanda (20); «Cargar más» pide el resto
+    products_total: number;          // cuántos productos tiene en total esta categoría o subcategoría
     seo: SeoContrato;
 }
 

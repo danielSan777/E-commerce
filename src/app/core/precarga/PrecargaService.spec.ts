@@ -20,7 +20,7 @@ describe('PrecargaService', () => {
 
     ctrl.expectOne('/api/v1/categories-page').flush({ title: null, subtitle: null, items: [] });
     ctrl.expectOne('/api/v1/categories').flush({ data: RESUMEN_CATEGORIAS_API });
-    const pedidas = RESUMEN_CATEGORIAS_API.map(c => `/api/v1/categories/${c.slug}`);
+    const pedidas = RESUMEN_CATEGORIAS_API.map(c => `/api/v1/categories/${c.slug}?limit=20`);
     pedidas.forEach(u => ctrl.expectOne(u).flush({}, { status: 500, statusText: 'x' })); // un error no rompe nada
     ctrl.verify();
   });

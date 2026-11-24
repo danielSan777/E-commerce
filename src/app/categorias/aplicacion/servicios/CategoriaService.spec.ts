@@ -41,7 +41,7 @@ describe('CategoriaService (API de Laravel)', () => {
 
     it('una subcategoría se pide con ?subcategory=; 404 da null y otros errores se propagan', async () => {
         const ok = firstValueFrom(servicio.categoria('profesiones-y-hobbies', 'salud'));
-        ctrl.expectOne('/api/v1/categories/profesiones-y-hobbies?subcategory=salud').flush({
+        ctrl.expectOne('/api/v1/categories/profesiones-y-hobbies?subcategory=salud&limit=20').flush({
             slug: 'profesiones-y-hobbies', name: 'Profesiones y Hobbies', headline: null, intro_html: null, hero: null, price_from_cents: null,
             subcategories: [], active_subcategory: 'salud', products: [producto('doctor')],
             seo: { title: null, description: null, canonical: 'https://jardindesele.com/profesiones-y-hobbies/salud', og_image: null },
@@ -52,17 +52,17 @@ describe('CategoriaService (API de Laravel)', () => {
         expect(c.price_from_cents).toBe(0);
 
         const noExiste = firstValueFrom(servicio.categoria('amor', 'x'));
-        ctrl.expectOne('/api/v1/categories/amor?subcategory=x').flush({}, { status: 404, statusText: 'Not Found' });
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=x&limit=20').flush({}, { status: 404, statusText: 'Not Found' });
         expect(await noExiste).toBeNull();
 
         const cae = firstValueFrom(servicio.categoria('amor')).catch(e => e.status);
-        ctrl.expectOne('/api/v1/categories/amor').flush({}, { status: 500, statusText: 'Error' });
+        ctrl.expectOne('/api/v1/categories/amor?limit=20').flush({}, { status: 500, statusText: 'Error' });
         expect(await cae).toBe(500);
     });
 
     it('la introducción en texto simple se escapa y cada párrafo queda en su etiqueta', async () => {
         const p = firstValueFrom(servicio.categoria('amor'));
-        ctrl.expectOne('/api/v1/categories/amor').flush({
+        ctrl.expectOne('/api/v1/categories/amor?limit=20').flush({
             slug: 'amor', name: 'Amor', headline: 'x', intro_html: 'Uno <b>dos</b> & tres\nlínea\n\nOtro párrafo', hero: { type: 'image', srcset: { '600': 'a-600', '1080': 'a-1080' } },
             price_from_cents: 100, subcategories: [], active_subcategory: null, products: [],
             seo: { title: 'T', description: 'D', canonical: 'c', og_image: 'o' },
@@ -89,7 +89,7 @@ describe('CategoriaService (API de Laravel)', () => {
 
     it('el video del banner (hero_video) llega al contrato; la foto del banner sigue siendo la imagen', async () => {
         const p = firstValueFrom(servicio.categoria('amor'));
-        ctrl.expectOne('/api/v1/categories/amor').flush({
+        ctrl.expectOne('/api/v1/categories/amor?limit=20').flush({
             slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: null, products: [],
             hero: { type: 'image', srcset: { '1080': 'http://api/media/b-1080.webp' } },
             hero_video: { type: 'video', url: 'http://api/media/categories/amor/v.mp4', poster: 'http://api/media/categories/amor/v-portada.webp', duration_s: 40 },
@@ -104,7 +104,7 @@ describe('CategoriaService (API de Laravel)', () => {
     it('hero_videos llega como lista completa al contrato', async () => {
         const p = firstValueFrom(servicio.categoria('amor'));
         const v = (n: number) => ({ type: 'video', url: `http://api/v${n}.mp4`, poster: null, duration_s: 5 });
-        ctrl.expectOne('/api/v1/categories/amor').flush({
+        ctrl.expectOne('/api/v1/categories/amor?limit=20').flush({
             slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: null, products: [],
             hero: null, hero_video: v(1), hero_videos: [v(1), v(2), v(3)],
             seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null },
@@ -116,29 +116,76 @@ describe('CategoriaService (API de Laravel)', () => {
         const cuerpo = { slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: 'a', products: [], hero: null,
             seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null } };
         const primera = firstValueFrom(servicio.categoria('amor', 'a'));
-        ctrl.expectOne('/api/v1/categories/amor?subcategory=a').flush(cuerpo);
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=a&limit=20').flush(cuerpo);
         await primera;
         await firstValueFrom(servicio.categoria('amor', 'a'));
-        ctrl.expectNone('/api/v1/categories/amor?subcategory=a');
+        ctrl.expectNone('/api/v1/categories/amor?subcategory=a&limit=20');
     });
 
     it('adelantar pide en segundo plano cada subcategoría y la respuesta queda lista', async () => {
         const cuerpo = (s: string) => ({ slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: s, products: [], hero: null,
             seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null } });
         servicio.adelantar('amor', ['a', 'b']);
-        ctrl.expectOne('/api/v1/categories/amor?subcategory=a').flush(cuerpo('a'));
-        ctrl.expectOne('/api/v1/categories/amor?subcategory=b').flush(cuerpo('b'));
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=a&limit=20').flush(cuerpo('a'));
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=b&limit=20').flush(cuerpo('b'));
         const c = await firstValueFrom(servicio.categoria('amor', 'b'));
         expect(c?.active_subcategory).toBe('b');
         ctrl.verify();
     });
 
+    it('adelantar pide de 3 en 3 las subcategorías (y «Todos») y no repite lo ya guardado', async () => {
+        const cuerpo = (s: string | null) => ({ slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: s, products: [], hero: null,
+            seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null } });
+        const url = (s: string | null) => `/api/v1/categories/amor?${s ? `subcategory=${s}&` : ''}limit=20`;
+        const actual = firstValueFrom(servicio.categoria('amor', 'a'));
+        ctrl.expectOne(url('a')).flush(cuerpo('a'));
+        await actual;
+
+        servicio.adelantar('amor', [null, 'a', 'b', 'c', 'd', 'e']);
+        // 'a' ya estaba guardada: solo se piden 3 de las 5 restantes al mismo tiempo
+        const primeras = ctrl.match(r => r.url.startsWith('/api/v1/categories/amor'));
+        expect(primeras.map(r => r.request.urlWithParams)).toEqual([url(null), url('b'), url('c')]);
+        primeras[0].flush(cuerpo(null));
+        const cuarta = ctrl.expectOne(url('d'));
+        primeras[1].flush(cuerpo('b'));
+        const quinta = ctrl.expectOne(url('e'));
+        primeras[2].flush(cuerpo('c'));
+        cuarta.flush(cuerpo('d'));
+        quinta.flush(cuerpo('e'));
+    });
+
+    it('«Cargar más» pide los siguientes 20, los suma a la lista y los conserva al volver', async () => {
+        const lista = (desde: number, n: number) => Array.from({ length: n }, (_, i) => producto(`p${desde + i}`));
+        const base = { slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: 'a', hero: null,
+            seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null } };
+        const primera = firstValueFrom(servicio.categoria('amor', 'a'));
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=a&limit=20').flush({ ...base, products: lista(0, 20), products_total: 45 });
+        const c = (await primera)!;
+        expect(c.products_total).toBe(45);
+        expect(servicio.adicionales('amor', 'a')).toEqual([]);
+
+        servicio.cargarMas(c);
+        expect(servicio.estaCargandoMas('amor', 'a')).toBe(true);
+        servicio.cargarMas(c);   // un segundo toque mientras carga no duplica la petición
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=a&limit=20&offset=20').flush({ ...base, products: lista(20, 20), products_total: 45 });
+        expect(servicio.estaCargandoMas('amor', 'a')).toBe(false);
+        expect(servicio.adicionales('amor', 'a').map(p => p.slug)).toEqual(lista(20, 20).map(p => p.slug));
+
+        servicio.cargarMas(c);
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=a&limit=20&offset=40').flush({ ...base, products: lista(40, 5), products_total: 45 });
+        expect(servicio.adicionales('amor', 'a')).toHaveLength(25);
+
+        // al volver a la subcategoría no se consulta nada y lo cargado sigue ahí
+        await firstValueFrom(servicio.categoria('amor', 'a'));
+        expect(servicio.adicionales('amor', 'a')).toHaveLength(25);
+    });
+
     it('un error de la API no se guarda: la siguiente vez vuelve a intentar', async () => {
         const falla = firstValueFrom(servicio.categoria('amor', 'z')).catch(e => e.status);
-        ctrl.expectOne('/api/v1/categories/amor?subcategory=z').flush({}, { status: 500, statusText: 'Error' });
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=z&limit=20').flush({}, { status: 500, statusText: 'Error' });
         expect(await falla).toBe(500);
         void firstValueFrom(servicio.categoria('amor', 'z')).catch(() => undefined);
-        ctrl.expectOne('/api/v1/categories/amor?subcategory=z').flush({}, { status: 500, statusText: 'Error' });
+        ctrl.expectOne('/api/v1/categories/amor?subcategory=z&limit=20').flush({}, { status: 500, statusText: 'Error' });
     });
 
     it('enCache entrega al instante lo ya descargado y esCategoria sabe cuáles son las categorías', async () => {
@@ -151,7 +198,7 @@ describe('CategoriaService (API de Laravel)', () => {
         expect(servicio.esCategoria('navidad')).toBe(false);
 
         const c = firstValueFrom(servicio.categoria('amor'));
-        ctrl.expectOne('/api/v1/categories/amor').flush({ slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: null, products: [], hero: null,
+        ctrl.expectOne('/api/v1/categories/amor?limit=20').flush({ slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: null, products: [], hero: null,
             seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null } });
         await c;
         expect(servicio.enCache('amor')?.slug).toBe('amor');
@@ -160,7 +207,7 @@ describe('CategoriaService (API de Laravel)', () => {
 
     it('sin hero_video no hay video en el contrato', async () => {
         const p = firstValueFrom(servicio.categoria('amor'));
-        ctrl.expectOne('/api/v1/categories/amor').flush({
+        ctrl.expectOne('/api/v1/categories/amor?limit=20').flush({
             slug: 'amor', name: 'Amor', headline: null, intro_html: null, price_from_cents: null, subcategories: [], active_subcategory: null, products: [], hero: null,
             seo: { title: null, description: null, canonical: 'https://jardindesele.com/amor', og_image: null },
         });

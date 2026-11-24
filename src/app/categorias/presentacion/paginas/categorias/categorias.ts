@@ -78,11 +78,17 @@ export class Categorias {
   });
   otras = computed(() => this.tarjetas().filter(t => t.slug !== this.categoria()?.slug));
 
-  // "Ver más de Salud": al inicio se ven los primeros productos; todos están en el HTML (los demás, ocultos)
-  readonly PRODUCTOS_INICIALES = 4;
-  verTodos = signal(false);
-  visible(indice: number): boolean {
-    return this.verTodos() || indice < this.PRODUCTOS_INICIALES;
+  // Lista de productos: la primera tanda (20) y todo lo que «Cargar más» fue sumando. Cada lista queda guardada en el servicio,
+  // así que cambiar de subcategoría o de categoría y volver la muestra completa al instante, sin volver a pedirla.
+  readonly productos = computed(() => {
+    const c = this.categoria();
+    return c ? [...c.products, ...this.servicio.adicionales(c.slug, c.active_subcategory)] : [];
+  });
+  readonly hayMas = computed(() => { const c = this.categoria(); return !!c && this.productos().length < c.products_total; });
+  readonly cargandoMas = computed(() => { const c = this.categoria(); return !!c && this.servicio.estaCargandoMas(c.slug, c.active_subcategory); });
+  cargarMas(): void {
+    const c = this.categoria();
+    if (c) this.servicio.cargarMas(c);
   }
 
   constructor() {
@@ -93,7 +99,7 @@ export class Categorias {
     afterNextRender(() => {
       effect(() => {
         const c = this.categoria();
-        if (c?.slug && c.subcategories.length) this.servicio.adelantar(c.slug, c.subcategories.map(s => s.slug));
+        if (c?.slug && c.subcategories.length) this.servicio.adelantar(c.slug, [null, ...c.subcategories.map(s => s.slug)]);
       }, { injector: this.injector });
     });
 

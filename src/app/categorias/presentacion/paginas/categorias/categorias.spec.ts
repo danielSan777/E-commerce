@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { API_URL } from '../../../../core/configuracion/api';
+import { CategoriaService } from '../../../aplicacion/servicios/CategoriaService';
 import { Categorias } from './categorias';
 
 const esperar = (ms = 0) => new Promise<void>(r => setTimeout(r, ms));
@@ -44,7 +45,7 @@ async function montar(categoria: string | null, subcategoria: string | null, res
     fixture.detectChanges();
     await esperar();
     ctrl.expectOne('/api/v1/categories').flush({ data: RESUMEN });
-    const consulta = subcategoria ? `?subcategory=${subcategoria}` : '';
+    const consulta = subcategoria ? `?subcategory=${subcategoria}&limit=20` : '?limit=20';
     const peticion = ctrl.expectOne(`/api/v1/categories/${categoria}${consulta}`);
     if (typeof respuesta === 'number') peticion.flush({ message: 'x' }, { status: respuesta, statusText: 'Error' });
     else if (respuesta === null) peticion.flush({ code: 'not_found', message: 'No existe' }, { status: 404, statusText: 'Not Found' });
@@ -75,6 +76,28 @@ describe('Categorias (pantalla de una categoría con datos de Laravel)', () => {
         const enlaces = Array.from(html.querySelectorAll<HTMLAnchorElement>('.personalizar')).map(a => a.getAttribute('href'));
 
         expect(enlaces.sort()).toEqual(['/producto/bob/personalizar', '/producto/homero/personalizar']);
+    });
+
+    it('si la categoría tiene más productos de los que llegaron, muestra «Cargar más» y al tocarlo suma los siguientes 20', async () => {
+        const primeros = Array.from({ length: 20 }, (_, i) => producto(`p${i}`, `P${i}`));
+        const html = await montar('amor', null, categoriaApi('amor', 'Amor', { products: primeros, products_total: 25 }));
+        const boton = () => html.querySelector<HTMLButtonElement>('.ver-mas');
+
+        expect(html.querySelectorAll('.producto').length).toBe(20);
+        expect(boton()?.textContent).toContain('Cargar más');
+
+        boton()!.click();
+        const peticion = TestBed.inject(HttpTestingController).expectOne('/api/v1/categories/amor?limit=20&offset=20');
+        peticion.flush(categoriaApi('amor', 'Amor', { products: Array.from({ length: 5 }, (_, i) => producto(`q${i}`, `Q${i}`)), products_total: 25 }));
+        await esperar();
+
+        expect(TestBed.inject(CategoriaService).adicionales('amor', null).map(p => p.slug)).toEqual(['q0', 'q1', 'q2', 'q3', 'q4']);
+    });
+
+    it('si ya llegaron todos los productos no hay botón «Cargar más»', async () => {
+        const html = await montar('amor', null, categoriaApi('amor', 'Amor', { products: [producto('bob', 'Bob')], products_total: 1 }));
+
+        expect(html.querySelector('.ver-mas')).toBeNull();
     });
 
     it('muestra la ruta Inicio / Categorías / nombre y las otras 3 categorías', async () => {

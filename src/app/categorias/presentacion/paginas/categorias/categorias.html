@@ -53,10 +53,10 @@
     }
 
     <!-- Grilla -->
-    @if (c.products.length) {
+    @if (productos().length) {
     <ul class="grilla">
-        @for (p of c.products; track p.sku; let i = $index) {
-        <li [hidden]="!visible(i)">
+        @for (p of productos(); track p.sku) {
+        <li>
             <article class="producto">
                 <a class="enlace" [routerLink]="['/producto', p.slug]">
                     <span class="foto">
@@ -76,9 +76,9 @@
         </li>
         }
     </ul>
-    @if (c.products.length > PRODUCTOS_INICIALES && !verTodos()) {
-    <button type="button" class="ver-mas" (click)="verTodos.set(true)">
-        Ver más{{ subcategoria() ? ' de ' + subcategoria()!.name : '' }} <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    @if (hayMas()) {
+    <button type="button" class="ver-mas" [disabled]="cargandoMas()" (click)="cargarMas()">
+        {{ cargandoMas() ? 'Cargando…' : 'Cargar más' + (subcategoria() ? ' de ' + subcategoria()!.name : '') }} <i class="bi bi-chevron-down" aria-hidden="true"></i>
     </button>
     }
     } @else {

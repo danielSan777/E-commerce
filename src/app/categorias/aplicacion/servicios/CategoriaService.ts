@@ -1,6 +1,6 @@
 import { HttpClient, HttpContext, HttpErrorResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, of, shareReplay, tap, throwError } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { EMPTY, Observable, catchError, from, map, mergeMap, of, shareReplay, tap, throwError } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
 import { SIN_CARGANDO } from '../../../shared/interceptores/cargandoInterceptor';
 import {
@@ -8,7 +8,12 @@ import {
 } from '../../dominio/interfaces/categoria';
 
 const SITIO = 'https://jardindesele.com';
-const VIGENCIA_MS = 2 * 60 * 1000;
+/** Lo ya descargado de una categoría se conserva este tiempo: volver a ella o a una subcategoría no consulta la API. */
+const VIGENCIA_MS = 15 * 60 * 1000;
+/** Productos que se piden de una vez por categoría o subcategoría, y cuántos más trae «Cargar más». */
+export const PRODUCTOS_POR_PAGINA = 20;
+/** Cuántas subcategorías se adelantan a la vez, para no saturar a Laravel. */
+const ADELANTOS_SIMULTANEOS = 3;
 /** Foto que se muestra mientras un producto o una categoría todavía no tiene imagen subida. */
 export const IMAGEN_PENDIENTE = 'imagenes/sin-imagen.svg';
 
@@ -24,6 +29,7 @@ interface CategoriaApi {
     subcategories: { slug: string; name: string; url: string }[];
     active_subcategory: string | null;
     products: ProductoCategoria[];
+    products_total?: number;
     seo: { title: string | null; description: string | null; canonical: string; og_image: string | null };
 }
 
@@ -54,6 +60,9 @@ export class CategoriaService {
     private slugs: Set<string> | null = null;
     private valores = new Map<string, { en: number; valor: CategoriaContrato | null }>();
     private recientes = new Map<string, { en: number; datos$: Observable<CategoriaContrato | null> }>();
+    // Productos que «Cargar más» fue agregando a cada lista (clave `categoria|subcategoria`); se conservan junto con la primera tanda.
+    private extras = signal<ReadonlyMap<string, ProductoCategoria[]>>(new Map());
+    private cargandoMas = signal<ReadonlySet<string>>(new Set());
 
     /** Las categorías activas, en su orden (menú, inicio y tarjetas). Se piden una sola vez. */
     categorias(enSegundoPlano = false): Observable<CategoriaResumen[]> {
@@ -76,12 +85,13 @@ export class CategoriaService {
     categoria(slug: string | null, subcategoria: string | null = null, enSegundoPlano = false): Observable<CategoriaContrato | null> {
         if (!slug) return this.todos();
 
-        // Lo ya pedido se reutiliza por 2 minutos: volver a una subcategoría es instantáneo y no consulta la API.
+        // Lo ya pedido se reutiliza: volver a una subcategoría o a una categoría es instantáneo y no consulta la API.
         const clave = `${slug}|${subcategoria ?? ''}`;
         const guardado = this.recientes.get(clave);
         if (guardado && Date.now() - guardado.en < VIGENCIA_MS) return guardado.datos$;
+        this.quitarExtras(clave);   // la lista se vuelve a pedir desde el principio
 
-        const consulta = subcategoria ? `?subcategory=${encodeURIComponent(subcategoria)}` : '';
+        const consulta = `?${subcategoria ? `subcategory=${encodeURIComponent(subcategoria)}&` : ''}limit=${PRODUCTOS_POR_PAGINA}`;
         const contexto = enSegundoPlano ? new HttpContext().set(SIN_CARGANDO, true) : undefined;
         const datos$ = this.http.get<CategoriaApi>(`${this.api}/categories/${encodeURIComponent(slug)}${consulta}`, { context: contexto }).pipe(
             map(c => this.aContrato(c)),
@@ -107,9 +117,50 @@ export class CategoriaService {
         return v && Date.now() - v.en < VIGENCIA_MS ? v.valor : undefined;
     }
 
-    /** Adelanta en segundo plano las demás subcategorías de una categoría, para que al tocar una pestaña ya esté lista. */
-    adelantar(slug: string, subcategorias: string[]): void {
-        subcategorias.forEach(sub => this.categoria(slug, sub, true).subscribe({ error: () => undefined }));
+    /**
+     * Adelanta en segundo plano las primeras 20 de cada subcategoría (y «Todos»), de 3 en 3, para que al tocar una pestaña ya esté lista.
+     * Lo que ya está guardado no se vuelve a pedir.
+     */
+    adelantar(slug: string, subcategorias: (string | null)[]): void {
+        from(subcategorias).pipe(
+            mergeMap(sub => this.categoria(slug, sub, true).pipe(catchError(() => EMPTY)), ADELANTOS_SIMULTANEOS),
+        ).subscribe();
+    }
+
+    /** Los productos que «Cargar más» agregó a esta lista, después de la primera tanda. Reactivo: úsalo dentro de un `computed`. */
+    adicionales(slug: string, subcategoria: string | null): ProductoCategoria[] {
+        return this.extras().get(`${slug}|${subcategoria ?? ''}`) ?? [];
+    }
+
+    /** ¿Se está pidiendo la siguiente tanda de esta lista? Reactivo. */
+    estaCargandoMas(slug: string, subcategoria: string | null): boolean {
+        return this.cargandoMas().has(`${slug}|${subcategoria ?? ''}`);
+    }
+
+    /** Pide otros 20 productos de la lista y los suma a lo ya cargado; quedan guardados para cuando se vuelva a ella. */
+    cargarMas(actual: CategoriaContrato): void {
+        const slug = actual.slug;
+        const sub = actual.active_subcategory;
+        const clave = `${slug}|${sub ?? ''}`;
+        if (this.cargandoMas().has(clave)) return;
+        const previos = this.extras().get(clave) ?? [];
+        const desde = actual.products.length + previos.length;
+        this.cargandoMas.update(s => new Set(s).add(clave));
+        const consulta = `?${sub ? `subcategory=${encodeURIComponent(sub)}&` : ''}limit=${PRODUCTOS_POR_PAGINA}&offset=${desde}`;
+        this.http.get<CategoriaApi>(`${this.api}/categories/${encodeURIComponent(slug)}${consulta}`, { context: new HttpContext().set(SIN_CARGANDO, true) }).subscribe({
+            next: c => {
+                const vistos = new Set([...actual.products, ...previos].map(p => p.sku));
+                const nuevos = c.products.map(conImagen).filter(p => !vistos.has(p.sku));
+                this.extras.update(m => new Map(m).set(clave, [...previos, ...nuevos]));
+                this.cargandoMas.update(s => { const n = new Set(s); n.delete(clave); return n; });
+            },
+            error: () => this.cargandoMas.update(s => { const n = new Set(s); n.delete(clave); return n; }),
+        });
+    }
+
+    private quitarExtras(clave: string): void {
+        if (!this.extras().has(clave)) return;
+        this.extras.update(m => { const n = new Map(m); n.delete(clave); return n; });
     }
 
     /** Productos activos, los más nuevos primero (`limite` opcional). */
@@ -147,6 +198,7 @@ export class CategoriaService {
             subcategories: [],
             active_subcategory: null,
             products: items,
+            products_total: items.length,
             seo: {
                 title: 'Todos los productos | Jardín de Sele',
                 description: 'Macetas personalizadas con plantita natural. Envíos a todo Ecuador.',
@@ -172,6 +224,7 @@ export class CategoriaService {
             subcategories,
             active_subcategory: c.active_subcategory,
             products: c.products.map(conImagen),
+            products_total: c.products_total ?? c.products.length,
             seo: {
                 title: c.seo.title ?? `${c.name} | Jardín de Sele`,
                 description: c.seo.description ?? c.headline ?? 'Macetas personalizadas con plantita natural. Envíos a todo Ecuador.',
