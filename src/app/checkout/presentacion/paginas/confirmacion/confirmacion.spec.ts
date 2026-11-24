@@ -16,7 +16,7 @@ const item = (uid: string, nombre: string, vista: string): ItemCarrito => ({
 
 function pedido(items: ItemCarrito[], metodo: 'transferencia' | 'payphone' = 'transferencia'): NuevoPedido {
   return {
-    metodo, items, datos: { metodoPago: metodo, provincia: 'Guayas', canton: 'Durán' } as DatosCheckout,
+    metodo, items, datos: { metodoPago: metodo, correo: 'cliente@correo.com', provincia: 'Guayas', canton: 'Durán' } as DatosCheckout,
     subtotal: 25, envio: 3.5, envioGratis: false, recargo: 0, total: 28.5,
     entrega: { tipo: 'inmediata', window: { start: '2026-11-12', end: '2026-11-13' }, label: 'x', promise_token: 't' },
   };
@@ -44,6 +44,14 @@ describe('Confirmacion', () => {
     const fixture = TestBed.createComponent(Confirmacion);
     await fixture.whenStable();
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('avisa a qué correo se envió el pedido con el enlace de seguimiento', async () => {
+    const { html } = await montar([item('a', 'Doctor', '')]);
+    const aviso = html.querySelector('.aviso-correo')?.textContent ?? '';
+
+    expect(aviso).toContain('Te enviamos un correo a cliente@correo.com');
+    expect(aviso).toContain('spam');
   });
 
   it('transferencia: número, plazo y cuentas vienen de Laravel', async () => {

@@ -17,6 +17,11 @@
             Tu pedido ha sido recibido correctamente.
             }
         </p>
+        @if (p.datos.correo) {
+        <p class="aviso-correo"><i class="bi bi-envelope-check" aria-hidden="true"></i>
+            Te enviamos un correo a <strong>{{ p.datos.correo }}</strong> con tu pedido y el enlace para seguirlo.
+            Si no lo ves, revisa tu carpeta de spam.</p>
+        }
     </div>
 
     <!-- ===== Número de pedido ===== -->
