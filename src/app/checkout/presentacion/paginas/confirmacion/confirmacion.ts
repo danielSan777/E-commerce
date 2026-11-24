@@ -1,7 +1,8 @@
-import { Component, afterNextRender, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
+import { PedidoConsultaService, esSeguimiento } from '../../../aplicacion/servicios/PedidoConsultaService';
 import { distintivoBanco } from '../../../dominio/interfaces/datos_transferencia';
 import { itemsConFoto, nombreArchivoFoto } from '../../../dominio/validaciones/foto_pedido';
 import { fechaLarga } from '../../../dominio/validaciones/mensaje_whatsapp';
@@ -19,6 +20,8 @@ export class Confirmacion {
 
   private pedidos = inject(PedidoService);
   private router = inject(Router);
+  private consulta = inject(PedidoConsultaService);
+  private destruir = inject(DestroyRef);
 
   pedido = this.pedidos.pedido;
 
@@ -53,6 +56,20 @@ export class Confirmacion {
       // Un pedido con tarjeta que todavía no se pagó no es una compra confirmada: vuelve a la Cajita
       const p = this.pedido();
       if (p && p.metodo === 'payphone' && !p.pagoConfirmado) this.router.navigateByUrl('/checkout/tarjeta', { replaceUrl: true });
+      // Al volver a la pestaña con una transferencia pendiente, se revisa si ya se validó el pago: de ser así, pasa al seguimiento
+      const alVolver = () => { if (document.visibilityState === 'visible') this.revisarPago(); };
+      document.addEventListener('visibilitychange', alVolver);
+      this.destruir.onDestroy(() => document.removeEventListener('visibilitychange', alVolver));
+    });
+  }
+
+  /** Pregunta a Laravel (en silencio) si la transferencia ya fue validada; si sí, abre el seguimiento del pedido. */
+  revisarPago(): void {
+    const p = this.pedido();
+    if (!p || p.metodo !== 'transferencia' || p.pagoConfirmado) return;
+    this.consulta.obtener(p.token).subscribe({
+      next: v => { if (esSeguimiento(v)) this.router.navigateByUrl(`/pedido/${p.token}`, { replaceUrl: true }); },
+      error: () => { /* se queda la pantalla como estaba */ },
     });
   }
 

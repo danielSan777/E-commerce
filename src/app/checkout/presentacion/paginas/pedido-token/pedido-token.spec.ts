@@ -1,5 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute, provideRouter } from '@angular/router';
@@ -23,6 +24,18 @@ async function montar(respuesta: { cuerpo: object; status?: number }) {
 }
 
 describe('PedidoToken (/pedido/{token})', () => {
+    it('al volver a la pestaña vuelve a pedir el pedido y pasa de pendiente a pagado', async () => {
+        const html = await montar({ cuerpo: PENDIENTE_API });
+        expect(html.textContent).toContain('Pendiente de pago');
+
+        document.dispatchEvent(new Event('visibilitychange'));
+        TestBed.inject(HttpTestingController).expectOne(`/api/v1/orders/${TOKEN_PRUEBA}`).flush(SEGUIMIENTO_API);
+        await TestBed.inject(ApplicationRef).whenStable();
+
+        expect(html.textContent).toContain('Confirmado');
+        expect(html.textContent).not.toContain('Pendiente de pago');
+    });
+
     it('pedido pagado: muestra el seguimiento con el estado, la ventana y el nombre', async () => {
         const html = await montar({ cuerpo: SEGUIMIENTO_API });
 

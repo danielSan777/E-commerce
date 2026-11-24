@@ -1,9 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { API_URL } from '../../../../core/configuracion/api';
-import { CHECKOUT_API, TOKEN_PRUEBA } from '../../../../testing/pedido-api';
+import { CHECKOUT_API, SEGUIMIENTO_API, TOKEN_PRUEBA } from '../../../../testing/pedido-api';
 import { Confirmacion } from './confirmacion';
 import { NuevoPedido, PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { DatosCheckout } from '../../../aplicacion/servicios/CheckoutService';
@@ -52,6 +52,17 @@ describe('Confirmacion', () => {
 
     expect(aviso).toContain('Te enviamos un correo a cliente@correo.com');
     expect(aviso).toContain('spam');
+  });
+
+  it('al volver a la pestaña con transferencia pendiente, si ya se validó el pago abre el seguimiento', async () => {
+    const { fixture } = await montar([item('a', 'Doctor', '')]);
+    const ir = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+    document.dispatchEvent(new Event('visibilitychange'));
+    TestBed.inject(HttpTestingController).expectOne(`/api/v1/orders/${TOKEN_PRUEBA}`).flush(SEGUIMIENTO_API);
+    await fixture.whenStable();
+
+    expect(ir).toHaveBeenCalledWith(`/pedido/${TOKEN_PRUEBA}`, { replaceUrl: true });
   });
 
   it('transferencia: número, plazo y cuentas vienen de Laravel', async () => {

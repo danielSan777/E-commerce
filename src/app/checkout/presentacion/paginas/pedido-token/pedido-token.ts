@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, afterNextRender, inject, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { PedidoPendiente as VistaPendiente } from '../../../dominio/interfaces/pedido_pendiente';
@@ -58,6 +58,19 @@ export class PedidoToken {
     // Página privada: no se indexa (Paso 16). Los pixeles no se cargan aquí.
     this.meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });
     this.cargar();
+    // Al volver a la pestaña se pide el pedido otra vez, sin pantalla de carga, para ver si ya se validó el pago o cambió el estado
+    const destruir = inject(DestroyRef);
+    afterNextRender(() => {
+      const alVolver = () => { if (document.visibilityState === 'visible') this.refrescar(); };
+      document.addEventListener('visibilitychange', alVolver);
+      destruir.onDestroy(() => document.removeEventListener('visibilitychange', alVolver));
+    });
+  }
+
+  /** Vuelve a leer el pedido en silencio: no borra lo que la persona estaba haciendo (por ejemplo, un comprobante ya elegido). */
+  refrescar(): void {
+    if (this.estado().tipo === 'cargando' || this.estado().tipo === 'no_encontrado') return;
+    this.servicio.obtener(this.token).subscribe({ next: v => this.mostrar(v), error: () => { /* se queda lo que ya se veía */ } });
   }
 
   pendiente(): VistaPendiente | null {
