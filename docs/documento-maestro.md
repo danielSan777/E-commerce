@@ -1400,8 +1400,8 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Configurar el correo con SMTP autenticado de Hostinger (nunca `mail()`).
-- [ ] Crear los registros DNS de correo en Cloudflare.
+- [x] Configurar el correo con SMTP autenticado de Hostinger (nunca `mail()`). *(2026-11-24: `notificaciones@`, `smtp.hostinger.com:587` con STARTTLS; los correos de compra y de cambio de estado ya llegan.)*
+- [x] Crear los registros DNS de correo en Cloudflare. *(2026-11-24: creados por Daniel; falta revisar SPF/DKIM/DMARC en «Mostrar original» de Gmail.)*
 - [ ] Plantillas fijas de la tabla de abajo, con textos aprobados por Josué. *(En curso: los cinco correos ya se envían —pedido recibido, pago confirmado, enviado, vencido y cancelado— con un texto provisional que Josué debe aprobar; falta configurar el SMTP real y los DNS.)*
 - [x] Clave de idempotencia por correo: pedido + motivo. (`order_events.idempotency_key` única «correo:{pedido}:{motivo}»; un reintento o doble clic no reenvía; corregir la guía tampoco)
 - [x] Registrar en `order_events` cada correo enviado. (destinatario y asunto; si el envío falla se libera la clave para reintentar)
