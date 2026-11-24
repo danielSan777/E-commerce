@@ -53,11 +53,18 @@
               <dt>Comprobante</dt><dd>{{ p.receipt_uploaded_at ? 'Subido ' + fechaHora(p.receipt_uploaded_at) : 'No ha subido' }}</dd>
               <dt>Tocó WhatsApp</dt><dd>{{ p.whatsapp_clicked_at ? fechaHora(p.whatsapp_clicked_at) : 'No' }}</dd>
               <dt>Entrega</dt><dd>{{ ventana(p.window) }} ({{ p.window.type === 'scheduled' ? 'programada' : 'lo antes posible' }})</dd>
-              <dt>Cliente</dt><dd>{{ p.customer.name }} · {{ p.customer.email }} · {{ p.customer.phone }}</dd>
+              <dt>Cliente</dt>
+              <dd>{{ p.customer.name }} · {{ p.customer.email }} · {{ p.customer.phone }}
+                <button type="button" class="btn-copiar" (click)="copiarCorreo(p.customer.email)" [attr.aria-label]="'Copiar el correo ' + p.customer.email">Copiar correo</button></dd>
               <dt>Envía a</dt>
               <dd>{{ p.shipping.name }} · {{ p.shipping.address }}, {{ p.shipping.canton_name }}, {{ p.shipping.province_name }}
                 @if (p.shipping.reference) { <br><small>Ref.: {{ p.shipping.reference }}</small> }</dd>
               <dt>Documento</dt><dd>{{ p.shipping.id_number }}</dd>
+              <dt>Etiqueta de envío</dt>
+              <dd class="etiqueta">
+                <button type="button" class="btn-copiar" (click)="descargarEtiqueta(p, 'pdf')">Descargar PDF</button>
+                <button type="button" class="btn-copiar" (click)="descargarEtiqueta(p, 'imagen')">Descargar imagen</button>
+              </dd>
             </dl>
 
             <ul class="items">

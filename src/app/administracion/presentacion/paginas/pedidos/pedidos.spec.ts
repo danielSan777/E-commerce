@@ -61,6 +61,30 @@ describe('AdminPedidos', () => {
     expect(el.textContent).toContain('Av. Principal 123, Durán, Guayas');
   });
 
+  it('el botón «Copiar correo» copia el correo del cliente y avisa', async () => {
+    const { c, fixture, el } = await abrir();
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+    const escribir = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: escribir } });
+
+    const boton = Array.from(el.querySelectorAll<HTMLButtonElement>('button')).find(b => b.textContent?.includes('Copiar correo'))!;
+    boton.click();
+    await fixture.whenStable();
+
+    expect(escribir).toHaveBeenCalledWith(pedido().customer.email);
+  });
+
+  it('el detalle ofrece descargar la etiqueta de envío como PDF o como imagen', async () => {
+    const { c, fixture, el } = await abrir();
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+    const textos = Array.from(el.querySelectorAll('button')).map(b => b.textContent?.trim());
+
+    expect(textos).toContain('Descargar PDF');
+    expect(textos).toContain('Descargar imagen');
+  });
+
   it('muestra los accesorios, el color de los lentes, la frase y la foto del marco', async () => {
     const { c, fixture, el } = await abrir();
     c.alternar('JDS-1001');

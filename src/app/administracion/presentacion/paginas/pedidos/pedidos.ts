@@ -6,6 +6,7 @@ import { finalize } from 'rxjs';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { PedidosAdminService } from '../../../aplicacion/servicios/PedidosAdminService';
+import { descargarEtiquetaImagen, descargarEtiquetaPdf, datosDeEtiqueta } from '../../../aplicacion/servicios/EtiquetaEnvio';
 import { EstadoPedidoAdmin, FiltroPedidos, PedidoAdmin, estadoDePedido } from '../../../dominio/interfaces/pedidos-admin';
 
 type Accion = 'pagar' | 'pagar_tarde' | 'cancelar' | 'produccion';
@@ -159,6 +160,30 @@ export class AdminPedidos implements OnInit {
         else { this.confirmando.set(null); this.avisos.error(e.message); }
       },
     });
+  }
+
+  /** Copia el correo del cliente al portapapeles (con respaldo para navegadores sin permiso). */
+  async copiarCorreo(correo: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(correo);
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = correo;
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy'); } catch { /* sin permiso */ }
+      area.remove();
+    }
+    this.avisos.exito(`Correo copiado: ${correo}`);
+  }
+
+  /** Etiqueta con los datos de envío para pegar en la caja, como imagen o como PDF de 15 × 10 cm. */
+  descargarEtiqueta(p: PedidoAdmin, formato: 'pdf' | 'imagen'): void {
+    const datos = datosDeEtiqueta(p, ventana(p.window));
+    if (formato === 'pdf') descargarEtiquetaPdf(datos);
+    else descargarEtiquetaImagen(datos);
   }
 
   /** «Enviado»: exige la guía de Servientrega; el comprador la ve en su seguimiento. */

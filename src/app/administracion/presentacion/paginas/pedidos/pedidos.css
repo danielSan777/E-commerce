@@ -54,3 +54,7 @@
 .buscador input { flex: 1; min-height: 44px; min-width: 0; }
 .buscador button { min-height: 44px; min-width: 44px; }
 .solo-lectores { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.btn-copiar { margin-left: .5rem; padding: .15rem .6rem; font-size: .85rem; border: 1px solid var(--borde, #cfd8d3); border-radius: 999px; background: #fff; color: inherit; cursor: pointer; }
+.btn-copiar:hover { background: #f1f6f3; }
+.etiqueta .btn-copiar { margin: 0 .5rem .25rem 0; }
