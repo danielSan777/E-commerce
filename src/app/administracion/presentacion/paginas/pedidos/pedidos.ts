@@ -181,7 +181,7 @@ export class AdminPedidos implements OnInit {
 
   /** Etiqueta con los datos de envío para pegar en la caja, como imagen o como PDF de 15 × 10 cm. */
   descargarEtiqueta(p: PedidoAdmin, formato: 'pdf' | 'imagen'): void {
-    const datos = datosDeEtiqueta(p, ventana(p.window));
+    const datos = datosDeEtiqueta(p);
     if (formato === 'pdf') descargarEtiquetaPdf(datos);
     else descargarEtiquetaImagen(datos);
   }

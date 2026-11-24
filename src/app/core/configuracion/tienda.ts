@@ -17,6 +17,13 @@ export const TIENDA = {
     mensajeWhatsapp: 'Hola, quisiera más información sobre sus productos.',
 } as const;
 
+/** Quién envía los paquetes: sale como «Remitente» en la etiqueta de envío del panel. */
+export const REMITENTE = {
+    nombre: 'Josué de Santis Alvarado',
+    /** RUC como va impreso en la etiqueta. */
+    ruc: '0930247994-001',
+} as const;
+
 /** Enlace a un chat de WhatsApp de la tienda con un texto ya escrito. */
 export function enlaceWhatsapp(texto: string = TIENDA.mensajeWhatsapp): string {
     return `https://wa.me/${TIENDA.whatsapp}?text=${encodeURIComponent(texto)}`;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PedidoAdmin } from '../../dominio/interfaces/pedidos-admin';
-import { construirPdf, datosDeEtiqueta, partirEnLineas } from './EtiquetaEnvio';
+import { celularEcuatoriano, construirPdf, datosDeEtiqueta, partirEnLineas, provinciaConArticulo } from './EtiquetaEnvio';
 
 const pedido = {
     number: 'JDS-1017', tracking_number: null,
@@ -9,15 +9,23 @@ const pedido = {
 } as PedidoAdmin;
 
 describe('EtiquetaEnvio', () => {
-    it('la etiqueta lleva los datos de quien recibe, con provincia, cantón, referencia y correo', () => {
-        const d = datosDeEtiqueta(pedido, '27 nov – 28 nov');
+    it('la etiqueta lleva los datos de quien recibe: destino con provincia, nombre, dirección, celular, cédula y referencia', () => {
+        const d = datosDeEtiqueta(pedido);
 
-        expect(d).toMatchObject({ numero: 'JDS-1017', destinatario: 'Josué de Santis', celular: '0991112233', correo: 'recibe@correo.com', provincia: 'Guayas', canton: 'Durán', referencia: 'Frente al parque', entrega: '27 nov – 28 nov', guia: '' });
+        expect(d).toEqual({ numero: 'JDS-1017', destino: 'Durán – Prov. del Guayas', nombre: 'Josué de Santis', direccion: 'Cdla. Ejemplo, Mz 4 Villa 12', celular: '0991112233', documento: '0930247994', referencia: 'Frente al parque' });
     });
 
-    it('si el envío no trae correo usa el del comprador', () => {
-        const d = datosDeEtiqueta({ ...pedido, shipping: { ...pedido.shipping, email: '' } }, '');
-        expect(d.correo).toBe('comprador@correo.com');
+    it('el celular siempre sale con 0 inicial, no con +593', () => {
+        expect(celularEcuatoriano('+593 969632650')).toBe('0969632650');
+        expect(celularEcuatoriano('593969632650')).toBe('0969632650');
+        expect(celularEcuatoriano('969632650')).toBe('0969632650');
+        expect(celularEcuatoriano('0969632650')).toBe('0969632650');
+    });
+
+    it('la provincia lleva su artículo: del Guayas, de Manabí', () => {
+        expect(provinciaConArticulo('Guayas')).toBe('Prov. del Guayas');
+        expect(provinciaConArticulo('Manabí')).toBe('Prov. de Manabí');
+        expect(provinciaConArticulo('')).toBe('');
     });
 
     it('parte el texto en renglones y recorta con «…» al pasar el máximo', () => {
