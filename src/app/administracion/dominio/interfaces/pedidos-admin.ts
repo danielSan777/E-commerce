@@ -61,3 +61,14 @@ export function estadoDePedido(p: Pick<PedidoAdmin, 'payment_status' | 'status'>
     if (p.payment_status === 'paid') return 'in_production';
     return p.status === 'expired' ? 'expired' : 'pending';
 }
+
+/** Un hecho del historial del pedido (GET /admin/orders/{n}/history). El texto lo redacta Laravel. */
+export interface EventoPedido {
+    id: number;
+    type: string;
+    reason: string;
+    text: string;
+    actor: 'system' | 'buyer' | 'admin';
+    actor_name: string | null;
+    at: string;
+}

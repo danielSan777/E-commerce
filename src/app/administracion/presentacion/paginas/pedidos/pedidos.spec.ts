@@ -273,6 +273,43 @@ describe('AdminPedidos', () => {
     expect(el.textContent).not.toContain('Registrar reembolso');
   });
 
+  it('al abrir un pedido pide su historial y lo muestra con el texto, la fecha y el autor', async () => {
+    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'in_production' })]);
+    c.alternar('JDS-1001');
+    http.expectOne('/api/v1/admin/orders/JDS-1001/history').flush({ data: [
+      { id: 1, type: 'order', reason: 'created', text: 'Pedido creado (web, transferencia, $24.50)', actor: 'buyer', actor_name: null, at: '2026-11-17T15:00:00Z' },
+      { id: 2, type: 'order', reason: 'paid', text: 'Pago confirmado por transferencia; entrega 20 nov – 21 nov', actor: 'admin', actor_name: 'Josué', at: '2026-11-17T20:00:00Z' },
+      { id: 3, type: 'email', reason: 'paid', text: 'Correo enviado al comprador: Pago confirmado', actor: 'system', actor_name: null, at: '2026-11-17T20:00:05Z' },
+    ] });
+    fixture.detectChanges();
+
+    const filas = Array.from(el.querySelectorAll('.historial li')).map(x => x.textContent?.replace(/\s+/g, ' ').trim());
+    expect(filas).toHaveLength(3);
+    expect(filas[0]).toContain('Pedido creado (web, transferencia, $24.50)');
+    expect(filas[0]).toContain('Comprador');
+    expect(filas[1]).toContain('Josué');
+    expect(filas[2]).toContain('Sistema');
+  });
+
+  it('si el historial no carga, se ofrece reintentar; y tras una acción se vuelve a pedir', async () => {
+    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'in_production' })]);
+    c.filtro.set('all');
+    c.alternar('JDS-1001');
+    http.expectOne('/api/v1/admin/orders/JDS-1001/history').flush({ message: 'x' }, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+    expect(el.querySelector('.historial .campo-error')?.textContent).toContain('No se pudo cargar el historial');
+
+    c.reintentarHistorial('JDS-1001');
+    http.expectOne('/api/v1/admin/orders/JDS-1001/history').flush({ data: [] });
+    fixture.detectChanges();
+    expect(el.querySelector('.historial')?.textContent).toContain('Todavía no hay hechos registrados');
+
+    c.guia.set('AB-12345');
+    c.enviar(c.pedidos()[0]);
+    http.expectOne('/api/v1/admin/orders/JDS-1001/ship').flush(pedido({ payment_status: 'paid', status: 'shipped', tracking_number: 'AB-12345', shipped_at: '2026-11-18T15:00:00Z' }));
+    http.expectOne('/api/v1/admin/orders/JDS-1001/history').flush({ data: [] });   // el envío sumó un hecho: se recarga
+  });
+
   it('ver comprobante descarga el archivo con la sesión del administrador y lo abre', async () => {
     const { c } = await abrir();
     const abrirVentana = vi.spyOn(window, 'open').mockReturnValue(null);

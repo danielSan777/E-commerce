@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
-import { FiltroPedidos, OrdenProduccion, PedidoAdmin } from '../../dominio/interfaces/pedidos-admin';
+import { EventoPedido, FiltroPedidos, OrdenProduccion, PedidoAdmin } from '../../dominio/interfaces/pedidos-admin';
 
 // Pedidos del panel: ver, revisar el comprobante, marcar pagado o cancelar. Laravel decide cupos, ciclos y ventanas.
 @Injectable({ providedIn: 'root' })
@@ -44,6 +44,11 @@ export class PedidosAdminService {
     if (aviso?.motivo.trim()) cuerpo['reason'] = aviso.motivo.trim();     // el motivo se guarda siempre; el correo solo sale con «notificar»
     if (aviso?.reembolso?.trim()) cuerpo['refund_amount'] = aviso.reembolso.trim();   // dólares escritos por Josué; Laravel los valida y convierte
     return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/cancel`, cuerpo).pipe(conErrorApi());
+  }
+
+  /** Historial del pedido, del más antiguo al más reciente. */
+  historial(numero: string): Observable<EventoPedido[]> {
+    return this.http.get<{ data: EventoPedido[] }>(`${this.api}/admin/orders/${numero}/history`).pipe(map(r => r.data), conErrorApi());
   }
 
   /** Registra cuánto se reembolsó a un pedido ya cancelado (el dinero se devuelve a mano). */

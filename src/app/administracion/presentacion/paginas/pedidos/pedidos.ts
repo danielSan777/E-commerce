@@ -7,7 +7,7 @@ import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { PedidosAdminService } from '../../../aplicacion/servicios/PedidosAdminService';
 import { descargarEtiquetaImagen, descargarEtiquetaPdf, datosDeEtiqueta } from '../../../aplicacion/servicios/EtiquetaEnvio';
-import { EstadoPedidoAdmin, FiltroPedidos, OrdenProduccion, PedidoAdmin, estadoDePedido } from '../../../dominio/interfaces/pedidos-admin';
+import { EstadoPedidoAdmin, EventoPedido, FiltroPedidos, OrdenProduccion, PedidoAdmin, estadoDePedido } from '../../../dominio/interfaces/pedidos-admin';
 
 type Accion = 'pagar' | 'pagar_tarde' | 'cancelar' | 'reembolsar';
 
@@ -96,6 +96,7 @@ export class AdminPedidos implements OnInit {
   errorRetraso = signal('');
   guia = signal('');                                       // guía escrita para marcar «Enviado»
   errorGuia = signal('');
+  historial = signal<{ numero: string; eventos: EventoPedido[] | null; error: boolean } | null>(null);   // historial del pedido abierto
   sobrecupo = signal<{ numero: string; mensaje: string } | null>(null);   // Laravel pidió confirmar que se pasa del límite
 
   constructor() {
@@ -154,6 +155,24 @@ export class AdminPedidos implements OnInit {
     this.sobrecupo.set(null);
     this.errorGuia.set('');
     this.guia.set(this.pedidos().find(p => p.number === numero)?.tracking_number ?? '');
+    this.historial.set(null);
+    if (this.abierto() === numero) this.cargarHistorial(numero);
+  }
+
+  /** Pide a Laravel el historial del pedido abierto (qué pasó, cuándo y quién). */
+  private cargarHistorial(numero: string): void {
+    this.historial.set({ numero, eventos: null, error: false });
+    this.servicio.historial(numero).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: eventos => { if (this.historial()?.numero === numero) this.historial.set({ numero, eventos, error: false }); },
+      error: () => { if (this.historial()?.numero === numero) this.historial.set({ numero, eventos: null, error: true }); },
+    });
+  }
+
+  reintentarHistorial(numero: string): void { this.cargarHistorial(numero); }
+
+  /** Quién hizo el hecho, en palabras. */
+  autor(e: EventoPedido): string {
+    return e.actor === 'buyer' ? 'Comprador' : e.actor === 'admin' ? (e.actor_name || 'Administrador') : 'Sistema';
   }
 
   pedirConfirmacion(numero: string, accion: Accion): void {
@@ -289,5 +308,6 @@ export class AdminPedidos implements OnInit {
     const f = this.filtro();
     const sigue = f === 'all' || f === estadoDePedido(nuevo);   // cada filtro es un estado
     this.pedidos.update(l => sigue ? l.map(x => (x.number === nuevo.number ? nuevo : x)) : l.filter(x => x.number !== nuevo.number));
+    if (this.abierto() === nuevo.number && sigue) this.cargarHistorial(nuevo.number);   // la acción acaba de sumar un hecho al historial
   }
 }

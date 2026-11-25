@@ -80,3 +80,10 @@
 .insignia.reembolsado { background: #e0e7ff; color: #3730a3; }
 .monto-reembolso { display: flex; flex-direction: column; gap: .2rem; font-size: .9rem; }
 .monto-reembolso input { min-height: 44px; max-width: 12rem; }
+
+.historial { margin: .75rem 0; padding: .6rem .75rem; background: #f8faf9; border: 1px solid var(--borde); border-radius: 10px; }
+.historial ol { list-style: none; margin: .4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; }
+.historial li { display: grid; grid-template-columns: 9.5rem 1fr auto; gap: .1rem .6rem; font-size: .88rem; align-items: baseline; }
+.historial time { color: var(--suave); }
+.historial small { color: var(--suave); }
+@media (max-width: 560px) { .historial li { grid-template-columns: 1fr; } }

@@ -94,6 +94,23 @@
               </dd>
             </dl>
 
+            <section class="historial" aria-label="Historial del pedido">
+              <strong>Historial</strong>
+              @if (historial(); as h) {
+                @if (h.numero === p.number) {
+                  @if (h.error) { <p class="campo-error" role="alert">No se pudo cargar el historial. <button type="button" class="btn-copiar" (click)="reintentarHistorial(p.number)">Reintentar</button></p> }
+                  @else if (!h.eventos) { <p class="ayuda">Cargando historial…</p> }
+                  @else {
+                    <ol>
+                      @for (ev of h.eventos; track ev.id) {
+                        <li><time [attr.datetime]="ev.at">{{ fechaHora(ev.at) }}</time><span>{{ ev.text }}</span><small>{{ autor(ev) }}</small></li>
+                      } @empty { <li class="ayuda">Todavía no hay hechos registrados.</li> }
+                    </ol>
+                  }
+                }
+              }
+            </section>
+
             <ul class="items">
               @for (i of p.items; track i.id) {
                 <li class="item">
