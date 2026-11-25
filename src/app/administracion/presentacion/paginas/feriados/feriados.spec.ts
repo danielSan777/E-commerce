@@ -17,7 +17,7 @@ describe('AdminFeriados', () => {
     http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(AdminFeriados);
     fixture.detectChanges();
-    http.expectOne(URL).flush({ data: dias, meta: { next_year: 2027, national_holidays_next_year: proximo } });
+    http.expectOne(URL).flush({ data: dias, meta: { today: '2026-11-25', next_year: 2027, national_holidays_next_year: proximo } });
     await fixture.whenStable();
     return fixture;
   }
@@ -32,6 +32,8 @@ describe('AdminFeriados', () => {
     const ok = { desde: '2026-12-01', hasta: '', tipo: 'closure' as const, produccion: true, despacho: false, entrega: false, nota: '' };
     expect(validarDia(ok)).toEqual({});
     expect(validarDia({ ...ok, desde: '' })['desde']).toBeTruthy();
+    expect(validarDia(ok, '2026-12-02')['desde']).toBe('No puedes bloquear un día que ya pasó.');
+    expect(validarDia(ok, '2026-12-01')).toEqual({});   // hoy sí se puede
     expect(validarDia({ ...ok, hasta: '2026-11-30' })['hasta']).toBeTruthy();
     expect(validarDia({ ...ok, produccion: false })['afecta']).toBeTruthy();
     expect(validarDia({ ...ok, nota: 'x'.repeat(151) })['nota']).toBeTruthy();
@@ -59,6 +61,32 @@ describe('AdminFeriados', () => {
     expect(((await abrir([NAVIDAD], 1)).nativeElement as HTMLElement).querySelector('.aviso')).toBeNull();
   });
 
+  it('los selectores de fecha no dejan elegir días anteriores a hoy (el de "hasta", tampoco antes del "desde")', async () => {
+    const f = await abrir();
+    const html = f.nativeElement as HTMLElement;
+    const desde = html.querySelector<HTMLInputElement>('#fer-desde')!;
+    const hasta = html.querySelector<HTMLInputElement>('#fer-hasta')!;
+
+    expect(desde.min).toBe('2026-11-25');
+    expect(hasta.min).toBe('2026-11-25');
+
+    f.componentInstance.poner('desde', '2026-12-10');
+    f.detectChanges();
+    expect(hasta.min).toBe('2026-12-10');
+  });
+
+  it('un día que ya pasó, aunque lo escriban a mano, no llama a la API', async () => {
+    const f = await abrir();
+    f.componentInstance.poner('desde', '2025-02-06');
+    f.componentInstance.poner('hasta', '2026-01-01');
+    f.componentInstance.guardar(new Event('submit'));
+    await f.whenStable();
+    f.detectChanges();
+
+    http.expectNone({ method: 'POST', url: URL });
+    expect((f.nativeElement as HTMLElement).textContent).toContain('No puedes bloquear un día que ya pasó.');
+  });
+
   it('sin fecha no llama a la API', async () => {
     const f = await abrir();
     (f.nativeElement as HTMLElement).querySelector<HTMLFormElement>('form')!.dispatchEvent(new Event('submit'));
@@ -81,7 +109,7 @@ describe('AdminFeriados', () => {
     const post = http.expectOne(r => r.method === 'POST' && r.url === URL);
     expect(post.request.body).toEqual({ date: '2026-12-28', end_date: '2026-12-30', type: 'closure', affects_production: true, affects_dispatch: true, affects_delivery: false, note: 'Viaje' });
     post.flush({ data: [] }, { status: 201, statusText: 'Created' });
-    http.expectOne(URL).flush({ data: [NAVIDAD], meta: { next_year: 2027, national_holidays_next_year: 1 } });
+    http.expectOne(URL).flush({ data: [NAVIDAD], meta: { today: '2026-11-25', next_year: 2027, national_holidays_next_year: 1 } });
     await f.whenStable();
 
     expect(c.formulario().desde).toBe('');   // el formulario queda limpio
@@ -96,7 +124,7 @@ describe('AdminFeriados', () => {
     const post = http.expectOne(r => r.method === 'POST' && r.url === URL);
     expect(post.request.body.end_date).toBeNull();
     post.flush({ ...NAVIDAD, date: '2026-12-31' }, { status: 201, statusText: 'Created' });
-    http.expectOne(URL).flush({ data: [], meta: { next_year: 2027, national_holidays_next_year: 1 } });
+    http.expectOne(URL).flush({ data: [], meta: { today: '2026-11-25', next_year: 2027, national_holidays_next_year: 1 } });
   });
 
   it('quitar un día lo borra por su fecha y refresca', async () => {
@@ -106,7 +134,7 @@ describe('AdminFeriados', () => {
     const del = http.expectOne(`${URL}/2026-12-25`);
     expect(del.request.method).toBe('DELETE');
     del.flush(null, { status: 204, statusText: 'No Content' });
-    http.expectOne(URL).flush({ data: [CIERRE], meta: { next_year: 2027, national_holidays_next_year: 0 } });
+    http.expectOne(URL).flush({ data: [CIERRE], meta: { today: '2026-11-25', next_year: 2027, national_holidays_next_year: 0 } });
     await f.whenStable();
 
     expect(f.componentInstance.dias()).toHaveLength(1);

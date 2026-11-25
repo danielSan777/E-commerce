@@ -16,10 +16,10 @@
   <form class="formulario" (submit)="guardar($event)" novalidate>
     <div class="fechas">
       <label for="fer-desde">Desde
-        <input id="fer-desde" name="desde" type="date" [ngModel]="formulario().desde" (ngModelChange)="poner('desde', $event)" [attr.aria-invalid]="errores()['desde'] ? true : null" />
+        <input id="fer-desde" name="desde" type="date" [min]="hoy()" [ngModel]="formulario().desde" (ngModelChange)="poner('desde', $event)" [attr.aria-invalid]="errores()['desde'] ? true : null" />
       </label>
       <label for="fer-hasta">Hasta (opcional, para un rango)
-        <input id="fer-hasta" name="hasta" type="date" [ngModel]="formulario().hasta" (ngModelChange)="poner('hasta', $event)" [attr.aria-invalid]="errores()['hasta'] ? true : null" />
+        <input id="fer-hasta" name="hasta" type="date" [min]="minimoHasta()" [ngModel]="formulario().hasta" (ngModelChange)="poner('hasta', $event)" [attr.aria-invalid]="errores()['hasta'] ? true : null" />
       </label>
     </div>
     @if (errores()['desde']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }

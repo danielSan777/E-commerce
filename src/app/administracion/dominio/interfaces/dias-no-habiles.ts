@@ -12,7 +12,7 @@ export interface DiaNoHabil {
 /** Lo que Laravel responde al listar: los días y el dato para el aviso del año siguiente. */
 export interface ListaDiasNoHabiles {
   data: DiaNoHabil[];
-  meta: { next_year: number; national_holidays_next_year: number };
+  meta: { today: string; next_year: number; national_holidays_next_year: number };
 }
 
 export interface DatosDiaNoHabil {

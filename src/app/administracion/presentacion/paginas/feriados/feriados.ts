@@ -18,10 +18,11 @@ export const TIPOS: { valor: TipoDiaNoHabil; nombre: string }[] = [
 interface FormularioDia { desde: string; hasta: string; tipo: TipoDiaNoHabil; produccion: boolean; despacho: boolean; entrega: boolean; nota: string }
 
 /** Revisa el formulario antes de llamar a la API (Laravel vuelve a validar). */
-export function validarDia(f: FormularioDia): Record<string, string> {
+export function validarDia(f: FormularioDia, hoy = ''): Record<string, string> {
   const e: Record<string, string> = {};
   const fecha = /^\d{4}-\d{2}-\d{2}$/;
   if (!fecha.test(f.desde)) e['desde'] = 'Elige la fecha.';
+  else if (hoy && f.desde < hoy) e['desde'] = 'No puedes bloquear un día que ya pasó.';
   if (f.hasta && !fecha.test(f.hasta)) e['hasta'] = 'La fecha final no es válida.';
   else if (f.hasta && fecha.test(f.desde) && f.hasta < f.desde) e['hasta'] = 'La fecha final no puede ser anterior a la inicial.';
   if (!f.produccion && !f.despacho && !f.entrega) e['afecta'] = 'Marca al menos una cosa a la que afecta.';
@@ -62,7 +63,11 @@ export class AdminFeriados implements OnInit {
   eliminando = signal<string | null>(null);
   intento = signal(false);
   formulario = signal<FormularioDia>({ ...FORMULARIO_VACIO });
-  errores = computed(() => this.intento() ? validarDia(this.formulario()) : {});
+  /** Hoy en Guayaquil, que lo dice Laravel: el formulario no deja elegir días anteriores. */
+  hoy = computed(() => this.meta()?.today ?? '');
+  /** El rango no puede empezar antes de la fecha inicial elegida. */
+  minimoHasta = computed(() => this.formulario().desde || this.hoy());
+  errores = computed(() => this.intento() ? validarDia(this.formulario(), this.hoy()) : {});
 
   /** Aviso si el año que viene no tiene ningún feriado nacional cargado. */
   sinFeriadosDelAnioSiguiente = computed(() => this.meta()?.national_holidays_next_year === 0);
@@ -113,7 +118,7 @@ export class AdminFeriados implements OnInit {
     const f = this.formulario();
     if (this.guardando()) return;
     this.intento.set(true);
-    if (Object.keys(validarDia(f)).length) return this.avisos.faltanDatos();
+    if (Object.keys(validarDia(f, this.hoy())).length) return this.avisos.faltanDatos();
     this.guardando.set(true);
     this.servicio.guardar({
       date: f.desde, end_date: f.hasta && f.hasta !== f.desde ? f.hasta : null, type: f.tipo,
