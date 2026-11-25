@@ -13,10 +13,16 @@ export const PROMESA_API: Promesa = {
     amazon_note: 'Región Amazónica: considera 1 día adicional.',
 };
 
+// Una ventana por día de entrega (se solapan): cada día + el siguiente día válido, sin domingos.
 export const VENTANAS_API: VentanaDisponible[] = [
     { start: '2026-11-12', end: '2026-11-13', available: true },
     { start: '2026-11-14', end: '2026-11-16', available: true },
     { start: '2026-11-17', end: '2026-11-18', available: false },
     { start: '2026-11-19', end: '2026-11-20', available: true },
     { start: '2026-11-21', end: '2026-11-23', available: true },
+    // el resto de los días de entrega, cada uno con su propia ventana
+    { start: '2026-11-13', end: '2026-11-14', available: true },
+    { start: '2026-11-16', end: '2026-11-17', available: true },
+    { start: '2026-11-18', end: '2026-11-19', available: false },
+    { start: '2026-11-20', end: '2026-11-21', available: true },
 ];

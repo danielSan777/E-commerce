@@ -11,7 +11,7 @@ interface Dia {
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
 // Calendario de ventanas de entrega. Solo dibuja lo que llega en `ventanas` (Laravel las calcula): tocar un día
-// elige su ventana completa (2 días, por ejemplo sábado + lunes). Los días sin ventana o no disponibles salen deshabilitados.
+// elige la ventana que empieza ese día (él y el siguiente día válido: sábado 5 + lunes 7, lunes 7 + martes 8). Todo día habilitado se puede elegir. Los días sin ventana o no disponibles salen deshabilitados.
 @Component({
   selector: 'app-calendario-ventanas',
   templateUrl: './calendario-ventanas.html',
@@ -56,13 +56,13 @@ export class CalendarioVentanas {
     const celdas: (Dia | null)[] = Array(primero).fill(null);
     for (let d = 1; d <= total; d++) {
       const fecha = `${this.mes()}-${String(d).padStart(2, '0')}`;
-      celdas.push({ fecha, numero: d, ventana: this.ventanas().find(v => v.start === fecha || v.end === fecha) });
+      celdas.push({ fecha, numero: d, ventana: this.ventanas().find(v => v.start === fecha) });
     }
     return celdas;
   });
 
   esDeVentana(dia: Dia, v: VentanaDisponible | undefined): boolean {
-    return !!v && !!dia.ventana && dia.ventana.start === v.start && dia.ventana.end === v.end;
+    return !!v && (dia.fecha === v.start || dia.fecha === v.end);
   }
 
   mover(paso: number): void {

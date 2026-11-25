@@ -30,7 +30,7 @@ describe('PromesaService (API de Laravel)', () => {
     it('pide la promesa y las ventanas a Laravel y las deja disponibles', () => {
         cargar();
         expect(servicio.promesa()?.label).toBe('Recíbelo entre jueves 12 y viernes 13 de noviembre');
-        expect(servicio.ventanas().length).toBe(5);
+        expect(servicio.ventanas().length).toBe(VENTANAS_API.length);
     });
 
     it('con un cantón lo envía en la petición (la Amazonía suma un día en Laravel)', () => {

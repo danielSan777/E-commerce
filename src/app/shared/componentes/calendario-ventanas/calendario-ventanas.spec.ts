@@ -50,6 +50,19 @@ describe('CalendarioVentanas', () => {
         expect((f.nativeElement as HTMLElement).querySelector('.resumen')?.textContent).toContain('sábado 14 y lunes 16 de noviembre');
     });
 
+    it('cada día habilitado se puede elegir: el segundo día de una ventana abre la suya (lunes 16 → lunes + martes)', async () => {
+        const f = await montar();
+        botones(f, 'libre').find(b => b.textContent!.trim() === '14')!.click();
+        await f.whenStable();
+        expect(botones(f, 'marcado').map(b => b.textContent!.trim())).toEqual(['14', '16']);
+
+        botones(f, 'libre').find(b => b.textContent!.trim() === '16')!.click();
+        await f.whenStable();
+
+        expect(f.componentInstance.elegida).toEqual({ start: '2026-11-16', end: '2026-11-17', available: true });
+        expect(botones(f, 'marcado').map(b => b.textContent!.trim())).toEqual(['16', '17']);
+    });
+
     it('un día de una ventana no disponible no se puede elegir', async () => {
         const f = await montar();
         botones(f, 'lleno')[0].click();
