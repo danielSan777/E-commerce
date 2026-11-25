@@ -20,9 +20,6 @@ export class MainLayout {
   // ===== Botón flotante de WhatsApp (editable) =====
   // El número y el mensaje se cambian en core/configuracion/tienda.ts (un solo lugar)
 
-  // Texto que se ve junto al botón
-  textoWhatsapp = 'Chatea con nosotros';
-
   // Dirección final del chat
   readonly enlaceWhatsapp = enlaceWhatsapp(TIENDA.mensajeWhatsapp);
 

@@ -19,17 +19,6 @@
     text-decoration: none;
 }
 
-.whatsapp-texto {
-    background-color: #fff;
-    color: #111;
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 10px 18px;
-    border-radius: 10px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-    white-space: nowrap;
-}
-
 .whatsapp-icono {
     width: 62px;
     height: 62px;
@@ -43,19 +32,50 @@
     justify-content: center;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    /* cada 5 segundos: vibra ligeramente y pasa un reflejo de luz */
+    animation: whatsapp-vibrar 5s ease-in-out infinite;
+}
+
+.whatsapp-icono::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -80%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    transform: skewX(-20deg);
+    animation: whatsapp-reflejo 5s ease-in-out infinite;
+}
+
+@keyframes whatsapp-vibrar {
+    0%, 84%, 100% { transform: rotate(0); }
+    86% { transform: rotate(-8deg); }
+    88% { transform: rotate(8deg); }
+    90% { transform: rotate(-6deg); }
+    92% { transform: rotate(6deg); }
+    94% { transform: rotate(-3deg); }
+    96% { transform: rotate(0); }
+}
+
+@keyframes whatsapp-reflejo {
+    0%, 80% { left: -80%; }
+    95%, 100% { left: 140%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .whatsapp-icono,
+    .whatsapp-icono::after { animation: none; }
 }
 
 .whatsapp-flotante:hover .whatsapp-icono {
     transform: scale(1.1);
 }
 
-/* Celular: solo el círculo verde, sin el texto */
+/* Celular: círculo un poco más chico */
 @media (max-width: 575.98px) {
-    .whatsapp-texto {
-        font-size: 0.85rem;
-        padding: 8px 12px;
-    }
-
     .whatsapp-icono {
         width: 56px;
         height: 56px;

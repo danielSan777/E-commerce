@@ -35,9 +35,6 @@ export class Footer {
   // Mensaje que aparece escrito al abrir el chat
   mensajeWhatsapp = TIENDA.mensajeWhatsapp;
 
-  // Texto que se ve junto al botón
-  textoWhatsapp = 'Chatea con nosotros';
-
 
 
   // ===== TODO LO EDITABLE ESTÁ AQUÍ: textos, enlaces y rutas de imágenes =====

@@ -21,6 +21,16 @@ describe('MainLayout', () => {
     expect(component).toBeTruthy();
   });
 
+  it('el botón de WhatsApp es solo el ícono, sin el texto "Chatea con nosotros"', async () => {
+    fixture.detectChanges();
+    const boton = (fixture.nativeElement as HTMLElement).querySelector('a.whatsapp-flotante') as HTMLElement;
+
+    expect(boton).not.toBeNull();
+    expect(boton.querySelector('.whatsapp-icono')).not.toBeNull();
+    expect(boton.textContent?.trim()).toBe('');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Chatea con nosotros');
+  });
+
   it('el botón flotante de WhatsApp aparece en la tienda y no en el checkout ni en el pedido pendiente', async () => {
     const router = TestBed.inject(Router);
 
