@@ -60,6 +60,11 @@ export const routes: Routes = [
         loadComponent: () => import('./administracion/presentacion/paginas/envios/envios').then(m => m.AdminEnvios)
     },
     {
+        path: 'admin/ciclos',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/ciclos/ciclos').then(m => m.AdminCiclos)
+    },
+    {
         path: 'admin/feriados',
         canActivate: [adminGuard],
         loadComponent: () => import('./administracion/presentacion/paginas/feriados/feriados').then(m => m.AdminFeriados)

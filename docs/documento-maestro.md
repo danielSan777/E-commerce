@@ -1011,8 +1011,8 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 
 - [x] Tabla de días no hábiles con tipo (feriado nacional, feriado local de Guayaquil, cierre propio) y a qué afecta (producción, despacho o ambos). *(Tabla `non_working_days` con API de administración (`/admin/non-working-days`); solo trae Navidad y Año Nuevo 2027. Falta la pantalla del panel y que Josué cargue los feriados del año.)*
 - [x] Pantalla del panel `/admin/feriados` para bloquear un día o un rango, con tipo, a qué afecta y nota, y quitar días. *(2026-11-25: `POST admin/non-working-days` acepta `end_date` (rango de hasta 62 días, sin duplicar); el calendario de entrega salta esos días. Falta cargar los feriados reales del año.)*
-- [ ] En el panel: ver cada ciclo con pedidos pagados, pendientes y capacidad restante; cambiar la capacidad de un ciclo puntual.
-- [ ] Botón **"Pasar las ventas al siguiente ciclo"** y su reverso, "Reabrir ciclo".
+- [x] En el panel: ver cada ciclo con pedidos pagados, pendientes y capacidad restante; cambiar la capacidad de un ciclo puntual. *(2026-11-27: `/admin/ciclos` muestra los próximos 14 días de producción con pagados, transferencias en plazo, tarjetas en curso, comprometidos, capacidad y lo que queda; marca el ciclo donde entra el siguiente pedido. `GET admin/cycles`, `PUT admin/cycles/{fecha}/capacity` (1 a 30, `null` vuelve a la nominal).)*
+- [x] Botón **"Pasar las ventas al siguiente ciclo"** y su reverso, "Reabrir ciclo". *(Con confirmación antes de cerrar. `POST admin/cycles/{fecha}/close` y `/reopen`. Los pedidos del ciclo no cambian. Cada acción queda en `cycle_events` con el nombre de quien la hizo y se ve en el ciclo.)*
 - [x] Servicio de ciclo: dado un instante, devuelve ciclo, día de despacho y ventana. *(`MotorDeEntrega` en Laravel, probado con cada fila de la tabla y los cortes 19:59:59, 20:00:00, 20:00:01 y sábado 16:00:00/16:00:01. Falta la capacidad de 8 y 10 pedidos: todavía no existen pedidos.)*
 - [ ] Servicio de capacidad con asignación dentro de una transacción que bloquea la fila del ciclo.
 - [x] Aviso en el panel si no hay feriados cargados para el año siguiente. *(Avisa cuando no hay ningún feriado nacional del año que viene; `meta.national_holidays_next_year` lo calcula Laravel. Hoy no avisa porque ya trae el 1 de enero de 2027: conviene cargar los demás.)*
@@ -1079,7 +1079,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - [x] La ficha vuelve a pedir la promesa al llegar el corte y al volver a la pestaña.
 - [ ] Guardar el `promise_token` al tocar "Personalizar" y enviarlo al crear el pedido.
 - [ ] Validar la gracia al crear el pedido.
-- [x] Endpoint de ventanas disponibles para "Programar para otra fecha". *(`GET /api/v1/delivery/windows?canton=`: 8 semanas desde la primera ventana posible, sin domingos ni feriados, nunca en el pasado. Angular además descarta una ventana guardada que Laravel ya no ofrece. Hoy todas salen disponibles: falta la capacidad.)*
+- [x] Endpoint de ventanas disponibles para "Programar para otra fecha". *(`GET /api/v1/delivery/windows?canton=`: 8 semanas desde la primera ventana posible, sin domingos ni feriados, nunca en el pasado. Angular además descarta una ventana guardada que Laravel ya no ofrece. Las ventanas todavía salen todas disponibles: el calendario no cruza la capacidad.)*
 - [ ] Mensaje tranquilo cuando la fecha cambió: "Actualizamos tu fecha estimada".
 - [ ] Fecha límite de campaña.
 
@@ -1500,7 +1500,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] **Vista por ciclo:** pedidos pagados, transferencias pendientes y capacidad restante, con el botón "Pasar las ventas al siguiente ciclo".
+- [x] **Vista por ciclo:** pedidos pagados, transferencias pendientes y capacidad restante, con el botón "Pasar las ventas al siguiente ciclo". *(Hecha en `/admin/ciclos` (Paso 8). Falta enlazar cada ciclo con su hoja de producción y su lista de envíos.)*
 - [ ] **Hoja de producción por día de despacho,** imprimible y sin precios (detalle abajo).
 - [ ] **Lista de envíos del ciclo** para crear las guías de Servientrega (detalle abajo).
 - [ ] **"Enviado" por lote:** se cargan las guías en la lista, se seleccionan los pedidos y se marcan juntos; cada comprador recibe su correo con su guía.

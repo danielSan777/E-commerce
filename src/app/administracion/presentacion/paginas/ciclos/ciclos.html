@@ -1,0 +1,65 @@
+<header class="barra">
+  <strong>Ciclos</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+  @if (error()) { <p class="error" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
+  @if (cargando() && !lista()) { <p>Cargando…</p> }
+
+  @if (lista(); as l) {
+    <p class="ayuda">Cada ciclo es un día de producción: los pedidos hechos hasta su corte. Entran hasta {{ l.meta.nominal_capacity }} pedidos por ciclo
+      (se cuentan pedidos, no macetas); hasta {{ l.meta.tolerance }} solo con gracia o pagos validados a mano. Comprometidos = pagados + transferencias dentro de su plazo + tarjetas en curso.</p>
+
+    <ul class="ciclos">
+      @for (c of l.data; track c.date) {
+        <li class="ciclo" [class.cerrado]="c.closed" [class.lleno]="!c.closed && c.remaining === 0" [class.ofrecido]="c.is_offered">
+          <div class="titulo">
+            <strong>{{ fechaLarga(c.date) }}</strong>
+            <span class="estado" [class]="'estado ' + estado(c).toLowerCase()">{{ estado(c) }}</span>
+            @if (c.is_offered) { <span class="ahora">Aquí entra el siguiente pedido</span> }
+          </div>
+
+          <p class="fechas">Corte: {{ instante(c.cutoff_at) }} · Despacho: {{ fechaCorta(c.dispatch_date) }} · Entrega: {{ fechaCorta(c.window.start) }} – {{ fechaCorta(c.window.end) }}</p>
+
+          <dl class="cuentas">
+            <div><dt>Pagados</dt><dd>{{ c.paid }}</dd></div>
+            <div><dt>Transferencias pendientes</dt><dd>{{ c.pending_transfer }}</dd></div>
+            <div><dt>Tarjetas en curso</dt><dd>{{ c.card_in_progress }}</dd></div>
+            <div class="total"><dt>Comprometidos</dt><dd>{{ c.committed }} de {{ c.capacity }}</dd></div>
+            <div class="total"><dt>Quedan</dt><dd>{{ c.remaining }}</dd></div>
+          </dl>
+
+          @if (c.capacity_override !== null && !c.closed) { <p class="nota">Capacidad propia de este ciclo (la normal es {{ l.meta.nominal_capacity }}).</p> }
+          @if (c.last_event; as e) { <p class="evento">{{ textoEvento(e) }}</p> }
+
+          <div class="acciones">
+            <form class="capacidad" (submit)="guardarCapacidad(c, $event)" novalidate>
+              <label [for]="'cap-' + c.date">Capacidad de este ciclo</label>
+              <input [id]="'cap-' + c.date" [name]="'cap-' + c.date" inputmode="numeric" maxlength="3" autocomplete="off"
+                [ngModel]="capacidades()[c.date]" (ngModelChange)="escribir(c.date, $event)" [disabled]="c.closed"
+                [attr.aria-invalid]="errorCapacidad()[c.date] ? true : null" />
+              <button type="submit" class="secundario" [disabled]="c.closed || ocupado() !== null">Guardar</button>
+              @if (c.capacity_override !== null && !c.closed) {
+                <button type="button" class="secundario" (click)="usarNominal(c)" [disabled]="ocupado() !== null">Usar la normal</button>
+              }
+              @if (errorCapacidad()[c.date]; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+            </form>
+
+            @if (c.closed) {
+              <button type="button" (click)="reabrir(c)" [disabled]="ocupado() !== null">{{ ocupado() === c.date ? 'Reabriendo…' : 'Reabrir ciclo' }}</button>
+            } @else if (confirmando() === c.date) {
+              <div class="confirmar" role="alert">
+                <span>¿Dejar de recibir pedidos en este ciclo? Los {{ c.committed }} que ya tiene no cambian.</span>
+                <button type="button" class="peligro" (click)="cerrar(c)" [disabled]="ocupado() !== null">{{ ocupado() === c.date ? 'Cerrando…' : 'Sí, pasar al siguiente' }}</button>
+                <button type="button" class="secundario" (click)="cancelarCierre()">No</button>
+              </div>
+            } @else {
+              <button type="button" class="secundario" (click)="pedirCierre(c)" [disabled]="ocupado() !== null">Pasar las ventas al siguiente ciclo</button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</main>

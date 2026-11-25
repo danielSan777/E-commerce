@@ -1,0 +1,26 @@
+@import '../../estilos/admin-tema.css';
+
+.contenido { max-width: 860px; }
+.ciclos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .75rem; }
+.ciclo { background: var(--tarjeta); border: 1px solid var(--borde); border-left: 6px solid var(--primario); border-radius: 12px; padding: .9rem 1rem; display: flex; flex-direction: column; gap: .4rem; }
+.ciclo.ofrecido { box-shadow: 0 0 0 2px var(--primario); }
+.ciclo.lleno { border-left-color: #d97706; }
+.ciclo.cerrado { border-left-color: var(--peligro); background: #fef2f2; }
+.titulo { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.estado { font-size: .78rem; font-weight: 700; border-radius: 999px; padding: 0 .6rem; background: #d1fae5; color: var(--primario); }
+.estado.lleno { background: #fef3c7; color: #92400e; }
+.estado.cerrado { background: #fee2e2; color: #991b1b; }
+.ahora { font-size: .78rem; color: var(--primario); font-weight: 700; }
+.fechas, .nota, .evento { margin: 0; color: var(--suave); font-size: .9rem; }
+.evento { font-style: italic; }
+.cuentas { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin: .25rem 0; }
+.cuentas div { display: flex; flex-direction: column; }
+.cuentas dt { font-size: .78rem; color: var(--suave); }
+.cuentas dd { margin: 0; font-weight: 700; font-size: 1.1rem; }
+.cuentas .total dd { color: var(--primario); }
+.acciones { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; align-items: flex-end; margin-top: .25rem; }
+.capacidad { display: flex; flex-wrap: wrap; align-items: end; gap: .4rem; }
+.capacidad label { width: 100%; margin: 0; font-size: .85rem; }
+.capacidad input { width: 5rem; min-height: 40px; }
+.confirmar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; background: #fef3c7; border-radius: 8px; padding: .5rem .75rem; }
+.acciones button { min-height: 44px; }

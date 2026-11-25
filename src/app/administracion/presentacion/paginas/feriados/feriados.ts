@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
+import { fechaLarga } from '../../../aplicacion/fechas';
 import { DiasNoHabilesAdminService } from '../../../aplicacion/servicios/DiasNoHabilesAdminService';
 import { DiaNoHabil, ListaDiasNoHabiles, TipoDiaNoHabil } from '../../../dominio/interfaces/dias-no-habiles';
 
@@ -31,14 +32,7 @@ export function validarDia(f: FormularioDia, hoy = ''): Record<string, string> {
 }
 
 const FORMULARIO_VACIO: FormularioDia = { desde: '', hasta: '', tipo: 'national_holiday', produccion: true, despacho: true, entrega: true, nota: '' };
-const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-
-/** "2026-12-25" → "viernes 25 de diciembre de 2026" (solo formato: la fecha ya es la de Guayaquil). */
-export function fechaLarga(fecha: string): string {
-  const [a, m, d] = fecha.split('-').map(Number);
-  return `${DIAS[new Date(Date.UTC(a, m - 1, d)).getUTCDay()]} ${d} de ${MESES[m - 1]} de ${a}`;
-}
+export { fechaLarga };
 
 // Feriados y cierres en el panel: un día o un rango. Laravel los guarda y los usa para el despacho y el calendario de entrega.
 @Component({
