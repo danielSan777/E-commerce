@@ -36,13 +36,18 @@ export function diaDeEnvio(fecha: string): string {
 }
 
 /** Tiempo que falta (o que pasó) hasta el fin del plazo de envío, en días y horas. `limiteIso` lo calcula Laravel. */
-export function plazoDeEnvio(limiteIso: string, ahoraMs: number): { texto: string; nivel: 'ok' | 'pronto' | 'vencido' } {
+export function plazoDeEnvio(limiteIso: string, ahoraMs: number): { texto: string; nivel: 'ok' | 'pronto' | 'hoy' | 'vencido' } {
   const resta = new Date(limiteIso).getTime() - ahoraMs;
   const horasTotales = Math.floor(Math.abs(resta) / 3_600_000);
   const dias = Math.floor(horasTotales / 24), horas = horasTotales % 24;
   const u = (n: number, s: string) => `${n} ${s}${n === 1 ? '' : 's'}`;
   const partes = [dias ? u(dias, 'día') : '', horas ? u(horas, 'hora') : ''].filter(Boolean).join(' y ');
   if (resta <= 0) return { texto: horasTotales < 1 ? 'Plazo vencido hace menos de 1 hora' : `Plazo vencido hace ${partes}`, nivel: 'vencido' };
+  // El día de envío (hora de Ecuador) el aviso es «ENVÍO VENCE HOY», con lo que falta del día.
+  const diaEcuador = (ms: number) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Guayaquil' }).format(ms);
+  if (diaEcuador(ahoraMs) === diaEcuador(new Date(limiteIso).getTime())) {
+    return { texto: `ENVÍO VENCE HOY · ${horasTotales < 1 ? 'falta menos de 1 hora' : `${horas === 1 ? 'falta' : 'faltan'} ${u(horas, 'hora')}`}`, nivel: 'hoy' };
+  }
   if (horasTotales < 1) return { texto: 'Falta menos de 1 hora para enviar', nivel: 'pronto' };
   return { texto: `${(dias === 1 && !horas) || (!dias && horas === 1) ? 'Falta' : 'Faltan'} ${partes} para enviar`, nivel: dias < 1 ? 'pronto' : 'ok' };
 }

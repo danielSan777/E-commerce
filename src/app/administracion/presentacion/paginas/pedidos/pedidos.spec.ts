@@ -326,8 +326,9 @@ describe('AdminPedidos', () => {
     const ms = (iso: string) => new Date(iso).getTime();
     expect(plazoDeEnvio(limite, ms('2026-11-17T15:00:00Z'))).toEqual({ texto: 'Faltan 2 días y 13 horas para enviar', nivel: 'ok' });
     expect(plazoDeEnvio(limite, ms('2026-11-19T04:00:00Z'))).toEqual({ texto: 'Falta 1 día para enviar', nivel: 'ok' });
-    expect(plazoDeEnvio(limite, ms('2026-11-19T20:00:00Z'))).toEqual({ texto: 'Faltan 8 horas para enviar', nivel: 'pronto' });
-    expect(plazoDeEnvio(limite, ms('2026-11-20T04:30:00Z'))).toEqual({ texto: 'Falta menos de 1 hora para enviar', nivel: 'pronto' });
+    expect(plazoDeEnvio(limite, ms('2026-11-19T06:00:00Z')).nivel).toBe('hoy');   // ya es el día de envío en Ecuador
+    expect(plazoDeEnvio(limite, ms('2026-11-19T20:00:00Z'))).toEqual({ texto: 'ENVÍO VENCE HOY · faltan 8 horas', nivel: 'hoy' });
+    expect(plazoDeEnvio(limite, ms('2026-11-20T04:30:00Z'))).toEqual({ texto: 'ENVÍO VENCE HOY · falta menos de 1 hora', nivel: 'hoy' });
     expect(plazoDeEnvio(limite, ms('2026-11-21T08:00:00Z'))).toEqual({ texto: 'Plazo vencido hace 1 día y 3 horas', nivel: 'vencido' });
     expect(diaDeEnvio('2026-11-27')).toBe('viernes 27 de nov');
   });

@@ -74,4 +74,5 @@
 .orden button.activo { background: var(--primario); color: #fff; }
 .plazo-envio { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .1rem 1rem; margin: 0; padding: .45rem 1rem; font-size: .85rem; background: #f0fdf4; color: #065f46; border-top: 1px solid var(--borde); }
 .plazo-envio.pronto { background: #fffbeb; color: #92400e; }
+.plazo-envio.hoy { background: #fee2e2; color: #991b1b; font-weight: 700; }
 .plazo-envio.vencido { background: #fee2e2; color: #991b1b; }
