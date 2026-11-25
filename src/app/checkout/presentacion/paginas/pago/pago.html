@@ -213,8 +213,11 @@
     @if (errorPedido()) {
     <p class="error error-pedido" role="alert">{{ errorPedido() }}</p>
     }
+    @if (errorCotizacion()) {
+    <p class="error error-pedido" role="alert">No pudimos calcular tu total. Revisa tu conexión y vuelve a intentarlo. <button type="button" (click)="reintentarCotizacion()">Reintentar</button></p>
+    }
 
-    <button type="button" class="btn-confirmar" [disabled]="faltanDatos() || sinEnvio() || enviando()" (click)="confirmar()">
+    <button type="button" class="btn-confirmar" [disabled]="faltanDatos() || sinEnvio() || enviando() || !totalListo()" (click)="confirmar()">
         Confirmar pedido <i class="bi bi-arrow-right" aria-hidden="true"></i>
     </button>
 

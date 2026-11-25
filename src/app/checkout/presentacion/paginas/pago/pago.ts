@@ -5,6 +5,7 @@ import { CurrencyPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { CalendarioVentanas } from '../../../../shared/componentes/calendario-ventanas/calendario-ventanas';
 import { CarritoService } from '../../../../carrito/aplicacion/servicios/CarritoService';
+import { CotizacionService } from '../../../../carrito/aplicacion/servicios/CotizacionService';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { CheckoutService, DatosCheckout } from '../../../aplicacion/servicios/CheckoutService';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
@@ -20,6 +21,9 @@ function formatearCentavos(c: number): string {
 }
 
 type Metodo = DatosCheckout['metodoPago'];
+
+/** Centavos que entregó Laravel → dólares para mostrar; sin dato se usa el respaldo (lo que ya había en pantalla). */
+const dolares = (centavos: number | null | undefined, respaldo = 0): number => (centavos == null ? respaldo : centavos / 100);
 
 @Component({
   selector: 'app-pago',
@@ -44,10 +48,11 @@ export class Pago {
   private promesas = inject(PromesaService);
   private ubicaciones = inject(UbicacionesService);
   private avisos = inject(AvisosService);
+  private cotizador = inject(CotizacionService);
 
   items = this.carrito.items;
   cantidad = this.carrito.cantidad;
-  subtotal = this.carrito.subtotal;
+  subtotal = computed(() => dolares(this.cotizador.cotizacion()?.subtotal_cents, this.carrito.subtotal()));
   private promo = inject(EnvioGratisService);
   envioGratis = this.promo.envioGratis;
   // Descuento por segunda maceta (modo "todo gratis"); 0 en el modo estándar
@@ -96,20 +101,18 @@ export class Pago {
   sinEnvio = computed(() => !this.ubicaciones.disponible(this.datos().provincia, this.datos().canton));
   readonly MENSAJE_GALAPAGOS = MENSAJE_SIN_ENVIO;
 
-  // Tarifa según el cantón y la provincia elegidos en "Envío y facturación"
-  tarifaEnvio = computed(() => this.ubicaciones.costo(this.datos().provincia, this.datos().canton));
-  envio = computed(() => (this.envioGratis() ? 0 : this.tarifaEnvio()));
+  // Envío, recargo y totales: los calcula Laravel (cotización del carrito con el cantón elegido); aquí solo se muestran
+  private cot = this.cotizador.cotizacion;
 
-  // Total por transferencia (sin cargo adicional): productos − descuento + envío
-  totalTransferencia = computed(() => Math.round((this.subtotal() - this.descuento() + this.envio()) * 100) / 100);
-
-  // Cargo de PayPhone en dólares, redondeado a centavos. Su porcentaje lo define el modo de venta (0 en "todo gratis")
-  recargoPayphone = computed(() => Math.round(this.totalTransferencia() * 100 * this.promo.recargoPorcentaje() / 100) / 100);
-
-  totalPayphone = computed(() => Math.round((this.totalTransferencia() + this.recargoPayphone()) * 100) / 100);
-
+  envio = computed(() => dolares(this.cot()?.shipping_cents));
+  recargoPayphone = computed(() => dolares(this.cot()?.card_fee_cents));
+  totalTransferencia = computed(() => dolares(this.cot()?.total_transfer_cents, this.subtotal() - this.descuento()));
+  totalPayphone = computed(() => dolares(this.cot()?.total_card_cents, this.subtotal() - this.descuento()));
   // Lo que se muestra en "Tu pedido"
   totalFinal = computed(() => (this.metodo() === 'payphone' ? this.totalPayphone() : this.totalTransferencia()));
+  /** Hasta que Laravel responda con el total de este carrito y este cantón no se puede confirmar. */
+  totalListo = computed(() => !this.cotizador.calculando() && !this.cotizador.fallo() && this.cot()?.total_transfer_cents != null);
+  errorCotizacion = this.cotizador.fallo;
 
   porcentajeTexto = computed(() => Number(this.promo.recargoPorcentaje().toFixed(2)));
   porcentajeDescuento = computed(() => this.promo.pct());
@@ -118,6 +121,12 @@ export class Pago {
 
   constructor() {
     this.ubicaciones.cargar();
+    // El cantón elegido se le pasa a la cotización: Laravel responde con el envío, el recargo y los totales de ese destino
+    effect(() => {
+      const d = this.datos();
+      const codigo = this.ubicaciones.codigoCanton(d.provincia, d.canton);
+      this.cotizador.canton.set(this.ubicaciones.listo() || !d.canton ? codigo : '');
+    });
     // La promesa y las ventanas se piden al destino elegido: la Amazonía suma un día (Laravel lo calcula)
     effect(() => {
       const d = this.datos();
@@ -143,6 +152,8 @@ export class Pago {
       this.datosListos.set(true);
     });
   }
+
+  reintentarCotizacion(): void { this.cotizador.recargar(); }
 
   // Si la foto del producto no existe, se oculta y queda el fondo
   sinImagen(evento: Event): void {
@@ -170,7 +181,7 @@ export class Pago {
   }
 
   confirmar(): void {
-    if (this.faltanDatos() || this.sinEnvio() || this.cantidad() === 0) return;
+    if (this.faltanDatos() || this.sinEnvio() || this.cantidad() === 0 || !this.totalListo()) return;
 
     this.intentoConfirmar.set(true);
     const entrega = this.entregaPedido();
@@ -222,6 +233,7 @@ export class Pago {
       case 'price_changed':
         // Los precios y tarifas pueden haber cambiado: se vuelven a pedir las zonas
         this.ubicaciones.recargar();
+        this.cotizador.recargar();
         if (typeof d['total_cents'] === 'number') texto = `${e.message} El total ahora es ${formatearCentavos(d['total_cents'])}.`;
         break;
       case 'window_changed':

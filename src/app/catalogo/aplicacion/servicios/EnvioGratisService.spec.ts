@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { API_URL } from '../../../core/configuracion/api';
 import { CarritoService, ItemCarrito } from '../../../carrito/aplicacion/servicios/CarritoService';
+import { cotizacionApi } from '../../../testing/cotizacion-api';
 import { EnvioGratisService } from './EnvioGratisService';
 import { ModoVentaService, PreciosTienda } from './ModoVentaService';
 
@@ -60,9 +61,11 @@ describe('EnvioGratisService (modo de venta)', () => {
     expect(envio.anuncio()).toEqual({ fuerte: 'Envío gratis', resto: 'en todos tus pedidos' });
   });
 
-  it('modo todo gratis: envío gratis siempre, sin recargo y 30 % a todas las macetas menos la más cara, desde 2 macetas', () => {
+  it('modo todo gratis: envío gratis siempre, sin recargo, y el descuento lo calcula Laravel (cotización)', () => {
     http.expectOne('/api/v1/store/pricing').flush(TODO_GRATIS);
     carrito.items.set([maceta('a', 20)]);
+    TestBed.tick();
+    http.expectOne('/api/v1/cart/quote').flush(cotizacionApi({ mode: 'free_shipping_discount', subtotal_cents: 2000, free_shipping: true, shipping_cents: 0 }));
     expect(envio.envioGratis()).toBe(true);
     expect(envio.descuento()).toBe(0);                     // con una sola maceta no hay descuento
     expect(envio.ofertaSegundaMaceta()).toBe(true);        // se invita a elegir la segunda
@@ -70,19 +73,21 @@ describe('EnvioGratisService (modo de venta)', () => {
     expect(envio.anuncio().resto).toContain('30% de descuento desde tu segunda maceta');
 
     carrito.items.set([maceta('a', 20), maceta('b', 19)]);
-    expect(envio.descuento()).toBe(5.7);                   // 30 % de $19; la de $20 se paga completa
+    TestBed.tick();
+    const pedido = http.expectOne('/api/v1/cart/quote');
+    expect(pedido.request.body.items).toEqual([{ slug: 'a', quantity: 1 }, { slug: 'b', quantity: 1 }]);
+    pedido.flush(cotizacionApi({ mode: 'free_shipping_discount', subtotal_cents: 3900, discount_cents: 570, discounted_lines: [1], free_shipping: true, shipping_cents: 0 }));
+    expect(envio.descuento()).toBe(5.7);                   // lo que respondió Laravel, en dólares
     expect(envio.subtotalConDescuento()).toBeCloseTo(33.3, 2);
     expect(envio.ofertaSegundaMaceta()).toBe(false);
+  });
 
-    carrito.items.set([maceta('a', 20), maceta('b', 19), maceta('c', 18)]);
-    expect(envio.descuento()).toBe(11.1);                  // $5,70 + $5,40: se paga completa solo la de $20
-    expect(envio.subtotalConDescuento()).toBeCloseTo(45.9, 2);
+  it('sin carrito no se pide cotización y el descuento es 0', () => {
+    http.expectOne('/api/v1/store/pricing').flush(TODO_GRATIS);
+    TestBed.tick();
 
-    carrito.items.set([maceta('c', 18), maceta('b', 19), maceta('a', 20)]);
-    expect(envio.descuento()).toBe(11.1);                  // el orden del carrito no cambia el resultado
-
-    TestBed.inject(ModoVentaService).precios.set({ ...TODO_GRATIS, discount_percent: 50 });
-    expect(envio.descuento()).toBe(18.5);                  // porcentaje editado: 50 % de $19 y de $18
+    http.expectNone('/api/v1/cart/quote');
+    expect(envio.descuento()).toBe(0);
   });
 
   it('los complementos no cuentan para el descuento', () => {

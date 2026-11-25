@@ -5,6 +5,7 @@ import { API_URL } from '../../../../core/configuracion/api';
 import { productoListadoApi } from '../../../../testing/catalogo-api';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ModoVentaService } from '../../../../catalogo/aplicacion/servicios/ModoVentaService';
+import { cotizacionApi } from '../../../../testing/cotizacion-api';
 import { Carrito } from './carrito';
 import { CarritoService, ItemCarrito } from '../../../aplicacion/servicios/CarritoService';
 
@@ -58,10 +59,17 @@ describe('Carrito', () => {
       expect(html.querySelector('.pie-descuento')).toBeNull();
     });
 
-    it('con $20 y $19 muestra el descuento sobre la de $19 y el total final', () => {
+    /** Laravel calcula el descuento y los totales: el carrito los pide y solo los muestra. */
+    const responder = (cambios: Parameters<typeof cotizacionApi>[0]) => {
+      TestBed.tick();
+      TestBed.inject(HttpTestingController).match('/api/v1/cart/quote').filter(r => !r.cancelled).forEach(r => r.flush(cotizacionApi({ free_shipping: true, shipping_cents: 0, ...cambios })));
+      fixture.detectChanges();
+    };
+
+    it('con $20 y $19 muestra el descuento y el total que calculó Laravel', () => {
       activar();
       TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19)]);
-      fixture.detectChanges();
+      responder({ mode: 'free_shipping_discount', subtotal_cents: 3900, discount_cents: 570, discounted_lines: [1] });
       const html = fixture.nativeElement as HTMLElement;
 
       expect(html.querySelector('.pie-descuento-valor')?.textContent).toContain('5.70');
@@ -69,10 +77,10 @@ describe('Carrito', () => {
       expect(html.querySelector('.franja-verde h2')?.textContent).toContain('Envío GRATIS y 30% de descuento en tus demás macetas');
     });
 
-    it('con 3 macetas ($20, $19 y $18) solo la de $20 se paga completa: descuento $11,10 y total $45,90', () => {
+    it('con 3 macetas muestra el descuento y el total que responde Laravel ($11,10 y $45,90)', () => {
       activar();
       TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19), maceta('c', 18)]);
-      fixture.detectChanges();
+      responder({ mode: 'free_shipping_discount', subtotal_cents: 5700, discount_cents: 1110, discounted_lines: [1, 2] });
       const html = fixture.nativeElement as HTMLElement;
 
       expect(html.querySelector('.pie-descuento-valor')?.textContent).toContain('11.10');
@@ -82,7 +90,7 @@ describe('Carrito', () => {
     it('usa el porcentaje que el administrador escribió', () => {
       TestBed.inject(ModoVentaService).precios.set({ mode: 'free_shipping_discount', free_shipping_min_planters: 2, card_surcharge_percent: 0, discount_percent: 50, free_shipping_everywhere: true });
       TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19)]);
-      fixture.detectChanges();
+      responder({ mode: 'free_shipping_discount', subtotal_cents: 3900, discount_cents: 950, discounted_lines: [1] });
       const html = fixture.nativeElement as HTMLElement;
 
       expect(html.querySelector('.pie-descuento-valor')?.textContent).toContain('9.50');

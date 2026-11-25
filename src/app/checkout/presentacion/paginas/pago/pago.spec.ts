@@ -11,6 +11,7 @@ import { CarritoService } from '../../../../carrito/aplicacion/servicios/Carrito
 import { CHECKOUT_API } from '../../../../testing/pedido-api';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { ModoVentaService } from '../../../../catalogo/aplicacion/servicios/ModoVentaService';
+import { cotizacionApi } from '../../../../testing/cotizacion-api';
 import { Pago } from './pago';
 
 describe('Pago', () => {
@@ -38,6 +39,13 @@ describe('Pago', () => {
   // Lo guardado en el navegador (datos del checkout, pedido) no debe pasar de una prueba a la siguiente
   afterEach(() => { localStorage.clear(); sessionStorage.clear(); });
 
+  /** Laravel calcula envío, recargo y totales: la pantalla los pide (carrito + cantón) y solo los muestra. */
+  const responderCotizacion = (cambios: Parameters<typeof cotizacionApi>[0] = {}) => {
+    TestBed.tick();
+    http.match('/api/v1/cart/quote').filter(r => !r.cancelled).forEach(r => r.flush(cotizacionApi(cambios)));
+    fixture.detectChanges();
+  };
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -53,19 +61,36 @@ describe('Pago', () => {
   describe('modo de venta', () => {
     const maceta = (uid: string, precio: number) => ({ uid, tipo: 'personalizado' as const, producto: { id: uid, nombre: uid, precio }, vista: '', ruta: '', resumen: [] });
 
-    it('modo estándar: recargo de PayPhone sobre productos + envío', () => {
+    it('modo estándar: muestra el envío, el recargo y los totales que calculó Laravel', () => {
       TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19)]);   // 2 macetas: envío gratis
+      responderCotizacion({ subtotal_cents: 3900, shipping_cents: 0, free_shipping: true, card_fee_cents: 234, total_transfer_cents: 3900, total_card_cents: 4134 });
 
       expect(component.descuento()).toBe(0);
       expect(component.totalTransferencia()).toBe(39);
       expect(component.recargoPayphone()).toBe(2.34);
       expect(component.totalPayphone()).toBe(41.34);
+      expect(http.match('/api/v1/cart/quote').length).toBe(0);
     });
 
-    it('modo todo gratis: 30 % a las macetas menos la más cara, envío gratis y sin recargo (el total es el final con cualquier método)', () => {
+    it('mientras Laravel no responde no se puede confirmar, y si falla se ofrece reintentar', () => {
+      TestBed.inject(CarritoService).items.set([maceta('a', 20)]);
+      TestBed.tick();
+      expect(component.totalListo()).toBe(false);
+
+      http.match('/api/v1/cart/quote').filter(r => !r.cancelled).forEach(r => r.flush({ message: 'x' }, { status: 500, statusText: 'Error' }));
+      fixture.detectChanges();
+      expect(component.errorCotizacion()).toBe(true);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('No pudimos calcular tu total');
+
+      component.reintentarCotizacion();
+      responderCotizacion();
+      expect(component.totalListo()).toBe(true);
+    });
+
+    it('modo todo gratis: muestra el descuento y los totales que responde Laravel, envío gratis y sin recargo', () => {
       TestBed.inject(ModoVentaService).precios.set({ mode: 'free_shipping_discount', free_shipping_min_planters: 2, card_surcharge_percent: 0, discount_percent: 30, free_shipping_everywhere: true });
       TestBed.inject(CarritoService).items.set([maceta('a', 20), maceta('b', 19)]);
-      fixture.detectChanges();
+      responderCotizacion({ mode: 'free_shipping_discount', subtotal_cents: 3900, discount_cents: 570, discounted_lines: [1], free_shipping: true, shipping_cents: 0, card_fee_cents: 0, total_transfer_cents: 3330, total_card_cents: 3330 });
       const html = fixture.nativeElement as HTMLElement;
 
       expect(component.descuento()).toBe(5.7);
@@ -86,7 +111,7 @@ describe('Pago', () => {
         zones: [{ code: 'A', name: 'Zona A', price_cents: 0, extra_days: 0, is_available: true }],
         provinces: [{ code: '09', name: 'Guayas', cantons: [{ code: '0907', name: 'Durán', zone: 'A', is_locality: false }] }],
       }));
-      fixture.detectChanges();
+      responderCotizacion({ subtotal_cents: 2000, shipping_cents: 0, free_shipping: true, card_fee_cents: 120, total_transfer_cents: 2000, total_card_cents: 2120 });
 
       expect(component.envio()).toBe(0);
       expect((fixture.nativeElement as HTMLElement).textContent).toContain('¡Gratis!');
@@ -138,6 +163,7 @@ describe('Pago', () => {
       await fixture.whenStable();
       http.match(r => r.url.startsWith('/api/v1/delivery')).forEach(r => r.flush(r.request.url.endsWith('promise') ? PROMESA_API : { windows: VENTANAS_API }));
       await fixture.whenStable();
+      responderCotizacion({ subtotal_cents: 500, shipping_cents: 350, card_fee_cents: 51, total_transfer_cents: 850, total_card_cents: 901 });
       component.aceptaTerminos.set(true);
     }
 
@@ -188,6 +214,7 @@ describe('Pago', () => {
         uid: 'u1', tipo: 'personalizado', producto: { id: 'doctora', nombre: 'Doctora', precio: 25 }, vista: '', ruta: '', resumen: [],
         configuracion: { accesorios: [], nombre: 'Ana', colorLentes: 'negro', colorGafas: 'negro', dedicatoria: '', textoMarco: '', sinTarjeta: true, fotoMarcoNombre: '' },
       }]);
+      responderCotizacion({ subtotal_cents: 2500, shipping_cents: 350, total_transfer_cents: 2850, total_card_cents: 3021 });
       component.confirmar();
 
       http.expectOne('/api/v1/checkout').flush(

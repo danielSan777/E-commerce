@@ -1,6 +1,7 @@
 import { Injectable, computed, inject } from '@angular/core';
 // AJUSTA la ruta si tu CarritoService está en otra carpeta (este archivo va en la misma carpeta que CarritoService.ts)
 import { CarritoService } from '../../../carrito/aplicacion/servicios/CarritoService';
+import { CotizacionService } from '../../../carrito/aplicacion/servicios/CotizacionService';
 import { ModoVentaService } from './ModoVentaService';
 
 /*
@@ -19,6 +20,7 @@ export class EnvioGratisService {
 
     private carrito = inject(CarritoService);
     private modo = inject(ModoVentaService);
+    private cotizacion = inject(CotizacionService);
 
     constructor() { this.modo.cargar(); }
 
@@ -37,13 +39,8 @@ export class EnvioGratisService {
     readonly hayDescuento = computed(() => this.descuentoPorcentaje() > 0);
     readonly descuentoActivo = computed(() => this.hayDescuento() && this.macetas() >= 2);
 
-    /** Descuento en dólares: el porcentaje sobre cada maceta menos la de mayor valor (esa se paga completa), cada una al centavo (mitad hacia arriba). */
-    readonly descuento = computed(() => {
-        if (!this.descuentoActivo()) return 0;
-        const precios = this.carrito.items().filter(i => i.tipo === 'personalizado').map(i => Math.round((i.producto.precio || 0) * 100)).sort((a, b) => b - a);
-        const centavos = precios.slice(1).reduce((suma, p) => suma + Math.floor(p * this.descuentoPorcentaje() / 100 + 0.5), 0);
-        return centavos / 100;
-    });
+    /** Descuento en dólares: lo calcula Laravel (cotización del carrito); aquí solo se muestra. */
+    readonly descuento = this.cotizacion.descuento;
 
     /** ¿Se ofrece la segunda maceta? Con descuento: hasta llevar 2. Sin descuento: mientras el envío no sea gratis. */
     readonly ofertaSegundaMaceta = computed(() => this.hayDescuento() ? !this.descuentoActivo() : !this.envioGratis());
@@ -69,6 +66,9 @@ export class EnvioGratisService {
     /** Porcentaje sin decimales sobrantes: 30, no 30.0. */
     pct(): string { return String(Number(this.descuentoPorcentaje().toFixed(2))); }
 
-    /** Subtotal menos el descuento (el envío y el recargo se suman en el pago). */
-    readonly subtotalConDescuento = computed(() => this.carrito.subtotal() - this.descuento());
+    /** Subtotal menos el descuento (el envío y el recargo se suman en el pago): ambos números vienen de Laravel. */
+    readonly subtotalConDescuento = computed(() => {
+        const c = this.cotizacion.cotizacion();
+        return c ? (c.subtotal_cents - c.discount_cents) / 100 : this.carrito.subtotal();
+    });
 }
