@@ -1,13 +1,13 @@
 // Pedidos en el panel (GET /api/v1/admin/orders). Nombres en inglés y snake_case: son los de Laravel. Dinero en centavos.
 
-export type FiltroPedidos = 'pending' | 'to_produce' | 'in_production' | 'shipped' | 'expired' | 'cancelled' | 'all';
+export type FiltroPedidos = 'pending' | 'in_production' | 'shipped' | 'expired' | 'cancelled' | 'all';
 
 export interface PedidoAdmin {
     number: string;
     channel: string;
     payment_method: 'transfer' | 'card';
     payment_status: 'pending_validation' | 'unpaid' | 'paid';
-    status: string;                                   // created, expired, cancelled, ready_for_production…
+    status: string;                                   // created, expired, cancelled, in_production, shipped
     customer: { name: string; email: string; phone: string | null };
     total_cents: number;
     discount_cents: number;                           // descuento del modo de venta (a todas las macetas menos la de mayor valor)
@@ -17,6 +17,9 @@ export interface PedidoAdmin {
     cycle_date: string;
     dispatch_date: string;
     window: { start: string; end: string; type: string };
+    /** Último día para enviar (un día antes de la entrega) y el instante en que termina ese día en Guayaquil; los calcula Laravel. */
+    send_by: string;
+    send_by_at: string;
     /** Si Josué avisó un retraso: el motivo, cuándo, y la fecha prometida al comprar. */
     delay?: { reason: string | null; at: string; original_window: { start: string | null; end: string | null } } | null;
     deadline_at: string | null;
@@ -44,12 +47,13 @@ export interface PedidoAdmin {
     billing: { same_as_shipping: boolean; name?: string; id_number?: string } | null;
 }
 
-export type EstadoPedidoAdmin = 'to_produce' | 'in_production' | 'shipped' | 'cancelled' | 'expired' | 'pending';
+export type EstadoPedidoAdmin = 'in_production' | 'shipped' | 'cancelled' | 'expired' | 'pending';
+export type OrdenProduccion = 'due' | 'amount';
 
 export function estadoDePedido(p: Pick<PedidoAdmin, 'payment_status' | 'status'>): EstadoPedidoAdmin {
     if (p.status === 'cancelled') return 'cancelled';
     if (p.status === 'shipped') return 'shipped';
     if (p.status === 'in_production') return 'in_production';
-    if (p.payment_status === 'paid') return 'to_produce';
+    if (p.payment_status === 'paid') return 'in_production';
     return p.status === 'expired' ? 'expired' : 'pending';
 }

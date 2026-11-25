@@ -34,7 +34,6 @@
 
 @media (max-width: 560px) { .detalle dl { grid-template-columns: 1fr; } .detalle dt { margin-top: .4rem; } }
 
-.insignia.to_produce { background: #d1fae5; color: #065f46; }
 .insignia.in_production { background: #ede9fe; color: #5b21b6; }
 .insignia.shipped { background: #dbeafe; color: #1e40af; }
 .envio-guia { display: flex; flex-direction: column; gap: .3rem; }
@@ -68,3 +67,11 @@
 .retraso .fila-fechas { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
 .retraso .fila-fechas label { display: flex; flex-direction: column; gap: .2rem; font-size: .9rem; }
 .retraso .botones { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+.orden { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-bottom: .75rem; }
+.orden span { color: var(--suave); font-size: .9rem; }
+.orden button { min-height: 40px; }
+.orden button.activo { background: var(--primario); color: #fff; }
+.plazo-envio { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .1rem 1rem; margin: 0; padding: .45rem 1rem; font-size: .85rem; background: #f0fdf4; color: #065f46; border-top: 1px solid var(--borde); }
+.plazo-envio.pronto { background: #fffbeb; color: #92400e; }
+.plazo-envio.vencido { background: #fee2e2; color: #991b1b; }

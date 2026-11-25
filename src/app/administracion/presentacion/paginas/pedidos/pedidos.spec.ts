@@ -5,13 +5,13 @@ import { provideRouter } from '@angular/router';
 import { API_URL } from '../../../../core/configuracion/api';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { PedidoAdmin, estadoDePedido } from '../../../dominio/interfaces/pedidos-admin';
-import { AdminPedidos, guiaValida, ventana } from './pedidos';
+import { AdminPedidos, diaDeEnvio, guiaValida, plazoDeEnvio, ventana } from './pedidos';
 
 const pedido = (over: Partial<PedidoAdmin> = {}): PedidoAdmin => ({
   number: 'JDS-1001', channel: 'web', payment_method: 'transfer', payment_status: 'pending_validation', status: 'created',
   customer: { name: 'María Pérez', email: 'm@correo.com', phone: '0991234567' },
   total_cents: 2450, discount_cents: 0, card_fee_cents: 0, shipping_cents: 350, shipping_zone: 'A', cycle_date: '2026-11-17', dispatch_date: '2026-11-19',
-  window: { start: '2026-11-20', end: '2026-11-21', type: 'immediate' },
+  window: { start: '2026-11-20', end: '2026-11-21', type: 'immediate' }, send_by: '2026-11-19', send_by_at: '2026-11-20T04:59:59Z',
   deadline_at: '2026-11-18T03:00:00Z', receipt_uploaded_at: '2026-11-17T20:00:00Z', whatsapp_clicked_at: null, paid_at: null, production_started_at: null, shipped_at: null, tracking_number: null, created_at: '2026-11-17T15:00:00Z',
   items: [{
     id: 55, has_preview: true, has_frame_photo: true, sku: 'DOC', name: 'Abogada', type: 'personalizable', line_total_cents: 2100,
@@ -91,7 +91,8 @@ describe('AdminPedidos', () => {
   });
 
   it('si Laravel rechaza las fechas del retraso, el formulario muestra el motivo y no se cierra', async () => {
-    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'ready_for_production' })]);
+    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'in_production' })]);
+    c.filtro.set('in_production');
     c.alternar('JDS-1001');
     fixture.detectChanges();
     c.abrirRetraso(c.pedidos()[0]);
@@ -176,7 +177,7 @@ describe('AdminPedidos', () => {
     c.ejecutar(c.pedidos()[0], 'pagar');
     const r = http.expectOne('/api/v1/admin/orders/JDS-1001/mark-paid');
     expect(r.request.body).toEqual({ late: false, confirm_over_capacity: false });
-    r.flush(pedido({ payment_status: 'paid', status: 'ready_for_production' }));
+    r.flush(pedido({ payment_status: 'paid', status: 'in_production' }));
     fixture.detectChanges();
 
     expect(c.pedidos()).toEqual([]);
@@ -283,13 +284,52 @@ describe('AdminPedidos', () => {
     expect(fila.querySelector('.codigo strong')?.textContent).toBe('JDS-1001');
   });
 
-  it('pasar a producción pide confirmación y llama a Laravel; el pedido sale de "Por producir"', async () => {
-    const { c } = await abrir([pedido({ payment_status: 'paid', status: 'ready_for_production' })]);
-    c.filtro.set('to_produce');
-    c.ejecutar(c.pedidos()[0], 'produccion');
-    http.expectOne('/api/v1/admin/orders/JDS-1001/production').flush(pedido({ payment_status: 'paid', status: 'in_production' }));
+  it('no existe «Por producir»: el pedido pagado se muestra En producción', async () => {
+    const { c, fixture } = await abrir([pedido({ payment_status: 'paid', status: 'in_production' })]);
+    expect(c.filtros.map(f => f.valor)).not.toContain('to_produce' as never);
+    expect(c.estado(c.pedidos()[0])).toBe('in_production');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Por producir');
+  });
 
-    expect(c.pedidos()).toEqual([]);
+  it('en producción muestra el día límite de envío y el temporizador, y ordena por vencimiento o monto', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-17T15:00:00Z'));   // 10:00 en Guayaquil
+    try {
+      TestBed.configureTestingModule({ imports: [AdminPedidos], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), { provide: API_URL, useValue: '/api/v1' }] });
+      http = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(AdminPedidos);
+      fixture.detectChanges();
+      http.expectOne(x => x.url === '/api/v1/admin/orders').flush({ data: [] });
+      const c = fixture.componentInstance;
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('.orden')).toBeNull();                      // el selector solo aparece en En producción
+
+      c.elegirFiltro('in_production');
+      const r = http.expectOne(x => x.url === '/api/v1/admin/orders');
+      expect(r.request.params.get('sort')).toBe('due');                   // por vencimiento es el default
+      r.flush({ data: [pedido({ payment_status: 'paid', status: 'in_production' })] });
+      fixture.detectChanges();
+
+      const plazo = el.querySelector('.plazo-envio');
+      expect(plazo?.textContent).toContain('Enviar el jueves 19 de nov');
+      expect(plazo?.textContent).toContain('Faltan 2 días y 13 horas para enviar');
+
+      c.elegirOrden('amount');
+      expect(http.expectOne(x => x.url === '/api/v1/admin/orders').request.params.get('sort')).toBe('amount');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('el temporizador cuenta días y horas, y avisa cuando ya venció', () => {
+    const limite = '2026-11-20T04:59:59Z';
+    const ms = (iso: string) => new Date(iso).getTime();
+    expect(plazoDeEnvio(limite, ms('2026-11-17T15:00:00Z'))).toEqual({ texto: 'Faltan 2 días y 13 horas para enviar', nivel: 'ok' });
+    expect(plazoDeEnvio(limite, ms('2026-11-19T04:00:00Z'))).toEqual({ texto: 'Falta 1 día para enviar', nivel: 'ok' });
+    expect(plazoDeEnvio(limite, ms('2026-11-19T20:00:00Z'))).toEqual({ texto: 'Faltan 8 horas para enviar', nivel: 'pronto' });
+    expect(plazoDeEnvio(limite, ms('2026-11-20T04:30:00Z'))).toEqual({ texto: 'Falta menos de 1 hora para enviar', nivel: 'pronto' });
+    expect(plazoDeEnvio(limite, ms('2026-11-21T08:00:00Z'))).toEqual({ texto: 'Plazo vencido hace 1 día y 3 horas', nivel: 'vencido' });
+    expect(diaDeEnvio('2026-11-27')).toBe('viernes 27 de nov');
   });
 
   it('marcar enviado exige una guía válida y la manda a Laravel', async () => {
@@ -320,15 +360,6 @@ describe('AdminPedidos', () => {
     expect(el.querySelector<HTMLInputElement>('.fila-guia input')?.value).toBe('1234567890');
   });
 
-  it('el campo de la guía solo aparece cuando el pedido ya está en producción', async () => {
-    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'ready_for_production' })]);
-    c.alternar('JDS-1001');
-    fixture.detectChanges();
-
-    expect(el.textContent).toContain('Pasar a producción');
-    expect(el.querySelector('.envio-guia')).toBeNull();
-  });
-
   it('en producción sí muestra la guía y ya no ofrece "Pasar a producción"', async () => {
     const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'in_production' })]);
     c.alternar('JDS-1001');
@@ -346,8 +377,7 @@ describe('AdminPedidos', () => {
   });
 
   it('estado y ventana en texto', () => {
-    expect(estadoDePedido({ payment_status: 'paid', status: 'ready_for_production' })).toBe('to_produce');
-    expect(estadoDePedido({ payment_status: 'paid', status: 'in_production' })).toBe('in_production');
+        expect(estadoDePedido({ payment_status: 'paid', status: 'in_production' })).toBe('in_production');
     expect(estadoDePedido({ payment_status: 'paid', status: 'shipped' })).toBe('shipped');
     expect(estadoDePedido({ payment_status: 'pending_validation', status: 'expired' })).toBe('expired');
     expect(estadoDePedido({ payment_status: 'paid', status: 'cancelled' })).toBe('cancelled');

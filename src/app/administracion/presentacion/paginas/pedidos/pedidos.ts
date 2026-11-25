@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, afterNextRender, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -7,9 +7,9 @@ import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 import { AvisosService } from '../../../../shared/componentes/avisos/AvisosService';
 import { PedidosAdminService } from '../../../aplicacion/servicios/PedidosAdminService';
 import { descargarEtiquetaImagen, descargarEtiquetaPdf, datosDeEtiqueta } from '../../../aplicacion/servicios/EtiquetaEnvio';
-import { EstadoPedidoAdmin, FiltroPedidos, PedidoAdmin, estadoDePedido } from '../../../dominio/interfaces/pedidos-admin';
+import { EstadoPedidoAdmin, FiltroPedidos, OrdenProduccion, PedidoAdmin, estadoDePedido } from '../../../dominio/interfaces/pedidos-admin';
 
-type Accion = 'pagar' | 'pagar_tarde' | 'cancelar' | 'produccion';
+type Accion = 'pagar' | 'pagar_tarde' | 'cancelar';
 
 /** La guía de Servientrega: letras, números y guiones, de 5 a 40 caracteres (Laravel valida lo mismo). */
 export function guiaValida(guia: string): boolean {
@@ -28,6 +28,25 @@ export function ventana(v: { start: string; end: string }): string {
   return `${f(v.start)} – ${f(v.end)}`;
 }
 
+/** "miércoles 27 de nov": día límite de envío (fecha de negocio YYYY-MM-DD, sin convertir de zona). */
+export function diaDeEnvio(fecha: string): string {
+  const d = new Date(`${fecha}T00:00:00Z`);
+  const f = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('es-EC', { timeZone: 'UTC', ...o }).format(d);
+  return `${f({ weekday: 'long' })} ${f({ day: 'numeric' })} de ${f({ month: 'short' }).replace('.', '')}`;
+}
+
+/** Tiempo que falta (o que pasó) hasta el fin del plazo de envío, en días y horas. `limiteIso` lo calcula Laravel. */
+export function plazoDeEnvio(limiteIso: string, ahoraMs: number): { texto: string; nivel: 'ok' | 'pronto' | 'vencido' } {
+  const resta = new Date(limiteIso).getTime() - ahoraMs;
+  const horasTotales = Math.floor(Math.abs(resta) / 3_600_000);
+  const dias = Math.floor(horasTotales / 24), horas = horasTotales % 24;
+  const u = (n: number, s: string) => `${n} ${s}${n === 1 ? '' : 's'}`;
+  const partes = [dias ? u(dias, 'día') : '', horas ? u(horas, 'hora') : ''].filter(Boolean).join(' y ');
+  if (resta <= 0) return { texto: horasTotales < 1 ? 'Plazo vencido hace menos de 1 hora' : `Plazo vencido hace ${partes}`, nivel: 'vencido' };
+  if (horasTotales < 1) return { texto: 'Falta menos de 1 hora para enviar', nivel: 'pronto' };
+  return { texto: `${(dias === 1 && !horas) || (!dias && horas === 1) ? 'Falta' : 'Faltan'} ${partes} para enviar`, nivel: dias < 1 ? 'pronto' : 'ok' };
+}
+
 // Pedidos en el panel (Paso 14): lista con filtros, comprobante, "Marcar pagado", "Pagado fuera de plazo" y "Cancelar".
 @Component({
   selector: 'app-admin-pedidos',
@@ -41,16 +60,21 @@ export class AdminPedidos implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   readonly filtros: { valor: FiltroPedidos; etiqueta: string }[] = [
-    { valor: 'pending', etiqueta: 'Por validar' }, { valor: 'to_produce', etiqueta: 'Por producir' },
+    { valor: 'pending', etiqueta: 'Por validar' },
     { valor: 'in_production', etiqueta: 'En producción' }, { valor: 'shipped', etiqueta: 'Enviados' },
     { valor: 'expired', etiqueta: 'Vencidos' }, { valor: 'cancelled', etiqueta: 'Cancelados' }, { valor: 'all', etiqueta: 'Todos' },
   ];
-  readonly ETIQUETAS: Record<EstadoPedidoAdmin, string> = { pending: 'Pendiente de pago', to_produce: 'Pagado · por producir', in_production: 'En producción', shipped: 'Enviado', expired: 'Vencido', cancelled: 'Cancelado' };
+  readonly ETIQUETAS: Record<EstadoPedidoAdmin, string> = { pending: 'Pendiente de pago', in_production: 'En producción', shipped: 'Enviado', expired: 'Vencido', cancelled: 'Cancelado' };
   readonly fechaHora = fechaHora;
   readonly ventana = ventana;
   readonly estado = estadoDePedido;
+  readonly diaDeEnvio = diaDeEnvio;
+  readonly plazo = plazoDeEnvio;
+  readonly ordenes: { valor: OrdenProduccion; etiqueta: string }[] = [{ valor: 'due', etiqueta: 'Por vencimiento' }, { valor: 'amount', etiqueta: 'Por monto' }];
 
   filtro = signal<FiltroPedidos>('pending');
+  orden = signal<OrdenProduccion>('due');                  // solo en «En producción»: por vencimiento (default) o por monto
+  ahora = signal(Date.now());                              // reloj de los temporizadores; se actualiza cada minuto
   busqueda = signal('');                                   // código escrito en el buscador (se mantiene al cambiar de lista)
   private espera?: ReturnType<typeof setTimeout>;
   pedidos = signal<PedidoAdmin[]>([]);
@@ -67,8 +91,23 @@ export class AdminPedidos implements OnInit {
   errorGuia = signal('');
   sobrecupo = signal<{ numero: string; mensaje: string } | null>(null);   // Laravel pidió confirmar que se pasa del límite
 
+  constructor() {
+    // El reloj corre solo en el navegador (no en el servidor SSR) y se detiene al salir de la pantalla.
+    afterNextRender(() => {
+      this.ahora.set(Date.now());
+      const reloj = setInterval(() => this.ahora.set(Date.now()), 60_000);
+      this.destroyRef.onDestroy(() => clearInterval(reloj));
+    });
+  }
+
   ngOnInit(): void {
     this.destroyRef.onDestroy(() => clearTimeout(this.espera));
+    this.cargar();
+  }
+
+  elegirOrden(o: OrdenProduccion): void {
+    this.orden.set(o);
+    this.abierto.set(null);
     this.cargar();
   }
 
@@ -96,7 +135,7 @@ export class AdminPedidos implements OnInit {
   cargar(): void {
     this.cargando.set(true);
     this.error.set('');
-    this.servicio.listar(this.filtro(), this.busqueda()).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
+    this.servicio.listar(this.filtro(), this.busqueda(), this.orden()).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.cargando.set(false))).subscribe({
       next: p => this.pedidos.set(p),
       error: (e: ErrorApi) => this.error.set(e.message),
     });
@@ -145,7 +184,7 @@ export class AdminPedidos implements OnInit {
   ejecutar(p: PedidoAdmin, accion: Accion, confirmarSobrecupo = false): void {
     this.trabajando.set(p.number);
     const llamada = accion === 'cancelar' ? this.servicio.cancelar(p.number, { notificar: this.notificarCancelacion(), motivo: this.motivoCancelacion() })
-      : accion === 'produccion' ? this.servicio.enProduccion(p.number)
+     
       : this.servicio.marcarPagado(p.number, { fueraDePlazo: accion === 'pagar_tarde', confirmarSobrecupo });
 
     llamada.pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.trabajando.set(null))).subscribe({
@@ -154,7 +193,7 @@ export class AdminPedidos implements OnInit {
         this.sobrecupo.set(null);
         this.notificarCancelacion.set(false);
         this.motivoCancelacion.set('');
-        this.avisos.exito(accion === 'cancelar' ? `Pedido ${p.number} cancelado.` : accion === 'produccion' ? `Pedido ${p.number} en producción.` : `Pedido ${p.number} marcado como pagado.`);
+        this.avisos.exito(accion === 'cancelar' ? `Pedido ${p.number} cancelado.` : `Pedido ${p.number} marcado como pagado.`);
         this.reemplazar(nuevo);
       },
       error: (e: ErrorApi) => {

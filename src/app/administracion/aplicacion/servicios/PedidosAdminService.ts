@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { API_URL } from '../../../core/configuracion/api';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
-import { FiltroPedidos, PedidoAdmin } from '../../dominio/interfaces/pedidos-admin';
+import { FiltroPedidos, OrdenProduccion, PedidoAdmin } from '../../dominio/interfaces/pedidos-admin';
 
 // Pedidos del panel: ver, revisar el comprobante, marcar pagado o cancelar. Laravel decide cupos, ciclos y ventanas.
 @Injectable({ providedIn: 'root' })
@@ -12,8 +12,9 @@ export class PedidosAdminService {
   private api = inject(API_URL);
 
   /** `buscar`: código del pedido (JDS-1005 o solo 1005); Laravel lo busca dentro del filtro elegido. */
-  listar(filtro: FiltroPedidos, buscar = ''): Observable<PedidoAdmin[]> {
+  listar(filtro: FiltroPedidos, buscar = '', orden: OrdenProduccion = 'due'): Observable<PedidoAdmin[]> {
     let params = new HttpParams().set('status', filtro);
+    if (filtro === 'in_production') params = params.set('sort', orden);   // «due» (vencimiento) o «amount» (monto)
     if (buscar.trim()) params = params.set('q', buscar.trim());
     return this.http.get<{ data: PedidoAdmin[] }>(`${this.api}/admin/orders`, { params })
       .pipe(map(r => r.data), conErrorApi());
@@ -29,11 +30,6 @@ export class PedidosAdminService {
   /** Foto de la maceta personalizada (`preview`) o foto del marco que subió el comprador (`frame-photo`). Exige sesión. */
   imagenDelItem(numero: string, item: number, cual: 'preview' | 'frame-photo'): Observable<Blob> {
     return this.http.get(`${this.api}/admin/orders/${numero}/items/${item}/${cual}`, { responseType: 'blob' }).pipe(conErrorApi());
-  }
-
-  /** Pedido pagado que entra a producción. */
-  enProduccion(numero: string): Observable<PedidoAdmin> {
-    return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/production`, {}).pipe(conErrorApi());
   }
 
   /** Pedido enviado, con la guía de Servientrega que verá el comprador. Volver a llamarlo corrige la guía. */

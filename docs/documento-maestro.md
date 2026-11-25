@@ -473,7 +473,7 @@ Códigos mínimos: `capacity_full`, `window_unavailable`, `price_changed`, `zone
 | Dimensión | Valores |
 | --- | --- |
 | Pago | `unpaid`, `in_progress`, `pending_validation`, `paid`, `failed`, `refunded` |
-| Operativo | `created`, `ready_for_production`, `in_production`, `shipped`, `cancelled`, `expired` |
+| Operativo | `created`, `in_production`, `shipped`, `cancelled`, `expired` *(desde 2026-11-26 ya no existe `ready_for_production`: al pagarse, el pedido pasa directo a `in_production`)* |
 | Canal | `web`, `whatsapp` |
 | Facturación | `invoiced` (sí o no) |
 | Visible al comprador | Pendiente de pago (solo transferencia) · Confirmado · En producción · Enviado · Cancelado · Reembolsado |
@@ -1415,7 +1415,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 | Enviado | El pedido se marca "Enviado" | Guía de Servientrega si se cargó, ventana y enlace de seguimiento |
 | Pedido vencido | Vence el plazo de 12 h sin pago | Aviso de vencimiento y enlace para volver a comprar |
 | Cancelado | Solo si Josué marca "Notificar al comprador" | Motivo breve y reembolso, si aplica |
-| Retraso *(agregado el 2026-11-25, pedido por Daniel)* | Josué pulsa «Avisar retraso» en un pedido pagado (por producir, en producción o enviado) y escribe la nueva fecha de entrega y un motivo breve | Nueva fecha de entrega, fecha anterior y motivo; responde a `pedidos@`. Se guarda la fecha prometida al comprar (`original_window_*`), `delay_reason` y `delayed_at`; el panel marca el pedido «Retrasado». Repetir las mismas fechas no reenvía el correo; fechas nuevas, sí |
+| Retraso *(agregado el 2026-11-25, pedido por Daniel)* | Josué pulsa «Avisar retraso» en un pedido pagado (en producción o enviado) y escribe la nueva fecha de entrega y un motivo breve | Nueva fecha de entrega, fecha anterior y motivo; responde a `pedidos@`. Se guarda la fecha prometida al comprar (`original_window_*`), `delay_reason` y `delayed_at`; el panel marca el pedido «Retrasado». Repetir las mismas fechas no reenvía el correo; fechas nuevas, sí |
 
 **Implementación acordada**
 
@@ -2043,3 +2043,9 @@ Estas decisiones ya fueron evaluadas y acordadas con el negocio. Si durante la i
 - [Hostinger: registros DNS de correo con nameservers externos](https://www.hostinger.com/support/8671319-set-up-a-domain-for-hostinger-email-manually/)
 - [Laravel: colas](https://laravel.com/docs/11.x/queues)
 - [Google WebP: cwebp](https://developers.google.com/speed/webp/docs/cwebp)
+
+
+### Pantalla «En producción» del administrador *(agregado el 2026-11-26, pedido por Daniel)*
+- Sin paso «Por producir»: al marcar pagado (manual o por tarjeta) el pedido queda `in_production` y se guarda `production_started_at`. Una migración pasó los que estaban en `ready_for_production` a `in_production`.
+- Fecha límite de envío: un día antes del inicio de la entrega (`window_start − 1 día`). Laravel la entrega como `send_by` (fecha) y `send_by_at` (fin de ese día en Guayaquil, en UTC); Angular solo muestra «Enviar el miércoles 27 de nov» y un temporizador en días y horas (se actualiza cada minuto; en rojo cuando el plazo venció). Si hay un retraso, el plazo se mueve con la nueva fecha de entrega.
+- Orden: `GET admin/orders?status=in_production&sort=due|amount`. `due` (default) = el que vence antes primero; `amount` = mayor monto primero. El desempate es siempre el otro criterio.
