@@ -48,6 +48,7 @@
           <span class="estados">
             <span class="insignia" [class]="e">{{ ETIQUETAS[e] }}</span>
             @if (p.delay) { <span class="insignia retrasado">Retrasado</span> }
+            @if (p.refund) { <span class="insignia reembolsado">Reembolsado</span> }
             @if (e === 'pending' || e === 'expired') {
               @if (p.receipt_uploaded_at) { <span class="insignia con-comprobante">Con comprobante</span> }
               @else { <span class="insignia sin-comprobante">Sin comprobante</span> }
@@ -68,6 +69,8 @@
               <dt>Creado</dt><dd>{{ fechaHora(p.created_at) }}</dd>
               @if (p.deadline_at && (e === 'pending' || e === 'expired')) { <dt>Plazo de pago</dt><dd>{{ fechaHora(p.deadline_at) }}</dd> }
               @if (p.paid_at) { <dt>Pagado</dt><dd>{{ fechaHora(p.paid_at) }}</dd> }
+              @if (p.cancelled_at) { <dt>Cancelado</dt><dd>{{ fechaHora(p.cancelled_at) }}{{ p.cancel_reason ? ' · ' + p.cancel_reason : '' }}</dd> }
+              @if (p.refund; as r) { <dt>Reembolso</dt><dd>{{ r.cents / 100 | currency:'USD':'symbol':'1.2-2' }} registrado {{ fechaHora(r.at) }}</dd> }
               @if (p.production_started_at) { <dt>En producción desde</dt><dd>{{ fechaHora(p.production_started_at) }}</dd> }
               @if (p.shipped_at) { <dt>Enviado</dt><dd>{{ fechaHora(p.shipped_at) }} · guía <b>{{ p.tracking_number }}</b></dd> }
               <dt>Comprobante</dt><dd>{{ p.receipt_uploaded_at ? 'Subido ' + fechaHora(p.receipt_uploaded_at) : 'No ha subido' }}</dd>
@@ -148,6 +151,9 @@
               @if (e === 'in_production' || e === 'shipped') {
                 <button type="button" (click)="abrirRetraso(p)" [disabled]="trabajando() === p.number">Avisar retraso</button>
               }
+              @if (e === 'cancelled' && p.payment_status === 'paid') {
+                <button type="button" class="primario" (click)="pedirConfirmacion(p.number, 'reembolsar')" [disabled]="trabajando() === p.number">Registrar reembolso</button>
+              }
               @if (e !== 'cancelled' && e !== 'shipped') {
                 <button type="button" class="peligro" (click)="pedirConfirmacion(p.number, 'cancelar')" [disabled]="trabajando() === p.number">Cancelar pedido</button>
               }
@@ -200,11 +206,20 @@
                         <input type="checkbox" [checked]="notificarCancelacion()" (change)="notificarCancelacion.set($any($event.target).checked)" />
                         Notificar al comprador por correo
                       </label>
-                      @if (notificarCancelacion()) {
-                        <input type="text" maxlength="200" [value]="motivoCancelacion()" (input)="motivoCancelacion.set($any($event.target).value)"
-                          placeholder="Motivo breve (opcional)" aria-label="Motivo de la cancelación" />
-                        @if (p.payment_status === 'paid') { <small class="ayuda">Como ya pagó, el correo le avisa que lo contactarán para el reembolso.</small> }
+                      <input type="text" maxlength="200" [value]="motivoCancelacion()" (input)="motivoCancelacion.set($any($event.target).value)"
+                        placeholder="Motivo breve (opcional)" aria-label="Motivo de la cancelación" />
+                      @if (p.payment_status === 'paid') {
+                        <label class="monto-reembolso">Reembolso en USD (opcional, máximo {{ p.total_cents / 100 | currency:'USD':'symbol':'1.2-2' }})
+                          <input type="text" inputmode="decimal" maxlength="9" autocomplete="off" placeholder="Ej.: 12.50" [value]="montoReembolso()" (input)="montoReembolso.set($any($event.target).value)" /></label>
+                        <small class="ayuda">Aquí solo se registra el monto: el dinero lo devuelves tú (en el panel de PayPhone si pagó con tarjeta, o por transferencia). Si lo dejas vacío, lo registras después.</small>
+                        @if (errorReembolso()) { <small class="campo-error" role="alert">{{ errorReembolso() }}</small> }
                       }
+                    }
+                    @case ('reembolsar') {
+                      <p>Registra cuánto devolviste del pedido {{ p.number }}. El dinero lo devuelves tú (PayPhone o transferencia); aquí solo queda el registro.</p>
+                      <label class="monto-reembolso">Monto reembolsado en USD (máximo {{ p.total_cents / 100 | currency:'USD':'symbol':'1.2-2' }})
+                        <input type="text" inputmode="decimal" maxlength="9" autocomplete="off" placeholder="Ej.: 12.50" [value]="montoReembolso()" (input)="montoReembolso.set($any($event.target).value)" /></label>
+                      @if (errorReembolso()) { <small class="campo-error" role="alert">{{ errorReembolso() }}</small> }
                     }
                   }
                   @if (sobrecupo(); as s) {

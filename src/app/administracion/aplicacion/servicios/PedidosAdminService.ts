@@ -38,9 +38,17 @@ export class PedidosAdminService {
   }
 
   /** Con `notificar` Laravel avisa al comprador por correo, con el motivo breve que se escriba. */
-  cancelar(numero: string, aviso?: { notificar: boolean; motivo: string }): Observable<PedidoAdmin> {
-    const cuerpo = aviso?.notificar ? { notify_buyer: true, reason: aviso.motivo.trim() || null } : {};
+  cancelar(numero: string, aviso?: { notificar: boolean; motivo: string; reembolso?: string }): Observable<PedidoAdmin> {
+    const cuerpo: Record<string, unknown> = {};
+    if (aviso?.notificar) cuerpo['notify_buyer'] = true;
+    if (aviso?.motivo.trim()) cuerpo['reason'] = aviso.motivo.trim();     // el motivo se guarda siempre; el correo solo sale con «notificar»
+    if (aviso?.reembolso?.trim()) cuerpo['refund_amount'] = aviso.reembolso.trim();   // dólares escritos por Josué; Laravel los valida y convierte
     return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/cancel`, cuerpo).pipe(conErrorApi());
+  }
+
+  /** Registra cuánto se reembolsó a un pedido ya cancelado (el dinero se devuelve a mano). */
+  registrarReembolso(numero: string, monto: string): Observable<PedidoAdmin> {
+    return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/refund`, { refund_amount: monto.trim() }).pipe(conErrorApi());
   }
 
   /** Retraso: nueva fecha de entrega y motivo breve; Laravel guarda la fecha anterior y le avisa al comprador por correo. */

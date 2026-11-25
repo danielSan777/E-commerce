@@ -6,7 +6,7 @@ export interface PedidoAdmin {
     number: string;
     channel: string;
     payment_method: 'transfer' | 'card';
-    payment_status: 'pending_validation' | 'unpaid' | 'paid';
+    payment_status: 'pending_validation' | 'unpaid' | 'paid' | 'refunded';
     status: string;                                   // created, expired, cancelled, in_production, shipped
     customer: { name: string; email: string; phone: string | null };
     total_cents: number;
@@ -22,6 +22,10 @@ export interface PedidoAdmin {
     send_by_at: string;
     /** Si Josué avisó un retraso: el motivo, cuándo, y la fecha prometida al comprar. */
     delay?: { reason: string | null; at: string; original_window: { start: string | null; end: string | null } } | null;
+    /** Motivo de la cancelación y reembolso que registró Josué (el dinero se devuelve a mano, fuera del sistema). */
+    cancel_reason?: string | null;
+    cancelled_at?: string | null;
+    refund?: { cents: number; at: string | null } | null;
     deadline_at: string | null;
     receipt_uploaded_at: string | null;
     whatsapp_clicked_at: string | null;

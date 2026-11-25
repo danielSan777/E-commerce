@@ -9,7 +9,7 @@ import { PedidosAdminService } from '../../../aplicacion/servicios/PedidosAdminS
 import { descargarEtiquetaImagen, descargarEtiquetaPdf, datosDeEtiqueta } from '../../../aplicacion/servicios/EtiquetaEnvio';
 import { EstadoPedidoAdmin, FiltroPedidos, OrdenProduccion, PedidoAdmin, estadoDePedido } from '../../../dominio/interfaces/pedidos-admin';
 
-type Accion = 'pagar' | 'pagar_tarde' | 'cancelar';
+type Accion = 'pagar' | 'pagar_tarde' | 'cancelar' | 'reembolsar';
 
 /** La guía de Servientrega: letras, números y guiones, de 5 a 40 caracteres (Laravel valida lo mismo). */
 export function guiaValida(guia: string): boolean {
@@ -90,6 +90,8 @@ export class AdminPedidos implements OnInit {
   confirmando = signal<{ numero: string; accion: Accion } | null>(null);
   notificarCancelacion = signal(false);                    // «Notificar al comprador» al cancelar
   motivoCancelacion = signal('');
+  montoReembolso = signal('');                              // dólares escritos al cancelar o al registrar un reembolso
+  errorReembolso = signal('');
   retraso = signal<{ numero: string; inicio: string; fin: string; motivo: string } | null>(null);   // formulario «Avisar retraso» abierto
   errorRetraso = signal('');
   guia = signal('');                                       // guía escrita para marcar «Enviado»
@@ -156,6 +158,8 @@ export class AdminPedidos implements OnInit {
 
   pedirConfirmacion(numero: string, accion: Accion): void {
     this.sobrecupo.set(null);
+    this.montoReembolso.set('');
+    this.errorReembolso.set('');
     this.confirmando.set({ numero, accion });
   }
 
@@ -188,7 +192,8 @@ export class AdminPedidos implements OnInit {
 
   ejecutar(p: PedidoAdmin, accion: Accion, confirmarSobrecupo = false): void {
     this.trabajando.set(p.number);
-    const llamada = accion === 'cancelar' ? this.servicio.cancelar(p.number, { notificar: this.notificarCancelacion(), motivo: this.motivoCancelacion() })
+    const llamada = accion === 'cancelar' ? this.servicio.cancelar(p.number, { notificar: this.notificarCancelacion(), motivo: this.motivoCancelacion(), reembolso: this.montoReembolso() })
+      : accion === 'reembolsar' ? this.servicio.registrarReembolso(p.number, this.montoReembolso())
      
       : this.servicio.marcarPagado(p.number, { fueraDePlazo: accion === 'pagar_tarde', confirmarSobrecupo });
 
@@ -198,11 +203,14 @@ export class AdminPedidos implements OnInit {
         this.sobrecupo.set(null);
         this.notificarCancelacion.set(false);
         this.motivoCancelacion.set('');
-        this.avisos.exito(accion === 'cancelar' ? `Pedido ${p.number} cancelado.` : `Pedido ${p.number} marcado como pagado.`);
+        this.montoReembolso.set('');
+        this.errorReembolso.set('');
+        this.avisos.exito(accion === 'reembolsar' ? `Reembolso de ${p.number} registrado.` : accion === 'cancelar' ? `Pedido ${p.number} cancelado.` : `Pedido ${p.number} marcado como pagado.`);
         this.reemplazar(nuevo);
       },
       error: (e: ErrorApi) => {
         if (e.code === 'capacity_over_limit') this.sobrecupo.set({ numero: p.number, mensaje: e.message });
+        else if (e.errors?.['refund_amount']) this.errorReembolso.set(e.errors['refund_amount'][0]);
         else { this.confirmando.set(null); this.avisos.error(e.message); }
       },
     });

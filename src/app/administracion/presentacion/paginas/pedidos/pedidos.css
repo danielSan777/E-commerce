@@ -76,3 +76,7 @@
 .plazo-envio.pronto { background: #fffbeb; color: #92400e; }
 .plazo-envio.hoy { background: #fee2e2; color: #991b1b; font-weight: 700; }
 .plazo-envio.vencido { background: #fee2e2; color: #991b1b; }
+
+.insignia.reembolsado { background: #e0e7ff; color: #3730a3; }
+.monto-reembolso { display: flex; flex-direction: column; gap: .2rem; font-size: .9rem; }
+.monto-reembolso input { min-height: 44px; max-width: 12rem; }

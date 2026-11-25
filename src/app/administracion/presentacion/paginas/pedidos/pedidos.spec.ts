@@ -231,6 +231,48 @@ describe('AdminPedidos', () => {
     expect(c.notificarCancelacion()).toBe(false);
   });
 
+  it('al cancelar un pedido pagado manda el monto del reembolso; el motivo se guarda aunque no se avise por correo', async () => {
+    const { c } = await abrir([pedido({ payment_status: 'paid', status: 'in_production' })]);
+    c.motivoCancelacion.set('Se rompió');
+    c.montoReembolso.set(' 12.50 ');
+    c.ejecutar(c.pedidos()[0], 'cancelar');
+    const r = http.expectOne('/api/v1/admin/orders/JDS-1001/cancel');
+    expect(r.request.body).toEqual({ reason: 'Se rompió', refund_amount: '12.50' });
+    r.flush(pedido({ payment_status: 'refunded', status: 'cancelled', refund: { cents: 1250, at: '2026-11-25T18:00:00Z' } }));
+    expect(c.montoReembolso()).toBe('');
+  });
+
+  it('si Laravel rechaza el monto, se muestra el motivo y la confirmación sigue abierta', async () => {
+    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'in_production' })]);
+    c.alternar('JDS-1001');
+    c.pedirConfirmacion('JDS-1001', 'cancelar');
+    c.montoReembolso.set('999');
+    c.ejecutar(c.pedidos()[0], 'cancelar');
+    http.expectOne('/api/v1/admin/orders/JDS-1001/cancel').flush({ code: 'validation_failed', message: 'Datos inválidos', errors: { refund_amount: ['El reembolso no puede pasar de $24.50.'] } }, { status: 422, statusText: 'Unprocessable' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('.confirmacion .campo-error')?.textContent).toContain('no puede pasar de $24.50');
+  });
+
+  it('un pedido cancelado y pagado ofrece «Registrar reembolso» y lo manda a Laravel', async () => {
+    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'cancelled' })]);
+    c.filtro.set('cancelled');
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+    expect(el.textContent).toContain('Registrar reembolso');
+
+    c.montoReembolso.set('24.50');
+    c.ejecutar(c.pedidos()[0], 'reembolsar');
+    const r = http.expectOne('/api/v1/admin/orders/JDS-1001/refund');
+    expect(r.request.body).toEqual({ refund_amount: '24.50' });
+    r.flush(pedido({ payment_status: 'refunded', status: 'cancelled', refund: { cents: 2450, at: '2026-11-25T18:00:00Z' } }));
+    fixture.detectChanges();
+
+    expect(el.textContent).toContain('Reembolsado');
+    expect(el.textContent).not.toContain('Registrar reembolso');
+  });
+
   it('ver comprobante descarga el archivo con la sesión del administrador y lo abre', async () => {
     const { c } = await abrir();
     const abrirVentana = vi.spyOn(window, 'open').mockReturnValue(null);
