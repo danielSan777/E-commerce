@@ -60,6 +60,16 @@ export const routes: Routes = [
         loadComponent: () => import('./administracion/presentacion/paginas/envios/envios').then(m => m.AdminEnvios)
     },
     {
+        path: 'admin/ciclos/:fecha/produccion',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/hoja-produccion/hoja-produccion').then(m => m.AdminHojaProduccion)
+    },
+    {
+        path: 'admin/ciclos/:fecha/envios',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/lista-envios/lista-envios').then(m => m.AdminListaEnvios)
+    },
+    {
         path: 'admin/ciclos',
         canActivate: [adminGuard],
         loadComponent: () => import('./administracion/presentacion/paginas/ciclos/ciclos').then(m => m.AdminCiclos)

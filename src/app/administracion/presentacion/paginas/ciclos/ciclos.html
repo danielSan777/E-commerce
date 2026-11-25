@@ -33,6 +33,11 @@
           @if (c.capacity_override !== null && !c.closed) { <p class="nota">Capacidad propia de este ciclo (la normal es {{ l.meta.nominal_capacity }}).</p> }
           @if (c.last_event; as e) { <p class="evento">{{ textoEvento(e) }}</p> }
 
+          <p class="enlaces">
+            <a [routerLink]="['/admin/ciclos', c.date, 'produccion']">Hoja de producción</a>
+            <a [routerLink]="['/admin/ciclos', c.date, 'envios']">Lista de envíos</a>
+          </p>
+
           <div class="acciones">
             <form class="capacidad" (submit)="guardarCapacidad(c, $event)" novalidate>
               <label [for]="'cap-' + c.date">Capacidad de este ciclo</label>

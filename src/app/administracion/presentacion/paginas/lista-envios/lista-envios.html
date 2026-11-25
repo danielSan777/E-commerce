@@ -1,0 +1,71 @@
+<header class="barra no-imprimir">
+  <strong>Lista de envíos</strong>
+  <a [routerLink]="['/admin/ciclos']">← Volver a ciclos</a>
+</header>
+
+<main class="contenido">
+  @if (error()) { <p class="error no-imprimir" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
+  @if (cargando() && !lista()) { <p>Cargando…</p> }
+
+  @if (lista(); as l) {
+    <section class="encabezado">
+      <h1>Envíos del ciclo del {{ fechaLarga(l.cycle.date) }}</h1>
+      <p>Despacho: <strong>{{ fechaLarga(l.cycle.dispatch_date) }}</strong> · Entrega: <strong>{{ fechaCorta(l.cycle.window.start) }} – {{ fechaCorta(l.cycle.window.end) }}</strong></p>
+    </section>
+
+    @if (resultado(); as r) {
+      @if (r.results.length > r.shipped) {
+        <div class="resultado no-imprimir" role="alert">
+          <strong>{{ r.shipped }} enviados. Estos no salieron:</strong>
+          <ul>@for (x of r.results; track x.number) { @if (!x.ok) { <li>{{ x.number }}: {{ x.message }}</li> } }</ul>
+        </div>
+      }
+    }
+
+    <div class="herramientas no-imprimir">
+      <button type="button" class="secundario" (click)="todos(true)">Marcar todos</button>
+      <button type="button" class="secundario" (click)="todos(false)">Quitar todos</button>
+      <button type="button" class="secundario" (click)="exportarCsv()" [disabled]="!elegidos().size">Exportar CSV</button>
+      <button type="button" class="secundario" (click)="imprimir()" [disabled]="!elegidos().size">Imprimir</button>
+      <a class="enlace" [routerLink]="['/admin/ciclos', l.cycle.date, 'produccion']">Ir a la hoja de producción</a>
+    </div>
+
+    @if (!l.orders.length) { <p class="vacio">Este ciclo todavía no tiene pedidos pagados.</p> }
+
+    <ul class="envios">
+      @for (p of l.orders; track p.number) {
+        <li class="envio" [class.excluido]="!estaElegido(p)" [class.enviado]="p.status === 'shipped'">
+          <label class="incluir no-imprimir"><input type="checkbox" [checked]="estaElegido(p)" (change)="alternar(p)" [attr.aria-label]="'Elegir ' + p.number" /></label>
+          <div class="datos">
+            <h2>{{ p.number }} <span class="estado">{{ p.status === 'shipped' ? 'Enviado' : 'Por enviar' }}</span></h2>
+            <p class="nombre">{{ p.name }} · {{ documento(p) }} · Cel. {{ p.phone }}</p>
+            <p>{{ p.province }}, {{ p.canton }}</p>
+            <p>{{ p.address }}@if (p.reference) { <em> — Ref.: {{ p.reference }}</em> }</p>
+            <p class="entrega">Entrega: {{ fechaCorta(p.window.start) }} – {{ fechaCorta(p.window.end) }}</p>
+          </div>
+          <div class="guia">
+            <label [for]="'guia-' + p.number">Guía</label>
+            <input [id]="'guia-' + p.number" [name]="'guia-' + p.number" autocomplete="off" maxlength="40" placeholder="Ej.: 0012345678"
+              [ngModel]="guias()[p.number]" (ngModelChange)="escribirGuia(p.number, $event)"
+              [attr.aria-invalid]="guiaMala().includes(p) ? true : null" />
+            <span class="solo-imprimir">{{ guias()[p.number] }}</span>
+            <button type="button" class="secundario no-imprimir" (click)="copiarFila(p)">Copiar datos</button>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <div class="lote no-imprimir">
+      @if (confirmando()) {
+        <div class="confirmar" role="alert">
+          <span>¿Marcar {{ listosParaEnviar().length }} pedido(s) como enviado(s)? Cada comprador recibirá su correo con su guía.</span>
+          <button type="button" (click)="marcarEnviados()" [disabled]="enviando()">{{ enviando() ? 'Enviando…' : 'Sí, marcar como enviados' }}</button>
+          <button type="button" class="secundario" (click)="cancelar()">No</button>
+        </div>
+      } @else {
+        <button type="button" (click)="pedirConfirmacion()" [disabled]="enviando() || !l.orders.length">Marcar como enviados ({{ listosParaEnviar().length }})</button>
+        @if (sinGuia().length) { <small class="aviso">{{ sinGuia().length }} pedido(s) marcado(s) todavía sin guía: no se enviarán.</small> }
+      }
+    </div>
+  }
+</main>

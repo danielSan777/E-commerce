@@ -1501,9 +1501,9 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 **Tareas**
 
 - [x] **Vista por ciclo:** pedidos pagados, transferencias pendientes y capacidad restante, con el botón "Pasar las ventas al siguiente ciclo". *(Hecha en `/admin/ciclos` (Paso 8). Falta enlazar cada ciclo con su hoja de producción y su lista de envíos.)*
-- [ ] **Hoja de producción por día de despacho,** imprimible y sin precios (detalle abajo).
-- [ ] **Lista de envíos del ciclo** para crear las guías de Servientrega (detalle abajo).
-- [ ] **"Enviado" por lote:** se cargan las guías en la lista, se seleccionan los pedidos y se marcan juntos; cada comprador recibe su correo con su guía.
+- [x] **Hoja de producción por día de despacho,** imprimible y sin precios (detalle abajo). *(2026-11-27: `/admin/ciclos/{fecha}/produccion`. Decisión: se elige el ciclo y salen todos sus pedidos pagados marcados; con la casilla se quitan los que no se quieran y solo los marcados se imprimen. Trae pedido, canal, pago, zona (Amazonía +1 día), ventana y si es programado; por maceta, placa con «Copiar texto de placa», lentes o gafas con su color, accesorios, frase del marco, descarga de la foto del marco, dedicatoria y complementos. Falta el «slot» de cada accesorio: el pedido no lo guarda, solo su nombre.)*
+- [x] **Lista de envíos del ciclo** para crear las guías de Servientrega (detalle abajo). *(`/admin/ciclos/{fecha}/envios`: destinatario, cédula o RUC, celular, provincia, cantón, dirección, referencia y campo de guía; «Copiar datos» por fila, exportar a CSV (separado por «;» para Excel en español) e imprimir solo los marcados. Falta la localidad: el pedido no la guarda aparte.)*
+- [x] **"Enviado" por lote:** se cargan las guías en la lista, se seleccionan los pedidos y se marcan juntos; cada comprador recibe su correo con su guía. *(`POST admin/orders/ship-batch`, hasta 50 pedidos; cada uno por separado: los que fallan no frenan a los demás y la pantalla dice cuál y por qué. Pide confirmación. Corregir una guía no repite el correo.)*
 - [ ] **Facturación:** filtro "Por facturar" (pagados sin facturar), datos de facturación con botón copiar por campo, marca "Facturado" individual o por lote y número de factura opcional.
 - [ ] **Pedidos:** búsqueda y filtros por estado, canal, ciclo, método de pago, campaña y anuncio de origen; exportación CSV.
 - [ ] **Excepciones:** mantener una ventana, superar la capacidad de 10 con confirmación explícita y ajustar el envío de un pedido.

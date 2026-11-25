@@ -1,0 +1,41 @@
+@import '../../estilos/admin-tema.css';
+
+.contenido { max-width: 960px; }
+.encabezado h1 { margin: 0 0 .25rem; }
+.encabezado p { margin: .15rem 0; }
+.herramientas { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: .75rem 0; }
+.herramientas button, .lote button { min-height: 44px; }
+.enlace { margin-left: auto; }
+.vacio { color: var(--suave); }
+.resultado { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; border-radius: 12px; padding: .6rem 1rem; margin-bottom: .75rem; }
+.envios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .6rem; }
+.envio { display: grid; grid-template-columns: auto 1fr 15rem; gap: .75rem; align-items: start; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: .75rem 1rem; break-inside: avoid; }
+.envio.excluido { opacity: .45; }
+.envio.enviado { border-left: 6px solid var(--primario); }
+.incluir { margin: 0; padding-top: .2rem; }
+.incluir input { width: 1.3rem; height: 1.3rem; accent-color: var(--primario); }
+.datos h2 { margin: 0 0 .2rem; font-size: 1.1rem; }
+.datos p { margin: .1rem 0; }
+.nombre { font-weight: 600; }
+.entrega { color: var(--suave); font-size: .9rem; }
+.estado { font-size: .78rem; font-weight: 700; background: #d1fae5; color: var(--primario); border-radius: 999px; padding: 0 .6rem; margin-left: .4rem; }
+.guia { display: flex; flex-direction: column; gap: .3rem; }
+.guia label { margin: 0; font-size: .85rem; }
+.guia input { min-height: 40px; }
+.guia button { min-height: 36px; align-self: flex-start; }
+.solo-imprimir { display: none; }
+.lote { margin: 1rem 0; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.confirmar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; background: #fef3c7; border-radius: 8px; padding: .5rem .75rem; }
+.aviso { color: #92400e; }
+
+@media (max-width: 640px) { .envio { grid-template-columns: auto 1fr; } .guia { grid-column: 1 / -1; } .enlace { margin-left: 0; } }
+
+@media print {
+  .no-imprimir { display: none !important; }
+  .solo-imprimir { display: inline; font-weight: 700; }
+  .guia input { display: none; }
+  .guia::before { content: 'Guía:'; }
+  .envio.excluido { display: none !important; }
+  .envio { border: 1px solid #000; opacity: 1; grid-template-columns: 1fr 12rem; }
+  .contenido { max-width: none; padding: 0; }
+}

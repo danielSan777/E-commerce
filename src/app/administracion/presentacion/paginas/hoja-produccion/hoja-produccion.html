@@ -1,0 +1,71 @@
+<header class="barra no-imprimir">
+  <strong>Hoja de producción</strong>
+  <a [routerLink]="['/admin/ciclos']">← Volver a ciclos</a>
+</header>
+
+<main class="contenido">
+  @if (error()) { <p class="error no-imprimir" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
+  @if (cargando() && !hoja()) { <p>Cargando…</p> }
+
+  @if (hoja(); as h) {
+    <section class="encabezado">
+      <h1>Ciclo del {{ fechaLarga(h.cycle.date) }}</h1>
+      <p>Despacho: <strong>{{ fechaLarga(h.cycle.dispatch_date) }}</strong> · Entrega: <strong>{{ fechaCorta(h.cycle.window.start) }} – {{ fechaCorta(h.cycle.window.end) }}</strong></p>
+      <p class="resumen">{{ seleccionados().length }} de {{ h.totals.orders }} pedidos · {{ totalMacetas() }} macetas</p>
+    </section>
+
+    <div class="herramientas no-imprimir">
+      <button type="button" (click)="imprimir()" [disabled]="!seleccionados().length">Imprimir hoja</button>
+      <button type="button" class="secundario" (click)="todos(true)">Marcar todos</button>
+      <button type="button" class="secundario" (click)="todos(false)">Quitar todos</button>
+      <a class="enlace" [routerLink]="['/admin/ciclos', h.cycle.date, 'envios']">Ir a la lista de envíos</a>
+    </div>
+
+    @if (!h.orders.length) { <p class="vacio">Este ciclo todavía no tiene pedidos pagados.</p> }
+
+    @for (p of h.orders; track p.number) {
+      <article class="pedido" [class.excluido]="!estaIncluido(p)">
+        <header>
+          <label class="incluir no-imprimir"><input type="checkbox" [checked]="estaIncluido(p)" (change)="alternar(p)" [attr.aria-label]="'Incluir ' + p.number" /> Incluir</label>
+          <h2>{{ p.number }}</h2>
+          <span class="dato">{{ canal(p.channel) }}</span>
+          <span class="dato">{{ metodo(p.payment_method) }} · {{ estadoDePago(p.payment_status) }}</span>
+          <span class="dato">Zona {{ p.zone }}@if (p.extra_days > 0) { · Amazonía (+{{ p.extra_days }} día) }</span>
+          <span class="dato">Entrega: {{ fechaCorta(p.window.start) }} – {{ fechaCorta(p.window.end) }}</span>
+          @if (p.scheduled) { <span class="dato programado">Programado</span> }
+        </header>
+
+        <ul class="items">
+          @for (i of p.items; track i.id) {
+            <li class="item" [class.complemento]="!esMaceta(i)">
+              <strong>{{ i.name }}@if (i.quantity > 1) { × {{ i.quantity }} }</strong>
+              @if (esMaceta(i)) {
+                <dl>
+                  <div><dt>Placa</dt>
+                    <dd>
+                      @if (i.plate_text) {
+                        <span class="placa">{{ i.plate_text }}</span>
+                        <button type="button" class="copiar no-imprimir" (click)="copiarPlaca(i)">Copiar texto de placa</button>
+                      } @else { <em>Sin nombre</em> }
+                    </dd></div>
+                  @if (i.lens_color) { <div><dt>Lentes</dt><dd>{{ color(i.lens_color) }}</dd></div> }
+                  @if (i.glasses_color) { <div><dt>Gafas</dt><dd>{{ color(i.glasses_color) }}</dd></div> }
+                  @if (i.accessories.length) { <div><dt>Accesorios</dt><dd>{{ i.accessories.join(', ') }}</dd></div> }
+                  @if (i.frame_text) { <div><dt>Frase del marco</dt><dd>{{ i.frame_text }}</dd></div> }
+                  @if (i.has_frame_photo) {
+                    <div><dt>Foto del marco</dt>
+                      <dd><button type="button" class="copiar no-imprimir" (click)="descargarFoto(p, i)" [disabled]="descargando() === i.id">{{ descargando() === i.id ? 'Descargando…' : 'Descargar foto' }}</button>
+                        <span class="solo-imprimir">(foto en el panel)</span></dd></div>
+                  }
+                  <div><dt>Dedicatoria</dt><dd>@if (i.dedication) { {{ i.dedication }} } @else { <em>Sin dedicatoria</em> }</dd></div>
+                </dl>
+              } @else {
+                <span class="etiqueta">Complemento</span>
+              }
+            </li>
+          }
+        </ul>
+      </article>
+    }
+  }
+</main>
