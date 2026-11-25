@@ -47,6 +47,11 @@ export class PedidosAdminService {
     return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/cancel`, cuerpo).pipe(conErrorApi());
   }
 
+  /** Retraso: nueva fecha de entrega y motivo breve; Laravel guarda la fecha anterior y le avisa al comprador por correo. */
+  registrarRetraso(numero: string, inicio: string, fin: string, motivo: string): Observable<PedidoAdmin> {
+    return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/delay`, { window_start: inicio, window_end: fin, reason: motivo.trim() || null }).pipe(conErrorApi());
+  }
+
   /** El comprobante está en un disco privado y exige sesión: se descarga con el token y se abre como archivo local. */
   comprobante(numero: string): Observable<Blob> {
     return this.http.get(`${this.api}/admin/orders/${numero}/receipt`, { responseType: 'blob' }).pipe(conErrorApi());

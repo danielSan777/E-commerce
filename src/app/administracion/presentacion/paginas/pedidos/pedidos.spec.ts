@@ -51,6 +51,60 @@ describe('AdminPedidos', () => {
     expect(el.textContent).toContain('Con comprobante');
   });
 
+  it('cada pedido muestra su fecha de entrega en la lista y en el detalle del cliente', async () => {
+    const { c, fixture, el } = await abrir([pedido({ window: { start: '2026-11-27', end: '2026-11-28', type: 'scheduled' } })]);
+
+    expect(el.querySelector('.resumen .entrega')?.textContent).toContain('27 nov');
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+    expect(el.querySelector('.detalle')?.textContent).toContain('Fecha de entrega');
+    expect(el.querySelector('.detalle')?.textContent).toContain('27 nov – 28 nov');
+  });
+
+  it('«Avisar retraso» guarda la nueva fecha y el motivo, y el pedido queda marcado como retrasado', async () => {
+    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'in_production', window: { start: '2026-11-27', end: '2026-11-28', type: 'scheduled' } })]);
+    c.filtro.set('in_production');   // el pedido sigue en esta lista después de guardar
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('Retrasado');
+
+    Array.from(el.querySelectorAll<HTMLButtonElement>('button')).find(b => b.textContent?.includes('Avisar retraso'))!.click();
+    fixture.detectChanges();
+    c.cambiarRetraso('inicio', '2026-12-02');
+    c.cambiarRetraso('fin', '2026-12-03');
+    c.cambiarRetraso('motivo', 'Se rompió la maceta');
+    fixture.detectChanges();
+    el.querySelector<HTMLFormElement>('form.retraso')!.dispatchEvent(new Event('submit'));
+
+    const r = http.expectOne('/api/v1/admin/orders/JDS-1001/delay');
+    expect(r.request.body).toEqual({ window_start: '2026-12-02', window_end: '2026-12-03', reason: 'Se rompió la maceta' });
+    r.flush(pedido({ payment_status: 'paid', status: 'in_production', window: { start: '2026-12-02', end: '2026-12-03', type: 'scheduled' },
+      delay: { reason: 'Se rompió la maceta', at: '2026-11-25T15:00:00Z', original_window: { start: '2026-11-27', end: '2026-11-28' } } }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('form.retraso')).toBeNull();
+    expect(el.querySelector('.insignia.retrasado')).not.toBeNull();
+    expect(el.querySelector('.detalle')?.textContent).toContain('2 dic – 3 dic');
+    expect(el.querySelector('.detalle')?.textContent).toContain('antes: 27 nov – 28 nov');
+    expect(el.querySelector('.detalle')?.textContent).toContain('Se rompió la maceta');
+  });
+
+  it('si Laravel rechaza las fechas del retraso, el formulario muestra el motivo y no se cierra', async () => {
+    const { c, fixture, el } = await abrir([pedido({ payment_status: 'paid', status: 'ready_for_production' })]);
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+    c.abrirRetraso(c.pedidos()[0]);
+    fixture.detectChanges();
+    c.guardarRetraso(c.pedidos()[0]);
+
+    http.expectOne('/api/v1/admin/orders/JDS-1001/delay').flush({ code: 'validation_failed', message: 'Datos inválidos', errors: { window_start: ['La nueva fecha no puede ser anterior a hoy.'] } }, { status: 422, statusText: 'Unprocessable' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.querySelector('form.retraso .campo-error')?.textContent).toContain('anterior a hoy');
+  });
+
   it('el detalle muestra qué personalizó el cliente y adónde se envía', async () => {
     const { c, fixture, el } = await abrir();
     c.alternar('JDS-1001');

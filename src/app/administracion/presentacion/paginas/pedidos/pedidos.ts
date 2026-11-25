@@ -61,6 +61,8 @@ export class AdminPedidos implements OnInit {
   confirmando = signal<{ numero: string; accion: Accion } | null>(null);
   notificarCancelacion = signal(false);                    // «Notificar al comprador» al cancelar
   motivoCancelacion = signal('');
+  retraso = signal<{ numero: string; inicio: string; fin: string; motivo: string } | null>(null);   // formulario «Avisar retraso» abierto
+  errorRetraso = signal('');
   guia = signal('');                                       // guía escrita para marcar «Enviado»
   errorGuia = signal('');
   sobrecupo = signal<{ numero: string; mensaje: string } | null>(null);   // Laravel pidió confirmar que se pasa del límite
@@ -184,6 +186,32 @@ export class AdminPedidos implements OnInit {
     const datos = datosDeEtiqueta(p);
     if (formato === 'pdf') descargarEtiquetaPdf(datos);
     else descargarEtiquetaImagen(datos);
+  }
+
+  /** Abre el formulario de retraso con las fechas actuales del pedido. */
+  abrirRetraso(p: PedidoAdmin): void {
+    this.errorRetraso.set('');
+    this.retraso.set({ numero: p.number, inicio: p.window.start, fin: p.window.end, motivo: '' });
+  }
+
+  cambiarRetraso(campo: 'inicio' | 'fin' | 'motivo', valor: string): void {
+    this.retraso.update(r => (r ? { ...r, [campo]: valor } : r));
+  }
+
+  /** Guarda la nueva fecha de entrega: Laravel valida, avisa al comprador por correo y devuelve el pedido ya cambiado. */
+  guardarRetraso(p: PedidoAdmin): void {
+    const r = this.retraso();
+    if (!r || r.numero !== p.number) return;
+    this.errorRetraso.set('');
+    this.trabajando.set(p.number);
+    this.servicio.registrarRetraso(p.number, r.inicio, r.fin, r.motivo).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.trabajando.set(null))).subscribe({
+      next: nuevo => {
+        this.retraso.set(null);
+        this.avisos.exito(`Retraso de ${p.number} guardado: se avisó al comprador por correo.`);
+        this.reemplazar(nuevo);
+      },
+      error: (e: ErrorApi) => this.errorRetraso.set(e.errors?.['window_start']?.[0] ?? e.errors?.['window_end']?.[0] ?? e.errors?.['reason']?.[0] ?? e.message),
+    });
   }
 
   /** «Enviado»: exige la guía de Servientrega; el comprador la ve en su seguimiento. */

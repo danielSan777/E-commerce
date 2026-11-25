@@ -17,6 +17,8 @@ export interface PedidoAdmin {
     cycle_date: string;
     dispatch_date: string;
     window: { start: string; end: string; type: string };
+    /** Si Josué avisó un retraso: el motivo, cuándo, y la fecha prometida al comprar. */
+    delay?: { reason: string | null; at: string; original_window: { start: string | null; end: string | null } } | null;
     deadline_at: string | null;
     receipt_uploaded_at: string | null;
     whatsapp_clicked_at: string | null;

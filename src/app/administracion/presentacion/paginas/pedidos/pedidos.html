@@ -32,9 +32,13 @@
             <strong>{{ p.number }}</strong>
             <span class="monto">{{ p.total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}</span>
           </span>
-          <span class="cliente">{{ p.customer.name }}</span>
+          <span class="cliente">
+            <span class="nombre">{{ p.customer.name }}</span>
+            <small class="entrega">Entrega: {{ ventana(p.window) }}</small>
+          </span>
           <span class="estados">
             <span class="insignia" [class]="e">{{ ETIQUETAS[e] }}</span>
+            @if (p.delay) { <span class="insignia retrasado">Retrasado</span> }
             @if (e === 'pending' || e === 'expired') {
               @if (p.receipt_uploaded_at) { <span class="insignia con-comprobante">Con comprobante</span> }
               @else { <span class="insignia sin-comprobante">Sin comprobante</span> }
@@ -52,7 +56,6 @@
               @if (p.shipped_at) { <dt>Enviado</dt><dd>{{ fechaHora(p.shipped_at) }} · guía <b>{{ p.tracking_number }}</b></dd> }
               <dt>Comprobante</dt><dd>{{ p.receipt_uploaded_at ? 'Subido ' + fechaHora(p.receipt_uploaded_at) : 'No ha subido' }}</dd>
               <dt>Tocó WhatsApp</dt><dd>{{ p.whatsapp_clicked_at ? fechaHora(p.whatsapp_clicked_at) : 'No' }}</dd>
-              <dt>Entrega</dt><dd>{{ ventana(p.window) }} ({{ p.window.type === 'scheduled' ? 'programada' : 'lo antes posible' }})</dd>
               <dt>Cliente</dt>
               <dd>{{ p.customer.name }} · {{ p.customer.email }} · {{ p.customer.phone }}
                 <button type="button" class="btn-copiar" (click)="copiarCorreo(p.customer.email)" [attr.aria-label]="'Copiar el correo ' + p.customer.email">Copiar correo</button></dd>
@@ -60,6 +63,11 @@
               <dd>{{ p.shipping.name }} · {{ p.shipping.address }}, {{ p.shipping.canton_name }}, {{ p.shipping.province_name }}
                 @if (p.shipping.reference) { <br><small>Ref.: {{ p.shipping.reference }}</small> }</dd>
               <dt>Documento</dt><dd>{{ p.shipping.id_number }}</dd>
+              <dt>Fecha de entrega</dt>
+              <dd>{{ ventana(p.window) }} ({{ p.window.type === 'scheduled' ? 'programada' : 'lo antes posible' }})
+                @if (p.delay; as d) {
+                  <br><small class="retraso-nota">Retrasado{{ d.original_window.start && d.original_window.end ? ' (antes: ' + ventana({ start: d.original_window.start, end: d.original_window.end }) + ')' : '' }}{{ d.reason ? ' · ' + d.reason : '' }}</small>
+                }</dd>
               <dt>Etiqueta de envío</dt>
               <dd class="etiqueta">
                 <button type="button" class="btn-copiar" (click)="descargarEtiqueta(p, 'pdf')">Descargar PDF</button>
@@ -124,10 +132,35 @@
               @if (e === 'to_produce') {
                 <button type="button" class="primario" (click)="pedirConfirmacion(p.number, 'produccion')" [disabled]="trabajando() === p.number">Pasar a producción</button>
               }
+              @if (e === 'to_produce' || e === 'in_production' || e === 'shipped') {
+                <button type="button" (click)="abrirRetraso(p)" [disabled]="trabajando() === p.number">Avisar retraso</button>
+              }
               @if (e !== 'cancelled' && e !== 'shipped') {
                 <button type="button" class="peligro" (click)="pedirConfirmacion(p.number, 'cancelar')" [disabled]="trabajando() === p.number">Cancelar pedido</button>
               }
             </div>
+
+            @if (retraso(); as r) {
+              @if (r.numero === p.number) {
+                <form class="retraso" (submit)="guardarRetraso(p); $event.preventDefault()" novalidate>
+                  <strong>Avisar retraso al comprador</strong>
+                  <div class="fila-fechas">
+                    <label>Nueva entrega desde
+                      <input type="date" [name]="'retraso-inicio-' + p.number" [value]="r.inicio" (input)="cambiarRetraso('inicio', $any($event.target).value)" /></label>
+                    <label>hasta
+                      <input type="date" [name]="'retraso-fin-' + p.number" [value]="r.fin" (input)="cambiarRetraso('fin', $any($event.target).value)" /></label>
+                  </div>
+                  <input type="text" maxlength="200" [name]="'retraso-motivo-' + p.number" [value]="r.motivo" (input)="cambiarRetraso('motivo', $any($event.target).value)"
+                    placeholder="Motivo breve que verá el comprador (ej. se rompió la maceta)" aria-label="Motivo del retraso" />
+                  @if (errorRetraso()) { <small class="campo-error" role="alert">{{ errorRetraso() }}</small> }
+                  <small class="ayuda">Se guarda la nueva fecha y el comprador recibe un correo con ella.</small>
+                  <div class="botones">
+                    <button type="submit" class="primario" [disabled]="trabajando() === p.number">Guardar y avisar al cliente</button>
+                    <button type="button" (click)="retraso.set(null)">Cancelar</button>
+                  </div>
+                </form>
+              }
+            }
 
             @if (e === 'in_production' || e === 'shipped') {
               <form class="envio-guia" (submit)="enviar(p); $event.preventDefault()" novalidate>

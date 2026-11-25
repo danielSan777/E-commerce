@@ -1415,6 +1415,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 | Enviado | El pedido se marca "Enviado" | Guía de Servientrega si se cargó, ventana y enlace de seguimiento |
 | Pedido vencido | Vence el plazo de 12 h sin pago | Aviso de vencimiento y enlace para volver a comprar |
 | Cancelado | Solo si Josué marca "Notificar al comprador" | Motivo breve y reembolso, si aplica |
+| Retraso *(agregado el 2026-11-25, pedido por Daniel)* | Josué pulsa «Avisar retraso» en un pedido pagado (por producir, en producción o enviado) y escribe la nueva fecha de entrega y un motivo breve | Nueva fecha de entrega, fecha anterior y motivo; responde a `pedidos@`. Se guarda la fecha prometida al comprar (`original_window_*`), `delay_reason` y `delayed_at`; el panel marca el pedido «Retrasado». Repetir las mismas fechas no reenvía el correo; fechas nuevas, sí |
 
 **Implementación acordada**
 

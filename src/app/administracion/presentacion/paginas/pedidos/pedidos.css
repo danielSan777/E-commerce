@@ -58,3 +58,13 @@
 .btn-copiar { margin-left: .5rem; padding: .15rem .6rem; font-size: .85rem; border: 1px solid var(--borde, #cfd8d3); border-radius: 999px; background: #fff; color: inherit; cursor: pointer; }
 .btn-copiar:hover { background: #f1f6f3; }
 .etiqueta .btn-copiar { margin: 0 .5rem .25rem 0; }
+
+.resumen .cliente { display: flex; flex-direction: column; gap: .1rem; -webkit-line-clamp: unset; display: flex; }
+.resumen .cliente .nombre { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: var(--suave); }
+.resumen .cliente .entrega { font-size: .8rem; color: var(--suave); }
+.insignia.retrasado { background: #fff1e0; color: #9a4a00; }
+.retraso-nota { color: #9a4a00; }
+.retraso { display: flex; flex-direction: column; gap: .5rem; margin-top: .75rem; padding: .75rem; border: 1px solid #f0c9a0; border-radius: 10px; background: #fff8ef; }
+.retraso .fila-fechas { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+.retraso .fila-fechas label { display: flex; flex-direction: column; gap: .2rem; font-size: .9rem; }
+.retraso .botones { display: flex; gap: .5rem; flex-wrap: wrap; }
