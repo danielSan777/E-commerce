@@ -1246,7 +1246,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - [x] Integrar la Cajita en Angular con los datos que entrega Laravel. *(Hecho según la documentación de PayPhone; falta probarla con la app de Pruebas de PayPhone. Mientras no haya credenciales, Laravel responde en modo simulado, solo fuera de producción.)*
 - [x] Ruta de respuesta que recibe `id` y `clientTransactionId` y llama al backend. *(`/checkout/tarjeta/respuesta`.)*
 - [x] Confirmación en Laravel contra PayPhone. *(Valida estado 3, referencia y monto; guarda `transactionId` único y código de autorización; pago duplicado o monto distinto queda en revisión.)*
-- [ ] Endpoint de Notificación Externa (webhook), según la respuesta de PayPhone.
+- [x] Endpoint de Notificación Externa (webhook). *(2026-11-25: `POST /api/v1/payments/payphone/NotificacionPago`. PayPhone no firma el aviso, así que Laravel solo toma `TransactionId` y `ClientTransactionId` y llama a Confirm (idempotente, igual que la ruta de respuesta); nunca usa el monto ni el estado del aviso. Responde `{Response, ErrorCode}`: `000` ok, `444` datos incompletos, `666` otro StoreId, `222` Confirm falló (PayPhone debe reintentar). Falta que PayPhone autorice la Notificación Externa para la tienda (3–5 días hábiles) con la URL HTTPS indicada.)*
 - [x] Pantalla de error amable con opción de reintentar.
 
 **Implementación acordada**
