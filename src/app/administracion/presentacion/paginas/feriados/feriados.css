@@ -1,0 +1,18 @@
+@import '../../estilos/admin-tema.css';
+
+.contenido { max-width: 760px; }
+.aviso { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; border-radius: 12px; padding: .75rem 1rem; }
+.formulario { display: flex; flex-direction: column; gap: .75rem; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 1rem; }
+.formulario label { display: flex; flex-direction: column; gap: .2rem; margin: 0; }
+.fechas { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .75rem; }
+.formulario fieldset { border: 1px solid var(--borde); border-radius: 8px; display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; padding: .5rem .75rem; }
+.formulario .check { flex-direction: row; align-items: center; gap: .4rem; }
+.formulario .check input { width: 1.2rem; height: 1.2rem; accent-color: var(--primario); }
+.formulario button { align-self: flex-start; min-height: 44px; }
+.lista { list-style: none; margin: 0 0 1rem; padding: 0; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; overflow: hidden; }
+.lista li { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .6rem .9rem; border-top: 1px solid #d1fae5; }
+.lista li:first-child { border-top: 0; }
+.lista li > div { display: flex; flex-direction: column; gap: .15rem; }
+.etiqueta { font-size: .78rem; background: #d1fae5; color: var(--primario); border-radius: 999px; padding: 0 .55rem; align-self: flex-start; }
+.detalle { color: var(--suave); }
+.vacio { color: var(--suave); }

@@ -1010,11 +1010,12 @@ Terminado cuando: el repositorio aparece en la cuenta del negocio y el desarroll
 **Tareas**
 
 - [x] Tabla de días no hábiles con tipo (feriado nacional, feriado local de Guayaquil, cierre propio) y a qué afecta (producción, despacho o ambos). *(Tabla `non_working_days` con API de administración (`/admin/non-working-days`); solo trae Navidad y Año Nuevo 2027. Falta la pantalla del panel y que Josué cargue los feriados del año.)*
-- [ ] En el panel: bloquear un día, varios días o un rango; ver cada ciclo con pedidos pagados, pendientes y capacidad restante; cambiar la capacidad de un ciclo puntual.
+- [x] Pantalla del panel `/admin/feriados` para bloquear un día o un rango, con tipo, a qué afecta y nota, y quitar días. *(2026-11-25: `POST admin/non-working-days` acepta `end_date` (rango de hasta 62 días, sin duplicar); el calendario de entrega salta esos días. Falta cargar los feriados reales del año.)*
+- [ ] En el panel: ver cada ciclo con pedidos pagados, pendientes y capacidad restante; cambiar la capacidad de un ciclo puntual.
 - [ ] Botón **"Pasar las ventas al siguiente ciclo"** y su reverso, "Reabrir ciclo".
 - [x] Servicio de ciclo: dado un instante, devuelve ciclo, día de despacho y ventana. *(`MotorDeEntrega` en Laravel, probado con cada fila de la tabla y los cortes 19:59:59, 20:00:00, 20:00:01 y sábado 16:00:00/16:00:01. Falta la capacidad de 8 y 10 pedidos: todavía no existen pedidos.)*
 - [ ] Servicio de capacidad con asignación dentro de una transacción que bloquea la fila del ciclo.
-- [ ] Aviso en el panel si no hay feriados cargados para el año siguiente.
+- [x] Aviso en el panel si no hay feriados cargados para el año siguiente. *(Avisa cuando no hay ningún feriado nacional del año que viene; `meta.national_holidays_next_year` lo calcula Laravel. Hoy no avisa porque ya trae el 1 de enero de 2027: conviene cargar los demás.)*
 
 **Implementación acordada**
 

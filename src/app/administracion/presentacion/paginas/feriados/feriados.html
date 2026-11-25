@@ -1,0 +1,71 @@
+<header class="barra">
+  <strong>Feriados y cierres</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+  @if (error()) { <p class="error" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
+
+  @if (sinFeriadosDelAnioSiguiente()) {
+    <p class="aviso" role="status">No hay feriados nacionales cargados para {{ meta()?.next_year }}. Cárgalos para que el calendario de entrega y los despachos no cuenten esos días como hábiles.</p>
+  }
+
+  <p class="ayuda">Los domingos nunca cuentan. Aquí cargas los feriados y los cierres propios: Laravel los salta al calcular el día de despacho, la fecha de entrega y el calendario de la tienda.</p>
+
+  <h2>Bloquear un día o varios</h2>
+  <form class="formulario" (submit)="guardar($event)" novalidate>
+    <div class="fechas">
+      <label for="fer-desde">Desde
+        <input id="fer-desde" name="desde" type="date" [ngModel]="formulario().desde" (ngModelChange)="poner('desde', $event)" [attr.aria-invalid]="errores()['desde'] ? true : null" />
+      </label>
+      <label for="fer-hasta">Hasta (opcional, para un rango)
+        <input id="fer-hasta" name="hasta" type="date" [ngModel]="formulario().hasta" (ngModelChange)="poner('hasta', $event)" [attr.aria-invalid]="errores()['hasta'] ? true : null" />
+      </label>
+    </div>
+    @if (errores()['desde']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+    @if (errores()['hasta']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+
+    <label for="fer-tipo">Tipo
+      <select id="fer-tipo" name="tipo" [ngModel]="formulario().tipo" (ngModelChange)="poner('tipo', $event)">
+        @for (t of tipos; track t.valor) { <option [value]="t.valor">{{ t.nombre }}</option> }
+      </select>
+    </label>
+
+    <fieldset>
+      <legend>Afecta a</legend>
+      <label class="check"><input type="checkbox" name="produccion" [ngModel]="formulario().produccion" (ngModelChange)="poner('produccion', $event)" /> Producción</label>
+      <label class="check"><input type="checkbox" name="despacho" [ngModel]="formulario().despacho" (ngModelChange)="poner('despacho', $event)" /> Despacho</label>
+      <label class="check"><input type="checkbox" name="entrega" [ngModel]="formulario().entrega" (ngModelChange)="poner('entrega', $event)" /> Entrega</label>
+      @if (errores()['afecta']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+    </fieldset>
+
+    <label for="fer-nota">Nota (opcional)
+      <input id="fer-nota" name="nota" maxlength="150" autocomplete="off" [ngModel]="formulario().nota" (ngModelChange)="poner('nota', $event)" placeholder="Ejemplo: Carnaval, viaje de Josué" />
+    </label>
+    @if (errores()['nota']; as m) { <small class="campo-error" role="alert">{{ m }}</small> }
+
+    <button type="submit" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+  </form>
+
+  <h2>Días cargados</h2>
+  @if (cargando() && !dias().length) { <p>Cargando…</p> }
+  @else if (!dias().length) { <p class="vacio">Todavía no hay días cargados.</p> }
+
+  @for (g of porAnio(); track g.anio) {
+    <h3>{{ g.anio }}</h3>
+    <ul class="lista">
+      @for (d of g.dias; track d.date) {
+        <li>
+          <div>
+            <strong>{{ fechaLarga(d.date) }}</strong>
+            <span class="etiqueta">{{ nombreTipo(d.type) }}</span>
+            <small class="detalle">Afecta: {{ afecta(d) }}@if (d.note) { · {{ d.note }} }</small>
+          </div>
+          <button type="button" class="secundario" (click)="quitar(d)" [disabled]="eliminando() === d.date" [attr.aria-label]="'Quitar ' + fechaLarga(d.date)">
+            {{ eliminando() === d.date ? 'Quitando…' : 'Quitar' }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</main>
