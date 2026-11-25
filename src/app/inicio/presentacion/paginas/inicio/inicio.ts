@@ -91,9 +91,13 @@ export class Inicio {
       });
     }
     inject(Title).setTitle('Jardín de Sele | Macetas personalizadas con plantita natural');
-    inject(Meta).updateTag({
-      name: 'description',
-      content: 'Regalos personalizados con su nombre y una plantita natural. Envíos a todo Ecuador.',
-    });
+    const meta = inject(Meta);
+    const titulo = 'Jardín de Sele | Macetas personalizadas con plantita natural';
+    const descripcion = 'Regalos personalizados con su nombre y una plantita natural. Envíos a todo Ecuador.';
+    meta.updateTag({ name: 'description', content: descripcion });
+    // Vista previa del enlace de la portada (WhatsApp, Facebook): título, descripción, dirección y la foto de la marca
+    meta.updateTag({ property: 'og:title', content: titulo });
+    meta.updateTag({ property: 'og:description', content: descripcion });
+    meta.updateTag({ property: 'og:url', content: 'https://jardindesele.com/' });
   }
 }

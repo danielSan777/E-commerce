@@ -1646,6 +1646,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 - [ ] Título, meta description y canonical únicos por página, editables desde el panel, renderizados en SSR.
 - [ ] Open Graph y Twitter Cards en SSR: home con la marca, categoría con su imagen, producto con su imagen social.
+  - Hecho: la portada (`/`) ya trae Open Graph y Twitter Card con el logo (`public/og-jardin-de-sele.jpg`, 1200x630). Falta categoría y producto. El logo actual mide 48x48; con uno más grande la vista previa se vería más nítida.
 - [ ] JSON-LD: `Organization` en la home; `Product` + `Offer` (precio final, moneda, disponibilidad) en cada producto.
 - [ ] `AggregateRating`: no se publica mientras no existan reseñas verificadas (fuera del lanzamiento).
 - [ ] `sitemap.xml` generado desde la base: home, categorías, productos y políticas.

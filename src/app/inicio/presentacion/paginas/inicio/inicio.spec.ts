@@ -30,6 +30,15 @@ describe('Inicio (/)', () => {
         return fixture.nativeElement as HTMLElement;
     }
 
+    it('la portada trae las etiquetas para la vista previa del enlace (título, descripción y dirección)', async () => {
+        await montar();
+        const og = (propiedad: string) => document.head.querySelector(`meta[property="${propiedad}"]`)?.getAttribute('content');
+
+        expect(og('og:title')).toBe('Jardín de Sele | Macetas personalizadas con plantita natural');
+        expect(og('og:description')).toContain('plantita natural');
+        expect(og('og:url')).toBe('https://jardindesele.com/');
+    });
+
     it('tiene el botón "Encuentra tu detalle perfecto" hacia /categorias', async () => {
         const html = await montar();
         const boton = html.querySelector('.hero a.boton') as HTMLAnchorElement;
