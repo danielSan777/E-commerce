@@ -11,7 +11,7 @@ const pedido = (over: Partial<PedidoAdmin> = {}): PedidoAdmin => ({
   number: 'JDS-1001', channel: 'web', payment_method: 'transfer', payment_status: 'pending_validation', status: 'created',
   customer: { name: 'María Pérez', email: 'm@correo.com', phone: '0991234567' },
   total_cents: 2450, discount_cents: 0, card_fee_cents: 0, shipping_cents: 350, shipping_zone: 'A', cycle_date: '2026-11-17', dispatch_date: '2026-11-19',
-  window: { start: '2026-11-20', end: '2026-11-21', type: 'immediate' }, send_by: '2026-11-19', send_by_at: '2026-11-20T04:59:59Z',
+  window: { start: '2026-11-20', end: '2026-11-21', type: 'immediate' }, send_by: '2026-11-19', send_by_at: '2026-11-19T12:00:00Z',
   deadline_at: '2026-11-18T03:00:00Z', receipt_uploaded_at: '2026-11-17T20:00:00Z', whatsapp_clicked_at: null, paid_at: null, production_started_at: null, shipped_at: null, tracking_number: null, created_at: '2026-11-17T15:00:00Z',
   items: [{
     id: 55, has_preview: true, has_frame_photo: true, sku: 'DOC', name: 'Abogada', type: 'personalizable', line_total_cents: 2100,
@@ -312,7 +312,7 @@ describe('AdminPedidos', () => {
 
       const plazo = el.querySelector('.plazo-envio');
       expect(plazo?.textContent).toContain('Enviar el jueves 19 de nov');
-      expect(plazo?.textContent).toContain('Faltan 2 días y 13 horas para enviar');
+      expect(plazo?.textContent).toContain('Faltan 1 día y 21 horas para enviar');
 
       c.elegirOrden('amount');
       expect(http.expectOne(x => x.url === '/api/v1/admin/orders').request.params.get('sort')).toBe('amount');
@@ -322,14 +322,15 @@ describe('AdminPedidos', () => {
   });
 
   it('el temporizador cuenta días y horas, y avisa cuando ya venció', () => {
-    const limite = '2026-11-20T04:59:59Z';
+    const limite = '2026-11-19T12:00:00Z';
     const ms = (iso: string) => new Date(iso).getTime();
-    expect(plazoDeEnvio(limite, ms('2026-11-17T15:00:00Z'))).toEqual({ texto: 'Faltan 2 días y 13 horas para enviar', nivel: 'ok' });
-    expect(plazoDeEnvio(limite, ms('2026-11-19T04:00:00Z'))).toEqual({ texto: 'Falta 1 día para enviar', nivel: 'ok' });
-    expect(plazoDeEnvio(limite, ms('2026-11-19T06:00:00Z')).nivel).toBe('hoy');   // ya es el día de envío en Ecuador
-    expect(plazoDeEnvio(limite, ms('2026-11-19T20:00:00Z'))).toEqual({ texto: 'ENVÍO VENCE HOY · faltan 8 horas', nivel: 'hoy' });
-    expect(plazoDeEnvio(limite, ms('2026-11-20T04:30:00Z'))).toEqual({ texto: 'ENVÍO VENCE HOY · falta menos de 1 hora', nivel: 'hoy' });
-    expect(plazoDeEnvio(limite, ms('2026-11-21T08:00:00Z'))).toEqual({ texto: 'Plazo vencido hace 1 día y 3 horas', nivel: 'vencido' });
+    expect(plazoDeEnvio(limite, ms('2026-11-17T15:00:00Z'))).toEqual({ texto: 'Faltan 1 día y 21 horas para enviar', nivel: 'ok' });
+    expect(plazoDeEnvio(limite, ms('2026-11-18T12:00:00Z'))).toEqual({ texto: 'Falta 1 día para enviar', nivel: 'ok' });
+    expect(plazoDeEnvio(limite, ms('2026-11-18T20:00:00Z'))).toEqual({ texto: 'Faltan 16 horas para enviar', nivel: 'pronto' });   // víspera, 15:00 en Ecuador
+    expect(plazoDeEnvio(limite, ms('2026-11-19T05:00:00Z'))).toEqual({ texto: 'ENVÍO VENCE HOY · faltan 7 horas', nivel: 'hoy' });   // 00:00 del día de envío
+    expect(plazoDeEnvio(limite, ms('2026-11-19T11:30:00Z'))).toEqual({ texto: 'ENVÍO VENCE HOY · falta menos de 1 hora', nivel: 'hoy' });
+    expect(plazoDeEnvio(limite, ms('2026-11-19T12:00:00Z')).nivel).toBe('vencido');                                                   // pasadas las 7:00
+    expect(plazoDeEnvio(limite, ms('2026-11-20T15:00:00Z'))).toEqual({ texto: 'Plazo vencido hace 1 día y 3 horas', nivel: 'vencido' });
     expect(diaDeEnvio('2026-11-27')).toBe('viernes 27 de nov');
   });
 
