@@ -464,4 +464,45 @@ describe('AdminPedidos', () => {
     expect(estadoDePedido({ payment_status: 'paid', status: 'cancelled' })).toBe('cancelled');
     expect(ventana({ start: '2026-11-20', end: '2026-11-21' })).toBe('20 nov – 21 nov');
   });
+  it('los filtros de canal, pago y ciclo viajan a Laravel y se pueden quitar', async () => {
+    const { c, http: _h } = { ...(await abrir()), http };
+    c.elegirCanal('whatsapp');
+    let r = http.expectOne(x => x.url === '/api/v1/admin/orders');
+    expect(r.request.params.get('channel')).toBe('whatsapp');
+    r.flush({ data: [] });
+
+    c.elegirPago('card');
+    c.elegirCiclo('2026-11-16');
+    const ultimas = http.match(x => x.url === '/api/v1/admin/orders');
+    const ultima = ultimas[ultimas.length - 1];
+    expect(ultima.request.params.get('channel')).toBe('whatsapp');
+    expect(ultima.request.params.get('payment_method')).toBe('card');
+    expect(ultima.request.params.get('cycle')).toBe('2026-11-16');
+    ultimas.forEach(x => x.flush({ data: [] }));
+
+    c.limpiarFiltrosExtra();
+    r = http.expectOne(x => x.url === '/api/v1/admin/orders');
+    expect(r.request.params.has('channel') || r.request.params.has('payment_method') || r.request.params.has('cycle')).toBe(false);
+    r.flush({ data: [] });
+    expect(c.hayFiltrosExtra()).toBe(false);
+  });
+
+  it('exportar CSV pide hasta 2000 pedidos con los mismos filtros y descarga el archivo', async () => {
+    const descargado: string[] = [];
+    const url = vi.spyOn(URL, 'createObjectURL').mockImplementation(b => { descargado.push(String((b as Blob).size)); return 'blob:x'; });
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const { c } = await abrir();
+    c.elegirCanal('web');
+    http.expectOne(x => x.url === '/api/v1/admin/orders').flush({ data: [] });
+
+    c.exportarCsv();
+    const r = http.expectOne(x => x.url === '/api/v1/admin/orders');
+    expect(r.request.params.get('limit')).toBe('2000');
+    expect(r.request.params.get('channel')).toBe('web');
+    r.flush({ data: [pedido()] });
+
+    expect(url).toHaveBeenCalled();
+    expect(descargado.length).toBe(1);
+    expect(c.exportando()).toBe(false);
+  });
 });

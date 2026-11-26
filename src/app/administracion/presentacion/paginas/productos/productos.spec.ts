@@ -96,4 +96,23 @@ describe('AdminProductos', () => {
     expect(tiene(1)).toBe(false);
     expect(filas[1].textContent).toContain('Editar');
   });
+  it('«Marcar agotado» y «Volver a vender» cambian solo la disponibilidad y recargan la lista', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+    const [doctor, enfermera] = c.productos();
+
+    c.cambiarDisponibilidad(doctor);
+    let put = ctrl.expectOne('/api/v1/admin/products/D-1');
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual({ is_available: false });
+    put.flush({});
+    ctrl.expectOne(r => r.url === '/api/v1/admin/products').flush({ data: [prod('D-1', 'Doctor', { is_available: false }), enfermera] });
+
+    c.cambiarDisponibilidad(enfermera);
+    put = ctrl.expectOne('/api/v1/admin/products/E-1');
+    expect(put.request.body).toEqual({ is_available: true });
+    put.flush({});
+    ctrl.expectOne(r => r.url === '/api/v1/admin/products').flush({ data: [] });
+  });
+
 });

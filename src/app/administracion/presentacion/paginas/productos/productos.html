@@ -40,6 +40,9 @@
             @if (p.type === 'personalizable') {
               <a class="boton" routerLink="/admin/configurador" [queryParams]="{ producto: p.sku }">Configurador</a>
             }
+            @if (p.is_active) {
+              <button type="button" (click)="cambiarDisponibilidad(p)">{{ p.is_available ? 'Marcar agotado' : 'Volver a vender' }}</button>
+            }
             @if (porEliminar() === p.sku) {
               <span>¿Eliminar?</span>
               <button type="button" class="peligro" (click)="eliminar(p.sku)">Sí, eliminar</button>

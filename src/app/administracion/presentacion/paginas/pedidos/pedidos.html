@@ -26,6 +26,24 @@
     @if (busqueda()) { <button type="button" (click)="limpiarBusqueda()" aria-label="Borrar búsqueda">✕</button> }
   </form>
 
+  <div class="extras">
+    <label>Canal
+      <select name="canal" [value]="canal()" (change)="elegirCanal($any($event.target).value)">
+        <option value="">Todos</option><option value="web">Web</option><option value="whatsapp">WhatsApp</option>
+      </select>
+    </label>
+    <label>Pago
+      <select name="pago" [value]="pago()" (change)="elegirPago($any($event.target).value)">
+        <option value="">Todos</option><option value="transfer">Transferencia</option><option value="card">Tarjeta</option>
+      </select>
+    </label>
+    <label>Ciclo
+      <input type="date" name="ciclo" [value]="ciclo()" (change)="elegirCiclo($any($event.target).value)" />
+    </label>
+    @if (hayFiltrosExtra()) { <button type="button" class="secundario" (click)="limpiarFiltrosExtra()">Quitar filtros</button> }
+    <button type="button" class="secundario" (click)="exportarCsv()" [disabled]="exportando()">{{ exportando() ? 'Exportando…' : 'Exportar CSV' }}</button>
+  </div>
+
   @if (error()) { <p class="error" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
   @if (cargando()) { <p>Cargando…</p> }
   @else if (!pedidos().length && !error()) {

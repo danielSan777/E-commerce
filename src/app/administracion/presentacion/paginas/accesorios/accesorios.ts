@@ -351,6 +351,11 @@ export class AdminAccesorios implements OnInit {
     this.cargar(true);
   }
 
+  /** Agotar (desaparece del personalizador) o activar un accesorio sin abrir el formulario. */
+  alternarActivo(a: AccesorioAdmin): void {
+    this.ejecutar(this.servicio.editarAccesorio(a.id, { is_active: !a.is_active }), a.is_active ? `«${a.name}» agotado: ya no se ofrece.` : `«${a.name}» activo: se ofrece de nuevo.`, () => undefined);
+  }
+
   eliminarAccesorio(id: number): void {
     this.ejecutar(this.servicio.eliminarAccesorio(id), 'Accesorio eliminado.', () => undefined);
   }

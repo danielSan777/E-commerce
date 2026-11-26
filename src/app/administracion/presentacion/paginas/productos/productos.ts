@@ -83,6 +83,15 @@ export class AdminProductos implements OnInit {
     this.cargar();
   }
 
+  /** Agotar o volver a vender sin abrir el formulario. */
+  cambiarDisponibilidad(p: ProductoAdmin): void {
+    const disponible = !p.is_available;
+    this.productosApi.cambiarDisponibilidad(p.sku, disponible).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => { this.avisos.exito(disponible ? `«${p.name}» vuelve a venderse.` : `«${p.name}» quedó agotado.`); this.cargar(); },
+      error: (e: ErrorApi) => this.avisos.error(e.message),
+    });
+  }
+
   pedirEliminar(sku: string): void {
     this.aviso.set('');
     this.porEliminar.set(sku);

@@ -6,16 +6,23 @@ import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService'
 import { EventoPedido, FiltroPedidos, OrdenProduccion, PedidoAdmin } from '../../dominio/interfaces/pedidos-admin';
 
 // Pedidos del panel: ver, revisar el comprobante, marcar pagado o cancelar. Laravel decide cupos, ciclos y ventanas.
+/** Filtros de operación del listado: canal, método de pago y fecha del ciclo (YYYY-MM-DD). */
+export interface FiltrosExtraPedidos { canal?: 'web' | 'whatsapp' | ''; pago?: 'transfer' | 'card' | ''; ciclo?: string; limite?: number }
+
 @Injectable({ providedIn: 'root' })
 export class PedidosAdminService {
   private http = inject(HttpClient);
   private api = inject(API_URL);
 
   /** `buscar`: código del pedido (JDS-1005 o solo 1005); Laravel lo busca dentro del filtro elegido. */
-  listar(filtro: FiltroPedidos, buscar = '', orden: OrdenProduccion = 'due'): Observable<PedidoAdmin[]> {
+  listar(filtro: FiltroPedidos, buscar = '', orden: OrdenProduccion = 'due', extra: FiltrosExtraPedidos = {}): Observable<PedidoAdmin[]> {
     let params = new HttpParams().set('status', filtro);
     if (filtro === 'in_production') params = params.set('sort', orden);   // «due» (vencimiento) o «amount» (monto)
     if (buscar.trim()) params = params.set('q', buscar.trim());
+    if (extra.canal) params = params.set('channel', extra.canal);
+    if (extra.pago) params = params.set('payment_method', extra.pago);
+    if (extra.ciclo) params = params.set('cycle', extra.ciclo);
+    if (extra.limite) params = params.set('limit', extra.limite);   // la exportación CSV pide más de los 200 que muestra la lista
     return this.http.get<{ data: PedidoAdmin[] }>(`${this.api}/admin/orders`, { params })
       .pipe(map(r => r.data), conErrorApi());
   }

@@ -150,7 +150,7 @@
             <div class="datos">
               <strong>{{ a.name }}</strong>
               <small>{{ a.category }} · {{ a.type === 'texto' ? 'texto' : 'imagen' }}@if (a.behavior) { · {{ nombreComportamiento(a.behavior) }} }</small>
-              @if (!a.is_active) { <span class="inactiva">Inactivo</span> }
+              @if (!a.is_active) { <span class="inactiva">Agotado / inactivo</span> }
               @if (a.is_exclusive) { <span class="inactiva">Exclusivo de un producto</span> }
             </div>
           </div>
@@ -160,6 +160,7 @@
               <button type="button" class="peligro" (click)="eliminarAccesorio(a.id)">Sí, eliminar</button>
               <button type="button" (click)="cancelarEliminar()">No</button>
             } @else {
+              <button type="button" (click)="alternarActivo(a)">{{ a.is_active ? 'Agotar' : 'Activar' }}</button>
               <button type="button" (click)="editarAccesorio(a)">Editar</button>
               <button type="button" class="peligro" (click)="confirmarEliminar('accesorio:' + a.id)">Eliminar</button>
             }

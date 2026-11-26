@@ -87,3 +87,8 @@
 .historial time { color: var(--suave); }
 .historial small { color: var(--suave); }
 @media (max-width: 560px) { .historial li { grid-template-columns: 1fr; } }
+
+.extras { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; margin: .5rem 0 1rem; }
+.extras label { display: flex; flex-direction: column; gap: .2rem; font-size: .85rem; margin: 0; }
+.extras select, .extras input { min-height: 40px; }
+.extras button { min-height: 40px; }

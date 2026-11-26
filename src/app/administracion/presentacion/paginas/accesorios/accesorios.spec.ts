@@ -218,4 +218,25 @@ describe('AdminAccesorios · imagen del accesorio', () => {
     // Sin archivo nuevo no hay subida: se conserva la imagen actual
     ctrl.expectNone(`${BASE}/accessories/6/image`);
   });
+  it('«Agotar» desactiva el accesorio con un solo campo y «Activar» lo vuelve a ofrecer', async () => {
+    const fixture = await montar();
+    const c = fixture.componentInstance;
+
+    c.alternarActivo(BALANZA);
+    const put = ctrl.expectOne(`${BASE}/accessories/5`);
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual({ is_active: false });
+    put.flush({ ...BALANZA, is_active: false });
+    await esperar();
+    ctrl.expectOne(`${BASE}/accessory-categories`).flush({ data: [] });
+    ctrl.expectOne(`${BASE}/accessories`).flush({ data: [{ ...BALANZA, is_active: false }] });
+    ctrl.expectOne(`${BASE}/locations`).flush({ data: [] });
+    await esperar();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Activar');
+
+    c.alternarActivo({ ...BALANZA, is_active: false });
+    expect(ctrl.expectOne(`${BASE}/accessories/5`).request.body).toEqual({ is_active: true });
+  });
+
 });

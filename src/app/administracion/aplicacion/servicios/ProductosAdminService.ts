@@ -44,6 +44,11 @@ export class ProductosAdminService {
     return this.http.put<ProductoAdmin>(this.url(sku), datos).pipe(conErrorApi());
   }
 
+  /** Agotar (`false`) o volver a vender (`true`) un producto: Laravel acepta el cambio de un solo campo. */
+  cambiarDisponibilidad(sku: string, disponible: boolean): Observable<ProductoAdmin> {
+    return this.http.put<ProductoAdmin>(this.url(sku), { is_available: disponible }).pipe(conErrorApi());
+  }
+
   /** Imagen para personalizar del producto (reemplaza la anterior). Es obligatoria en los personalizables. */
   subirImagenParaPersonalizar(sku: string, archivo: File): Observable<{ personalization_image: string }> {
     const datos = new FormData();
