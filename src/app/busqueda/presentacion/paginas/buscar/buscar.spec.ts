@@ -28,7 +28,7 @@ async function montar(q: string | null) {
     ctrl.expectOne('/api/v1/products?limit=6').flush({ data: INDICE.slice(0, 2) });
     await fixture.whenStable();
     fixture.detectChanges();
-    return { fixture, html: fixture.nativeElement as HTMLElement };
+    return { fixture, ctrl, html: fixture.nativeElement as HTMLElement };
 }
 
 describe('Buscar (/buscar)', () => {
@@ -56,5 +56,20 @@ describe('Buscar (/buscar)', () => {
         const { html } = await montar(null);
         expect(html.textContent).toContain('Nuestros favoritos');
         expect(html.textContent).toContain('Enfermera');
+    });
+    it('al dejar de escribir se registra una sola vez la búsqueda con su cantidad de resultados', async () => {
+        const { fixture, ctrl } = await montar(null);
+        vi.useFakeTimers();
+        try {
+            fixture.componentInstance.escribir('astro');
+            fixture.componentInstance.escribir('astronauta');   // sigue escribiendo: la anterior no se envía
+            vi.advanceTimersByTime(900);
+        } finally {
+            vi.useRealTimers();
+        }
+        const r = ctrl.expectOne('/api/v1/search-log');
+        expect(r.request.body).toEqual({ term: 'astronauta', results_count: 0 });
+        r.flush({ ok: true }, { status: 201, statusText: 'Created' });
+        ctrl.verify();
     });
 });

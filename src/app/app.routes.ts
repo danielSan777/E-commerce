@@ -70,6 +70,11 @@ export const routes: Routes = [
         loadComponent: () => import('./administracion/presentacion/paginas/lista-envios/lista-envios').then(m => m.AdminListaEnvios)
     },
     {
+        path: 'admin/busquedas',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./administracion/presentacion/paginas/busquedas/busquedas').then(m => m.AdminBusquedas)
+    },
+    {
         path: 'admin/facturacion',
         canActivate: [adminGuard],
         loadComponent: () => import('./administracion/presentacion/paginas/facturacion/facturacion').then(m => m.AdminFacturacion)

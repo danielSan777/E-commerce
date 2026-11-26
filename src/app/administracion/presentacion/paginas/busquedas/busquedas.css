@@ -1,0 +1,11 @@
+@import '../../estilos/admin-tema.css';
+
+.contenido { max-width: 760px; }
+.ayuda, .vacio { color: var(--suave); }
+.periodos { display: flex; gap: .5rem; margin: .75rem 0; }
+.periodos button { min-height: 44px; background: var(--tarjeta); color: inherit; border: 1px solid var(--borde); }
+.periodos button.activo { background: var(--primario); color: #fff; border-color: var(--primario); }
+.tabla { width: 100%; border-collapse: collapse; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; overflow: hidden; }
+.tabla th, .tabla td { text-align: left; padding: .6rem .9rem; border-bottom: 1px solid var(--borde); }
+.tabla th:nth-child(2), .tabla td:nth-child(2) { width: 5rem; text-align: right; }
+.tabla td:first-child { font-weight: 600; overflow-wrap: anywhere; }

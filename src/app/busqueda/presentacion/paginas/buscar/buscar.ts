@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, NgTemplateOutlet } from '@angular/common';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { RegistroDeBusquedasService } from '../../../aplicacion/servicios/RegistroDeBusquedasService';
 import { BusquedaService } from '../../../aplicacion/servicios/BusquedaService';
 import { enlaceWhatsapp } from '../../../../core/configuracion/tienda';
 
@@ -34,14 +35,17 @@ export class Buscar {
   }
 
   private analytics = inject(AnalyticsService);
+  private registro = inject(RegistroDeBusquedasService);
   private temporizador: ReturnType<typeof setTimeout> | null = null;
 
   escribir(valor: string): void {
     this.termino.set(valor);
     // Un solo evento cuando la persona deja de escribir (término y cantidad de resultados)
     if (this.temporizador) clearTimeout(this.temporizador);
-    if (valor.trim()) this.temporizador = setTimeout(() =>
-      this.analytics.track('search', { search_term: valor.trim(), results_count: this.resultados().length }), 800);
+    if (valor.trim()) this.temporizador = setTimeout(() => {
+      this.analytics.track('search', { search_term: valor.trim(), results_count: this.resultados().length });
+      this.registro.registrar(valor.trim(), this.resultados().length);   // Laravel guarda la búsqueda; el panel lista las que no dieron resultados
+    }, 800);
     // La dirección guarda lo buscado (se puede compartir y el botón "atrás" no se llena de pasos)
     void this.router.navigate([], { queryParams: { q: valor.trim() || null }, replaceUrl: true });
   }

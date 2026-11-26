@@ -1,0 +1,30 @@
+<header class="barra">
+  <strong>Búsquedas sin resultados</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+  <h1>Búsquedas sin resultados</h1>
+  <p class="ayuda">Lo que la gente escribió en la tienda y no encontró. Sirve para saber qué producto falta o qué palabra de búsqueda agregar a un producto.</p>
+
+  <div class="periodos" role="group" aria-label="Periodo">
+    @for (p of periodos; track p.dias) {
+      <button type="button" [attr.aria-pressed]="dias() === p.dias" [class.activo]="dias() === p.dias" (click)="elegir(p.dias)">{{ p.etiqueta }}</button>
+    }
+  </div>
+
+  @if (error()) { <p class="error" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
+  @if (cargando()) { <p>Cargando…</p> }
+  @if (!cargando() && !error() && !busquedas().length) { <p class="vacio">No hubo búsquedas sin resultados en los últimos {{ dias() }} días.</p> }
+
+  @if (busquedas().length) {
+    <table class="tabla">
+      <thead><tr><th>Búsqueda</th><th>Veces</th><th>Última vez</th></tr></thead>
+      <tbody>
+        @for (b of busquedas(); track b.term) {
+          <tr><td>{{ b.term }}</td><td>{{ b.times }}</td><td>{{ instante(b.last_at) }}</td></tr>
+        }
+      </tbody>
+    </table>
+  }
+</main>
