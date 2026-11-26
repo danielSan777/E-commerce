@@ -1,0 +1,93 @@
+<header class="barra">
+  <strong>Facturación</strong>
+  <a routerLink="/admin">← Volver al panel</a>
+</header>
+
+<main class="contenido">
+  <h1>Facturación</h1>
+  <p class="ayuda">Emite la factura en el SRI con estos datos y luego márcala aquí. Solo aparecen pedidos pagados.</p>
+
+  <div class="pestanas" role="tablist">
+    <button type="button" role="tab" [attr.aria-selected]="estado() === 'pending'" [class.activa]="estado() === 'pending'" (click)="cambiarEstado('pending')">Por facturar ({{ pendientes() }})</button>
+    <button type="button" role="tab" [attr.aria-selected]="estado() === 'done'" [class.activa]="estado() === 'done'" (click)="cambiarEstado('done')">Facturados</button>
+  </div>
+
+  @if (error()) { <p class="error" role="alert">{{ error() }} <button type="button" (click)="cargar()">Reintentar</button></p> }
+  @if (cargando() && !pedidos().length) { <p>Cargando…</p> }
+
+  @if (resultado(); as r) {
+    @if (r.results.length > r.invoiced) {
+      <div class="resultado" role="alert">
+        <strong>{{ r.invoiced }} facturados. Estos no se marcaron:</strong>
+        <ul>@for (x of r.results; track x.number) { @if (!x.ok) { <li>{{ x.number }}: {{ x.message }}</li> } }</ul>
+      </div>
+    }
+  }
+
+  @if (estado() === 'pending' && pedidos().length) {
+    <div class="herramientas">
+      <button type="button" class="secundario" (click)="todos(true)">Marcar todos</button>
+      <button type="button" class="secundario" (click)="todos(false)">Quitar todos</button>
+    </div>
+  }
+
+  @if (!cargando() && !pedidos().length && !error()) {
+    <p class="vacio">{{ estado() === 'pending' ? 'No hay pedidos por facturar.' : 'Todavía no hay pedidos facturados.' }}</p>
+  }
+
+  <ul class="facturas">
+    @for (p of pedidos(); track p.number) {
+      <li class="factura" [class.excluido]="estado() === 'pending' && !estaElegido(p)">
+        @if (estado() === 'pending') {
+          <label class="incluir"><input type="checkbox" [checked]="estaElegido(p)" (change)="alternar(p)" [attr.aria-label]="'Elegir ' + p.number" /></label>
+        }
+        <div class="datos">
+          <h2>{{ p.number }} <span class="total">$ {{ dolares(p.total_cents) }}</span></h2>
+          <p class="pago">Pagado {{ p.paid_at ? instante(p.paid_at) : '' }} · {{ p.payment_method }}</p>
+
+          <dl class="campos">
+            <div><dt>Nombre</dt><dd>{{ p.invoice_to.name }}</dd><button type="button" class="copiar" (click)="copiar('Nombre', p.invoice_to.name)">Copiar</button></div>
+            <div><dt>{{ p.invoice_to.id_type === 'ruc' ? 'RUC' : 'Cédula' }}</dt><dd>{{ p.invoice_to.id_number }}</dd><button type="button" class="copiar" (click)="copiar('Documento', p.invoice_to.id_number)">Copiar</button></div>
+            <div><dt>Correo</dt><dd>{{ p.invoice_to.email }}</dd><button type="button" class="copiar" (click)="copiar('Correo', p.invoice_to.email)">Copiar</button></div>
+            <div><dt>Teléfono</dt><dd>{{ p.invoice_to.phone }}</dd><button type="button" class="copiar" (click)="copiar('Teléfono', p.invoice_to.phone)">Copiar</button></div>
+            <div><dt>Dirección</dt><dd>{{ p.invoice_to.address }}, {{ p.invoice_to.canton }}, {{ p.invoice_to.province }}</dd><button type="button" class="copiar" (click)="copiar('Dirección', p.invoice_to.address + ', ' + p.invoice_to.canton + ', ' + p.invoice_to.province)">Copiar</button></div>
+            <div><dt>Total</dt><dd>{{ dolares(p.total_cents) }}</dd><button type="button" class="copiar" (click)="copiar('Total', dolares(p.total_cents))">Copiar</button></div>
+          </dl>
+          @if (p.invoice_to.same_as_shipping === 'no') { <p class="nota">El comprador pidió otros datos de facturación distintos a los del envío.</p> }
+
+          <ul class="lineas">
+            @for (i of p.items; track $index) { <li>{{ i.quantity }} × {{ i.name }} — $ {{ dolares(i.line_total_cents) }}</li> }
+            @if (p.discount_cents) { <li>Descuento: − $ {{ dolares(p.discount_cents) }}</li> }
+            <li>Envío: $ {{ dolares(p.shipping_cents) }}@if (p.card_fee_cents) { · Recargo por tarjeta: $ {{ dolares(p.card_fee_cents) }} }</li>
+          </ul>
+        </div>
+
+        <div class="numero">
+          <label [for]="'factura-' + p.number">N.º de factura (opcional)</label>
+          @if (estado() === 'pending') {
+            <input [id]="'factura-' + p.number" [name]="'factura-' + p.number" autocomplete="off" maxlength="30" placeholder="001-001-000000123"
+              [ngModel]="numeros()[p.number]" (ngModelChange)="escribirNumero(p.number, $event)"
+              [attr.aria-invalid]="numeroMalo().includes(p) ? true : null" />
+          } @else {
+            <p class="hecha"><strong>{{ p.invoice_number || 'Sin número' }}</strong><br />Facturado {{ p.invoiced_at ? instante(p.invoiced_at) : '' }}</p>
+            <button type="button" class="secundario" (click)="quitar(p)" [disabled]="guardando()">Volver a "Por facturar"</button>
+          }
+        </div>
+      </li>
+    }
+  </ul>
+
+  @if (estado() === 'pending' && pedidos().length) {
+    <div class="lote">
+      @if (confirmando()) {
+        <div class="confirmar" role="alert">
+          <span>¿Marcar {{ listosParaMarcar().length }} pedido(s) como facturado(s)?</span>
+          <button type="button" (click)="marcarFacturados()" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Sí, marcar como facturados' }}</button>
+          <button type="button" class="secundario" (click)="cancelar()">No</button>
+        </div>
+      } @else {
+        <button type="button" (click)="pedirConfirmacion()" [disabled]="guardando()">Marcar como facturados ({{ listosParaMarcar().length }})</button>
+      }
+    </div>
+  }
+</main>
