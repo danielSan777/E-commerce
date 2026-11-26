@@ -7,7 +7,7 @@ import { EventoPedido, FiltroPedidos, OrdenProduccion, PedidoAdmin } from '../..
 
 // Pedidos del panel: ver, revisar el comprobante, marcar pagado o cancelar. Laravel decide cupos, ciclos y ventanas.
 /** Filtros de operación del listado: canal, método de pago y fecha del ciclo (YYYY-MM-DD). */
-export interface FiltrosExtraPedidos { canal?: 'web' | 'whatsapp' | ''; pago?: 'transfer' | 'card' | ''; ciclo?: string; limite?: number }
+export interface FiltrosExtraPedidos { canal?: 'web' | 'whatsapp' | ''; pago?: 'transfer' | 'card' | ''; ciclo?: string; fuente?: string; campana?: string; anuncio?: string; limite?: number }
 
 @Injectable({ providedIn: 'root' })
 export class PedidosAdminService {
@@ -22,6 +22,9 @@ export class PedidosAdminService {
     if (extra.canal) params = params.set('channel', extra.canal);
     if (extra.pago) params = params.set('payment_method', extra.pago);
     if (extra.ciclo) params = params.set('cycle', extra.ciclo);
+    if (extra.fuente?.trim()) params = params.set('source', extra.fuente.trim());
+    if (extra.campana?.trim()) params = params.set('campaign', extra.campana.trim());
+    if (extra.anuncio?.trim()) params = params.set('ad', extra.anuncio.trim());
     if (extra.limite) params = params.set('limit', extra.limite);   // la exportación CSV pide más de los 200 que muestra la lista
     return this.http.get<{ data: PedidoAdmin[] }>(`${this.api}/admin/orders`, { params })
       .pipe(map(r => r.data), conErrorApi());

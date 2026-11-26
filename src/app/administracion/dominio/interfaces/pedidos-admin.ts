@@ -49,6 +49,8 @@ export interface PedidoAdmin {
     }[];
     shipping: { name: string; id_number: string; phone: string; email: string; address: string; reference: string; province_name?: string; canton_name?: string };
     billing: { same_as_shipping: boolean; name?: string; id_number?: string } | null;
+    /** De dónde vino la venta (último toque): fuente, campaña, ID del anuncio y página de entrada. Todo null si no vino de una campaña. */
+    attribution?: { source: string | null; medium: string | null; campaign: string | null; ad_id: string | null; landing_url: string | null };
 }
 
 export type EstadoPedidoAdmin = 'in_production' | 'shipped' | 'cancelled' | 'expired' | 'pending';

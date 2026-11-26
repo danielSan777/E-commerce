@@ -86,6 +86,9 @@ export class AdminPedidos implements OnInit {
   canal = signal<'web' | 'whatsapp' | ''>('');              // filtros de operación (vacío = todos)
   pago = signal<'transfer' | 'card' | ''>('');
   ciclo = signal('');                                       // fecha del ciclo YYYY-MM-DD
+  fuente = signal('');                                      // origen de la venta (último toque): fuente, campaña y ID del anuncio
+  campana = signal('');
+  anuncio = signal('');
   exportando = signal(false);
   busqueda = signal('');                                   // código escrito en el buscador (se mantiene al cambiar de lista)
   private espera?: ReturnType<typeof setTimeout>;
@@ -141,15 +144,23 @@ export class AdminPedidos implements OnInit {
     this.cargar();
   }
 
-  private extras = (limite?: number): FiltrosExtraPedidos => ({ canal: this.canal(), pago: this.pago(), ciclo: this.ciclo().trim(), limite });
+  private extras = (limite?: number): FiltrosExtraPedidos => ({ canal: this.canal(), pago: this.pago(), ciclo: this.ciclo().trim(), fuente: this.fuente(), campana: this.campana(), anuncio: this.anuncio(), limite });
 
-  hayFiltrosExtra = () => !!(this.canal() || this.pago() || this.ciclo());
+  hayFiltrosExtra = () => !!(this.canal() || this.pago() || this.ciclo() || this.fuente().trim() || this.campana().trim() || this.anuncio().trim());
 
   elegirCanal(v: string): void { this.canal.set(v === 'web' || v === 'whatsapp' ? v : ''); this.abierto.set(null); this.cargar(); }
   elegirPago(v: string): void { this.pago.set(v === 'transfer' || v === 'card' ? v : ''); this.abierto.set(null); this.cargar(); }
   elegirCiclo(v: string): void { this.ciclo.set(/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ''); this.abierto.set(null); this.cargar(); }
 
-  limpiarFiltrosExtra(): void { this.canal.set(''); this.pago.set(''); this.ciclo.set(''); this.abierto.set(null); this.cargar(); }
+  /** Fuente, campaña y anuncio se escriben: se pide a Laravel al dejar de teclear. */
+  escribirOrigen(cual: 'fuente' | 'campana' | 'anuncio', valor: string): void {
+    this[cual].set(valor);
+    this.abierto.set(null);
+    clearTimeout(this.espera);
+    this.espera = setTimeout(() => this.cargar(), 300);
+  }
+
+  limpiarFiltrosExtra(): void { this.canal.set(''); this.pago.set(''); this.ciclo.set(''); this.fuente.set(''); this.campana.set(''); this.anuncio.set(''); this.abierto.set(null); this.cargar(); }
 
   /** CSV de lo que muestran los filtros actuales (hasta 2000 pedidos), con dinero en dólares. */
   exportarCsv(): void {
@@ -157,10 +168,10 @@ export class AdminPedidos implements OnInit {
     this.exportando.set(true);
     this.servicio.listar(this.filtro(), this.busqueda(), this.orden(), this.extras(2000)).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.exportando.set(false))).subscribe({
       next: lista => {
-        const datos = [['Pedido', 'Creado', 'Estado', 'Pago', 'Método de pago', 'Canal', 'Ciclo', 'Despacho', 'Entrega desde', 'Entrega hasta', 'Comprador', 'Correo', 'Celular', 'Provincia', 'Cantón', 'Subtotal ítems', 'Descuento', 'Envío', 'Recargo tarjeta', 'Total', 'Guía']]
+        const datos = [['Pedido', 'Creado', 'Estado', 'Pago', 'Método de pago', 'Canal', 'Ciclo', 'Despacho', 'Entrega desde', 'Entrega hasta', 'Comprador', 'Correo', 'Celular', 'Provincia', 'Cantón', 'Subtotal ítems', 'Descuento', 'Envío', 'Recargo tarjeta', 'Total', 'Guía', 'Fuente', 'Campaña', 'Anuncio (ID)']]
           .concat(lista.map(p => [p.number, instanteEnGuayaquil(p.created_at), this.ETIQUETAS[estadoDePedido(p)], p.payment_status, p.payment_method === 'card' ? 'Tarjeta' : 'Transferencia', p.channel, p.cycle_date, p.dispatch_date, p.window.start, p.window.end,
             p.customer.name, p.customer.email, p.customer.phone ?? '', p.shipping.province_name ?? '', p.shipping.canton_name ?? '',
-            centavosADolares(p.items.reduce((t, i) => t + i.line_total_cents, 0)), centavosADolares(p.discount_cents), centavosADolares(p.shipping_cents), centavosADolares(p.card_fee_cents), centavosADolares(p.total_cents), p.tracking_number ?? '']));
+            centavosADolares(p.items.reduce((t, i) => t + i.line_total_cents, 0)), centavosADolares(p.discount_cents), centavosADolares(p.shipping_cents), centavosADolares(p.card_fee_cents), centavosADolares(p.total_cents), p.tracking_number ?? '', p.attribution?.source ?? '', p.attribution?.campaign ?? '', p.attribution?.ad_id ?? '']));
         descargarTexto(`pedidos-${this.filtro()}.csv`, aCsv(datos));
         this.avisos.exito(`${lista.length} pedido(s) exportados.`);
       },

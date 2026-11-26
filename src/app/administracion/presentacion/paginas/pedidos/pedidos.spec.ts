@@ -525,4 +525,21 @@ describe('AdminPedidos', () => {
     expect(c.confirmando()).toBeNull();
   });
 
+  it('el origen de la venta se muestra en el detalle y los filtros de fuente, campaña y anuncio viajan a Laravel', async () => {
+    const p = pedido({ attribution: { source: 'meta', medium: 'paid', campaign: 'dia-madre', ad_id: 'AD-777', landing_url: null } });
+    const { c, fixture, el } = await abrir([p]);
+    c.alternar('JDS-1001');
+    fixture.detectChanges();
+    expect(el.querySelector('.detalle')?.textContent).toContain('dia-madre');
+    expect(el.querySelector('.detalle')?.textContent).toContain('AD-777');
+
+    vi.useFakeTimers();
+    try { c.escribirOrigen('campana', 'dia-madre'); c.escribirOrigen('anuncio', 'AD-777'); vi.advanceTimersByTime(400); } finally { vi.useRealTimers(); }
+    const r = http.expectOne(x => x.url === '/api/v1/admin/orders');
+    expect(r.request.params.get('campaign')).toBe('dia-madre');
+    expect(r.request.params.get('ad')).toBe('AD-777');
+    r.flush({ data: [] });
+    expect(c.hayFiltrosExtra()).toBe(true);
+  });
+
 });

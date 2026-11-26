@@ -40,6 +40,15 @@
     <label>Ciclo
       <input type="date" name="ciclo" [value]="ciclo()" (change)="elegirCiclo($any($event.target).value)" />
     </label>
+    <label>Fuente
+      <input type="text" name="fuente" maxlength="200" placeholder="meta, tiktok…" autocomplete="off" [value]="fuente()" (input)="escribirOrigen('fuente', $any($event.target).value)" />
+    </label>
+    <label>Campaña
+      <input type="text" name="campana" maxlength="200" autocomplete="off" [value]="campana()" (input)="escribirOrigen('campana', $any($event.target).value)" />
+    </label>
+    <label>Anuncio (ID)
+      <input type="text" name="anuncio" maxlength="200" autocomplete="off" [value]="anuncio()" (input)="escribirOrigen('anuncio', $any($event.target).value)" />
+    </label>
     @if (hayFiltrosExtra()) { <button type="button" class="secundario" (click)="limpiarFiltrosExtra()">Quitar filtros</button> }
     <button type="button" class="secundario" (click)="exportarCsv()" [disabled]="exportando()">{{ exportando() ? 'Exportando…' : 'Exportar CSV' }}</button>
   </div>
@@ -105,6 +114,13 @@
                 @if (p.delay; as d) {
                   <br><small class="retraso-nota">Retrasado{{ d.original_window.start && d.original_window.end ? ' (antes: ' + ventana({ start: d.original_window.start, end: d.original_window.end }) + ')' : '' }}{{ d.reason ? ' · ' + d.reason : '' }}</small>
                 }</dd>
+              <dt>Origen</dt>
+              <dd>
+                @if (p.attribution?.source || p.attribution?.campaign || p.attribution?.ad_id) {
+                  {{ p.attribution?.source ?? '—' }}{{ p.attribution?.medium ? ' / ' + p.attribution?.medium : '' }}
+                  <br><small>Campaña: {{ p.attribution?.campaign ?? '—' }} · Anuncio: {{ p.attribution?.ad_id ?? '—' }}</small>
+                } @else { Directo u orgánico (sin campaña) }
+              </dd>
               <dt>Etiqueta de envío</dt>
               <dd class="etiqueta">
                 <button type="button" class="btn-copiar" (click)="descargarEtiqueta(p, 'pdf')">Descargar PDF</button>
