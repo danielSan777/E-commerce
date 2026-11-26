@@ -186,6 +186,9 @@
               @if (e === 'in_production' || e === 'shipped') {
                 <button type="button" (click)="abrirRetraso(p)" [disabled]="trabajando() === p.number">Avisar retraso</button>
               }
+              @if (e === 'in_production' && p.window.type !== 'scheduled') {
+                <button type="button" (click)="pedirConfirmacion(p.number, 'mover_ciclo')" [disabled]="trabajando() === p.number">Pasar al siguiente ciclo</button>
+              }
               @if (e === 'cancelled' && p.payment_status === 'paid') {
                 <button type="button" class="primario" (click)="pedirConfirmacion(p.number, 'reembolsar')" [disabled]="trabajando() === p.number">Registrar reembolso</button>
               }
@@ -234,6 +237,7 @@
                 <div class="confirmacion" role="alert">
                   @switch (c.accion) {
                     @case ('pagar') { <p>Confirma que <b>revisaste el banco</b> y el dinero ({{ p.total_cents / 100 | currency:'USD':'symbol':'1.2-2' }}) llegó. El pedido entra a producción en su ciclo.</p> }
+                    @case ('mover_ciclo') { <p>El pedido pasa al <b>siguiente ciclo de producción</b>: su despacho y su fecha de entrega se mueven solos y el comprador recibe un correo con la nueva fecha.</p> }
                     @case ('pagar_tarde') { <p>El pago llegó después del plazo: se le asigna el <b>siguiente ciclo disponible</b> y cambia su fecha de entrega.</p> }
                     @case ('cancelar') {
                       <p>¿Cancelar el pedido {{ p.number }}? Libera su cupo y no se puede deshacer.</p>

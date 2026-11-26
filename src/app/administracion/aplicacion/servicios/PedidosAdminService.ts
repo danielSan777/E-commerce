@@ -34,6 +34,11 @@ export class PedidosAdminService {
     }).pipe(conErrorApi());
   }
 
+  /** Pasa el pedido pagado al siguiente ciclo: Laravel recalcula solo el despacho y la ventana y avisa al comprador. */
+  moverDeCiclo(numero: string, confirmarSobrecupo = false): Observable<PedidoAdmin> {
+    return this.http.post<PedidoAdmin>(`${this.api}/admin/orders/${numero}/move-cycle`, { confirm_over_capacity: confirmarSobrecupo }).pipe(conErrorApi());
+  }
+
   /** Foto de la maceta personalizada (`preview`) o foto del marco que subió el comprador (`frame-photo`). Exige sesión. */
   imagenDelItem(numero: string, item: number, cual: 'preview' | 'frame-photo'): Observable<Blob> {
     return this.http.get(`${this.api}/admin/orders/${numero}/items/${item}/${cual}`, { responseType: 'blob' }).pipe(conErrorApi());

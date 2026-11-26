@@ -12,7 +12,7 @@ import { FiltrosExtraPedidos, PedidosAdminService } from '../../../aplicacion/se
 import { descargarEtiquetaImagen, descargarEtiquetaPdf, datosDeEtiqueta } from '../../../aplicacion/servicios/EtiquetaEnvio';
 import { EstadoPedidoAdmin, EventoPedido, FiltroPedidos, OrdenProduccion, PedidoAdmin, estadoDePedido } from '../../../dominio/interfaces/pedidos-admin';
 
-type Accion = 'pagar' | 'pagar_tarde' | 'cancelar' | 'reembolsar';
+type Accion = 'pagar' | 'pagar_tarde' | 'cancelar' | 'reembolsar' | 'mover_ciclo';
 
 /** La guía de Servientrega: letras, números y guiones, de 5 a 40 caracteres (Laravel valida lo mismo). */
 export function guiaValida(guia: string): boolean {
@@ -247,6 +247,7 @@ export class AdminPedidos implements OnInit {
     this.trabajando.set(p.number);
     const llamada = accion === 'cancelar' ? this.servicio.cancelar(p.number, { notificar: this.notificarCancelacion(), motivo: this.motivoCancelacion(), reembolso: this.montoReembolso() })
       : accion === 'reembolsar' ? this.servicio.registrarReembolso(p.number, this.montoReembolso())
+      : accion === 'mover_ciclo' ? this.servicio.moverDeCiclo(p.number, confirmarSobrecupo)
      
       : this.servicio.marcarPagado(p.number, { fueraDePlazo: accion === 'pagar_tarde', confirmarSobrecupo });
 
@@ -258,8 +259,9 @@ export class AdminPedidos implements OnInit {
         this.motivoCancelacion.set('');
         this.montoReembolso.set('');
         this.errorReembolso.set('');
-        this.avisos.exito(accion === 'reembolsar' ? `Reembolso de ${p.number} registrado.` : accion === 'cancelar' ? `Pedido ${p.number} cancelado.` : `Pedido ${p.number} marcado como pagado.`);
+        this.avisos.exito(accion === 'reembolsar' ? `Reembolso de ${p.number} registrado.` : accion === 'mover_ciclo' ? `Pedido ${p.number} pasado al siguiente ciclo; el comprador recibió su nueva fecha.` : accion === 'cancelar' ? `Pedido ${p.number} cancelado.` : `Pedido ${p.number} marcado como pagado.`);
         this.reemplazar(nuevo);
+        if (accion === 'mover_ciclo' && this.abierto() === p.number) this.cargarHistorial(p.number);
       },
       error: (e: ErrorApi) => {
         if (e.code === 'capacity_over_limit') this.sobrecupo.set({ numero: p.number, mensaje: e.message });

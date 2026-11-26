@@ -505,4 +505,24 @@ describe('AdminPedidos', () => {
     expect(descargado.length).toBe(1);
     expect(c.exportando()).toBe(false);
   });
+  it('«Pasar al siguiente ciclo» pide confirmación, llama a Laravel y, si el ciclo está lleno, pide confirmar el sobrecupo', async () => {
+    const enProduccion = pedido({ payment_status: 'paid', status: 'in_production' });
+    const { c } = await abrir([enProduccion]);
+    c.filtro.set('in_production');
+
+    c.pedirConfirmacion('JDS-1001', 'mover_ciclo');
+    c.ejecutar(enProduccion, 'mover_ciclo');
+    let r = http.expectOne('/api/v1/admin/orders/JDS-1001/move-cycle');
+    expect(r.request.body).toEqual({ confirm_over_capacity: false });
+    r.flush({ code: 'capacity_over_limit', message: 'El ciclo ya tiene 10 pedidos.' }, { status: 409, statusText: 'Conflict' });
+    expect(c.sobrecupo()?.numero).toBe('JDS-1001');
+
+    c.ejecutar(enProduccion, 'mover_ciclo', true);
+    r = http.expectOne('/api/v1/admin/orders/JDS-1001/move-cycle');
+    expect(r.request.body).toEqual({ confirm_over_capacity: true });
+    r.flush({ ...enProduccion, cycle_date: '2026-11-18', window: { start: '2026-11-21', end: '2026-11-22', type: 'immediate' } });
+    expect(c.pedidos()[0].cycle_date).toBe('2026-11-18');
+    expect(c.confirmando()).toBeNull();
+  });
+
 });
