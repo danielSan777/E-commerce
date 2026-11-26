@@ -4,14 +4,14 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import { ConsentimientoService } from '../../../core/seguimiento/ConsentimientoService';
 
-// Aviso de cookies: aparece abajo hasta que la persona elige. No se muestra en el panel de administración.
+// Aviso de cookies (sin la palabra «cookie» en selector, clase ni id: Brave y otros bloqueadores ocultan esos nombres): aparece abajo hasta que la persona elige. No se muestra en el panel de administración.
 @Component({
-  selector: 'app-aviso-cookies',
+  selector: 'app-aviso-privacidad',
   template: `
     @if (consentimiento.mostrarAviso() && !esAdmin()) {
-      <section class="aviso-cookies" role="dialog" aria-labelledby="titulo-cookies" aria-live="polite">
+      <section class="aviso-privacidad" role="dialog" aria-labelledby="titulo-privacidad" aria-live="polite">
         <div class="texto">
-          <strong id="titulo-cookies">Cookies</strong>
+          <strong id="titulo-privacidad">Cookies</strong>
           <p>Usamos cookies para medir las visitas y mostrarte anuncios que te interesen. Puedes aceptarlas o usar solo las necesarias para comprar.</p>
         </div>
         <div class="botones">
@@ -22,7 +22,7 @@ import { ConsentimientoService } from '../../../core/seguimiento/ConsentimientoS
     }
   `,
   styles: `
-    .aviso-cookies { position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); width: min(94vw, 46rem); z-index: 1900; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.25rem; padding: 1rem 1.25rem; border-radius: 14px; background: #fff; color: #1f2937; box-shadow: 0 10px 32px rgba(0,0,0,.28); border: 1px solid #d1d5db; }
+    .aviso-privacidad { position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); width: min(94vw, 46rem); z-index: 1900; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.25rem; padding: 1rem 1.25rem; border-radius: 14px; background: #fff; color: #1f2937; box-shadow: 0 10px 32px rgba(0,0,0,.28); border: 1px solid #d1d5db; }
     .texto { flex: 1 1 18rem; }
     .texto p { margin: .25rem 0 0; font-size: .92rem; line-height: 1.35; }
     .botones { display: flex; gap: .5rem; flex: none; }

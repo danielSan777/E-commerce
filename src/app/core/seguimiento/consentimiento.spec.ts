@@ -71,6 +71,6 @@ describe('Aviso de cookies y carga de GTM', () => {
 
     (el.querySelector('button.primario') as HTMLButtonElement).click();
     f.detectChanges();
-    expect(el.querySelector('.aviso-cookies')).toBeNull();
+    expect(el.querySelector('.aviso-privacidad')).toBeNull();
   });
 });
