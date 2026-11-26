@@ -28,7 +28,7 @@ describe('Aviso de cookies y carga de GTM', () => {
     c.aceptar();
     c.aceptar();
     expect(gtm()).toHaveLength(1);
-    expect((gtm()[0] as HTMLScriptElement).src).toContain('id=GTM-KSG39B86');
+    expect((gtm()[0] as HTMLScriptElement).src).toContain('id=GTM-5TTZST4M');
     expect(c.marketing()).toBe(true);
     expect(c.mostrarAviso()).toBe(false);
     expect(localStorage.getItem('jds_cookies')).toBe('aceptado');

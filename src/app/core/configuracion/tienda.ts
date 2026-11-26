@@ -35,5 +35,5 @@ export function enlaceWhatsapp(texto: string = TIENDA.mensajeWhatsapp): string {
  */
 export const SEGUIMIENTO = {
     /** ID del contenedor de Google Tag Manager. GTM reparte los eventos a GA4, Meta y TikTok. Solo se carga si el visitante acepta las cookies. */
-    gtmId: 'GTM-KSG39B86',
+    gtmId: 'GTM-5TTZST4M',
 } as const;
