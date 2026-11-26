@@ -28,3 +28,12 @@ export const REMITENTE = {
 export function enlaceWhatsapp(texto: string = TIENDA.mensajeWhatsapp): string {
     return `https://wa.me/${TIENDA.whatsapp}?text=${encodeURIComponent(texto)}`;
 }
+
+/**
+ * Seguimiento (Paso 20). Son identificadores públicos (no secretos): van en el navegador. Los tokens y secretos de Meta, TikTok y GA4
+ * van solo en el `.env` de Laravel. Vacío = ese servicio queda apagado.
+ */
+export const SEGUIMIENTO = {
+    /** ID del contenedor de Google Tag Manager. GTM reparte los eventos a GA4, Meta y TikTok. Solo se carga si el visitante acepta las cookies. */
+    gtmId: 'GTM-KSG39B86',
+} as const;

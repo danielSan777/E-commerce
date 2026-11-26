@@ -1,4 +1,5 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { ConsentimientoService } from '../../../seguimiento/ConsentimientoService';
 import { RouterLink } from '@angular/router';
 import { TIENDA, enlaceWhatsapp } from '../../../configuracion/tienda';
 
@@ -26,6 +27,12 @@ interface RedSocial {
 })
 
 export class Footer {
+  private consentimiento = inject(ConsentimientoService);
+
+  /** «Preferencias de cookies»: vuelve a mostrar el aviso para cambiar la elección. */
+  preferenciasDeCookies(): void {
+    this.consentimiento.reabrir();
+  }
 
 
   // ===== Botón flotante de WhatsApp (editable) =====

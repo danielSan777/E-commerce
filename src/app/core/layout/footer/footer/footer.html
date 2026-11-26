@@ -81,6 +81,7 @@
                     <a [href]="enlaceCorreoAutor" target="_blank" rel="noopener">{{ correoAutor }}</a>
                 </strong>
             </p>
+            <button type="button" class="footer-cookies" (click)="preferenciasDeCookies()">Preferencias de cookies</button>
             <div class="footer-pagos">
                 @for (pago of mediosPago; track pago.nombre) {
                 <span class="footer-pago"><i class="bi" [class]="pago.icono" aria-hidden="true"></i> {{ pago.nombre }}</span>

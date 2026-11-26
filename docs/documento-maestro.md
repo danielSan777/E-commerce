@@ -1547,10 +1547,10 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 
 **Tareas**
 
-- [ ] Contenedor GTM web; la función `track()` de Angular empuja al `dataLayer` y GTM reparte a GA4, Meta Pixel y TikTok Pixel.
+- [ ] Contenedor GTM web; la función `track()` de Angular empuja al `dataLayer` y GTM reparte a GA4, Meta Pixel y TikTok Pixel. *(2026-11-26, parcial: GTM `GTM-KSG39B86` se carga desde la tienda, solo cuando el visitante acepta las cookies; antes de eso los eventos esperan en el `dataLayer`. Falta configurar dentro de GTM las etiquetas de GA4, Meta y TikTok, que hace Josué con la guía que se le entregue.)*
 - [ ] Envío de compras desde Laravel a Meta Conversions API, TikTok Events API y GA4 Measurement Protocol, por la cola.
 - [ ] Registro `tracking_events`: plataforma, evento, `event_id`, pedido, respuesta o error.
-- [ ] Aviso de cookies simple; los pixeles se cargan según la elección del visitante.
+- [x] Aviso de cookies simple; los pixeles se cargan según la elección del visitante. *(2026-11-26: aviso con «Aceptar» y «Solo necesarias»; la elección se guarda en el navegador, se puede cambiar desde «Preferencias de cookies» en el pie de página, y no sale en el panel de administración. GTM solo se carga si acepta. El pedido lleva `cookie_consent.marketing`, que el servidor usará para no enviar eventos a Meta ni a TikTok si rechazó.)*
 - [ ] Atribución: primer toque en el cliente, último toque en el pedido. *(2026-11-26, parcial: Laravel limpia (solo campos conocidos, texto corto) y guarda en el pedido la atribución que manda Angular, con primer y último toque; el panel muestra fuente, campaña y anuncio del último toque y filtra por ellos, y el CSV los incluye. Falta guardar el primer toque en el cliente y capturar `fbp`, `fbc`, `ttp` y los ids de GA4, que llegan con GTM.)*
 - [x] Convención de UTMs documentada para Josué. *(2026-11-26: `docs/convencion-utms.md`. Los parámetros dinámicos de TikTok (`__CAMPAIGN_ID__`, `__CID__`) hay que confirmarlos en la plataforma.)*
 
@@ -1690,7 +1690,7 @@ Regla general que reproduce la tabla y absorbe feriados y cierres:
 - [ ] Ficha de cliente: nombre, correo y teléfono normalizados, canal de origen, primer toque, consentimientos y pedidos.
 - [ ] Métricas desde pedidos pagados: número de pedidos, total comprado, ticket promedio, primera y última compra.
 - [ ] Tabla de consentimientos con historial y baja en un clic en cada correo de marketing, cuando exista marketing.
-- [ ] Aviso de cookies simple; los pixeles se cargan según la elección del visitante (Paso 20).
+- [x] Aviso de cookies simple; los pixeles se cargan según la elección del visitante (Paso 20). *(Hecho: ver Paso 20.)*
 - [ ] Página de términos y condiciones con versión y fecha (una sola página; incluye envíos, cambios, cancelaciones, devoluciones y datos del cliente). *(Texto oficial de Josué ya publicado en `/terminos-y-condiciones` con mock; falta la tabla `policies` con versión y fecha en Laravel, por eso sigue sin marcar. Ya no hay páginas separadas de privacidad, envíos ni cambios.)*
 - [ ] Registro de la aceptación de términos por pedido (Paso 12).
 

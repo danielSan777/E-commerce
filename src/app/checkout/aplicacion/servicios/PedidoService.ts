@@ -3,6 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, from, map, of, switchMap, tap, throwError } from 'rxjs';
 import { CarritoService, ItemCarrito } from '../../../carrito/aplicacion/servicios/CarritoService';
 import { API_URL } from '../../../core/configuracion/api';
+import { ConsentimientoService } from '../../../core/seguimiento/ConsentimientoService';
 import { AtribucionService } from '../../../core/seguimiento/AtribucionService';
 import { ErrorApi } from '../../../cuenta/dominio/interfaces/sesion';
 import { conErrorApi } from '../../../cuenta/aplicacion/servicios/SesionService';
@@ -65,6 +66,7 @@ export class PedidoService {
     private api = inject(API_URL);
     private ubicaciones = inject(UbicacionesService);
     private atribucion = inject(AtribucionService);
+    private consentimiento = inject(ConsentimientoService);
     private recordado = inject(PedidoPendienteRecordadoService);
     private carrito = inject(CarritoService);
 
@@ -87,7 +89,7 @@ export class PedidoService {
                 datos: nuevo.datos,
                 totalCentavos: Math.round(nuevo.total * 100),
                 entrega: nuevo.entrega,
-                tracking: { first_touch: this.atribucion.first(), last_touch: this.atribucion.last() },
+                tracking: { first_touch: this.atribucion.first(), last_touch: this.atribucion.last(), cookie_consent: { marketing: this.consentimiento.marketing() } },
                 fotosMarco,
             }, {
                 provincia: n => this.ubicaciones.codigoProvincia(n),

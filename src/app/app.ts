@@ -3,13 +3,15 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { Avisos } from './shared/componentes/avisos/avisos';
 import { Cargando } from './shared/componentes/cargando/cargando';
+import { AvisoCookies } from './shared/componentes/aviso-cookies/aviso-cookies';
+import { ConsentimientoService } from './core/seguimiento/ConsentimientoService';
 import { AnalyticsService } from './core/seguimiento/AnalyticsService';
 import { AtribucionService } from './core/seguimiento/AtribucionService';
 import { PrecargaService } from './core/precarga/PrecargaService';
 import { PestanaService } from './core/pestana/PestanaService';
 
 @Component({
-  imports: [RouterOutlet, Avisos, Cargando],
+  imports: [RouterOutlet, Avisos, Cargando, AvisoCookies],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -22,8 +24,10 @@ export class App {
     const atribucion = inject(AtribucionService);
     const precarga = inject(PrecargaService);
     const pestana = inject(PestanaService);
+    const consentimiento = inject(ConsentimientoService);
     afterNextRender(() => {
       atribucion.capturar();
+      consentimiento.iniciar();
       precarga.iniciar();
       pestana.iniciar();
       document.addEventListener('click', e => this.clicDelegado(e, analytics));
