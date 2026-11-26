@@ -89,7 +89,7 @@ export class PedidoService {
                 datos: nuevo.datos,
                 totalCentavos: Math.round(nuevo.total * 100),
                 entrega: nuevo.entrega,
-                tracking: { first_touch: this.atribucion.first(), last_touch: this.atribucion.last(), cookie_consent: { marketing: this.consentimiento.marketing() } },
+                tracking: { ...this.atribucion.identificadores(), page_url: typeof location === 'undefined' ? null : location.href, first_touch: this.atribucion.first(), last_touch: this.atribucion.last(), cookie_consent: { marketing: this.consentimiento.marketing() } },
                 fotosMarco,
             }, {
                 provincia: n => this.ubicaciones.codigoProvincia(n),

@@ -31,6 +31,29 @@ export class AtribucionService {
         this.guardar(nuevo);
     }
 
+    /**
+     * Identificadores que dejan las plataformas en las cookies del navegador (solo existen si la persona aceptó las cookies y GTM cargó):
+     * `ga_client_id` y `ga_session_id` de GA4, `fbp` y `fbc` de Meta, `ttp` de TikTok. Si falta `_fbc` pero hubo `fbclid`, se arma con el
+     * formato de Meta (`fb.1.<fecha en ms>.<fbclid>`). Sin cookies, todo va en null.
+     */
+    identificadores(cookies: string = this.esNavegador ? document.cookie : ''): Record<string, string | null> {
+        const c = new Map(cookies.split(';').map(x => x.trim()).filter(Boolean).map(x => { const i = x.indexOf('='); return [x.slice(0, i), decodeURIComponent(x.slice(i + 1))] as [string, string]; }));
+        const ga = c.get('_ga')?.split('.');
+        const cookieSesion = [...c.entries()].find(([k]) => k.startsWith('_ga_'))?.[1] ?? '';
+        const sesion = /^GS2\.\d+\.s(\d+)/.exec(cookieSesion)?.[1] ?? (/^GS1\.\d+\.(\d+)/.exec(cookieSesion)?.[1] ?? null);
+        const toque = this.first() ?? this.last();
+        const fbclid = toque?.fbclid ?? null;
+        return {
+            ga_client_id: ga && ga.length >= 4 ? `${ga[2]}.${ga[3]}` : null,
+            ga_session_id: sesion,
+            fbp: c.get('_fbp') ?? null,
+            fbc: c.get('_fbc') ?? (fbclid && toque ? `fb.1.${new Date(toque.date).getTime()}.${fbclid}` : null),
+            fbclid: this.last()?.fbclid ?? fbclid,
+            ttclid: this.last()?.ttclid ?? this.first()?.ttclid ?? null,
+            ttp: c.get('_ttp') ?? null,
+        };
+    }
+
     first(): Toque | null { return this.leer().first_touch ?? null; }
     last(): Toque | null { return this.leer().last_touch ?? null; }
 
