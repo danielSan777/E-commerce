@@ -638,7 +638,7 @@ Redirecciones 301 *(hechas como redirección de Angular, 302; el 301 real llega 
 **Tracking en el frontend**
 
 - [x] Captura de atribución al aterrizar: UTMs, `fbclid`, `ttclid`, landing y fecha en almacenamiento propio (primer y último toque). *(Hecho: `AtribucionService`; `fbp`, `fbc`, `ttp` y los ids de GA4 llegan con GTM en el Paso 20.)*
-- [x] `dataLayer`: una función `track()` en cada paso del recorrido con los nombres del plan de eventos (Paso 20). *(Hecho: `AnalyticsService.track()` envía `page_view` (menos `/pedido/{token}`), `view_item`, `start_customization`, `add_to_cart`, `view_cart`, `open_more_products`, `begin_checkout`, `add_shipping_info`, `add_payment_info`, `select_delivery_window`, `select_subcategory`, `search`, `select_item` y `whatsapp_click`. Hoy solo llegan al `dataLayer`; GTM se carga en el Paso 20.)*
+- [x] `dataLayer`: una función `track()` en cada paso del recorrido con los nombres del plan de eventos (Paso 20). *(Hecho: `AnalyticsService.track()` envía `page_view` (menos `/pedido/{token}`), `view_item`, `start_customization`, `add_to_cart`, `view_cart`, `open_more_products`, `begin_checkout`, `add_shipping_info`, `add_payment_info`, `select_delivery_window`, `select_subcategory`, `search`, `select_item` y `whatsapp_click`. Hoy solo llegan al `dataLayer`; GTM se carga en el Paso 20.)* *(2026-11-27: `view_item` y `add_to_cart` mandan el SKU del producto como `item_id`, el mismo código que usa el servidor en `Purchase`, para que Meta y Analytics relacionen visitas, carrito y compra.)*
 
 **Limpieza, navegación y video**
 

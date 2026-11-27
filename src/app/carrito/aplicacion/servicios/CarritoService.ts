@@ -6,6 +6,7 @@ import type { EscenaMaceta } from '../../../shared/componentes/vista-maceta/vist
 // Producto que se está personalizando (lo manda la pantalla del producto al personalizador)
 export interface ProductoCarrito {
     id: number | string;
+    sku?: string;      // el código que usa también el servidor en la compra; Meta y Analytics lo relacionan con las visitas y el carrito
     nombre: string;
     precio: number;
     imagen?: string;
@@ -66,7 +67,7 @@ export class CarritoService {
     // Agrega el item; si ya existe uno con el mismo uid (se estaba editando) lo reemplaza en su lugar
     guardar(item: ItemCarrito, archivos?: ArchivosItem): void {
         const esNuevo = !this.items().some(i => i.uid === item.uid);
-        if (esNuevo) this.analytics.track('add_to_cart', { items: [{ item_id: String(item.producto.id), item_name: item.producto.nombre }] });
+        if (esNuevo) this.analytics.track('add_to_cart', { items: [{ item_id: item.producto.sku ?? String(item.producto.id), item_name: item.producto.nombre }] });
         this.items.update(lista =>
             lista.some(i => i.uid === item.uid)
                 ? lista.map(i => (i.uid === item.uid ? item : i))
