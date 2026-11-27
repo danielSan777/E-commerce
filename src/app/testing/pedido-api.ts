@@ -33,4 +33,4 @@ export const SEGUIMIENTO_API: PedidoSeguimiento = {
     share: PENDIENTE_API.share,
 };
 
-export const CHECKOUT_API = { order_number: 'JDS-48213', token: TOKEN_PRUEBA, event_id: 'evt-1', order: PENDIENTE_API };
+export const CHECKOUT_API = { order_number: 'JDS-48213', token: TOKEN_PRUEBA, event_id: 'evt-1', analytics: { event_id: 'evt-1', transaction_id: 'JDS-48213', value_cents: 2500, currency: 'USD', items: [{ sku: 'MAC-001', name: 'Doctor', price_cents: 2500, quantity: 1 }] }, order: PENDIENTE_API };

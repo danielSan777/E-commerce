@@ -4,6 +4,8 @@ import { Component, afterNextRender, computed, inject, signal } from '@angular/c
 import { DOCUMENT } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { CarritoService } from '../../../../carrito/aplicacion/servicios/CarritoService';
+import { CotizacionService } from '../../../../carrito/aplicacion/servicios/CotizacionService';
+import { parametrosDeCarrito } from '../../../../core/seguimiento/ParametrosComercio';
 import { CheckoutService, DatosCheckout } from '../../../aplicacion/servicios/CheckoutService';
 import { UbicacionesService } from '../../../aplicacion/servicios/UbicacionesService';
 import {
@@ -33,7 +35,9 @@ export class EnvioFacturacion {
   private avisos = inject(AvisosService);
 
   datos = this.checkout.datos;
-  cantidadCarrito = inject(CarritoService).cantidad;
+  private carrito = inject(CarritoService);
+  private cotizador = inject(CotizacionService);
+  cantidadCarrito = this.carrito.cantidad;
 
   // ----- Provincias y cantones: se piden una vez a Laravel y quedan en memoria para filtrar al instante -----
   provincias = this.ubicaciones.provincias;
@@ -99,7 +103,7 @@ export class EnvioFacturacion {
   private analytics = inject(AnalyticsService);
 
   constructor() {
-    this.analytics.track('begin_checkout');
+    this.analytics.track('begin_checkout', parametrosDeCarrito(this.carrito.items(), this.cotizador.cotizacion()));
     this.ubicaciones.cargar();
     // Solo en el navegador: así el servidor y el cliente pintan lo mismo en el primer render
     afterNextRender(() => {

@@ -1,3 +1,4 @@
+import type { DatosDeCompra } from '../../../core/seguimiento/ParametrosComercio';
 /** Datos de la Cajita de PayPhone que entrega Laravel (montos en centavos). Solo existen con PayPhone real. */
 export interface CajitaPayphone {
   token: string;
@@ -34,4 +35,5 @@ export interface RespuestaDelPago {
   order_number: string;
   token: string | null;     // solo con pago aprobado
   event_id: string | null;
+  analytics: DatosDeCompra | null;   // solo con pago aprobado: lo que el navegador avisa como `purchase`
 }

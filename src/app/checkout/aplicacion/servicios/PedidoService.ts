@@ -3,6 +3,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, from, map, of, switchMap, tap, throwError } from 'rxjs';
 import { CarritoService, ItemCarrito } from '../../../carrito/aplicacion/servicios/CarritoService';
 import { API_URL } from '../../../core/configuracion/api';
+import { AnalyticsService } from '../../../core/seguimiento/AnalyticsService';
+import { DatosDeCompra, parametrosDeCompra } from '../../../core/seguimiento/ParametrosComercio';
 import { ConsentimientoService } from '../../../core/seguimiento/ConsentimientoService';
 import { AtribucionService } from '../../../core/seguimiento/AtribucionService';
 import { ErrorApi } from '../../../cuenta/dominio/interfaces/sesion';
@@ -57,6 +59,7 @@ interface RespuestaCheckout {
     order_number: string;
     token: string;
     event_id: string;
+    analytics: DatosDeCompra;
     order: PedidoPendiente;
 }
 
@@ -69,6 +72,7 @@ export class PedidoService {
     private consentimiento = inject(ConsentimientoService);
     private recordado = inject(PedidoPendienteRecordadoService);
     private carrito = inject(CarritoService);
+    private analytics = inject(AnalyticsService);
 
     // sessionStorage: son datos personales y se borran al cerrar la pestaña
     private readonly CLAVE = 'pedido-jardin-de-sele';
@@ -96,6 +100,10 @@ export class PedidoService {
                 canton: (p, c) => this.ubicaciones.codigoCanton(p, c),
             })),
             switchMap(solicitud => this.http.post<RespuestaCheckout>(`${this.api}/checkout`, solicitud).pipe(conErrorApi())),
+            tap(r => {
+                // Transferencia: el pedido quedó hecho pero sin pagar; se mide como place_order (la compra con tarjeta se mide al aprobarse el cobro)
+                if (nuevo.metodo !== 'payphone') this.analytics.track('place_order', { payment_type: 'transfer', ...parametrosDeCompra(r.analytics) });
+            }),
             map(r => this.desdeApi(nuevo, r)),
             tap(p => {
                 this.guardarPedido(p);

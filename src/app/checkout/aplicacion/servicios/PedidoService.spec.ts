@@ -30,6 +30,20 @@ describe('PedidoService.crear', () => {
 
     afterEach(() => http.verify());
 
+    it('transferencia: avisa place_order con los datos de Laravel; con tarjeta no (la compra se mide al aprobarse el cobro)', () => {
+        const capa = () => (window as unknown as { dataLayer: { event: string }[] }).dataLayer;
+        (window as unknown as { dataLayer: unknown[] }).dataLayer = [];
+
+        servicio.crear(nuevo('transferencia')).subscribe();
+        http.expectOne('/api/v1/checkout').flush(CHECKOUT_API, { status: 201, statusText: 'Created' });
+        expect(capa()).toEqual([{ event: 'place_order', payment_type: 'transfer', event_id: 'evt-1', transaction_id: 'JDS-48213', currency: 'USD', value: 25, items: [{ item_id: 'MAC-001', item_name: 'Doctor', price: 25, quantity: 1 }] }]);
+
+        (window as unknown as { dataLayer: unknown[] }).dataLayer = [];
+        servicio.crear(nuevo('payphone')).subscribe();
+        http.expectOne('/api/v1/checkout').flush(CHECKOUT_API, { status: 201, statusText: 'Created' });
+        expect(capa()).toEqual([]);
+    });
+
     it('transferencia: Laravel crea el pedido y devuelve número, token y plazo', () => {
         let creado: ReturnType<PedidoService['pedido']> = null;
         servicio.crear(nuevo('transferencia')).subscribe(p => (creado = p));

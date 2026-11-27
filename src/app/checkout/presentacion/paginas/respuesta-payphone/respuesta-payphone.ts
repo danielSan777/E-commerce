@@ -4,6 +4,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CarritoService } from '../../../../carrito/aplicacion/servicios/CarritoService';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
 import { PagoTarjetaService } from '../../../aplicacion/servicios/PagoTarjetaService';
+import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
+import { DatosDeCompra, parametrosDeCompra } from '../../../../core/seguimiento/ParametrosComercio';
 import { PedidoService } from '../../../aplicacion/servicios/PedidoService';
 import { ResultadoDelPago } from '../../../dominio/interfaces/pago_tarjeta';
 
@@ -32,6 +34,7 @@ export class RespuestaPayphone {
   private pagos = inject(PagoTarjetaService);
   private pedidos = inject(PedidoService);
   private carrito = inject(CarritoService);
+  private analytics = inject(AnalyticsService);
 
   estado = signal<Estado>({ tipo: 'confirmando' });
   private id = 0;
@@ -57,7 +60,7 @@ export class RespuestaPayphone {
     this.estado.set({ tipo: 'confirmando' });
     this.pagos.confirmar(this.id, this.clientTransactionId).subscribe({
       next: r => {
-        if (r.result === 'approved') return this.aprobado(r.order_number, r.token, r.simulated);
+        if (r.result === 'approved') return this.aprobado(r.order_number, r.token, r.simulated, r.analytics);
         const tipo: Record<Exclude<ResultadoDelPago, 'approved'>, 'rechazado' | 'revision' | 'error'> = { declined: 'rechazado', review: 'revision', error: 'error' };
         this.estado.set({ tipo: tipo[r.result as Exclude<ResultadoDelPago, 'approved'>], mensaje: r.message });
       },
@@ -65,7 +68,9 @@ export class RespuestaPayphone {
     });
   }
 
-  private aprobado(numero: string, token: string | null, simulado: boolean): void {
+  private aprobado(numero: string, token: string | null, simulado: boolean, datos: DatosDeCompra | null): void {
+    // Compra real con tarjeta: el navegador la avisa con el mismo event_id que el servidor (Meta y TikTok la cuentan una sola vez). La simulada nunca.
+    if (!simulado && datos) this.analytics.trackUnaVez(`jds_purchase_${datos.transaction_id}`, 'purchase', parametrosDeCompra(datos));
     // Mismo navegador: confirmación con el pedido guardado. Otro navegador: el seguimiento por su enlace privado.
     if (this.pedidos.marcarPagadoConTarjeta(numero, simulado)) {
       this.router.navigateByUrl(this.RUTA_CONFIRMACION, { replaceUrl: true }).then(ok => { if (ok) this.carrito.vaciar(); });

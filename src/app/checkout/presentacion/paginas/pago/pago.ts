@@ -6,6 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 import { CalendarioVentanas } from '../../../../shared/componentes/calendario-ventanas/calendario-ventanas';
 import { CarritoService } from '../../../../carrito/aplicacion/servicios/CarritoService';
 import { CotizacionService } from '../../../../carrito/aplicacion/servicios/CotizacionService';
+import { parametrosDeCarrito } from '../../../../core/seguimiento/ParametrosComercio';
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { CheckoutService, DatosCheckout } from '../../../aplicacion/servicios/CheckoutService';
 import { ErrorApi } from '../../../../cuenta/dominio/interfaces/sesion';
@@ -177,7 +178,7 @@ export class Pago {
 
   elegir(metodo: Metodo): void {
     this.checkout.actualizar({ metodoPago: metodo });
-    this.analytics.track('add_payment_info', { payment_type: metodo === 'payphone' ? 'card' : 'transfer' });
+    this.analytics.track('add_payment_info', { ...parametrosDeCarrito(this.items(), this.cot()), payment_type: metodo === 'payphone' ? 'card' : 'transfer' });
   }
 
   confirmar(): void {

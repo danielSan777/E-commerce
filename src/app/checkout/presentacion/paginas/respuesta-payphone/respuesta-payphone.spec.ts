@@ -15,7 +15,7 @@ const nuevo = (): NuevoPedido => ({
   entrega: { tipo: 'inmediata', window: { start: '2026-11-12', end: '2026-11-13' }, label: 'x', promise_token: 't' },
 });
 
-const RESPUESTA = (result: string, extra: object = {}) => ({ result, message: `msg ${result}`, simulated: false, order_number: 'JDS-48213', token: null, event_id: null, ...extra });
+const RESPUESTA = (result: string, extra: object = {}) => ({ result, message: `msg ${result}`, simulated: false, order_number: 'JDS-48213', token: null, event_id: null, analytics: null, ...extra });
 
 async function montar(query: Record<string, string>, conPedidoEnLaSesion = true) {
   sessionStorage.clear();
@@ -49,6 +49,25 @@ describe('RespuestaPayphone', () => {
     expect(TestBed.inject(PedidoService).pedido()!.pagoConfirmado).toBe(true);
     expect(router.navigateByUrl).toHaveBeenCalledWith('/checkout/confirmacion', { replaceUrl: true });
     expect(vaciar).toHaveBeenCalled();
+  });
+
+  it('aprobado con tarjeta real: empuja purchase con el event_id y el valor de Laravel, una sola vez aunque se recargue', async () => {
+    (window as unknown as { dataLayer: unknown[] }).dataLayer = [];
+    const analytics = { event_id: 'purchase-abc', transaction_id: 'JDS-48213', value_cents: 2500, currency: 'USD', items: [{ sku: 'MAC-001', name: 'Doctor', price_cents: 2500, quantity: 1 }] };
+    const { http, fixture } = await montar(Q);
+    http.expectOne('/api/v1/payments/payphone/confirm').flush(RESPUESTA('approved', { token: TOKEN_PRUEBA, event_id: 'purchase-abc', analytics }));
+    fixture.componentInstance.confirmar();
+    http.expectOne('/api/v1/payments/payphone/confirm').flush(RESPUESTA('approved', { token: TOKEN_PRUEBA, event_id: 'purchase-abc', analytics }));
+
+    expect((window as unknown as { dataLayer: unknown[] }).dataLayer).toEqual([{ event: 'purchase', event_id: 'purchase-abc', transaction_id: 'JDS-48213', currency: 'USD', value: 25, items: [{ item_id: 'MAC-001', item_name: 'Doctor', price: 25, quantity: 1 }] }]);
+  });
+
+  it('pago simulado (pruebas): no avisa purchase', async () => {
+    (window as unknown as { dataLayer: unknown[] }).dataLayer = [];
+    const { http } = await montar(Q);
+    http.expectOne('/api/v1/payments/payphone/confirm').flush(RESPUESTA('approved', { token: TOKEN_PRUEBA, simulated: true, analytics: { event_id: 'x', transaction_id: 'JDS-48213', value_cents: 100, currency: 'USD', items: [] } }));
+
+    expect((window as unknown as { dataLayer: unknown[] }).dataLayer).toEqual([]);
   });
 
   it('aprobado desde otro navegador (sin pedido en la sesión): lleva al seguimiento por su enlace privado', async () => {

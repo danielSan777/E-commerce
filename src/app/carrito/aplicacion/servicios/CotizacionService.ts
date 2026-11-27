@@ -11,6 +11,7 @@ export interface CotizacionCarrito {
     mode: 'standard' | 'free_shipping_discount';
     subtotal_cents: number;
     discount_cents: number;
+    merchandise_value_cents: number;   // productos netos de descuento, sin envío ni recargo (el `value` de los eventos)
     discounted_lines: number[];
     free_shipping: boolean;
     shipping_cents: number | null;

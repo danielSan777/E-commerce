@@ -19,6 +19,7 @@ import { UbicacionesService } from '../../../../checkout/aplicacion/servicios/Ub
 import { EnvioGratisService } from '../../../../catalogo/aplicacion/servicios/EnvioGratisService';
 import { CalendarioVentanas } from '../../../../shared/componentes/calendario-ventanas/calendario-ventanas';
 import { AnalyticsService } from '../../../../core/seguimiento/AnalyticsService';
+import { parametrosDeProducto } from '../../../../core/seguimiento/ParametrosComercio';
 import { NoEncontrada } from '../../../../core/paginas/no-encontrada/no-encontrada';
 import { ProductoCarrito } from '../../../../carrito/aplicacion/servicios/CarritoService';
 
@@ -181,7 +182,7 @@ export class DetalleProducto implements OnDestroy {
     // La vista del producto se mide solo en el navegador, cuando la ficha ya llegó
     effect(() => {
       const p = this.producto();
-      if (p && this.esNavegador) untracked(() => this.analytics.track('view_item', { items: [{ item_id: p.sku, item_name: p.name }] }));
+      if (p && this.esNavegador) untracked(() => this.analytics.track('view_item', parametrosDeProducto(p.sku, p.name, p.price.final_cents / 100)));
     });
 
     // Una ventana elegida en otra visita puede haber quedado en el pasado: Laravel ya no la ofrece

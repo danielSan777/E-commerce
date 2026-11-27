@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { AnalyticsService } from '../../../core/seguimiento/AnalyticsService';
+import { parametrosDeProducto } from '../../../core/seguimiento/ParametrosComercio';
 import { AccesorioColocado } from '../../../personalizador/dominio/Accesorios';
 import type { EscenaMaceta } from '../../../shared/componentes/vista-maceta/vista-maceta';
 
@@ -67,7 +68,7 @@ export class CarritoService {
     // Agrega el item; si ya existe uno con el mismo uid (se estaba editando) lo reemplaza en su lugar
     guardar(item: ItemCarrito, archivos?: ArchivosItem): void {
         const esNuevo = !this.items().some(i => i.uid === item.uid);
-        if (esNuevo) this.analytics.track('add_to_cart', { items: [{ item_id: item.producto.sku ?? String(item.producto.id), item_name: item.producto.nombre }] });
+        if (esNuevo) this.analytics.track('add_to_cart', parametrosDeProducto(item.producto.sku ?? String(item.producto.id), item.producto.nombre, item.producto.precio));
         this.items.update(lista =>
             lista.some(i => i.uid === item.uid)
                 ? lista.map(i => (i.uid === item.uid ? item : i))
