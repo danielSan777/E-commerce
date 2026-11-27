@@ -61,12 +61,13 @@ describe('Aviso de cookies y carga de GTM', () => {
     expect(c.mostrarAviso()).toBe(true);
   });
 
-  it('el aviso aparece con los dos botones y no en el panel de administración', async () => {
+  it('el aviso aparece con un solo botón, «Aceptar», y no en el panel de administración', async () => {
     const f = TestBed.createComponent(AvisoCookies);
     TestBed.inject(ConsentimientoService).iniciar();
     f.detectChanges();
     const el = f.nativeElement as HTMLElement;
-    expect(el.textContent).toContain('Solo necesarias');
+    expect(el.textContent).not.toContain('Solo necesarias');
+    expect(el.querySelectorAll('button')).toHaveLength(1);
     expect(el.textContent).toContain('Aceptar');
 
     (el.querySelector('button.primario') as HTMLButtonElement).click();

@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import { ConsentimientoService } from '../../../core/seguimiento/ConsentimientoService';
 
-// Aviso de cookies (sin la palabra «cookie» en selector, clase ni id: Brave y otros bloqueadores ocultan esos nombres): aparece abajo hasta que la persona elige. No se muestra en el panel de administración.
+// Aviso de cookies con un solo botón, «Aceptar» (sin la palabra «cookie» en selector, clase ni id: Brave y otros bloqueadores ocultan esos nombres): aparece abajo hasta que la persona elige. No se muestra en el panel de administración.
 @Component({
   selector: 'app-aviso-privacidad',
   template: `
@@ -12,10 +12,9 @@ import { ConsentimientoService } from '../../../core/seguimiento/ConsentimientoS
       <section class="aviso-privacidad" role="dialog" aria-labelledby="titulo-privacidad" aria-live="polite">
         <div class="texto">
           <strong id="titulo-privacidad">Cookies</strong>
-          <p>Usamos cookies para medir las visitas y mostrarte anuncios que te interesen. Puedes aceptarlas o usar solo las necesarias para comprar.</p>
+          <p>Usamos cookies para medir las visitas y mostrarte anuncios que te interesen.</p>
         </div>
         <div class="botones">
-          <button type="button" class="secundario" (click)="consentimiento.rechazar()">Solo necesarias</button>
           <button type="button" class="primario" (click)="consentimiento.aceptar()">Aceptar</button>
         </div>
       </section>
@@ -28,7 +27,6 @@ import { ConsentimientoService } from '../../../core/seguimiento/ConsentimientoS
     .botones { display: flex; gap: .5rem; flex: none; }
     button { min-height: 44px; padding: 0 1.1rem; border-radius: 10px; font-weight: 600; cursor: pointer; border: 1px solid #1b5e20; }
     .primario { background: #1b5e20; color: #fff; }
-    .secundario { background: #fff; color: #1b5e20; }
     @media (max-width: 520px) { .botones { width: 100%; } .botones button { flex: 1; } }
   `,
 })
